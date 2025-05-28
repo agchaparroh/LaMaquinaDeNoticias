@@ -1,0 +1,80 @@
+# Task ID: 4
+# Title: Implement Supabase Integration
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Set up Supabase integration for storing extracted data and compressed HTML.
+# Details:
+1. Install supabase-py library (version 1.0.3)
+2. Set up Supabase credentials in settings.py
+3. Create a SupabaseStoragePipeline:
+   - Implement process_item method for storing ArticuloInItems
+   - Add method for compressing and storing original HTML
+4. Create a SupabaseClient utility class for reusable Supabase operations
+5. Implement error handling and retries for Supabase operations
+6. Add logging for Supabase interactions
+
+# Test Strategy:
+1. Unit test SupabaseStoragePipeline
+2. Mock Supabase client and test storage operations
+3. Verify correct compression of HTML
+4. Test error handling and retry logic
+5. Integration test with a test Supabase project
+
+# Subtasks:
+## 1. Install Supabase dependencies and configure environment variables [done]
+### Dependencies: None
+### Description: Install the required Supabase Python library and set up environment variables for storing credentials securely.
+### Details:
+Install supabase-py v1.0.3 using pip and add it to requirements.txt. Create a .env file template with placeholders for SUPABASE_URL and SUPABASE_KEY. Update the .gitignore to exclude the actual .env file with credentials.
+
+## 2. Create SupabaseClient utility class [done]
+### Dependencies: 4.1
+### Description: Implement a reusable SupabaseClient class that handles connection management and provides common operations.
+### Details:
+Create a new file utils/supabase_client.py. Implement a singleton pattern for the SupabaseClient class that loads credentials from environment variables. Include methods for connection initialization, health checks, and basic CRUD operations.
+
+## 3. Update settings.py with Supabase configuration [done]
+### Dependencies: 4.1
+### Description: Modify the project settings to include Supabase configuration and enable the storage pipeline.
+### Details:
+Add Supabase configuration section to settings.py that loads credentials from environment variables. Include settings for retry attempts, timeout values, and storage bucket names. Add the SupabaseStoragePipeline to the ITEM_PIPELINES dictionary with appropriate priority.
+
+## 4. Implement HTML compression utility [done]
+### Dependencies: 4.2
+### Description: Create a utility function to compress HTML content before storing it in Supabase.
+### Details:
+Create a new function in utils/compression.py that uses gzip to compress HTML content. Include options for compression level. Implement a corresponding decompression function for retrieving the content later.
+
+## 5. Implement SupabaseStoragePipeline base class [done]
+### Dependencies: 4.2, 4.3
+### Description: Create the pipeline class structure with error handling and retry logic.
+### Details:
+Create pipelines/supabase_pipeline.py with the SupabaseStoragePipeline class. Implement from_crawler class method for initialization. Add error handling with exponential backoff retry logic. Implement logging for all Supabase operations.
+
+## 6. Implement process_item method for ArticuloInItems [done]
+### Dependencies: 4.5
+### Description: Add functionality to store extracted article data in the Supabase 'articulos' table.
+### Details:
+Extend the SupabaseStoragePipeline class with a process_item method that converts ArticuloInItem objects to the format expected by the 'articulos' table. Include validation before insertion and handle potential duplicate entries.
+
+## 7. Implement HTML storage functionality [done]
+### Dependencies: 4.4, 4.5
+### Description: Add methods to store compressed HTML content in Supabase Storage.
+### Details:
+Add a store_html method to SupabaseStoragePipeline that compresses HTML using the utility function and uploads it to a Supabase Storage bucket. Generate unique filenames based on article URL or ID. Include metadata about compression in the storage object.
+
+## 8. Create integration tests for Supabase pipeline [done]
+### Dependencies: 4.6, 4.7
+### Description: Develop comprehensive integration tests to verify the entire Supabase integration works end-to-end.
+### Details:
+Create tests/test_supabase_integration.py with test cases that verify the complete flow from spider to storage. Include tests for both successful scenarios and error cases. Use a test Supabase project for integration testing.
+<info added on 2025-05-27T11:34:16.826Z>
+Updated integration tests in `test_supabase_integration.py` with comprehensive test structure. Implemented `setUpClass` method to establish test environment, including Supabase client initialization and test bucket creation/verification. Created tests with unique item URLs and direct database/storage verification in `test_process_item_success_scenario`. Added `tearDownClass` method with cleanup placeholders for proper test environment teardown.
+
+The `SupabaseClient` class now includes all required bucket methods for testing. However, test execution is currently paused as we await the setup of a dedicated Supabase test environment. Users need to provide Supabase URL and service key to fully validate the tests. Tests are designed to skip automatically if credentials aren't found in the environment.
+</info added on 2025-05-27T11:34:16.826Z>
+<info added on 2025-05-27T14:17:38.174Z>
+Integration tests have been fully implemented. The SupabaseClient class has been enhanced with test compatibility methods including table, storage, list_buckets, and create_bucket. A .env.test file was created with credentials for the test project. Six comprehensive test cases were implemented covering: successful scenarios, missing fields, empty HTML, database errors, storage errors, and duplicate handling. Complete documentation was added in tests/README.md along with a run_integration_tests.py script for easy test execution. All tests include automatic cleanup of test data to maintain a clean test environment.
+</info added on 2025-05-27T14:17:38.174Z>
+

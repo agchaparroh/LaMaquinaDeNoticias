@@ -1,0 +1,56 @@
+# Task ID: 8
+# Title: Integrate Portia Support
+# Status: pending
+# Dependencies: 1, 2
+# Priority: medium
+# Description: Replace Portia integration with alternative approach for dynamic spider generation, as Portia was discontinued in 2018 and is not compatible with modern Scrapy.
+# Details:
+Based on the critical update that Portia is discontinued, we'll implement one of these alternatives:
+
+1. Implement Scrapely integration for automatic pattern extraction:
+   - Set up Scrapely in the project dependencies
+   - Create ScrapelySpiderLoader class for dynamic spider creation
+   - Implement adapter for Scrapely output to ArticuloInItem format
+   - Add configuration in settings.py for Scrapely integration
+
+2. Implement JSON configuration for dynamic spiders:
+   - Design JSON schema for spider configuration
+   - Create JsonSpiderLoader class to generate spiders from config files
+   - Implement validation for JSON spider configurations
+   - Add directory structure for storing JSON spider configurations
+
+3. Error handling for whichever approach is selected
+
+# Test Strategy:
+1. Unit test for the selected approach (ScrapelySpiderLoader or JsonSpiderLoader)
+2. Test dynamic spider creation with sample configurations
+3. Verify correct adaptation of extracted data to ArticuloInItem format
+4. Integration test with actual dynamically generated spiders
+5. Test error handling with malformed configurations
+6. Performance testing to ensure dynamic spider generation doesn't impact system performance
+
+# Subtasks:
+## 8.1. Evaluate alternatives and select approach [pending]
+### Dependencies: None
+### Description: Evaluate Scrapely vs JSON configuration approach and document decision with rationale
+### Details:
+
+
+## 8.2. Update project dependencies [pending]
+### Dependencies: None
+### Description: Add required dependencies for the selected approach (Scrapely or other libraries needed)
+### Details:
+
+
+## 8.3. Implement dynamic spider loader [pending]
+### Dependencies: None
+### Description: Create loader class for the selected approach that can generate spiders dynamically
+### Details:
+
+
+## 8.4. Create data adapter [pending]
+### Dependencies: None
+### Description: Implement adapter to convert extracted data to ArticuloInItem format
+### Details:
+
+

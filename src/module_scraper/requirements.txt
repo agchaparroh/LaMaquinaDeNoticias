@@ -1,0 +1,37 @@
+# Core Scrapy framework
+scrapy==2.11.0  # Stable version compatible with all plugins
+
+# JavaScript rendering support
+scrapy-playwright==0.0.33  # Compatible with Scrapy 2.11
+
+# Monitoring and statistics
+spidermon==1.20.0
+
+# HTML parsing and cleaning
+beautifulsoup4==4.12.3
+lxml==5.1.0
+
+# Database integration
+supabase==2.4.6  # Stable version
+
+# Date and time handling
+python-dateutil==2.9.0
+
+# Data validation
+pydantic==2.10.3
+
+# User agent rotation
+scrapy-user-agents==0.1.1
+
+# Language detection
+langid==1.1.6
+
+# Duplicate detection
+scrapy-deltafetch==2.0.1
+
+# Additional utilities
+requests==2.31.0  # For API calls
+pillow==10.2.0  # For image processing
+chardet==5.2.0  # For encoding detection
+tenacity
+httpx

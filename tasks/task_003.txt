@@ -1,0 +1,25 @@
+# Task ID: 3
+# Title: Define ArticuloInItem and ItemLoaders
+# Status: done
+# Dependencies: 1
+# Priority: high
+# Description: Create the ArticuloInItem class and corresponding ItemLoader for structured data extraction.
+# Details:
+1. Define ArticuloInItem in items.py with fields:
+   - title
+   - content
+   - author
+   - publication_date
+   - url
+   - source
+   - category
+2. Create ArticuloInItemLoader in itemloaders.py
+3. Implement input and output processors for each field
+4. Add custom processors for data cleaning and normalization
+5. Implement date parsing logic for publication_date
+
+# Test Strategy:
+1. Unit test ArticuloInItem creation
+2. Test ItemLoader with sample data
+3. Verify correct data cleaning and normalization
+4. Test date parsing with various formats

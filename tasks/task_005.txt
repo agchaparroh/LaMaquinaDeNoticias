@@ -1,0 +1,19 @@
+# Task ID: 5
+# Title: Implement DeltaFetch Pipeline
+# Status: pending
+# Dependencies: 3, 4, 17
+# Priority: medium
+# Description: Create a DeltaFetch pipeline to avoid duplicate article extraction.
+# Details:
+1. Install scrapy-deltafetch library (version 2.0.1)
+2. Configure DeltaFetch middleware in settings.py
+3. Create a custom DeltaFetch pipeline that works with Supabase
+4. Implement logic to check for existing articles in Supabase
+5. Add method to update DeltaFetch database with new articles
+6. Integrate DeltaFetch pipeline into the item processing flow
+
+# Test Strategy:
+1. Unit test custom DeltaFetch pipeline
+2. Test duplicate detection with sample data
+3. Verify correct updating of DeltaFetch database
+4. Integration test with Supabase and sample spiders

@@ -1,0 +1,79 @@
+# Task ID: 2
+# Title: Implement Base Spider Classes
+# Status: done
+# Dependencies: 1
+# Priority: high
+# Description: Create base spider classes for different scraping strategies: BaseArticleSpider, BaseSitemapSpider, and BaseCrawlSpider.
+# Details:
+1. Create BaseArticleSpider:
+   - Implement common parsing logic
+   - Add error handling and logging
+2. Create BaseSitemapSpider:
+   - Extend Scrapy's SitemapSpider
+   - Implement sitemap parsing logic
+3. Create BaseCrawlSpider:
+   - Extend Scrapy's CrawlSpider
+   - Implement rules for crawling
+4. Implement common methods for extracting article data
+5. Add user-agent rotation logic
+6. Implement respect for robots.txt
+7. Add delay and throttling logic
+
+# Test Strategy:
+1. Create test spiders inheriting from each base class
+2. Verify correct behavior for each spider type
+3. Test error handling and logging
+4. Verify respect for robots.txt
+5. Check user-agent rotation and delay mechanisms
+
+# Subtasks:
+## 1. Implement BaseArticleSpider [done]
+### Dependencies: None
+### Description: Create the BaseArticleSpider class with common parsing logic, error handling, and logging
+### Details:
+1. Define BaseArticleSpider class
+2. Implement common parsing methods
+3. Add error handling mechanisms
+4. Implement logging functionality
+5. Include user-agent rotation logic
+
+## 2. Develop BaseSitemapSpider [done]
+### Dependencies: None
+### Description: Extend Scrapy's SitemapSpider and implement sitemap parsing logic
+### Details:
+1. Create BaseSitemapSpider class extending Scrapy's SitemapSpider
+2. Implement sitemap parsing methods
+3. Add error handling for sitemap-specific issues
+4. Implement respect for robots.txt
+5. Add delay and throttling logic
+
+## 3. Create BaseCrawlSpider [done]
+### Dependencies: None
+### Description: Extend Scrapy's CrawlSpider and implement rules for crawling
+### Details:
+1. Define BaseCrawlSpider class extending Scrapy's CrawlSpider
+2. Implement crawling rules
+3. Add methods for extracting links
+4. Implement depth control mechanisms
+5. Add respect for robots.txt and crawl delay settings
+
+## 4. Implement Common Article Extraction Methods [done]
+### Dependencies: 2.1, 2.2, 2.3
+### Description: Create shared methods for extracting article data across all spider classes
+### Details:
+1. Implement methods for extracting article title
+2. Create functions for extracting article content
+3. Develop methods for extracting publication date
+4. Implement author extraction logic
+5. Add methods for extracting article metadata
+
+## 5. Implement Shared Spider Functionality [done]
+### Dependencies: 2.1, 2.2, 2.3, 2.4
+### Description: Add common functionality shared across all spider classes
+### Details:
+1. Implement user-agent rotation logic
+2. Add delay and throttling mechanisms
+3. Create shared error handling and logging methods
+4. Implement respect for robots.txt across all classes
+5. Add common configuration options for all spiders
+
