@@ -5,7 +5,7 @@
 from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst, MapCompose, Join, Compose, Identity
 from w3lib.html import remove_tags, replace_escape_chars
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 from typing import Union, List, Optional
 import unicodedata
@@ -61,48 +61,97 @@ def normalize_date(date_string: Union[str, datetime]) -> Optional[datetime]:
         return None
     
     # Limpiar el string de fecha
-    date_string = date_string.strip()
+    original_date_str_cleaned = date_string.strip() # Keep original for standard parsing
+    lower_date_str = original_date_str_cleaned.lower() # Use lowercased for relative matching
+
+    # --- Relative date parsing ---
+    now = datetime.now()
+
+    # "ayer"
+    if lower_date_str == "ayer":
+        return (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # "hace N día(s)"
+    match = re.fullmatch(r"hace\s+(\d+)\s+d[ií]a(s)?", lower_date_str)
+    if match:
+        days_ago = int(match.group(1))
+        return (now - timedelta(days=days_ago)).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # "hace N hora(s)"
+    match = re.fullmatch(r"hace\s+(\d+)\s+hora(s)?", lower_date_str)
+    if match:
+        hours_ago = int(match.group(1))
+        return now - timedelta(hours=hours_ago)
+
+    # "hace N minuto(s)"
+    match = re.fullmatch(r"hace\s+(\d+)\s+minuto(s)?", lower_date_str)
+    if match:
+        minutes_ago = int(match.group(1))
+        return now - timedelta(minutes=minutes_ago)
     
-    # Formatos de fecha comunes en medios hispanohablantes
+    # --- Standard date format parsing ---
+    # Use original_date_str_cleaned for these formats as they might be case-sensitive
     date_formats = [
         # Formatos ISO
-        '%Y-%m-%dT%H:%M:%S%z',
-        '%Y-%m-%dT%H:%M:%SZ',
-        '%Y-%m-%dT%H:%M:%S',
-        '%Y-%m-%d %H:%M:%S',
-        '%Y-%m-%d',
+        '%Y-%m-%dT%H:%M:%S%z', # Must be before less specific ones
+        '%Y-%m-%dT%H:%M:%SZ', # With Z for UTC
+        '%Y-%m-%dT%H:%M:%S',  # Without timezone
+        '%Y-%m-%d %H:%M:%S',  # Space separator
+        '%Y-%m-%d',           # Date only
         
-        # Formatos españoles
+        # Formatos españoles (common variations)
         '%d/%m/%Y %H:%M:%S',
         '%d/%m/%Y %H:%M',
         '%d/%m/%Y',
+        '%d-%m-%Y %H:%M:%S', # Added
+        '%d-%m-%Y %H:%M',   # Added
         '%d-%m-%Y',
-        '%d de %B de %Y',
-        '%d %B %Y',
+        '%d de %B de %Y %H:%M:%S', # With time
+        '%d de %B de %Y %H:%M',   # With time
+        '%d de %B de %Y',         # Full month name
+        '%d %B %Y',               # Full month name without "de"
+        '%d/%m/%y %H:%M:%S',      # Short year with time
+        '%d/%m/%y %H:%M',         # Short year with time
+        '%d/%m/%y',               # Short year
         
-        # Formatos en inglés
+        # Formatos en inglés (common variations)
+        '%B %d, %Y %I:%M %p', # With AM/PM
         '%B %d, %Y',
+        '%b %d, %Y %I:%M %p', # Short month with AM/PM
         '%b %d, %Y',
+        '%m/%d/%Y %I:%M %p', # US format with AM/PM
         '%m/%d/%Y',
         '%m-%d-%Y',
         
-        # Formatos con día de la semana
+        # Formatos con día de la semana (usually at the beginning)
+        '%A, %d de %B de %Y %H:%M:%S', # Spanish full
         '%A, %d de %B de %Y',
-        '%a, %d %b %Y %H:%M:%S %z',
+        '%a, %d %b %Y %H:%M:%S %z', # English short with timezone
+        '%a, %d %b %Y %H:%M:%S',
+        '%a, %d %b %Y',
     ]
     
     for date_format in date_formats:
         try:
-            return datetime.strptime(date_string, date_format)
+            # Use original_date_str_cleaned here
+            return datetime.strptime(original_date_str_cleaned, date_format)
         except ValueError:
             continue
     
-    # Si no se pudo parsear, intentar con expresiones regulares para formatos más complejos
-    # Ejemplo: "hace 2 horas", "ayer", etc.
-    if 'hace' in date_string.lower():
-        # TODO: Implementar lógica para fechas relativas
-        pass
-    
+    # Try dateparser as a last resort if available and other methods fail
+    # This part is commented out as per the instruction to prioritize re/datetime
+    # try:
+    #     import dateparser
+    #     parsed_date = dateparser.parse(original_date_str_cleaned)
+    #     if parsed_date:
+    #         return parsed_date
+    # except ImportError:
+    #     pass # dateparser not installed
+    # except Exception as e: # Other dateparser errors
+    #     # Log this error if needed: logger.warning(f"Dateparser failed for '{original_date_str_cleaned}': {e}")
+    #     pass
+
+    # Si no se pudo parsear con formatos estándar, y no era relativo, retornar None
     return None
 
 

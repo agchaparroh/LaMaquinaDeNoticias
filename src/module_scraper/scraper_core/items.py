@@ -54,18 +54,3 @@ class ArticuloInItem(scrapy.Item):
             if not self.get(field):
                 return False
         return True
-
-
-class ArticleItem(scrapy.Item):
-    """
-    Item simplificado para compatibilidad hacia atrás.
-    DEPRECATED: Usar ArticuloInItem en su lugar.
-    """
-    # define the fields for your item here like:
-    url = scrapy.Field()
-    title = scrapy.Field()
-    body = scrapy.Field()
-    publication_date = scrapy.Field()
-    source_name = scrapy.Field()
-    html_content = scrapy.Field()
-    # ... add more fields as needed

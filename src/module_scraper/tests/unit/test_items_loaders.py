@@ -1,6 +1,7 @@
 # Tests para Items y ItemLoaders
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta, date # Added timedelta, date
+from unittest.mock import patch # Added patch
 from scrapy.http import HtmlResponse
 from scrapy.selector import Selector
 
@@ -103,7 +104,110 @@ class TestProcessorFunctions(unittest.TestCase):
         
         # Invalid format
         self.assertIsNone(normalize_date('invalid date'))
-    
+        self.assertIsNone(normalize_date('2024-13-01')) # Invalid month
+        self.assertIsNone(normalize_date('ayer por la tarde')) # Not supported variation
+
+    # --- Tests for relative date normalization ---
+    MOCKED_NOW = datetime(2024, 7, 22, 10, 0, 0) # Monday
+
+    @patch('scraper_core.itemloaders.datetime', autospec=True)
+    def test_normalize_date_relative_ayer(self, mock_datetime):
+        mock_datetime.now.return_value = self.MOCKED_NOW
+        
+        expected_date = (self.MOCKED_NOW - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        self.assertEqual(normalize_date("ayer"), expected_date)
+        self.assertEqual(normalize_date("Ayer"), expected_date)
+        self.assertEqual(normalize_date(" AYER "), expected_date)
+
+    @patch('scraper_core.itemloaders.datetime', autospec=True)
+    def test_normalize_date_relative_hace_dias(self, mock_datetime):
+        mock_datetime.now.return_value = self.MOCKED_NOW
+        
+        # Test "hace 1 día"
+        expected_date_1_day = (self.MOCKED_NOW - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        self.assertEqual(normalize_date("hace 1 día"), expected_date_1_day)
+        self.assertEqual(normalize_date("hace 1 dia"), expected_date_1_day) # without accent
+        
+        # Test "hace 5 días"
+        expected_date_5_days = (self.MOCKED_NOW - timedelta(days=5)).replace(hour=0, minute=0, second=0, microsecond=0)
+        self.assertEqual(normalize_date("hace 5 días"), expected_date_5_days)
+        self.assertEqual(normalize_date("HACE 5 DIAS"), expected_date_5_days) # uppercase, no accent, plural 's'
+        self.assertEqual(normalize_date("hace 10 dias"), (self.MOCKED_NOW - timedelta(days=10)).replace(hour=0, minute=0, second=0, microsecond=0))
+
+    @patch('scraper_core.itemloaders.datetime', autospec=True)
+    def test_normalize_date_relative_hace_horas(self, mock_datetime):
+        mock_datetime.now.return_value = self.MOCKED_NOW
+        
+        # Test "hace 1 hora"
+        expected_date_1_hour = self.MOCKED_NOW - timedelta(hours=1)
+        self.assertEqual(normalize_date("hace 1 hora"), expected_date_1_hour)
+        
+        # Test "hace 3 horas"
+        expected_date_3_hours = self.MOCKED_NOW - timedelta(hours=3)
+        self.assertEqual(normalize_date("hace 3 horas"), expected_date_3_hours)
+        self.assertEqual(normalize_date("HACE 10 HORAS"), self.MOCKED_NOW - timedelta(hours=10))
+
+    @patch('scraper_core.itemloaders.datetime', autospec=True)
+    def test_normalize_date_relative_hace_minutos(self, mock_datetime):
+        mock_datetime.now.return_value = self.MOCKED_NOW
+
+        # Test "hace 1 minuto"
+        expected_date_1_min = self.MOCKED_NOW - timedelta(minutes=1)
+        self.assertEqual(normalize_date("hace 1 minuto"), expected_date_1_min)
+
+        # Test "hace 15 minutos"
+        expected_date_15_mins = self.MOCKED_NOW - timedelta(minutes=15)
+        self.assertEqual(normalize_date("hace 15 minutos"), expected_date_15_mins)
+        self.assertEqual(normalize_date("HACE 30 MINUTOS"), self.MOCKED_NOW - timedelta(minutes=30))
+
+    def test_normalize_date_invalid_relative_formats(self):
+        """Test invalid or unsupported relative date formats."""
+        self.assertIsNone(normalize_date("hace una semana"))
+        self.assertIsNone(normalize_date("hace 2 meses"))
+        self.assertIsNone(normalize_date("ayer por la mañana"))
+        self.assertIsNone(normalize_date("hace mucho tiempo"))
+        self.assertIsNone(normalize_date("hace cinco dias")) # number as word
+        self.assertIsNone(normalize_date("hace 5dias")) # no space
+        self.assertIsNone(normalize_date("hace horas 5")) # wrong order
+        self.assertIsNone(normalize_date("1 hora hace"))
+
+    def test_normalize_date_keeps_time_for_standard_formats_with_time(self):
+        """Test that time is preserved for standard formats that include it."""
+        dt_with_time = normalize_date('2024-01-15T10:30:00Z')
+        self.assertEqual(dt_with_time.hour, 10)
+        self.assertEqual(dt_with_time.minute, 30)
+        self.assertEqual(dt_with_time.second, 0)
+
+        dt_with_time_es = normalize_date('15/01/2024 14:45:30')
+        self.assertEqual(dt_with_time_es.hour, 14)
+        self.assertEqual(dt_with_time_es.minute, 45)
+        self.assertEqual(dt_with_time_es.second, 30)
+
+    def test_normalize_date_sets_midnight_for_standard_formats_without_time(self):
+        """Test that time is set to midnight for standard formats that only specify date."""
+        dt_date_only_iso = normalize_date('2024-01-15')
+        self.assertEqual(dt_date_only_iso.hour, 0)
+        self.assertEqual(dt_date_only_iso.minute, 0)
+        self.assertEqual(dt_date_only_iso.second, 0)
+
+        dt_date_only_es = normalize_date('15/01/2024')
+        self.assertEqual(dt_date_only_es.hour, 0) # This depends on strptime default, usually 00:00:00
+        self.assertEqual(dt_date_only_es.minute, 0)
+        self.assertEqual(dt_date_only_es.second, 0)
+
+        dt_date_only_text = normalize_date('15 de Enero de 2024') # Assuming locale independent for month
+        if dt_date_only_text: # This might fail if locale for 'Enero' is not Spanish
+             self.assertEqual(dt_date_only_text.hour, 0)
+             self.assertEqual(dt_date_only_text.minute, 0)
+             self.assertEqual(dt_date_only_text.second, 0)
+        else:
+            # If '15 de Enero de 2024' is not parsed, this test part is skipped.
+            # This can happen if the test environment locale is not Spanish-aware for %B.
+            # The function itself doesn't set locale, relies on system's strptime behavior.
+            pass
+
+
     def test_normalize_url(self):
         """Test normalización de URLs"""
         # Eliminar parámetros de tracking

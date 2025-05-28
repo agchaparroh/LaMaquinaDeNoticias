@@ -52,10 +52,10 @@ class TestSettings(unittest.TestCase):
     
     def test_pipeline_configuration(self):
         """Test that Supabase pipeline is configured."""
-        self.assertIn('scraper_core.pipelines.supabase_pipeline.SupabaseStoragePipeline', 
+        self.assertIn('scraper_core.pipelines.SupabaseStoragePipeline', 
                       settings.ITEM_PIPELINES)
         self.assertEqual(
-            settings.ITEM_PIPELINES['scraper_core.pipelines.supabase_pipeline.SupabaseStoragePipeline'],
+            settings.ITEM_PIPELINES['scraper_core.pipelines.SupabaseStoragePipeline'],
             300
         )
     
