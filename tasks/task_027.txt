@@ -1,0 +1,11 @@
+# Task ID: 27
+# Title: Desarrollar Chat de Investigación (module_chat_interface)
+# Status: pending
+# Dependencies: 19, 23, 24
+# Priority: medium
+# Description: Implementar la interfaz de chat que permita a los usuarios interactuar con el LLM y las Query Tools para investigar la información almacenada.
+# Details:
+
+
+# Test Strategy:
+

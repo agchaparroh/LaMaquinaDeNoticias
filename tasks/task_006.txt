@@ -1,0 +1,31 @@
+# Task ID: 6
+# Title: Implement Specialized Spiders
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Create specialized spiders for configured media sources like La Nación and El País, following project guidelines and documentation.
+# Details:
+IMPORTANT: CONSULT Context7 BEFORE beginning any work on this task.
+
+1. Review module_scraper.md documentation to ensure alignment with project objectives
+2. Create LaNacionSpider:
+   - Inherit from appropriate base spider
+   - Implement parsing logic for La Nación website
+   - Use ArticuloInItemLoader for data extraction
+3. Create ElPaisSpider:
+   - Inherit from appropriate base spider
+   - Implement parsing logic for El País website
+   - Use ArticuloInItemLoader for data extraction
+4. Implement additional spiders for other sources
+5. Add configuration for each spider (start_urls, allowed_domains, etc.)
+6. Implement spider-specific error handling
+7. Ensure all implementations follow guidelines in Context7 and module_scraper.md
+
+# Test Strategy:
+1. Verify implementation aligns with Context7 requirements
+2. Unit test each specialized spider
+3. Test parsing logic with sample HTML
+4. Verify correct item extraction
+5. Integration test with live websites (respecting robots.txt)
+6. Check error handling with intentionally malformed data
+7. Confirm compliance with module_scraper.md specifications

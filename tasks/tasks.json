@@ -1,0 +1,675 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Setup Project Structure and Environment",
+      "description": "Set up the Scrapy-based scraping module within the existing project structure, ensuring proper integration with the current architecture.",
+      "status": "done",
+      "dependencies": [],
+      "priority": "high",
+      "details": "1. Work within the existing src/module_scraper directory\n2. Use the already initialized Git repository\n3. Create a virtual environment using Python 3.9+ if not already present\n4. Install Scrapy 2.8.0 and other necessary dependencies\n5. Set up the basic Scrapy project structure (spiders, items, pipelines, middlewares) within the module\n6. Check for an existing Dockerfile and optimize it for Scrapy if needed\n7. Ensure compatibility with the existing docker-compose.yml multi-module architecture\n8. Update module-specific .gitignore patterns if needed\n9. Initialize settings.py with basic configurations\n10. Set up logging configuration in settings.py",
+      "testStrategy": "1. Verify Scrapy structure is correctly integrated within the existing module\n2. Ensure virtual environment is working\n3. Test Docker build and run within the multi-module architecture\n4. Verify Scrapy project can be started without errors",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Initialize Project Repository",
+          "description": "Create the project directory, initialize Git, and set up .gitignore",
+          "dependencies": [],
+          "details": "Create a new directory for the project, initialize a Git repository within it, and configure a .gitignore file to exclude unnecessary files from version control.",
+          "status": "done",
+          "testStrategy": "Verify the existence of the .git directory and a properly configured .gitignore file."
+        },
+        {
+          "id": 2,
+          "title": "Set Up Python Environment",
+          "description": "Create a virtual environment and install required dependencies",
+          "dependencies": [
+            1
+          ],
+          "details": "Create a virtual environment using Python 3.9+, activate it, and install Scrapy 2.8.0 along with other necessary dependencies. Generate a requirements.txt file.",
+          "status": "done",
+          "testStrategy": "Confirm the virtual environment's existence and verify installed packages using 'pip list'."
+        },
+        {
+          "id": 3,
+          "title": "Configure Scrapy Project Structure",
+          "description": "Set up the basic Scrapy project structure and configure settings within the existing module",
+          "dependencies": [],
+          "details": "Use the 'scrapy startproject' command to create the basic project structure within the src/module_scraper directory. Set up spiders, items, pipelines, and middlewares directories. Initialize settings.py with basic configurations and set up logging.",
+          "status": "done",
+          "testStrategy": "Check for the presence of all required directories and files, and validate the content of settings.py."
+        },
+        {
+          "id": 6,
+          "title": "Evaluate Existing Docker Configuration",
+          "description": "Check for existing Dockerfile and ensure it supports Scrapy requirements",
+          "dependencies": [],
+          "details": "Examine the existing Dockerfile (if any) in the project and evaluate if it already supports Scrapy requirements. If needed, modify or create a Dockerfile that specifies the base Python image, installs Scrapy dependencies, and sets up the environment for running Scrapy spiders within the existing container architecture.",
+          "status": "done",
+          "testStrategy": "Verify the Dockerfile includes all necessary dependencies for Scrapy and builds successfully."
+        },
+        {
+          "id": 7,
+          "title": "Integrate with Existing Docker Compose Architecture",
+          "description": "Ensure the Scrapy module integrates properly with the existing multi-module architecture",
+          "dependencies": [
+            6
+          ],
+          "details": "Review the existing docker-compose.yml file to understand the multi-module architecture. Ensure the Scrapy module is properly integrated and can communicate with other services as needed. Make minimal necessary adjustments to maintain compatibility.",
+          "status": "done",
+          "testStrategy": "Run 'docker-compose up' and verify that the Scrapy module starts correctly and can communicate with other services in the architecture."
+        },
+        {
+          "id": 8,
+          "title": "Update Module-Specific Configuration",
+          "description": "Configure Scrapy-specific settings within the existing module structure",
+          "dependencies": [],
+          "details": "Update the Scrapy settings.py file with configurations specific to the project requirements. Ensure logging is properly configured to integrate with the existing project's logging system. Add any module-specific patterns to .gitignore if needed.",
+          "status": "done",
+          "testStrategy": "Verify settings are correctly applied by running a test spider and checking log output and behavior."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Implement DeltaFetch Pipeline",
+      "description": "Create a DeltaFetch pipeline to avoid duplicate article extraction, ensuring alignment with project objectives.",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "medium",
+      "details": "MANDATORY: Consult Context7 documentation BEFORE starting any work on this task.\n\n1. Review module_scraper.md documentation to ensure alignment with project objectives\n2. Install scrapy-deltafetch library (version 2.0.1)\n3. Configure DeltaFetch middleware in settings.py\n4. Create a custom DeltaFetch pipeline that works with Supabase\n5. Implement logic to check for existing articles in Supabase\n6. Add method to update DeltaFetch database with new articles\n7. Integrate DeltaFetch pipeline into the item processing flow\n8. Verify implementation against Context7 requirements",
+      "testStrategy": "1. Confirm implementation follows Context7 guidelines\n2. Unit test custom DeltaFetch pipeline\n3. Test duplicate detection with sample data\n4. Verify correct updating of DeltaFetch database\n5. Integration test with Supabase and sample spiders\n6. Validate alignment with module_scraper.md specifications",
+      "subtasks": []
+    },
+    {
+      "id": 6,
+      "title": "Implement Specialized Spiders",
+      "description": "Create specialized spiders for configured media sources like La Nación and El País, following project guidelines and documentation.",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "medium",
+      "details": "IMPORTANT: CONSULT Context7 BEFORE beginning any work on this task.\n\n1. Review module_scraper.md documentation to ensure alignment with project objectives\n2. Create LaNacionSpider:\n   - Inherit from appropriate base spider\n   - Implement parsing logic for La Nación website\n   - Use ArticuloInItemLoader for data extraction\n3. Create ElPaisSpider:\n   - Inherit from appropriate base spider\n   - Implement parsing logic for El País website\n   - Use ArticuloInItemLoader for data extraction\n4. Implement additional spiders for other sources\n5. Add configuration for each spider (start_urls, allowed_domains, etc.)\n6. Implement spider-specific error handling\n7. Ensure all implementations follow guidelines in Context7 and module_scraper.md",
+      "testStrategy": "1. Verify implementation aligns with Context7 requirements\n2. Unit test each specialized spider\n3. Test parsing logic with sample HTML\n4. Verify correct item extraction\n5. Integration test with live websites (respecting robots.txt)\n6. Check error handling with intentionally malformed data\n7. Confirm compliance with module_scraper.md specifications",
+      "subtasks": []
+    },
+    {
+      "id": 7,
+      "title": "Implement Middleware for Request Handling",
+      "description": "Create and configure middleware for user-agent rotation, delays, and error handling, following project guidelines.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "medium",
+      "details": "IMPORTANT: MUST consult Context7 BEFORE beginning any work on this task.\n\n1. Review documentation in module_scraper.md to ensure alignment with project objectives\n2. Create RotateUserAgentMiddleware:\n   - Implement a list of user agents\n   - Add logic to rotate user agent for each request\n3. Create DelayMiddleware:\n   - Implement adaptive delays based on response times\n   - Add randomization to delays\n4. Create ErrorHandlingMiddleware:\n   - Implement logic for retrying failed requests\n   - Add logging for errors\n5. Configure middleware in settings.py\n6. Implement respect for robots.txt in middleware",
+      "testStrategy": "1. Verify implementation follows guidelines in Context7 and module_scraper.md\n2. Unit test each middleware\n3. Verify user agent rotation\n4. Test delay logic with mock responses\n5. Check error handling and retry logic\n6. Integration test with sample spiders",
+      "subtasks": []
+    },
+    {
+      "id": 8,
+      "title": "Integrate Portia Support",
+      "description": "Replace Portia integration with alternative approach for dynamic spider generation, as Portia was discontinued in 2018 and is not compatible with modern Scrapy. MANDATORY: Consult Context7 BEFORE beginning any work and verify module_scraper.md documentation to ensure alignment with project objectives.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "medium",
+      "details": "MANDATORY: Consult Context7 BEFORE beginning any work and verify module_scraper.md documentation to ensure alignment with project objectives.\n\nBased on the critical update that Portia is discontinued, we'll implement one of these alternatives:\n\n1. Implement Scrapely integration for automatic pattern extraction:\n   - Set up Scrapely in the project dependencies\n   - Create ScrapelySpiderLoader class for dynamic spider creation\n   - Implement adapter for Scrapely output to ArticuloInItem format\n   - Add configuration in settings.py for Scrapely integration\n\n2. Implement JSON configuration for dynamic spiders:\n   - Design JSON schema for spider configuration\n   - Create JsonSpiderLoader class to generate spiders from config files\n   - Implement validation for JSON spider configurations\n   - Add directory structure for storing JSON spider configurations\n\n3. Error handling for whichever approach is selected\n\nAll implementation decisions must be verified against Context7 and module_scraper.md to ensure they align with the project's architecture and objectives.",
+      "testStrategy": "MANDATORY: Consult Context7 BEFORE beginning any testing work and verify module_scraper.md documentation to ensure alignment with project objectives.\n\n1. Unit test for the selected approach (ScrapelySpiderLoader or JsonSpiderLoader)\n2. Test dynamic spider creation with sample configurations\n3. Verify correct adaptation of extracted data to ArticuloInItem format\n4. Integration test with actual dynamically generated spiders\n5. Test error handling with malformed configurations\n6. Performance testing to ensure dynamic spider generation doesn't impact system performance",
+      "subtasks": [
+        {
+          "id": "8.1",
+          "title": "Evaluate alternatives and select approach",
+          "description": "MANDATORY: Consult Context7 BEFORE beginning this evaluation. Evaluate Scrapely vs JSON configuration approach and document decision with rationale. Verify alignment with module_scraper.md documentation.",
+          "status": "pending"
+        },
+        {
+          "id": "8.2",
+          "title": "Update project dependencies",
+          "description": "MANDATORY: Consult Context7 BEFORE beginning this task. Add required dependencies for the selected approach (Scrapely or other libraries needed) after verifying compatibility with existing project architecture in module_scraper.md.",
+          "status": "pending"
+        },
+        {
+          "id": "8.3",
+          "title": "Implement dynamic spider loader",
+          "description": "MANDATORY: Consult Context7 BEFORE beginning implementation. Create loader class for the selected approach that can generate spiders dynamically, ensuring alignment with module_scraper.md documentation.",
+          "status": "pending"
+        },
+        {
+          "id": "8.4",
+          "title": "Create data adapter",
+          "description": "MANDATORY: Consult Context7 BEFORE beginning implementation. Implement adapter to convert extracted data to ArticuloInItem format, following guidelines in module_scraper.md.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Implement Spidermon Integration",
+      "description": "Integrate Spidermon or an alternative monitoring solution for spider health and performance, ensuring compatibility with our Scrapy version.",
+      "status": "pending",
+      "dependencies": [
+        1,
+        6
+      ],
+      "priority": "medium",
+      "details": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Verify compatibility of Spidermon (version 1.16.0) with our Scrapy version (2.8+)\n2. If compatible:\n   a. Install spidermon library\n   b. Configure Spidermon in settings.py\n   c. Create custom monitors for:\n      - Item validation\n      - Spider performance (items scraped, response times)\n      - Error rate monitoring\n   d. Implement alerting system using Spidermon's built-in actions\n   e. Create custom actions for specific alerting needs (e.g., Slack notifications)\n3. If incompatible:\n   a. Implement alternative monitoring system using structured logging\n   b. Set up custom metrics collection for:\n      - Items scraped count and validation\n      - Response times and error rates\n      - Spider execution statistics\n   c. Create a simple dashboard or reporting mechanism\n   d. Implement basic alerting through custom notification handlers\n4. Prioritize basic monitoring functionality that is compatible and maintainable\n5. Document the chosen approach and any compatibility workarounds",
+      "testStrategy": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Test compatibility of Spidermon with our Scrapy version\n2. For chosen solution (Spidermon or alternative):\n   a. Unit test custom monitors/metrics collection\n   b. Test alerting system with mock data\n   c. Verify correct triggering of alerts\n   d. Integration test with running spiders\n3. Verify monitoring solution works consistently across development and production environments\n4. Performance testing to ensure monitoring doesn't significantly impact spider performance",
+      "subtasks": [
+        {
+          "id": 9.1,
+          "title": "Compatibility verification",
+          "description": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\nTest Spidermon 1.16.0 with our Scrapy 2.8+ setup to determine compatibility",
+          "status": "pending"
+        },
+        {
+          "id": 9.2,
+          "title": "Decision document",
+          "description": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\nCreate a brief document outlining the decision between Spidermon or alternative solution with justification",
+          "status": "pending"
+        },
+        {
+          "id": 9.3,
+          "title": "Implementation of chosen monitoring solution",
+          "description": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\nImplement either Spidermon or custom monitoring based on compatibility findings",
+          "status": "pending"
+        },
+        {
+          "id": 9.4,
+          "title": "Basic alerting setup",
+          "description": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\nConfigure essential alerts for critical spider metrics regardless of chosen solution",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Implement Playwright Integration",
+      "description": "Integrate Playwright for JavaScript rendering when necessary.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "low",
+      "details": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Install scrapy-playwright library (version 0.0.26)\n2. Configure Playwright in settings.py\n3. Create PlaywrightMiddleware:\n   - Implement logic to determine when to use Playwright\n   - Add method for rendering JavaScript-heavy pages\n4. Modify base spider classes to support Playwright when needed\n5. Implement resource optimization to minimize Playwright usage\n6. Add error handling for Playwright-related issues",
+      "testStrategy": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Unit test PlaywrightMiddleware\n2. Test JavaScript rendering with sample pages\n3. Verify correct integration with existing spiders\n4. Performance test to ensure minimal impact on scraping speed\n5. Test error handling with intentionally broken JavaScript",
+      "subtasks": []
+    },
+    {
+      "id": 11,
+      "title": "Implement Logging and Debugging System",
+      "description": "Set up a comprehensive logging and debugging system for the scraper.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "medium",
+      "details": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Configure Python's logging module in settings.py\n2. Implement different log levels (DEBUG, INFO, WARNING, ERROR)\n3. Create custom logging formatters for structured logging\n4. Implement log rotation to manage log file sizes\n5. Add context managers for tracking spider progress\n6. Implement debug mode toggle in settings.py\n7. Create utility functions for common logging patterns",
+      "testStrategy": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Unit test logging configuration\n2. Verify correct log level filtering\n3. Test log rotation with mock data\n4. Check structured logging output\n5. Integration test with running spiders to ensure comprehensive logging",
+      "subtasks": []
+    },
+    {
+      "id": 12,
+      "title": "Implement Rate Limiting and Politeness Policies",
+      "description": "Develop and implement rate limiting and politeness policies to respect target servers. MANDATORY: Consult Context7 BEFORE beginning any work on this task.",
+      "status": "pending",
+      "dependencies": [
+        7
+      ],
+      "priority": "high",
+      "details": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\nMANDATORY FIRST STEP: Consult Context7 before starting implementation.\n\n1. Review documentation in module_scraper.md to ensure alignment with project objectives\n2. Implement AutoThrottle extension configuration\n3. Create custom RateLimiting middleware:\n   - Implement per-domain rate limiting\n   - Add support for custom rate limits per spider\n4. Enhance robots.txt compliance:\n   - Strictly adhere to crawl-delay directives\n   - Implement support for custom robots.txt parsers\n5. Create RetryMiddleware with exponential backoff\n6. Implement IP rotation support (if using proxy services)\n7. Add configuration options in settings.py for fine-tuning rate limiting\n8. Verify implementation aligns with guidelines in Context7 and module_scraper.md",
+      "testStrategy": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Confirm implementation follows guidelines in Context7 and module_scraper.md\n2. Unit test RateLimiting middleware\n3. Verify correct application of per-domain rate limits\n4. Test robots.txt compliance with mock robots.txt files\n5. Check RetryMiddleware behavior with forced errors\n6. Integration test to ensure overall politeness of the scraper\n7. Document any deviations from Context7 guidelines with justification",
+      "subtasks": []
+    },
+    {
+      "id": 13,
+      "title": "Implement Data Validation and Cleaning Pipeline",
+      "description": "Create a pipeline for validating and cleaning extracted data before storage. IMPORTANT: Consult Context7 BEFORE beginning any work on this task.",
+      "status": "in-progress",
+      "dependencies": [],
+      "priority": "high",
+      "details": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\nMANDATORY: Review Context7 documentation before starting implementation.\n\n1. Review module_scraper.md documentation to ensure alignment with project objectives\n2. Create DataValidationPipeline:\n   - Implement field-by-field validation for ArticuloInItem\n   - Add data type checking and conversion\n3. Create DataCleaningPipeline:\n   - Implement HTML stripping for content fields\n   - Add text normalization (e.g., removing extra whitespace)\n   - Implement date standardization\n4. Create custom exceptions for validation errors\n5. Implement logging for validation and cleaning processes\n6. Add configuration options in settings.py for validation rules\n7. Ensure implementation follows guidelines in Context7 documentation",
+      "testStrategy": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Verify implementation aligns with Context7 requirements\n2. Unit test DataValidationPipeline with various input scenarios\n3. Test DataCleaningPipeline with sample dirty data\n4. Verify correct handling of validation exceptions\n5. Check logging output for validation and cleaning processes\n6. Integration test with full pipeline to ensure data integrity\n7. Confirm compliance with module_scraper.md specifications",
+      "subtasks": []
+    },
+    {
+      "id": 14,
+      "title": "Implement Scheduler and Job Management",
+      "description": "Develop a simplified CLI interface for executing individual scraping jobs, leaving complex orchestration to Prefect.",
+      "status": "pending",
+      "dependencies": [
+        1,
+        6
+      ],
+      "priority": "medium",
+      "details": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Create a basic CLI interface for spider execution:\n   - Implement commands for running individual spiders\n   - Support passing parameters to spiders\n   - Add basic logging of execution results\n2. Implement simple job status tracking for individual runs\n3. Add error handling for failed spider executions\n4. Create documentation on how this CLI interface integrates with Prefect for more complex orchestration\n5. Ensure the CLI provides clear output about execution status\n6. Implement a simple way to view execution history of recent runs",
+      "testStrategy": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Unit test CLI command structure and parameter handling\n2. Test error handling with deliberately failing spiders\n3. Verify correct execution of individual spiders through the CLI\n4. Test output formatting and readability\n5. Integration test to ensure proper interaction with the scraping system",
+      "subtasks": []
+    },
+    {
+      "id": 15,
+      "title": "Create Documentation and Final Testing",
+      "description": "Develop comprehensive documentation and conduct final testing of the entire system.",
+      "status": "pending",
+      "dependencies": [
+        1,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "priority": "high",
+      "details": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Create README.md with project overview and setup instructions\n2. Write technical documentation covering:\n   - System architecture\n   - Spider development guide\n   - Pipeline and middleware explanations\n   - Configuration options\n   - Deployment guide\n3. Document API endpoints and data formats\n4. Create user guide for non-technical users\n5. Implement docstrings for all classes and methods\n6. Conduct comprehensive system testing:\n   - Unit tests for all components\n   - Integration tests for the entire pipeline\n   - Performance testing under various loads\n   - Security testing, especially for external integrations\n7. Create sample configuration files\n8. Document known limitations and future improvements",
+      "testStrategy": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Review all documentation for completeness and clarity\n2. Conduct user acceptance testing with the documentation\n3. Verify all test cases pass in the final testing phase\n4. Perform a security audit of the entire system\n5. Conduct a mock deployment using the deployment guide",
+      "subtasks": []
+    },
+    {
+      "id": 16,
+      "title": "FASE 0: Auditoría y Actualización de Documentación Técnica",
+      "description": "Revisar y actualizar toda la documentación técnica para corregir inconsistencias, verificar tecnologías obsoletas, y asegurar que la documentación refleje las decisiones técnicas actualizadas antes de comenzar la implementación.",
+      "details": "Esta tarea crítica debe completarse antes de cualquier implementación para evitar problemas durante el desarrollo:\n\n1. **Auditoría de Tecnologías Mencionadas:**\n   - Verificar estado actual de todas las librerías mencionadas\n   - Confirmar compatibilidades con versiones modernas\n   - Identificar herramientas obsoletas o discontinuadas\n\n2. **Corrección de Inconsistencias Detectadas:**\n   - Actualizar referencias a Portia con alternativas viables\n   - Revisar versiones de Scrapy, Playwright, Spidermon\n   - Actualizar dependencias y configuraciones\n\n3. **Actualización del Documento module_scraper.md:**\n   - Reemplazar secciones obsoletas\n   - Actualizar arquitectura de contenedores\n   - Corregir flujo de trabajo sin Portia\n\n4. **Verificación de Compatibilidad:**\n   - Scrapy 2.8+ con scrapy-playwright\n   - Spidermon con Scrapy moderno\n   - Todas las dependencias del requirements.txt\n\n5. **Documentación de Alternativas:**\n   - Documentar alternativas a Portia (Scrapely, configuración JSON)\n   - Actualizar arquitectura de un solo contenedor vs dos\n   - Revisar volúmenes compartidos innecesarios",
+      "testStrategy": "",
+      "status": "done",
+      "dependencies": [],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Auditoría de Tecnologías y Librerías",
+          "description": "Verificar el estado actual de todas las tecnologías y librerías mencionadas en la documentación técnica.",
+          "dependencies": [],
+          "details": "Realizar un inventario completo de todas las tecnologías mencionadas (Scrapy, Playwright, Spidermon, Portia, etc.). Verificar versiones actuales, compatibilidad con sistemas modernos, y estado de mantenimiento. Identificar claramente cuáles están obsoletas o discontinuadas. Crear una tabla comparativa con: nombre de tecnología, versión mencionada en docs, versión actual, estado (mantenida/obsoleta), y recomendación.",
+          "status": "done",
+          "testStrategy": "Verificar cada tecnología contra sus repositorios oficiales y documentación. Confirmar fechas de últimas actualizaciones y estado de soporte."
+        },
+        {
+          "id": 2,
+          "title": "Identificación de Inconsistencias Técnicas",
+          "description": "Detectar y documentar todas las inconsistencias técnicas presentes en la documentación actual.",
+          "dependencies": [
+            1
+          ],
+          "details": "Revisar sistemáticamente toda la documentación técnica para identificar: referencias cruzadas incorrectas, flujos de trabajo imposibles o ineficientes, configuraciones incompatibles entre componentes, y cualquier otra inconsistencia técnica. Crear un registro detallado de cada inconsistencia encontrada, incluyendo ubicación en la documentación, descripción del problema, y severidad (crítica/alta/media/baja).",
+          "status": "done",
+          "testStrategy": "Validar cada inconsistencia identificada mediante pruebas de concepto o verificación cruzada con documentación oficial de las tecnologías."
+        },
+        {
+          "id": 3,
+          "title": "Actualización de Referencias a Portia",
+          "description": "Reemplazar todas las referencias a Portia con alternativas viables y modernas.",
+          "dependencies": [
+            1
+          ],
+          "details": "Identificar todas las secciones que mencionan Portia. Investigar y documentar alternativas modernas como Scrapely, configuraciones basadas en JSON, o herramientas de extracción visual más recientes. Reescribir completamente estas secciones con soluciones actualizadas, incluyendo ejemplos de código y configuración para cada alternativa propuesta.",
+          "status": "done",
+          "testStrategy": "Implementar ejemplos mínimos de cada alternativa propuesta para verificar su viabilidad y documentar resultados."
+        },
+        {
+          "id": 4,
+          "title": "Revisión de Arquitectura de Contenedores",
+          "description": "Actualizar la documentación de arquitectura de contenedores para reflejar prácticas modernas.",
+          "dependencies": [],
+          "details": "Revisar la arquitectura de contenedores actual. Evaluar la necesidad de mantener múltiples contenedores vs. un enfoque más simplificado. Actualizar diagramas de arquitectura, configuraciones de Docker y docker-compose. Eliminar referencias a volúmenes compartidos innecesarios. Documentar claramente las ventajas de la nueva arquitectura propuesta.",
+          "status": "done",
+          "testStrategy": "Crear configuraciones de prueba para validar que la arquitectura propuesta funciona correctamente con las tecnologías actualizadas."
+        },
+        {
+          "id": 5,
+          "title": "Actualización del Documento module_scraper.md",
+          "description": "Reescribir completamente el documento module_scraper.md para reflejar las tecnologías y arquitecturas actualizadas.",
+          "dependencies": [],
+          "details": "Reescribir el documento module_scraper.md incorporando todas las actualizaciones previas. Eliminar secciones obsoletas. Actualizar el flujo de trabajo sin Portia. Incluir nuevos diagramas de arquitectura. Asegurar que todas las referencias a tecnologías, versiones y configuraciones estén actualizadas. Mantener un estilo consistente y claro en todo el documento.",
+          "status": "done",
+          "testStrategy": "Realizar una revisión por pares del documento actualizado para verificar claridad, precisión técnica y completitud."
+        },
+        {
+          "id": 6,
+          "title": "Verificación Final de Compatibilidad y Pruebas",
+          "description": "Realizar pruebas de compatibilidad entre todas las tecnologías actualizadas y documentar los resultados.",
+          "dependencies": [
+            5
+          ],
+          "details": "Crear un entorno de pruebas para verificar la compatibilidad entre Scrapy 2.8+, scrapy-playwright, Spidermon y todas las dependencias listadas en requirements.txt. Documentar cualquier problema de compatibilidad encontrado y sus soluciones. Actualizar el archivo requirements.txt con versiones específicas que garanticen compatibilidad. Crear scripts de ejemplo que demuestren la integración correcta de todos los componentes.",
+          "status": "done",
+          "testStrategy": "Ejecutar scripts de prueba en un entorno limpio para verificar que todas las tecnologías funcionan correctamente juntas. Documentar cualquier error y su resolución."
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "title": "Supabase: Configuración y Finalización de Base de Datos",
+      "description": "Asegurar que la configuración de Supabase esté completa, incluyendo esquemas, tablas, vistas materializadas y funciones/triggers necesarios para el proyecto. Cubre lo indicado como 'Supabase _ base de datos _ COMPLETADO'.",
+      "details": "",
+      "testStrategy": "",
+      "status": "done",
+      "dependencies": [],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 20,
+      "title": "Desarrollar Módulo de Recopilación - Scrapy (module_scraper)",
+      "description": "Implementar el módulo de scraping basado en Scrapy para recolectar noticias de diversas fuentes. Incluye spiders, extracción de datos y limpieza inicial.",
+      "details": "",
+      "testStrategy": "",
+      "status": "in-progress",
+      "dependencies": [
+        "19"
+      ],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "[MIGRADO] Implement BaseArticleSpider",
+          "description": "Subtarea original 2.1: Create the BaseArticleSpider class with common parsing logic, error handling, and logging",
+          "details": "Original Details: 1. Define BaseArticleSpider class\n2. Implement common parsing methods\n3. Add error handling mechanisms\n4. Implement logging functionality\n5. Include user-agent rotation logic",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 2,
+          "title": "[MIGRADO] Develop BaseSitemapSpider",
+          "description": "Subtarea original 2.2: Extend Scrapy's SitemapSpider and implement sitemap parsing logic",
+          "details": "Original Details: 1. Create BaseSitemapSpider class extending Scrapy's SitemapSpider\n2. Implement sitemap parsing methods\n3. Add error handling for sitemap-specific issues\n4. Implement respect for robots.txt\n5. Add delay and throttling logic",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 3,
+          "title": "[MIGRADO] Create BaseCrawlSpider",
+          "description": "Subtarea original 2.3: Extend Scrapy's CrawlSpider and implement rules for crawling",
+          "details": "Original Details: 1. Define BaseCrawlSpider class extending Scrapy's CrawlSpider\n2. Implement crawling rules\n3. Add methods for extracting links\n4. Implement depth control mechanisms\n5. Add respect for robots.txt and crawl delay settings",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 4,
+          "title": "[MIGRADO] Implement Common Article Extraction Methods",
+          "description": "Subtarea original 2.4: Create shared methods for extracting article data across all spider classes",
+          "details": "Original Details: 1. Implement methods for extracting article title\n2. Create functions for extracting article content\n3. Develop methods for extracting publication date\n4. Implement author extraction logic\n5. Add methods for extracting article metadata",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 5,
+          "title": "[MIGRADO] Implement Shared Spider Functionality",
+          "description": "Subtarea original 2.5: Add common functionality shared across all spider classes",
+          "details": "Original Details: 1. Implement user-agent rotation logic\n2. Add delay and throttling mechanisms\n3. Create shared error handling and logging methods\n4. Implement respect for robots.txt across all classes\n5. Add common configuration options for all spiders",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 6,
+          "title": "[MIGRADO] Implement Base Spider Classes (Tarea Original 2)",
+          "description": "Tarea Original 2: Create base spider classes for different scraping strategies: BaseArticleSpider, BaseSitemapSpider, and BaseCrawlSpider.",
+          "details": "Original Details: 1. Create BaseArticleSpider:\n   - Implement common parsing logic\n   - Add error handling and logging\n2. Create BaseSitemapSpider:\n   - Extend Scrapy's SitemapSpider\n   - Implement sitemap parsing logic\n3. Create BaseCrawlSpider:\n   - Extend Scrapy's CrawlSpider\n   - Implement rules for crawling\n4. Implement common methods for extracting article data\n5. Add user-agent rotation logic\n6. Implement respect for robots.txt\n7. Add delay and throttling logic\n<info added on 2025-05-28T04:30:24.711Z>\nActualización de estado:\n- Procesadores en itemloaders.py implementados y probados correctamente\n- Pendiente: Implementar lógica de extracción específica en spiders usando selectores CSS/XPath\n- Pendiente: Desarrollar pruebas unitarias para spiders base y específicos\n- Nota: La implementación completa depende de la subtarea 20.12 (spiders específicos)\n</info added on 2025-05-28T04:30:24.711Z>",
+          "status": "in-progress",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 7,
+          "title": "[MIGRADO] Define ArticuloInItem and ItemLoaders (Tarea Original 3)",
+          "description": "Tarea Original 3: Create the ArticuloInItem class and corresponding ItemLoader for structured data extraction.",
+          "details": "Original Details: 1. Define ArticuloInItem in items.py with fields:\n   - title\n   - content\n   - author\n   - publication_date\n   - url\n   - source\n   - category\n2. Create ArticuloInItemLoader in itemloaders.py\n3. Implement input and output processors for each field\n4. Add custom processors for data cleaning and normalization\n5. Implement date parsing logic for publication_date",
+          "status": "in-progress",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 8,
+          "title": "[MIGRADO] Install Supabase dependencies and configure environment variables",
+          "description": "Subtarea original 4.1: Install the required Supabase Python library and set up environment variables for storing credentials securely.",
+          "details": "Original Details: Install supabase-py v1.0.3 using pip and add it to requirements.txt. Create a .env file template with placeholders for SUPABASE_URL and SUPABASE_KEY. Update the .gitignore to exclude the actual .env file with credentials.",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 9,
+          "title": "[MIGRADO] Create SupabaseClient utility class",
+          "description": "Subtarea original 4.2: Implement a reusable SupabaseClient class that handles connection management and provides common operations.",
+          "details": "Original Details: Create a new file utils/supabase_client.py. Implement a singleton pattern for the SupabaseClient class that loads credentials from environment variables. Include methods for connecting to Supabase, uploading files to storage, and inserting data into tables. Add error handling and logging for all operations.",
+          "status": "in-progress",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 10,
+          "title": "[MIGRADO] Implement SupabaseStoragePipeline",
+          "description": "Subtarea original 4.3: Develop the SupabaseStoragePipeline class in pipelines.py to handle storing extracted items and original HTML content.",
+          "details": "Original Details: Create the SupabaseStoragePipeline class. Implement the process_item method to store ArticuloInItem instances into the 'articulos' table and the compressed original HTML into Supabase Storage. Ensure proper handling of duplicate items and implement robust error handling and logging.",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 11,
+          "title": "[MIGRADO] Configure Scrapy settings for Supabase integration",
+          "description": "Subtarea original 4.4: Update Scrapy settings (settings.py) to enable the SupabaseStoragePipeline and configure Supabase connection details.",
+          "details": "Original Details: Add 'module_scraper.pipelines.SupabaseStoragePipeline' to ITEM_PIPELINES in settings.py. Define SUPABASE_URL and SUPABASE_KEY settings, ensuring they are loaded from environment variables for security. Configure appropriate pipeline order if multiple pipelines are used.",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 12,
+          "title": "[MIGRADO] Develop and run integration tests for Supabase",
+          "description": "Subtarea original 4.5: Create comprehensive integration tests that verify the end-to-end flow from spider extraction to Supabase storage.",
+          "details": "Original Details: Create a new test file tests/test_supabase_integration.py with test cases that verify the complete flow from spider to storage. Include tests for both successful scenarios and error cases. Use a test Supabase project for integration testing.\n<info added on 2025-05-28T04:30:37.433Z>\nAnálisis crítico: Se requiere desarrollar spiders específicos para cada periódico objetivo. Cada spider debe:\n\n1. Heredar de las clases base de Scrapy\n2. Definir selectores CSS/XPath precisos para extraer:\n   - Titular\n   - Contenido\n   - Fecha\n   - Autor\n   - URL\n   - Metadatos relevantes\n\n3. Implementar manejo de paginación y navegación dentro del sitio\n4. Considerar la integración de Playwright para sitios con contenido dinámico (JavaScript)\n5. Documentar la estructura de cada sitio y los desafíos específicos\n6. Crear al menos un spider funcional para cada uno de los periódicos principales identificados\n\nEsta es la pieza fundamental del módulo de recopilación y debe completarse antes de continuar con la integración a Supabase.\n</info added on 2025-05-28T04:30:37.433Z>",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 13,
+          "title": "[MIGRADO] Implement Supabase Integration (Tarea Original 4)",
+          "description": "Tarea Original 4: Set up Supabase integration for storing extracted data and compressed HTML.",
+          "details": "Original Details: 1. Install supabase-py library (version 1.0.3)\n2. Set up Supabase credentials in settings.py\n3. Create a SupabaseStoragePipeline:\n   - Implement process_item method for storing ArticuloInItems\n   - Add method for compressing and storing original HTML\n4. Create a SupabaseClient utility class for reusable Supabase operations\n5. Implement error handling and retries for Supabase operations\n6. Add logging for Supabase interactions",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 14,
+          "title": "[MIGRADO] Comprehensive Review of module_scraper (Tarea Original 17)",
+          "description": "Tarea Original 17: Perform an exhaustive review of the 'module_scraper' module to ensure correctness, adherence to best practices, and overall quality before proceeding to advanced features. This includes code, documentation, and configuration.",
+          "details": "Original Details: MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n## MANDATORY FIRST STEP\n**IMPORTANT**: Before beginning any work on this task, you MUST consult Context7 to understand the full context and best practices related to this module.\n\n## Project Alignment\nReview the `module_scraper.md` documentation to ensure all review activities maintain alignment with the overall project objectives and vision.\n\n## Review Process Overview\n\n### Preparation Phase\n1. **Proactive Context7 Research**: Before examining any code, use Context7 to thoroughly understand all external libraries and frameworks used in the module (Scrapy, Supabase-py, etc.). Document key insights and best practices for reference during review.\n\n### Review Activities\n\n1. **Module Structure Review**:\n   - Evaluate overall architecture and organization\n   - Check for proper separation of concerns\n   - Verify logical grouping of functionality\n\n2. **Code Review (Per File)**:\n   - **Pre-review Context7 Check**: For each file, use Context7 to understand relevant best practices\n   - **Clarity**: Readable code, meaningful variable names, appropriate comments\n   - **Efficiency**: Algorithmic efficiency, resource usage, performance considerations\n   - **Error Handling**: Comprehensive exception handling, graceful failure modes\n   - **Best Practices**: Adherence to Python/Scrapy conventions and patterns\n   - **Security**: Identify potential security vulnerabilities (injection risks, etc.)\n   - **Supabase Integration**: Verify correct implementation of Supabase operations\n\n3. **Documentation Review**:\n   - **READMEs**: Completeness, accuracy, and usefulness for new developers\n   - **Inline Comments**: Presence and quality of docstrings and explanatory comments\n   - **External Documentation**: Any additional documentation outside the codebase\n\n4. **Configuration Review**:\n   - Verify settings in `settings.py` for correctness\n   - Check for security issues in configuration (exposed credentials, etc.)\n   - Validate environment-specific configurations\n\n5. **Dependency Management**:\n   - Review `requirements.txt` for outdated or unnecessary packages\n   - Check for potential version conflicts\n   - Identify security vulnerabilities in dependencies\n\n6. **Additional Research**:\n   - Perform targeted online searches to clarify any doubts\n   - Research optimal solutions for identified issues\n\n### Documentation and Follow-up\n\n1. **Findings Documentation**:\n   - Create a comprehensive review report with all findings\n   - Categorize issues by severity and type\n\n2. **Sub-task Creation**:\n   - Create specific, actionable sub-tasks for all required fixes\n   - Prioritize sub-tasks based on severity and dependencies",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 15,
+          "title": "[MIGRADO] Fix Database Schema Issue in Articulos Table (Tarea Original 18)",
+          "description": "Tarea Original 18: Add the missing contenido_texto column to the articulos table in Supabase and fix field mapping inconsistencies in module_scraper to ensure proper data storage.",
+          "details": "Original Details: 1. Database Schema Update:\n   - Connect to the Supabase project using admin credentials\n   - Add the missing 'contenido_texto' column to the 'articulos' table with appropriate TEXT data type\n   - Ensure the column allows NULL values initially for backward compatibility\n   - Add appropriate indexing for the new column if text search will be performed\n\n2. Module_scraper Field Mapping Fixes:\n   - Locate and update the ArticuloItem class in items.py to include the contenido_texto field\n   - Review and fix any inconsistencies between field names in the spider extraction logic and the database schema\n   - Update the SupabaseStoragePipeline in pipelines.py to properly map and store the contenido_texto field\n   - Check for any other field mapping inconsistencies across the entire module_scraper\n\n3. Data Migration (if necessary):\n   - Develop a script to populate the contenido_texto field for existing records if the data exists elsewhere\n   - Test the migration script in a staging environment before running in production\n\n4. Code Updates:\n   - Update any ORM models or data access objects to include the new field\n   - Modify any relevant API endpoints that should return the contenido_texto field\n   - Update documentation to reflect the schema changes\n\n5. Error Handling:\n   - Add appropriate error handling for cases where the contenido_texto field might be missing in legacy code\n   - Implement logging for any schema-related issues encountered during runtime\n\nThis is an urgent fix that requires careful coordination to prevent data loss or application downtime. Consider implementing the changes during a maintenance window if possible.",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 16,
+          "title": "Implementar Spiders Específicos para Fuentes Clave",
+          "description": "Desarrollar spiders individuales para cada periódico objetivo (ej. el_pais, el_mundo). Heredar de clases base, definir selectores CSS/XPath para extracción de campos de ArticuloInItem. Considerar Playwright para JS.",
+          "details": "Pasos:\n1. Crear archivos Python para cada periódico en scraper_core/spiders/.\n2. Heredar de BaseCrawlSpider o BaseSitemapSpider.\n3. Definir name, allowed_domains, start_urls/sitemap_urls.\n4. Implementar reglas de CrawlSpider (si aplica).\n5. Implementar lógica de extracción con selectores CSS/XPath para todos los campos de ArticuloInItem.\n6. Manejar paginación y navegación específica del sitio.\n7. Documentar la estructura de cada sitio y los desafíos específicos.",
+          "status": "pending",
+          "dependencies": [
+            "20.1",
+            "20.2",
+            "20.3",
+            "20.4",
+            "20.5",
+            "20.6",
+            "20.7",
+            "20.8",
+            "20.9",
+            "20.10"
+          ],
+          "parentTaskId": 20
+        },
+        {
+          "id": 17,
+          "title": "Desarrollar Pruebas Unitarias para Clases Spider (Base y Específicas)",
+          "description": "Crear pruebas unitarias para las clases base de spiders (BaseArticleSpider, etc.) y para cada spider específico implementado.",
+          "details": "Pasos:\n1. Pruebas para Clases Base (ej. test_base_article.py):\n   - Mockear respuestas HTML.\n   - Probar métodos comunes de extracción (si los hay).\n   - Probar lógica de error handling, logging, user-agent rotation.\n2. Pruebas para Spiders Específicos (para cada spider):\n   - Usar fixtures de HTML guardadas de sitios reales.\n   - Verificar que cada campo se extraiga correctamente.\n   - Probar manejo de diferentes formatos de página.",
+          "status": "pending",
+          "dependencies": [
+            "20.16"
+          ],
+          "parentTaskId": 20
+        },
+        {
+          "id": 18,
+          "title": "Completar Documentación General del Módulo Scraper",
+          "description": "Crear un README.md principal para el module_scraper que describa su arquitectura, configuración, uso y cómo extenderlo.",
+          "details": "Pasos:\n1. Crear README.md en src/module_scraper/ o src/module_scraper/scraper_core/.\n2. Describir arquitectura general.\n3. Instrucciones de configuración (variables de entorno, etc.).\n4. Cómo ejecutar spiders.\n5. Cómo añadir nuevos spiders.\n6. Decisiones de diseño importantes.\n7. Alinear con README de tests de Supabase existente.",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 19,
+          "title": "Configurar y Probar CI/CD para el Módulo Scraper",
+          "description": "Establecer un pipeline de Integración Continua/Despliegue Continuo para el módulo scraper.",
+          "details": "Pasos:\n1. Configurar pipeline de CI/CD (ej. GitHub Actions).\n2. Incluir pasos para instalar dependencias.\n3. Ejecutar linters.\n4. Ejecutar todas las pruebas (unitarias y de integración, incluyendo las de Supabase).\n5. Manejar credenciales de Supabase de prueba de forma segura en el entorno de CI/CD.",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 20
+        },
+        {
+          "id": 20,
+          "title": "Verificar y Aplicar Uso de Playwright para Contenido Dinámico",
+          "description": "Identificar spiders que requieren renderizado de JavaScript y asegurar que Playwright se utilice correctamente.",
+          "details": "Pasos:\n1. Revisar los sitios objetivo para determinar la necesidad de renderizado JS.\n2. Para los spiders que lo necesiten, asegurar que las Requests se hagan con meta={'playwright': True}.\n3. Probar que la integración con Playwright funcione y el contenido dinámico se cargue y extraiga correctamente.\n4. Documentar qué spiders usan Playwright y por qué.",
+          "status": "pending",
+          "dependencies": [
+            "20.16"
+          ],
+          "parentTaskId": 20
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "title": "Desarrollar Conector Scrapy-Pipeline (module_connector)",
+      "description": "Implementar el conector que transfiere los datos desde el `module_scraper` hacia el `module_ingestion_engine`.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        "20"
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 22,
+      "title": "Desarrollar Motor de Ingesta y Segmentación (module_ingestion_engine)",
+      "description": "Implementar el motor para la ingesta de datos crudos (provenientes del conector) y su segmentación en unidades manejables (hechos, citas, etc.).",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        "19",
+        "21"
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 23,
+      "title": "Desarrollar Pipeline de Procesamiento (module_pipeline)",
+      "description": "Implementar el pipeline principal para el procesamiento de datos segmentados, aplicando LLMs para extracción de información y evaluación de importancia.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        "19",
+        "22"
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 24,
+      "title": "Desarrollar Lógica de Mantenimiento (module_maintenance_scripts)",
+      "description": "Implementar los scripts de mantenimiento para tareas automatizadas ('IA Nocturna') como generación de embeddings, actualización de Hilos Narrativos, etc.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        "19",
+        "23"
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 25,
+      "title": "Configurar Orquestación - Prefect (module_orchestration)",
+      "description": "Configurar y desplegar Prefect para orquestar los flujos de trabajo del sistema, especialmente los scripts de mantenimiento y el pipeline de datos.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        "24"
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 26,
+      "title": "Desarrollar Dashboard de Revisión (module_dashboard_review)",
+      "description": "Implementar la interfaz de usuario para que periodistas y editores revisen, validen y curen el contenido extraído, gestionen Hilos Narrativos y proporcionen feedback.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        "19",
+        "23"
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 27,
+      "title": "Desarrollar Chat de Investigación (module_chat_interface)",
+      "description": "Implementar la interfaz de chat que permita a los usuarios interactuar con el LLM y las Query Tools para investigar la información almacenada.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        "19",
+        "23",
+        "24"
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 28,
+      "title": "Desarrollar Interfaz de Desarrollador (module_dev_interface)",
+      "description": "Implementar una interfaz para desarrolladores que facilite la gestión, monitorización y depuración del sistema.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        "23"
+      ],
+      "priority": "low",
+      "subtasks": []
+    }
+  ]
+}

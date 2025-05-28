@@ -1,0 +1,74 @@
+# Task ID: 16
+# Title: FASE 0: Auditoría y Actualización de Documentación Técnica
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Revisar y actualizar toda la documentación técnica para corregir inconsistencias, verificar tecnologías obsoletas, y asegurar que la documentación refleje las decisiones técnicas actualizadas antes de comenzar la implementación.
+# Details:
+Esta tarea crítica debe completarse antes de cualquier implementación para evitar problemas durante el desarrollo:
+
+1. **Auditoría de Tecnologías Mencionadas:**
+   - Verificar estado actual de todas las librerías mencionadas
+   - Confirmar compatibilidades con versiones modernas
+   - Identificar herramientas obsoletas o discontinuadas
+
+2. **Corrección de Inconsistencias Detectadas:**
+   - Actualizar referencias a Portia con alternativas viables
+   - Revisar versiones de Scrapy, Playwright, Spidermon
+   - Actualizar dependencias y configuraciones
+
+3. **Actualización del Documento module_scraper.md:**
+   - Reemplazar secciones obsoletas
+   - Actualizar arquitectura de contenedores
+   - Corregir flujo de trabajo sin Portia
+
+4. **Verificación de Compatibilidad:**
+   - Scrapy 2.8+ con scrapy-playwright
+   - Spidermon con Scrapy moderno
+   - Todas las dependencias del requirements.txt
+
+5. **Documentación de Alternativas:**
+   - Documentar alternativas a Portia (Scrapely, configuración JSON)
+   - Actualizar arquitectura de un solo contenedor vs dos
+   - Revisar volúmenes compartidos innecesarios
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Auditoría de Tecnologías y Librerías [done]
+### Dependencies: None
+### Description: Verificar el estado actual de todas las tecnologías y librerías mencionadas en la documentación técnica.
+### Details:
+Realizar un inventario completo de todas las tecnologías mencionadas (Scrapy, Playwright, Spidermon, Portia, etc.). Verificar versiones actuales, compatibilidad con sistemas modernos, y estado de mantenimiento. Identificar claramente cuáles están obsoletas o discontinuadas. Crear una tabla comparativa con: nombre de tecnología, versión mencionada en docs, versión actual, estado (mantenida/obsoleta), y recomendación.
+
+## 2. Identificación de Inconsistencias Técnicas [done]
+### Dependencies: 16.1
+### Description: Detectar y documentar todas las inconsistencias técnicas presentes en la documentación actual.
+### Details:
+Revisar sistemáticamente toda la documentación técnica para identificar: referencias cruzadas incorrectas, flujos de trabajo imposibles o ineficientes, configuraciones incompatibles entre componentes, y cualquier otra inconsistencia técnica. Crear un registro detallado de cada inconsistencia encontrada, incluyendo ubicación en la documentación, descripción del problema, y severidad (crítica/alta/media/baja).
+
+## 3. Actualización de Referencias a Portia [done]
+### Dependencies: 16.1
+### Description: Reemplazar todas las referencias a Portia con alternativas viables y modernas.
+### Details:
+Identificar todas las secciones que mencionan Portia. Investigar y documentar alternativas modernas como Scrapely, configuraciones basadas en JSON, o herramientas de extracción visual más recientes. Reescribir completamente estas secciones con soluciones actualizadas, incluyendo ejemplos de código y configuración para cada alternativa propuesta.
+
+## 4. Revisión de Arquitectura de Contenedores [done]
+### Dependencies: None
+### Description: Actualizar la documentación de arquitectura de contenedores para reflejar prácticas modernas.
+### Details:
+Revisar la arquitectura de contenedores actual. Evaluar la necesidad de mantener múltiples contenedores vs. un enfoque más simplificado. Actualizar diagramas de arquitectura, configuraciones de Docker y docker-compose. Eliminar referencias a volúmenes compartidos innecesarios. Documentar claramente las ventajas de la nueva arquitectura propuesta.
+
+## 5. Actualización del Documento module_scraper.md [done]
+### Dependencies: None
+### Description: Reescribir completamente el documento module_scraper.md para reflejar las tecnologías y arquitecturas actualizadas.
+### Details:
+Reescribir el documento module_scraper.md incorporando todas las actualizaciones previas. Eliminar secciones obsoletas. Actualizar el flujo de trabajo sin Portia. Incluir nuevos diagramas de arquitectura. Asegurar que todas las referencias a tecnologías, versiones y configuraciones estén actualizadas. Mantener un estilo consistente y claro en todo el documento.
+
+## 6. Verificación Final de Compatibilidad y Pruebas [done]
+### Dependencies: 16.5
+### Description: Realizar pruebas de compatibilidad entre todas las tecnologías actualizadas y documentar los resultados.
+### Details:
+Crear un entorno de pruebas para verificar la compatibilidad entre Scrapy 2.8+, scrapy-playwright, Spidermon y todas las dependencias listadas en requirements.txt. Documentar cualquier problema de compatibilidad encontrado y sus soluciones. Actualizar el archivo requirements.txt con versiones específicas que garanticen compatibilidad. Crear scripts de ejemplo que demuestren la integración correcta de todos los componentes.
+

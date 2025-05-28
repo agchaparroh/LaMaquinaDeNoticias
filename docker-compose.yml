@@ -1,0 +1,183 @@
+version: '3.9'
+
+networks:
+  lamacquina_network:
+    driver: bridge
+
+services:
+  # --- Backend Services (Python/FastAPI) ---
+  module_scraper:
+    build:
+      context: ./src/module_scraper
+      dockerfile: Dockerfile
+    container_name: lamacquina_scraper
+    volumes:
+      - ./src/module_scraper:/app
+    env_file:
+      - .env
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+
+  module_connector:
+    build:
+      context: ./src/module_connector
+      dockerfile: Dockerfile
+    container_name: lamacquina_connector
+    command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+    volumes:
+      - ./src/module_connector:/app
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+
+  module_pipeline:
+    build:
+      context: ./src/module_pipeline
+      dockerfile: Dockerfile
+    container_name: lamacquina_pipeline
+    command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+    volumes:
+      - ./src/module_pipeline:/app
+    ports:
+      - "8003:8003"
+    env_file:
+      - .env
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+
+  module_dashboard_review_backend:
+    build:
+      context: ./src/module_dashboard_review_backend
+      dockerfile: Dockerfile
+    container_name: lamacquina_dashboard_review_backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8004 --reload
+    volumes:
+      - ./src/module_dashboard_review_backend:/app
+    ports:
+      - "8004:8004"
+    env_file:
+      - .env
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+
+  module_chat_interface_backend:
+    build:
+      context: ./src/module_chat_interface_backend
+      dockerfile: Dockerfile
+    container_name: lamacquina_chat_interface_backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8005 --reload
+    volumes:
+      - ./src/module_chat_interface_backend:/app
+    ports:
+      - "8005:8005"
+    env_file:
+      - .env
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+
+  module_dev_interface_backend:
+    build:
+      context: ./src/module_dev_interface_backend
+      dockerfile: Dockerfile
+    container_name: lamacquina_dev_interface_backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8006 --reload
+    volumes:
+      - ./src/module_dev_interface_backend:/app
+    ports:
+      - "8006:8006"
+    env_file:
+      - .env
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+
+  # --- Frontend Services (React/TypeScript served by Nginx) ---
+  module_dashboard_review_frontend:
+    build:
+      context: ./src/module_dashboard_review_frontend
+      dockerfile: Dockerfile
+    container_name: lamacquina_dashboard_review_frontend
+    ports:
+      - "3001:80" # Nginx in container serves on 80
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+
+  module_chat_interface_frontend:
+    build:
+      context: ./src/module_chat_interface_frontend
+      dockerfile: Dockerfile
+    container_name: lamacquina_chat_interface_frontend
+    ports:
+      - "3002:80"
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+
+  module_dev_interface_frontend:
+    build:
+      context: ./src/module_dev_interface_frontend
+      dockerfile: Dockerfile
+    container_name: lamacquina_dev_interface_frontend
+    ports:
+      - "3003:80"
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+
+  # --- Orchestration Agent ---
+  module_orchestration_agent: # Prefect Agent
+    build:
+      context: ./src/module_orchestration_agent
+      dockerfile: Dockerfile
+    container_name: lamacquina_orchestration_agent
+    # Command will depend on how you run your Prefect agent
+    # e.g., prefect agent start -q queue1 -q queue2
+    # This needs to be configured via .env
+    command: ["prefect", "agent", "start", "-q", "default"]
+    volumes:
+      - ./src/module_orchestration_agent:/app
+      - /var/run/docker.sock:/var/run/docker.sock # If agent needs to launch Docker containers
+    env_file:
+      - .env
+    environment:
+      - PREFECT_API_URL=${PREFECT_API_URL} # e.g., http://host.docker.internal:4200/api or Prefect Cloud URL
+      - PREFECT_API_KEY=${PREFECT_API_KEY}
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+
+  # --- Reverse Proxy (Nginx) ---
+  nginx_reverse_proxy:
+    build:
+      context: ./src/nginx_reverse_proxy
+      dockerfile: Dockerfile
+    container_name: lamacquina_reverse_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./src/nginx_reverse_proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      # For SSL certificates:
+      # - ./path/to/your/certs:/etc/nginx/certs:ro 
+    depends_on:
+      - module_scraper
+      - module_connector
+      - module_pipeline
+      - module_dashboard_review_backend
+      - module_chat_interface_backend
+      - module_dev_interface_backend
+      - module_dashboard_review_frontend
+      - module_chat_interface_frontend
+      - module_dev_interface_frontend
+    networks:
+      - lamacquina_network
+    restart: unless-stopped

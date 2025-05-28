@@ -1,0 +1,11 @@
+# Task ID: 19
+# Title: Supabase: Configuración y Finalización de Base de Datos
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Asegurar que la configuración de Supabase esté completa, incluyendo esquemas, tablas, vistas materializadas y funciones/triggers necesarios para el proyecto. Cubre lo indicado como 'Supabase _ base de datos _ COMPLETADO'.
+# Details:
+
+
+# Test Strategy:
+

@@ -1,0 +1,11 @@
+# Task ID: 26
+# Title: Desarrollar Dashboard de Revisión (module_dashboard_review)
+# Status: pending
+# Dependencies: 19, 23
+# Priority: medium
+# Description: Implementar la interfaz de usuario para que periodistas y editores revisen, validen y curen el contenido extraído, gestionen Hilos Narrativos y proporcionen feedback.
+# Details:
+
+
+# Test Strategy:
+

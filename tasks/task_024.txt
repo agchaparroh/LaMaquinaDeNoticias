@@ -1,0 +1,11 @@
+# Task ID: 24
+# Title: Desarrollar Lógica de Mantenimiento (module_maintenance_scripts)
+# Status: pending
+# Dependencies: 19, 23
+# Priority: high
+# Description: Implementar los scripts de mantenimiento para tareas automatizadas ('IA Nocturna') como generación de embeddings, actualización de Hilos Narrativos, etc.
+# Details:
+
+
+# Test Strategy:
+

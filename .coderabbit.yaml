@@ -1,0 +1,15 @@
+# Configuración general
+language: es
+tone_instructions: "Comunícate usando un lenguaje claro, sencillo y profesional."
+early_access: false # Valor por defecto, pero especificado explícitamente
+enable_free_tier: true # Valor por defecto, pero especificado explícitamente
+
+# Configuración de Revisiones
+reviews:
+  profile: chill # Valor por defecto, pero especificado explícitamente
+  path_filters:
+    - "!docs/**" # Excluye todos los archivos dentro de la carpeta /docs y sus subdirectorios
+
+# El resto de las configuraciones (chat, knowledge_base, code_generation, tools, etc.)
+# utilizarán sus valores por defecto ya que no se especifican aquí.
+# Por ejemplo, 'reviews.auto_review.enabled' seguirá siendo 'true' por defecto.

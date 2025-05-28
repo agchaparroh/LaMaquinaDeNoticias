@@ -1,0 +1,11 @@
+# Task ID: 21
+# Title: Desarrollar Conector Scrapy-Pipeline (module_connector)
+# Status: pending
+# Dependencies: 20
+# Priority: high
+# Description: Implementar el conector que transfiere los datos desde el `module_scraper` hacia el `module_ingestion_engine`.
+# Details:
+
+
+# Test Strategy:
+
