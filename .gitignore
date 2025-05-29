@@ -2,7 +2,7 @@
 docs/.obsidian/
 # Ignore environment variables
 .env
-src\module_scraper\.env.test
+.env.test
 
 # Added by Claude Task Master
 # Logs

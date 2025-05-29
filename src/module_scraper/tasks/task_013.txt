@@ -1,4 +1,4 @@
-# Task ID: 1
+# Task ID: 13
 # Title: FASE 0: Auditoría y Actualización de Documentación Técnica
 # Status: done
 # Dependencies: None
@@ -18,13 +18,13 @@
 
 
 ## 2. Identificación de Inconsistencias Técnicas [done]
-### Dependencies: 1.1
+### Dependencies: 13.1
 ### Description: Detectar y documentar todas las inconsistencias técnicas presentes en la documentación actual.
 ### Details:
 
 
 ## 3. Actualización de Referencias a Portia [done]
-### Dependencies: 1.1
+### Dependencies: 13.1
 ### Description: Reemplazar todas las referencias a Portia con alternativas viables y modernas.
 ### Details:
 
@@ -42,7 +42,7 @@
 
 
 ## 6. Verificación Final de Compatibilidad y Pruebas [done]
-### Dependencies: 1.5
+### Dependencies: 13.5
 ### Description: Realizar pruebas de compatibilidad entre todas las tecnologías actualizadas y documentar los resultados.
 ### Details:
 

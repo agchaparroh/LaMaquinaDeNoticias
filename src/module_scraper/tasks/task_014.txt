@@ -1,0 +1,162 @@
+# Task ID: 14
+# Title: Desarrollar Módulo de Recopilación - Scrapy (module_scraper)
+# Status: in-progress
+# Dependencies: None
+# Priority: high
+# Description: Implementar el módulo de scraping basado en Scrapy para recolectar noticias de diversas fuentes. Incluye spiders, extracción de datos y limpieza inicial.
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. [MIGRADO] Implement BaseArticleSpider [done]
+### Dependencies: None
+### Description: Subtarea original 2.1: Create the BaseArticleSpider class with common parsing logic, error handling, and logging
+### Details:
+
+
+## 2. [MIGRADO] Develop BaseSitemapSpider [done]
+### Dependencies: None
+### Description: Subtarea original 2.2: Extend Scrapy's SitemapSpider and implement sitemap parsing logic
+### Details:
+
+
+## 3. [MIGRADO] Create BaseCrawlSpider [done]
+### Dependencies: None
+### Description: Subtarea original 2.3: Extend Scrapy's CrawlSpider and implement rules for crawling
+### Details:
+
+
+## 4. [MIGRADO] Implement Common Article Extraction Methods [done]
+### Dependencies: None
+### Description: Subtarea original 2.4: Create shared methods for extracting article data across all spider classes
+### Details:
+
+
+## 5. [MIGRADO] Implement Shared Spider Functionality [done]
+### Dependencies: None
+### Description: Subtarea original 2.5: Add common functionality shared across all spider classes
+### Details:
+
+
+## 6. [MIGRADO] Implement Base Spider Classes (Tarea Original 2) [done]
+### Dependencies: None
+### Description: Tarea Original 2: Create base spider classes for different scraping strategies: BaseArticleSpider, BaseSitemapSpider, and BaseCrawlSpider.
+### Details:
+
+
+## 7. [MIGRADO] Define ArticuloInItem and ItemLoaders (Tarea Original 3) [done]
+### Dependencies: None
+### Description: Tarea Original 3: Create the ArticuloInItem class and corresponding ItemLoader for structured data extraction.
+### Details:
+
+
+## 8. [MIGRADO] Install Supabase dependencies and configure environment variables [done]
+### Dependencies: None
+### Description: Subtarea original 4.1: Install the required Supabase Python library and set up environment variables for storing credentials securely.
+### Details:
+
+
+## 9. [MIGRADO] Create SupabaseClient utility class [done]
+### Dependencies: None
+### Description: Subtarea original 4.2: Implement a reusable SupabaseClient class that handles connection management and provides common operations.
+### Details:
+
+
+## 10. [MIGRADO] Implement SupabaseStoragePipeline [done]
+### Dependencies: None
+### Description: Subtarea original 4.3: Develop the SupabaseStoragePipeline class in pipelines.py to handle storing extracted items and original HTML content.
+### Details:
+
+
+## 11. [MIGRADO] Configure Scrapy settings for Supabase integration [done]
+### Dependencies: None
+### Description: Subtarea original 4.4: Update Scrapy settings (settings.py) to enable the SupabaseStoragePipeline and configure Supabase connection details.
+### Details:
+
+
+## 12. [MIGRADO] Develop and run integration tests for Supabase [in-progress]
+### Dependencies: None
+### Description: Subtarea original 4.5: Create comprehensive integration tests that verify the end-to-end flow from spider extraction to Supabase storage.
+### Details:
+<info added on 2025-05-29T11:36:52.452Z>
+Para completar la tarea de pruebas de integración con Supabase:
+
+1. Revisar y ejecutar el archivo test_supabase_integration.py ubicado en la carpeta tests/ para verificar la funcionalidad básica de integración.
+
+2. Utilizar el spider de Infobae ya implementado para realizar pruebas de integración completas en un escenario real.
+
+3. Verificar que el contenido HTML de los artículos se almacene correctamente en formato comprimido dentro de Supabase Storage.
+
+4. Confirmar que todos los metadatos extraídos de los artículos se guarden adecuadamente en la tabla "articulos" de la base de datos.
+
+5. Probar escenarios de error para asegurar que el sistema maneje correctamente las excepciones y aplique la lógica de reintentos cuando sea necesario.
+
+Documentar los resultados de las pruebas y cualquier problema encontrado durante el proceso.
+</info added on 2025-05-29T11:36:52.452Z>
+
+## 13. [MIGRADO] Implement Supabase Integration (Tarea Original 4) [in-progress]
+### Dependencies: None
+### Description: Tarea Original 4: Set up Supabase integration for storing extracted data and compressed HTML.
+### Details:
+<info added on 2025-05-29T11:36:40.326Z>
+La integración con Supabase ya está implementada en scraper_core/pipelines.py a través de la clase SupabaseStoragePipeline, que incluye funcionalidades de reintentos mediante Tenacity y compresión de HTML para optimizar el almacenamiento. 
+
+Para activar y probar esta integración:
+
+1. Descomentar el pipeline SupabaseStoragePipeline en settings.py (aproximadamente en la línea 90)
+2. Verificar que las siguientes variables de entorno estén correctamente configuradas en el archivo .env:
+   - SUPABASE_URL
+   - SUPABASE_KEY
+   - SUPABASE_BUCKET_NAME
+
+3. Probar la conexión con Supabase ejecutando una pequeña extracción de prueba
+4. Ejecutar las pruebas de integración específicas para la funcionalidad de Supabase
+
+Nota: Asegurarse de que la compresión de HTML funciona correctamente y que los reintentos se comportan según lo esperado en caso de fallos de conexión.
+</info added on 2025-05-29T11:36:40.326Z>
+
+## 14. [MIGRADO] Comprehensive Review of module_scraper (Tarea Original 17) [done]
+### Dependencies: None
+### Description: Tarea Original 17: Perform an exhaustive review of the 'module_scraper' module to ensure correctness, adherence to best practices, and overall quality before proceeding to advanced features. This includes code, documentation, and configuration.
+### Details:
+
+
+## 15. [MIGRADO] Fix Database Schema Issue in Articulos Table (Tarea Original 18) [in-progress]
+### Dependencies: None
+### Description: Tarea Original 18: Add the missing contenido_texto column to the articulos table in Supabase and fix field mapping inconsistencies in module_scraper to ensure proper data storage.
+### Details:
+
+
+## 16. Implementar Spiders Específicos para Fuentes Clave [pending]
+### Dependencies: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8, 14.9, 14.10
+### Description: Desarrollar spiders individuales para cada periódico objetivo (ej. el_pais, el_mundo). Heredar de clases base, definir selectores CSS/XPath para extracción de campos de ArticuloInItem. Considerar Playwright para JS.
+### Details:
+
+
+## 17. Desarrollar Pruebas Unitarias para Clases Spider (Base y Específicas) [pending]
+### Dependencies: 14.16
+### Description: Crear pruebas unitarias para las clases base de spiders (BaseArticleSpider, etc.) y para cada spider específico implementado.
+### Details:
+
+
+## 18. Completar Documentación General del Módulo Scraper [in-progress]
+### Dependencies: None
+### Description: Crear un README.md principal para el module_scraper que describa su arquitectura, configuración, uso y cómo extenderlo.
+### Details:
+
+
+## 19. Configurar y Probar CI/CD para el Módulo Scraper [pending]
+### Dependencies: None
+### Description: Establecer un pipeline de Integración Continua/Despliegue Continuo para el módulo scraper.
+### Details:
+
+
+## 20. Verificar y Aplicar Uso de Playwright para Contenido Dinámico [pending]
+### Dependencies: 14.16
+### Description: Identificar spiders que requieren renderizado de JavaScript y asegurar que Playwright se utilice correctamente.
+### Details:
+
+

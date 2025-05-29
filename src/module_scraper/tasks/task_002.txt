@@ -1,0 +1,43 @@
+# Task ID: 2
+# Title: Implement DeltaFetch Pipeline
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Create a DeltaFetch pipeline to avoid duplicate article extraction, ensuring alignment with project objectives.
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Configure DeltaFetch in settings.py [pending]
+### Dependencies: None
+### Description: Set up the DeltaFetch middleware in the project's settings.py file to enable duplicate article detection.
+### Details:
+Add DeltaFetch middleware to SPIDER_MIDDLEWARES with appropriate priority (e.g., 100). Configure DELTAFETCH_ENABLED = True. Set DELTAFETCH_DIR to specify where hash storage will be located (e.g., '.scrapy/deltafetch'). Add any additional settings like DELTAFETCH_RESET if needed for testing.
+
+## 2. Implement hash storage mechanism [pending]
+### Dependencies: None
+### Description: Set up the storage backend for DeltaFetch to store and retrieve URL hashes efficiently.
+### Details:
+Choose appropriate storage backend (default is DbmCacheStorage). Create necessary directories for hash storage. Implement any custom storage class if needed. Configure persistence settings to ensure hashes are maintained between crawler runs. Test storage directory permissions.
+
+## 3. Integrate DeltaFetch with base spider classes [pending]
+### Dependencies: None
+### Description: Modify base spider classes to properly work with DeltaFetch middleware, ensuring all spiders inherit this functionality.
+### Details:
+Update base spider classes to include 'deltafetch_key' method if custom key generation is needed. Add 'deltafetch_enabled' flag to spiders. Implement any spider-specific logic for determining when to skip already fetched items. Ensure proper handling of the 'deltafetch_reset' flag for testing.
+
+## 4. Implement testing and validation procedures [pending]
+### Dependencies: None
+### Description: Create comprehensive tests to verify DeltaFetch is working correctly and preventing duplicate article extraction.
+### Details:
+Develop test cases that run spiders multiple times on the same content. Implement verification that items are only scraped once. Create test for reset functionality to ensure it works when needed. Add logging to track DeltaFetch skips. Create test fixtures with known duplicate content.
+
+## 5. Create documentation and monitoring [pending]
+### Dependencies: None
+### Description: Document the DeltaFetch implementation and set up monitoring to track its effectiveness.
+### Details:
+Create detailed documentation on how DeltaFetch is implemented in the project. Document any custom configurations or extensions. Add monitoring metrics to track number of skipped duplicates. Implement logging to show DeltaFetch statistics. Create maintenance guidelines for the hash database (cleanup, reset procedures).
+
