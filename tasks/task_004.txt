@@ -1,0 +1,11 @@
+# Task ID: 4
+# Title: Desarrollar module_pipeline
+# Status: pending
+# Dependencies: 2, 3
+# Priority: high
+# Description: Implementar el pipeline principal para el procesamiento de datos segmentados, aplicando LLMs para extracción de información y evaluación de importancia. Core del sistema de procesamiento de noticias.
+# Details:
+
+
+# Test Strategy:
+

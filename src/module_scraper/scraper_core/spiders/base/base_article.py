@@ -12,7 +12,7 @@ from datetime import datetime
 
 import scrapy
 from scrapy.http import Response, Request
-from scrapy.exceptions import DropItem
+
 from scrapy.utils.misc import arg_to_iter
 from ..items import ArticuloInItem
 from ..itemloaders import ArticuloItemLoader
@@ -48,6 +48,7 @@ class BaseArticleSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS_PER_DOMAIN': 2,  # Be polite
         'RETRY_TIMES': 3,
         'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
+        'USE_PLAYWRIGHT_FOR_EMPTY_CONTENT': True, # Intentar con Playwright si el contenido inicial está vacío
         'DOWNLOAD_TIMEOUT': 30,
     }
     
@@ -182,6 +183,7 @@ class BaseArticleSpider(scrapy.Spider):
     def parse_article(self, response: Response) -> Optional[ArticuloInItem]:
         """
         Parse the article page and extract data using ArticuloItemLoader.
+        Optionally retries with Playwright if initial content is insufficient.
         
         This method provides a base implementation. Specific spiders should override
         the selectors or this method entirely if more complex logic is needed.
@@ -191,46 +193,71 @@ class BaseArticleSpider(scrapy.Spider):
             response: The HTTP response from the article page
             
         Returns:
-            An ArticuloInItem instance.
+            An ArticuloInItem instance or None if retrying.
         """
         self.logger.info(f"Parsing article: {response.url}")
+
+        is_playwright_retry = response.meta.get('playwright_retried', False)
+        was_original_playwright_request = response.meta.get('playwright', False)
 
         loader = ArticuloItemLoader(item=ArticuloInItem(), response=response)
 
         # --- Populate common fields ---
         loader.add_value('url', response.url)
-        loader.add_value('fuente', self.name) # Spider name as source identifier
-        
-        # Generic selectors for title (to be overridden by specific spiders if needed)
+        loader.add_value('fuente', self.name)
         loader.add_xpath('titular', '//title/text()')
-        loader.add_xpath('titular', '//h1/text()') 
-        
-        # Content extraction: extract main article body HTML.
-        # The 'contenido_texto' field will be generated from this HTML by processors in ArticuloItemLoader.
-        # Specific spiders should refine these selectors to target the main content block accurately.
-        loader.add_xpath('contenido_html', '//article') 
+        loader.add_xpath('titular', '//h1/text()')
+        loader.add_xpath('contenido_html', '//article')
         loader.add_xpath('contenido_html', '//*[contains(@class, "article-body")]')
         loader.add_xpath('contenido_html', '//*[contains(@id, "article-content")]')
-        loader.add_xpath('contenido_html', '//*[contains(@class, "entry-content")]') # Common in WordPress
+        loader.add_xpath('contenido_html', '//*[contains(@class, "entry-content")]')
         loader.add_xpath('contenido_html', '//*[contains(@itemprop, "articleBody")]')
 
-        # Extract metadata using existing helper method and add to loader
         metadata_dict = self._extract_metadata(response)
         if metadata_dict.get('publication_date'):
             loader.add_value('fecha_publicacion', metadata_dict.get('publication_date'))
         if metadata_dict.get('language'):
             loader.add_value('idioma', metadata_dict.get('language'))
         if metadata_dict.get('keywords'):
-            # Assuming etiquetas_fuente is a list of strings
             loader.add_value('etiquetas_fuente', metadata_dict.get('keywords'))
-
-        # Fields like 'autor', 'medio', 'pais_publicacion', 'tipo_medio', 'seccion', 
-        # 'es_opinion', 'es_oficial' are typically highly site-specific and should be 
-        # populated by the individual spiders that inherit from this base class.
 
         # --- Load the item ---
         article_item = loader.load_item()
-            
+
+        # Verificar si el contenido se extrajo
+        # Usamos 'get_output_value' del loader para verificar el campo procesado.
+        # El campo exacto a verificar puede depender de tus procesadores de items.
+        # Asumimos que 'contenido_html' es el campo crudo y 'contenido_texto' podría ser el procesado.
+        # Si 'contenido_html' está vacío después de los XPaths, es un buen indicador.
+        
+        # Para ser más robustos, verificamos el 'contenido_html' directamente del loader ANTES de que se procese a texto.
+        # O, si confías en que 'contenido_texto' se genera a partir de 'contenido_html', puedes verificar 'contenido_texto' en el item.
+        # Aquí vamos a verificar si 'contenido_html' obtuvo algún valor a través de los XPath.
+        # Si el loader no pudo encontrar nada para 'contenido_html' con los selectores,
+        # el campo 'contenido_html' en 'article_item' podría estar vacío o no existir.
+
+        # Una forma de verificar si los selectores de contenido funcionaron es ver el valor recogido por el loader:
+        collected_content_html = loader.get_collected_values('contenido_html')
+
+        if not collected_content_html: # Si no se recolectó nada para contenido_html
+            self.logger.warning(f"No content extracted for 'contenido_html' from {response.url} with standard request.")
+            if not is_playwright_retry and not was_original_playwright_request and self.settings.getbool('USE_PLAYWRIGHT_FOR_EMPTY_CONTENT', True):
+                self.logger.info(f"Retrying {response.url} with Playwright as 'contenido_html' was empty.")
+                new_meta = response.meta.copy()
+                new_meta.update({
+                    'playwright': True,
+                    'playwright_retried': True,
+                })
+                yield Request(
+                    response.url,
+                    callback=self.parse_article,
+                    meta=new_meta,
+                    errback=self.handle_error, # Asegúrate que este método existe y es adecuado
+                    dont_filter=True
+                )
+                return # No devuelvas el item actual, espera el reintento
+
+        # Si llegamos aquí, el contenido se extrajo o es un reintento de Playwright, o no se reintenta.
         self.successful_urls.append(response.url)
         self.logger.info(f"Successfully parsed: {response.url}. Item will be passed to pipelines for validation and processing.")
         return article_item

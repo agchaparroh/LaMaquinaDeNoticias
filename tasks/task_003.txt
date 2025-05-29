@@ -1,0 +1,11 @@
+# Task ID: 3
+# Title: Desarrollar module_connector
+# Status: pending
+# Dependencies: 2
+# Priority: high
+# Description: Implementar el conector que transfiere los datos desde el module_scraper hacia el module_pipeline. Gestiona la comunicación entre el módulo de scraping y el pipeline de procesamiento.
+# Details:
+
+
+# Test Strategy:
+

@@ -1,29 +1,11 @@
 # Task ID: 7
-# Title: Implement Middleware for Request Handling
+# Title: Configurar nginx_reverse_proxy
 # Status: pending
-# Dependencies: 1
+# Dependencies: 2
 # Priority: medium
-# Description: Create and configure middleware for user-agent rotation, delays, and error handling, following project guidelines.
+# Description: Configurar y desplegar Nginx como proxy reverso para gestionar el enrutamiento entre los diferentes módulos frontend/backend, balanceo de carga y terminación SSL.
 # Details:
-IMPORTANT: MUST consult Context7 BEFORE beginning any work on this task.
 
-1. Review documentation in module_scraper.md to ensure alignment with project objectives
-2. Create RotateUserAgentMiddleware:
-   - Implement a list of user agents
-   - Add logic to rotate user agent for each request
-3. Create DelayMiddleware:
-   - Implement adaptive delays based on response times
-   - Add randomization to delays
-4. Create ErrorHandlingMiddleware:
-   - Implement logic for retrying failed requests
-   - Add logging for errors
-5. Configure middleware in settings.py
-6. Implement respect for robots.txt in middleware
 
 # Test Strategy:
-1. Verify implementation follows guidelines in Context7 and module_scraper.md
-2. Unit test each middleware
-3. Verify user agent rotation
-4. Test delay logic with mock responses
-5. Check error handling and retry logic
-6. Integration test with sample spiders
+

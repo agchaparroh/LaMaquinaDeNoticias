@@ -1,34 +1,11 @@
 # Task ID: 12
-# Title: Implement Rate Limiting and Politeness Policies
+# Title: Desarrollar module_dev_interface_backend
 # Status: pending
-# Dependencies: 7
-# Priority: high
-# Description: Develop and implement rate limiting and politeness policies to respect target servers. MANDATORY: Consult Context7 BEFORE beginning any work on this task.
+# Dependencies: 4, 6
+# Priority: low
+# Description: Implementar el backend de la interfaz para desarrolladores que facilite la gestión, monitorización y depuración del sistema. Incluye métricas, logs centralizados y herramientas de administración.
 # Details:
-MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.
 
-MANDATORY FIRST STEP: Consult Context7 before starting implementation.
-
-1. Review documentation in module_scraper.md to ensure alignment with project objectives
-2. Implement AutoThrottle extension configuration
-3. Create custom RateLimiting middleware:
-   - Implement per-domain rate limiting
-   - Add support for custom rate limits per spider
-4. Enhance robots.txt compliance:
-   - Strictly adhere to crawl-delay directives
-   - Implement support for custom robots.txt parsers
-5. Create RetryMiddleware with exponential backoff
-6. Implement IP rotation support (if using proxy services)
-7. Add configuration options in settings.py for fine-tuning rate limiting
-8. Verify implementation aligns with guidelines in Context7 and module_scraper.md
 
 # Test Strategy:
-MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.
 
-1. Confirm implementation follows guidelines in Context7 and module_scraper.md
-2. Unit test RateLimiting middleware
-3. Verify correct application of per-domain rate limits
-4. Test robots.txt compliance with mock robots.txt files
-5. Check RetryMiddleware behavior with forced errors
-6. Integration test to ensure overall politeness of the scraper
-7. Document any deviations from Context7 guidelines with justification

@@ -1,53 +1,78 @@
 # La Máquina de Noticias
 
-Sistema integral para recopilar, procesar, analizar y consultar información periodística usando IA.
+Este proyecto es un sistema integral para la recopilación, procesamiento y análisis de noticias. Está diseñado para ser una herramienta poderosa para periodistas, permitiendo la extracción de conocimiento estructurado desde grandes volúmenes de texto. Incluye módulos para la extracción de datos (web scraping), un pipeline de procesamiento, una base de datos para almacenar la información y varias interfaces para la interacción y revisión de datos.
 
-## Descripción
+## 🏗️ Arquitectura Modular
 
-Este proyecto está diseñado para ser una herramienta poderosa para periodistas, permitiendo la extracción de conocimiento estructurado desde grandes volúmenes de texto.
+El proyecto sigue una arquitectura modular donde cada componente tiene responsabilidades específicas y bien definidas:
 
-## Estructura del Proyecto
+### **Módulos del Sistema:**
 
-El sistema se organiza en varios componentes principales:
+1. **`module_scraper`** - Sistema de recopilación de noticias (Scrapy)
+2. **`module_connector`** - Conector entre scraper y pipeline  
+3. **`module_pipeline`** - Pipeline principal de procesamiento con LLMs
+4. **`module_maintenance_scripts`** - Scripts de mantenimiento ("IA Nocturna")
+5. **`module_orchestration_agent`** - Orquestación y scheduling (Prefect)
+6. **`nginx_reverse_proxy`** - Proxy reverso y balanceador
+7. **`module_dashboard_review_backend/frontend`** - Dashboard para periodistas
+8. **`module_chat_interface_backend/frontend`** - Interfaz de investigación
+9. **`module_dev_interface_backend/frontend`** - Herramientas de desarrollo
 
-**Directorios Clave:**
+## 📋 Gestión de Proyectos con TaskMaster-AI
 
-- `src/`: Contiene el código fuente principal de los diferentes módulos de la aplicación.
-- `Base de Datos_SUPABASE/`: Incluye esquemas, migraciones, y documentación esencial relacionada con la configuración y estructura de la base de datos del proyecto en Supabase.
-- `docs/`: Documentación general del proyecto, diagramas de arquitectura, y guías de usuario.
-- `scripts/`: Scripts útiles para desarrollo, despliegue, o mantenimiento.
-- `taskmaster/`: Configuración y tareas para TaskmasterAI, si se utiliza para la gestión del proyecto.
+### **División de Proyectos**
 
-**Módulos Dockerizados:**
-El núcleo funcional del sistema está compuesto por varios módulos, cada uno operando como un contenedor Docker:
+Para una gestión más eficiente, el proyecto se divide en **dos proyectos TaskMaster-AI independientes pero complementarios**:
 
-- `module_scraper`: Encargado de la recopilación de artículos.
-- `module_connector`: Gestiona la comunicación con la base de datos (Supabase).
-- `module_pipeline`: Procesa el texto utilizando LLMs para extraer información.
-- `module_dashboard_review_backend` / `frontend`: Interfaz para la revisión editorial.
-- `module_chat_interface_backend` / `frontend`: Interfaz de chat para consultas en lenguaje natural.
-- `module_dev_interface_backend` / `frontend`: Interfaz para desarrolladores (monitorización, etc.).
-- `module_orchestration_agent`: Agente de Prefect para la orquestación de flujos de trabajo.
-- `nginx_reverse_proxy`: Proxy inverso para enrutar el tráfico a los servicios.
-- `module_maintenance_scripts`: Scripts para tareas de mantenimiento (no es un servicio continuo).
+#### **🎯 Proyecto Principal** (Orquestación y Arquitectura General)
+- **Ubicación:** `C:\Users\DELL\Desktop\Prueba con Windsurf AI\La Máquina de Noticias\`
+- **Enfoque:** Desarrollo de módulos principales, integración, y despliegue
 
-## Puesta en Marcha (Desarrollo)
+#### **🎯 Proyecto module_scraper** (Desarrollo Específico Scraper)
+- **Ubicación:** `C:\Users\DELL\Desktop\Prueba con Windsurf AI\La Máquina de Noticias\src\module_scraper\`
+- **Enfoque:** Desarrollo específico del sistema de scraping
 
-1. **Clonar el repositorio.**
-2. **Configurar las variables de entorno:** Copia `.env.example` a `.env` y rellena los valores necesarios. Asegúrate de revisar la configuración específica para la conexión a Supabase detallada en la carpeta `Base de Datos_SUPABASE/`.
-3. **Construir y levantar los contenedores:**
+## 📁 Arquitectura del Directorio
 
-   ```bash
-   docker-compose up --build -d
-   ```
+El proyecto está estructurado de la siguiente manera:
 
-4. **Acceder a los servicios a través del reverse proxy** (normalmente `http://localhost`).
+### **Directorios Principales:**
+-   **`.github/`** - Flujos de trabajo y configuraciones GitHub Actions
+-   **`.venv/`** - Entorno virtual de Python aislado
+-   **`Base de datos_SUPABASE/`** - Scripts SQL, migraciones y documentación BD
+    -   `documentación/` - Arquitectura de BD, seguridad, etc.
+    -   `migrations/` - Scripts de versioning del esquema
+    -   `scripts/` - Scripts de mantenimiento (embeddings, etc.)
+-   **`docs/`** - Documentación completa del proyecto
+    -   `Arquitectura/` - Documentos de arquitectura técnica
+    -   `Componentes/` - Descripción de módulos principales
+    -   `En detalle/` - Documentación específica de componentes
+    -   `Guías/` - Guías prácticas para desarrolladores
+    -   `Prompts/` - Prompts de IA del sistema
+    -   `Revisiones/` - Informes de auditoría y revisión
 
-## Base de Datos
+### **Código Fuente (`src/`):**
+-   **`module_scraper/`** - Sistema Scrapy (68.6% completado)
+-   **`module_connector/`** - Conector scraper→pipeline (próximo)
+-   **`module_pipeline/`** - Pipeline de procesamiento LLM
+-   **`module_maintenance_scripts/`** - Scripts "IA Nocturna"
+-   **`module_orchestration_agent/`** - Orquestación Prefect
+-   **`nginx_reverse_proxy/`** - Proxy reverso
+-   **`module_dashboard_review_backend/`** - API dashboard periodistas
+-   **`module_dashboard_review_frontend/`** - UI dashboard periodistas  
+-   **`module_chat_interface_backend/`** - API chat investigación
+-   **`module_chat_interface_frontend/`** - UI chat investigación
+-   **`module_dev_interface_backend/`** - API herramientas dev
+-   **`module_dev_interface_frontend/`** - UI herramientas dev
 
-Este proyecto utiliza Supabase como proveedor de base de datos PostgreSQL y almacenamiento.
-Toda la información relevante para la estructura, migraciones y configuración específica de la base de datos del proyecto en Supabase se encuentra en la carpeta `Base de Datos_SUPABASE/`.
+### **Gestión y Control:**
+-   **`tasks/`** - Archivos TaskMaster-AI del proyecto principal
+    -   `tasks.json` - Estado actual del progreso general
+    -   `task_001.txt` a `task_015.txt` - Archivos individuales
+-   **`tests/`** - Pruebas de integración inter-módulos
 
-## Contribuir
-
-(Instrucciones para contribuir)
+### **Archivos de Configuración:**
+-   `.gitignore` - Archivos ignorados por Git
+-   `docker-compose.yml` - Servicios Docker del sistema completo
+-   `requirements.txt` - Dependencias Python del proyecto principal
+-   `README.md` - Este archivo de documentación

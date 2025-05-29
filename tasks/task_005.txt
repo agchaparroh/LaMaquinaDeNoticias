@@ -1,25 +1,11 @@
 # Task ID: 5
-# Title: Implement DeltaFetch Pipeline
+# Title: Desarrollar module_maintenance_scripts
 # Status: pending
-# Dependencies: None
-# Priority: medium
-# Description: Create a DeltaFetch pipeline to avoid duplicate article extraction, ensuring alignment with project objectives.
+# Dependencies: 2, 4
+# Priority: high
+# Description: Implementar los scripts de mantenimiento para tareas automatizadas ('IA Nocturna') como generación de embeddings, actualización de Hilos Narrativos, limpieza de datos antiguos, y optimización de base de datos.
 # Details:
-MANDATORY: Consult Context7 documentation BEFORE starting any work on this task.
 
-1. Review module_scraper.md documentation to ensure alignment with project objectives
-2. Install scrapy-deltafetch library (version 2.0.1)
-3. Configure DeltaFetch middleware in settings.py
-4. Create a custom DeltaFetch pipeline that works with Supabase
-5. Implement logic to check for existing articles in Supabase
-6. Add method to update DeltaFetch database with new articles
-7. Integrate DeltaFetch pipeline into the item processing flow
-8. Verify implementation against Context7 requirements
 
 # Test Strategy:
-1. Confirm implementation follows Context7 guidelines
-2. Unit test custom DeltaFetch pipeline
-3. Test duplicate detection with sample data
-4. Verify correct updating of DeltaFetch database
-5. Integration test with Supabase and sample spiders
-6. Validate alignment with module_scraper.md specifications
+

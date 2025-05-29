@@ -36,3 +36,6 @@ chardet==5.2.0  # For encoding detection
 tenacity==8.2.3  # For retry logic
 httpx==0.26.0  # HTTP client used by supabase-py
 unicodedata2==15.1.0  # Better unicode normalization support
+
+# Slack integration for Spidermon
+slack_sdk>=3.0.0

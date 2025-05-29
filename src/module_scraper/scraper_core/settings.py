@@ -125,6 +125,67 @@ DOWNLOAD_TIMEOUT = 30
 # }
 
 # =============================================================================
+# =============================================================================
+# SCRAPY-PLAYWRIGHT CONFIGURATION
+# =============================================================================
+DOWNLOAD_HANDLERS = {
+    "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+    "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+}
+
+TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
+
+# Opcional: Especifica el tipo de navegador que Playwright debe usar.
+# Por defecto es Chromium. Otros valores: "firefox", "webkit".
+# PLAYWRIGHT_BROWSER_TYPE = "chromium"
+
+# Opcional: Opciones de lanzamiento para Playwright.
+# Por ejemplo, para ejecutar en modo headless (sin interfaz gráfica):
+# PLAYWRIGHT_LAUNCH_OPTIONS = {
+#     "headless": True,
+#     "args": ["--no-sandbox"] # Necesario en algunos entornos Linux/Docker
+# }
+# Para depurar, puedes poner headless en False:
+# PLAYWRIGHT_LAUNCH_OPTIONS = {"headless": False}
+
+
+# Opcional: Timeout de navegación por defecto para Playwright (en milisegundos)
+PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT = 60 * 1000 # 0 segundos
+
+# Opcional: Argumentos para el contexto del navegador
+# PLAYWRIGHT_CONTEXT_ARGS = {
+#     "ignore_https_errors": True,
+# }
+
+# Asegúrate de que nest_asyncio.apply() está al principio de tu settings.py si usas Playwright
+# (ya lo tienes, lo cual es bueno)
+
+# =============================================================================
+# SPIDERMON CONFIGURATION
+# =============================================================================
+SPIDERMON_ENABLED = True
+
+EXTENSIONS = {
+    'spidermon.contrib.scrapy.extensions.Spidermon': 500,
+}
+
+SPIDERMON_SPIDER_CLOSE_MONITORS = (
+    'scraper_core.monitors.spider_monitors.SpiderCloseMonitorSuite',
+)
+
+# Configuración para notificaciones (ejemplo con Slack, necesitarás configurar las variables de entorno)
+SPIDERMON_SLACK_SENDER_TOKEN = os.getenv('SPIDERMON_SLACK_SENDER_TOKEN')
+SPIDERMON_SLACK_SENDER_NAME = 'ScraperAlerts' # Nombre que aparecerá como remitente
+SPIDERMON_SLACK_RECIPIENTS = ['@tu_usuario_slack'] # o '#tu_canal_slack' # ¡¡¡RECUERDA CAMBIAR ESTO!!!
+
+# Otras configuraciones de Spidermon pueden ir aquí.
+# Por ejemplo, para reportes en S3:
+# SPIDERMON_S3_BUCKET = 'tu-bucket-s3'
+# SPIDERMON_S3_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+# SPIDERMON_S3_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+# SPIDERMON_S3_REGION_NAME = 'tu-region-aws'
+
+# =============================================================================
 # SUPABASE CONFIGURATION
 # =============================================================================
 
