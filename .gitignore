@@ -2,6 +2,7 @@
 docs/.obsidian/
 # Ignore environment variables
 .env
+.env.test
 
 # Added by Claude Task Master
 # Logs
