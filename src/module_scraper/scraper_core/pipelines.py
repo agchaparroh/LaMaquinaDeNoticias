@@ -21,7 +21,7 @@ import httpx # supabase-py usa httpx, por lo que sus excepciones de red serían 
 
 from .items import ArticuloInItem
 from .utils.compression import compress_html
-from .utils.supabase_client import get_supabase_client, SupabaseClient
+from .utils.supabase_client import SupabaseClient
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ class SupabaseStoragePipeline:
 
     @classmethod
     def from_crawler(cls, crawler):
-        supabase_client = get_supabase_client()
+        supabase_client = SupabaseClient()
         html_bucket_name = crawler.settings.get(
             'SUPABASE_STORAGE_BUCKET',
             'articulos_html_beta'
@@ -166,12 +166,25 @@ class SupabaseStoragePipeline:
 
     def __upsert_articulo_logic(self, data):
         item_url = data.get('url', 'URL desconocida')
-        logger.debug(f"Attempting to upsert article data for {item_url}")
+        logger.debug(f"Attempting to upsert article data for {item_url} via SupabaseClient")
         try:
-            self.supabase_client.upsert_articulo(data)
+            # Capture the response from the client's upsert_articulo method
+            response_data = self.supabase_client.upsert_articulo(data)
+            # SupabaseClient.upsert_articulo is expected to return data on success or None/raise on error
+            if response_data:
+                logger.info(f"SupabaseClient.upsert_articulo successful for {item_url}")
+                return response_data # Return the actual data from Supabase
+            else:
+                # This case implies supabase_client.upsert_articulo returned None/empty without an exception,
+                # which might indicate a logical failure or no actual upsert occurred.
+                logger.warning(f"SupabaseClient.upsert_articulo for {item_url} returned no data or failed logically.")
+                raise SupabaseAPIError(f"Upsert for article {item_url} returned no data.")
         except httpx.RequestError as e:
             logger.warning(f"Network error during DB upsert for article {item_url}: {e}")
             raise SupabaseNetworkError(f"Network error upserting article {item_url}: {e}") from e
+        except SupabaseAPIError as e: 
+            logger.warning(f"Supabase API error during DB upsert for article {item_url}: {e}")
+            raise
         except Exception as e:
             logger.error(f"Unexpected error during DB upsert for article {item_url}: {e}", exc_info=True)
             raise
@@ -231,8 +244,13 @@ class SupabaseStoragePipeline:
                 if isinstance(field_value, datetime):
                     article_data_for_db[field_name] = field_value.isoformat()
 
-            self._upsert_articulo_with_retry(article_data_for_db)
-            logger.info(f"Successfully upserted article data for {item_url_for_log}")
+            upserted_data = self._upsert_articulo_with_retry(article_data_for_db)
+
+            if upserted_data:
+                logger.info(f"Successfully upserted article data for {item_url_for_log}. DB Response: {upserted_data}")
+            else:
+                logger.warning(f"Upsert article data for {item_url_for_log} did not return data, indicating a potential issue.")
+                adapter['error_detalle'] = f"DB upsert for {item_url_for_log} returned no data; {adapter.get('error_detalle', '')}"
 
         except RetryError as e:
             logger.error(
@@ -240,13 +258,15 @@ class SupabaseStoragePipeline:
                 exc_info=True
             )
             adapter['error_detalle'] = f"DB upsert failed after retries: {e}; {adapter.get('error_detalle', '')}"
-            # from scrapy.exceptions import DropItem
-            # raise DropItem(f"Critical DB upsert failed for {item_url_for_log}")
+        except SupabaseNetworkError as e:
+            logger.error(f"Supabase network error during article upsert for {item_url_for_log}: {e}", exc_info=True)
+            adapter['error_detalle'] = f"DB upsert network error: {e}; {adapter.get('error_detalle', '')}"
+        except SupabaseAPIError as e:
+            logger.error(f"Supabase API error during article upsert for {item_url_for_log}: {e}", exc_info=True)
+            adapter['error_detalle'] = f"DB upsert API error: {e}; {adapter.get('error_detalle', '')}"
         except Exception as e:
-            logger.error(f"Failed to upsert article data for {item_url_for_log}: {e}", exc_info=True)
-            adapter['error_detalle'] = f"DB upsert failed: {e}; {adapter.get('error_detalle', '')}"
-            # from scrapy.exceptions import DropItem
-            # raise DropItem(f"Critical DB upsert failed for {item_url_for_log}")
+            logger.error(f"Unexpected error during article data upsert for {item_url_for_log}: {e}", exc_info=True)
+            adapter['error_detalle'] = f"DB upsert failed unexpectedly: {e}; {adapter.get('error_detalle', '')}"
             
         if adapter.get('error_detalle'):
             logger.warning(f"Item {item_url_for_log} processed with errors: {adapter.get('error_detalle')}")

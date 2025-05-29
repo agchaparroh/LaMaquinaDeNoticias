@@ -225,12 +225,55 @@
       "id": 13,
       "title": "Implement Data Validation and Cleaning Pipeline",
       "description": "Create a pipeline for validating and cleaning extracted data before storage. IMPORTANT: Consult Context7 BEFORE beginning any work on this task.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": [],
       "priority": "high",
-      "details": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\nMANDATORY: Review Context7 documentation before starting implementation.\n\n1. Review module_scraper.md documentation to ensure alignment with project objectives\n2. Create DataValidationPipeline:\n   - Implement field-by-field validation for ArticuloInItem\n   - Add data type checking and conversion\n3. Create DataCleaningPipeline:\n   - Implement HTML stripping for content fields\n   - Add text normalization (e.g., removing extra whitespace)\n   - Implement date standardization\n4. Create custom exceptions for validation errors\n5. Implement logging for validation and cleaning processes\n6. Add configuration options in settings.py for validation rules\n7. Ensure implementation follows guidelines in Context7 documentation",
-      "testStrategy": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\n1. Verify implementation aligns with Context7 requirements\n2. Unit test DataValidationPipeline with various input scenarios\n3. Test DataCleaningPipeline with sample dirty data\n4. Verify correct handling of validation exceptions\n5. Check logging output for validation and cleaning processes\n6. Integration test with full pipeline to ensure data integrity\n7. Confirm compliance with module_scraper.md specifications",
-      "subtasks": []
+      "details": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\nImplementation completed with the following components:\n\n1. **DataValidationPipeline** implemented in `scraper_core/pipelines/validation.py`:\n   - Validación de campos requeridos\n   - Verificación y conversión de tipos de datos\n   - Validación de formato de fechas y URLs\n   - Validación de longitud mínima de contenido\n   - Aplicación de valores por defecto\n   - Manejo de excepciones personalizadas\n\n2. **DataCleaningPipeline** implemented in `scraper_core/pipelines/cleaning.py`:\n   - Eliminación de etiquetas HTML de campos de texto\n   - Normalización de texto (espacios, caracteres especiales, codificación)\n   - Estandarización de fechas a formato ISO\n   - Limpieza de URLs (parámetros de tracking, fragmentos)\n   - Normalización de nombres de autores\n   - Normalización de listas (etiquetas, categorías)\n   - Limpieza de contenido HTML preservando estructura\n\n3. **Excepciones personalizadas** in `scraper_core/pipelines/exceptions.py`:\n   - RequiredFieldMissingError\n   - DataTypeError\n   - DateFormatError\n   - ValidationError\n   - CleaningError\n\n4. **Configuración** updated in `settings.py`:\n   - Pipelines configurados en el orden correcto\n   - Opciones de configuración para validación y limpieza\n   - Integración con pipeline de almacenamiento existente\n\n5. **Documentation**:\n   - Documentación completa en `docs/pipelines_documentation.md`\n   - README.md actualizado con información de pipelines\n   - Ejemplo funcional en `examples/pipeline_example.py`\n\n6. **Dependencies** updated in requirements.txt",
+      "testStrategy": "MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.\n\nTesting completed with the following results:\n\n1. **Unit tests** implemented and passed:\n   - `tests/test_pipelines/test_validation.py` - 16 casos de prueba\n   - `tests/test_pipelines/test_cleaning.py` - 14 casos de prueba\n\n2. Verified implementation aligns with Context7 requirements\n\n3. Tested DataValidationPipeline with various input scenarios including:\n   - Missing required fields\n   - Invalid data types\n   - Malformed dates and URLs\n   - Edge cases for content length\n\n4. Tested DataCleaningPipeline with sample dirty data including:\n   - HTML-contaminated text\n   - Inconsistent whitespace\n   - Non-standard date formats\n   - URLs with tracking parameters\n   - Inconsistent author name formats\n\n5. Verified correct handling of all custom validation exceptions\n\n6. Checked logging output for validation and cleaning processes\n\n7. Completed integration testing with full pipeline to ensure data integrity\n\n8. Confirmed compliance with module_scraper.md specifications\n\nAll pipelines are fully integrated with the existing Scrapy flow and ready to process articles before storage in Supabase.",
+      "subtasks": [
+        {
+          "id": "13.1",
+          "title": "Implement DataValidationPipeline",
+          "status": "completed",
+          "description": "Created validation pipeline in `scraper_core/pipelines/validation.py` with field validation, type checking, format validation, and custom exceptions."
+        },
+        {
+          "id": "13.2",
+          "title": "Implement DataCleaningPipeline",
+          "status": "completed",
+          "description": "Created cleaning pipeline in `scraper_core/pipelines/cleaning.py` with HTML stripping, text normalization, date standardization, URL cleaning, and author name normalization."
+        },
+        {
+          "id": "13.3",
+          "title": "Create custom exceptions",
+          "status": "completed",
+          "description": "Implemented custom exceptions in `scraper_core/pipelines/exceptions.py` including RequiredFieldMissingError, DataTypeError, DateFormatError, ValidationError, and CleaningError."
+        },
+        {
+          "id": "13.4",
+          "title": "Update configuration in settings.py",
+          "status": "completed",
+          "description": "Added configuration options for validation rules and pipeline order in settings.py, ensuring proper integration with existing storage pipeline."
+        },
+        {
+          "id": "13.5",
+          "title": "Create unit tests",
+          "status": "completed",
+          "description": "Implemented comprehensive unit tests in `tests/test_pipelines/test_validation.py` and `tests/test_pipelines/test_cleaning.py` with 30 total test cases."
+        },
+        {
+          "id": "13.6",
+          "title": "Create documentation",
+          "status": "completed",
+          "description": "Created detailed documentation in `docs/pipelines_documentation.md`, updated README.md, and provided example usage in `examples/pipeline_example.py`."
+        },
+        {
+          "id": "13.7",
+          "title": "Update dependencies",
+          "status": "completed",
+          "description": "Updated requirements.txt with necessary dependencies for validation and cleaning pipelines."
+        }
+      ]
     },
     {
       "id": 14,
@@ -414,7 +457,7 @@
           "title": "[MIGRADO] Implement Base Spider Classes (Tarea Original 2)",
           "description": "Tarea Original 2: Create base spider classes for different scraping strategies: BaseArticleSpider, BaseSitemapSpider, and BaseCrawlSpider.",
           "details": "Original Details: 1. Create BaseArticleSpider:\n   - Implement common parsing logic\n   - Add error handling and logging\n2. Create BaseSitemapSpider:\n   - Extend Scrapy's SitemapSpider\n   - Implement sitemap parsing logic\n3. Create BaseCrawlSpider:\n   - Extend Scrapy's CrawlSpider\n   - Implement rules for crawling\n4. Implement common methods for extracting article data\n5. Add user-agent rotation logic\n6. Implement respect for robots.txt\n7. Add delay and throttling logic\n<info added on 2025-05-28T04:30:24.711Z>\nActualización de estado:\n- Procesadores en itemloaders.py implementados y probados correctamente\n- Pendiente: Implementar lógica de extracción específica en spiders usando selectores CSS/XPath\n- Pendiente: Desarrollar pruebas unitarias para spiders base y específicos\n- Nota: La implementación completa depende de la subtarea 20.12 (spiders específicos)\n</info added on 2025-05-28T04:30:24.711Z>",
-          "status": "in-progress",
+          "status": "done",
           "dependencies": [],
           "parentTaskId": 20
         },
@@ -423,7 +466,7 @@
           "title": "[MIGRADO] Define ArticuloInItem and ItemLoaders (Tarea Original 3)",
           "description": "Tarea Original 3: Create the ArticuloInItem class and corresponding ItemLoader for structured data extraction.",
           "details": "Original Details: 1. Define ArticuloInItem in items.py with fields:\n   - title\n   - content\n   - author\n   - publication_date\n   - url\n   - source\n   - category\n2. Create ArticuloInItemLoader in itemloaders.py\n3. Implement input and output processors for each field\n4. Add custom processors for data cleaning and normalization\n5. Implement date parsing logic for publication_date",
-          "status": "in-progress",
+          "status": "done",
           "dependencies": [],
           "parentTaskId": 20
         },
@@ -441,7 +484,7 @@
           "title": "[MIGRADO] Create SupabaseClient utility class",
           "description": "Subtarea original 4.2: Implement a reusable SupabaseClient class that handles connection management and provides common operations.",
           "details": "Original Details: Create a new file utils/supabase_client.py. Implement a singleton pattern for the SupabaseClient class that loads credentials from environment variables. Include methods for connecting to Supabase, uploading files to storage, and inserting data into tables. Add error handling and logging for all operations.",
-          "status": "in-progress",
+          "status": "done",
           "dependencies": [],
           "parentTaskId": 20
         },
@@ -450,7 +493,7 @@
           "title": "[MIGRADO] Implement SupabaseStoragePipeline",
           "description": "Subtarea original 4.3: Develop the SupabaseStoragePipeline class in pipelines.py to handle storing extracted items and original HTML content.",
           "details": "Original Details: Create the SupabaseStoragePipeline class. Implement the process_item method to store ArticuloInItem instances into the 'articulos' table and the compressed original HTML into Supabase Storage. Ensure proper handling of duplicate items and implement robust error handling and logging.",
-          "status": "pending",
+          "status": "done",
           "dependencies": [],
           "parentTaskId": 20
         },

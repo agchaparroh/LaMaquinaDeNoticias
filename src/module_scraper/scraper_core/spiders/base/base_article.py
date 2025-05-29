@@ -14,6 +14,8 @@ import scrapy
 from scrapy.http import Response, Request
 from scrapy.exceptions import DropItem
 from scrapy.utils.misc import arg_to_iter
+from ..items import ArticuloInItem
+from ..itemloaders import ArticuloItemLoader
 
 
 class BaseArticleSpider(scrapy.Spider):
@@ -50,252 +52,243 @@ class BaseArticleSpider(scrapy.Spider):
     }
     
     def __init__(self, *args, **kwargs):
-        """Initialize the spider with enhanced logging and configuration."""
         super().__init__(*args, **kwargs)
-        self.logger.setLevel(logging.INFO)
-        self.failed_urls = []
-        self.successful_urls = []
+        self.start_urls = list(arg_to_iter(kwargs.get('start_urls', [])))
+        self.allowed_domains = list(arg_to_iter(kwargs.get('allowed_domains', [])))
+        self.feed_url = kwargs.get('feed_url') # For RSS/Atom feeds
+        self.sitemap_urls = list(arg_to_iter(kwargs.get('sitemap_urls', []))) # For sitemap spiders
         
+        # Initialize logger
+        self.logger = logging.getLogger(self.name)
+        
+        # Tracking URLs
+        self.successful_urls = []
+        self.failed_urls = []
+
     def start_requests(self) -> Iterator[Request]:
         """
-        Generate initial requests with random user agents.
+        Generate initial requests based on spider configuration.
         
-        Yields:
-            Request: Initial requests with custom headers
+        Handles start_urls, feed_url, and sitemap_urls.
         """
-        for url in self.start_urls:
-            yield self.make_request(url)
-    
-    def make_request(self, url: str, callback=None, **kwargs) -> Request:
+        if self.start_urls:
+            for url in self.start_urls:
+                yield self.make_request(url, self.parse_article_list) # Assumes a method to parse lists of articles
+        elif self.feed_url:
+            yield self.make_request(self.feed_url, self.parse_feed)
+        elif self.sitemap_urls:
+            for url in self.sitemap_urls: # This part is usually handled by SitemapSpider itself
+                yield self.make_request(url, self.parse_sitemap_index_or_sitemap) # Custom method for sitemap handling
+        else:
+            self.logger.warning("No start_urls, feed_url, or sitemap_urls provided.")
+
+    def make_request(self, url: str, callback_method, meta: Optional[Dict[str, Any]] = None, 
+                     method: str = 'GET', body: Optional[Any] = None, 
+                     dont_filter: bool = False) -> Request:
         """
-        Create a request with a random user agent.
+        Create a Scrapy Request object with rotated user-agent and error handling.
         
         Args:
             url: The URL to request
-            callback: The callback method (defaults to self.parse)
-            **kwargs: Additional request parameters
+            callback_method: The method to call upon successful download
+            meta: Optional dictionary of metadata for the request
+            method: HTTP method (default: 'GET')
+            body: Optional request body
+            dont_filter: If True, request will not be filtered by DupeFilter
             
         Returns:
-            Request: A configured request object
+            A Scrapy Request object
         """
-        headers = kwargs.pop('headers', {})
-        headers['User-Agent'] = random.choice(self.user_agents)
+        headers = {'User-Agent': random.choice(self.user_agents)}
         
+        current_meta = meta.copy() if meta else {}
+        # Add Playwright meta if needed by specific spiders
+        # current_meta.setdefault('playwright', False) 
+        # current_meta.setdefault('playwright_include_page', False)
+        # current_meta.setdefault('playwright_page_methods', [])
+
         return Request(
             url,
-            callback=callback or self.parse,
-            headers=headers,
+            callback=callback_method,
             errback=self.handle_error,
-            **kwargs
+            headers=headers,
+            meta=current_meta,
+            method=method,
+            body=body,
+            dont_filter=dont_filter
         )
-    
-    def parse(self, response: Response) -> Iterator[Dict[str, Any]]:
+
+    def parse_article_list(self, response: Response) -> Iterator[Request]:
         """
-        Parse the response and extract article data.
+        Parse a page listing multiple articles and yield requests for each article.
         
-        This method should be overridden by subclasses to implement
-        specific parsing logic.
+        This method should be overridden by specific spiders.
         
         Args:
-            response: The response object to parse
+            response: The HTTP response from the article list page
             
         Yields:
-            dict: Extracted article data
+            Scrapy Request objects for individual article pages
         """
-        raise NotImplementedError("Subclasses must implement parse method")
-    
-    def extract_article_title(self, response: Response) -> Optional[str]:
+        self.logger.info(f"Parsing article list: {response.url}")
+        # Example: extract article links (to be customized)
+        # article_links = response.xpath('//a[@class="article-link"]/@href').getall()
+        # for link in article_links:
+        #     yield self.make_request(response.urljoin(link), self.parse_article)
+        raise NotImplementedError(f"{self.name} must implement parse_article_list or override start_requests.")
+
+    def parse_feed(self, response: Response) -> Iterator[Request]:
         """
-        Extract article title from the response.
+        Parse an RSS or Atom feed and yield requests for each article.
         
-        This method tries multiple selectors to find the title.
+        This method should be overridden by specific spiders.
         
         Args:
-            response: The response object
+            response: The HTTP response from the feed URL
             
-        Returns:
-            str: The article title or None if not found
+        Yields:
+            Scrapy Request objects for individual article pages
         """
-        # Try common title selectors
-        title_selectors = [
-            'h1::text',
-            'h1 *::text',
-            'title::text',
-            'meta[property="og:title"]::attr(content)',
-            'meta[name="twitter:title"]::attr(content)',
-            '.article-title::text',
-            '.title::text',
-            '.headline::text',
-        ]
-        
-        for selector in title_selectors:
-            title = response.css(selector).get()
-            if title:
-                return title.strip()
-        
-        # Try XPath selectors
-        title_xpaths = [
-            '//h1/text()',
-            '//h1//text()',
-            '//article//h1//text()',
-        ]
-        
-        for xpath in title_xpaths:
-            titles = response.xpath(xpath).getall()
-            if titles:
-                return ' '.join(titles).strip()
-        
-        self.logger.warning(f"Could not extract title from {response.url}")
-        return None
-    
-    def extract_article_content(self, response: Response) -> Optional[str]:
+        self.logger.info(f"Parsing feed: {response.url}")
+        # Example: extract links from feed items (to be customized)
+        # response.selector.remove_namespaces() # If namespaces are an issue
+        # links = response.xpath('//item/link/text()').getall() # For RSS
+        # links.extend(response.xpath('//entry/link[@rel="alternate"]/@href').getall()) # For Atom
+        # for link in links:
+        #     yield self.make_request(link, self.parse_article)
+        raise NotImplementedError(f"{self.name} must implement parse_feed or override start_requests.")
+
+    def parse_sitemap_index_or_sitemap(self, response: Response) -> Iterator[Request]:
         """
-        Extract article content from the response.
+        Parse a sitemap index or a sitemap file.
         
-        This method tries multiple selectors to find the main content.
+        This method is a placeholder. Scrapy's SitemapSpider handles this automatically.
+        If not using SitemapSpider, this needs custom implementation.
         
         Args:
-            response: The response object
+            response: The HTTP response from the sitemap URL
             
-        Returns:
-            str: The article content or None if not found
+        Yields:
+            Scrapy Request objects for sitemaps or article pages
         """
-        # Try common content selectors
-        content_selectors = [
-            'article p::text',
-            '.article-content p::text',
-            '.article-body p::text',
-            '.content p::text',
-            '.entry-content p::text',
-            'div[itemprop="articleBody"] p::text',
-            '.story-body p::text',
-        ]
-        
-        for selector in content_selectors:
-            paragraphs = response.css(selector).getall()
-            if paragraphs:
-                content = ' '.join(p.strip() for p in paragraphs if p.strip())
-                if len(content) > 100:  # Ensure we have substantial content
-                    return content
-        
-        # Try XPath selectors
-        content_xpaths = [
-            '//article//p/text()',
-            '//div[@class="article-content"]//p/text()',
-            '//div[@class="article-body"]//p/text()',
-        ]
-        
-        for xpath in content_xpaths:
-            paragraphs = response.xpath(xpath).getall()
-            if paragraphs:
-                content = ' '.join(p.strip() for p in paragraphs if p.strip())
-                if len(content) > 100:
-                    return content
-        
-        self.logger.warning(f"Could not extract content from {response.url}")
-        return None
-    
-    def extract_publication_date(self, response: Response) -> Optional[datetime]:
+        self.logger.info(f"Parsing sitemap: {response.url}")
+        # This logic is typically handled by SitemapSpider.
+        # If implementing manually:
+        # 1. Check if it's a sitemap index (contains <sitemaploc>) or a URL sitemap (contains <url>).
+        # 2. If sitemap index, extract sitemap URLs and yield requests for them.
+        # 3. If URL sitemap, extract article URLs and yield requests for them (to self.parse_article).
+        raise NotImplementedError(f"{self.name} should use SitemapSpider or implement sitemap parsing.")
+
+    def parse_article(self, response: Response) -> Optional[ArticuloInItem]:
         """
-        Extract publication date from the response.
+        Parse the article page and extract data using ArticuloItemLoader.
+        
+        This method provides a base implementation. Specific spiders should override
+        the selectors or this method entirely if more complex logic is needed.
+        Validation of the item should be handled by item pipelines.
         
         Args:
-            response: The response object
+            response: The HTTP response from the article page
             
         Returns:
-            datetime: The publication date or None if not found
+            An ArticuloInItem instance.
         """
-        # Try meta tags first
-        date_selectors = [
-            'meta[property="article:published_time"]::attr(content)',
-            'meta[name="publishdate"]::attr(content)',
-            'meta[name="publication_date"]::attr(content)',
-            'meta[itemprop="datePublished"]::attr(content)',
-            'time[itemprop="datePublished"]::attr(datetime)',
-            'time[pubdate]::attr(datetime)',
-        ]
+        self.logger.info(f"Parsing article: {response.url}")
+
+        loader = ArticuloItemLoader(item=ArticuloInItem(), response=response)
+
+        # --- Populate common fields ---
+        loader.add_value('url', response.url)
+        loader.add_value('fuente', self.name) # Spider name as source identifier
         
-        for selector in date_selectors:
-            date_str = response.css(selector).get()
-            if date_str:
-                try:
-                    # Try to parse ISO format
-                    return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-                except (ValueError, AttributeError):
-                    self.logger.debug(f"Could not parse date: {date_str}")
+        # Generic selectors for title (to be overridden by specific spiders if needed)
+        loader.add_xpath('titular', '//title/text()')
+        loader.add_xpath('titular', '//h1/text()') 
         
-        return None
-    
-    def extract_author(self, response: Response) -> Optional[str]:
+        # Content extraction: extract main article body HTML.
+        # The 'contenido_texto' field will be generated from this HTML by processors in ArticuloItemLoader.
+        # Specific spiders should refine these selectors to target the main content block accurately.
+        loader.add_xpath('contenido_html', '//article') 
+        loader.add_xpath('contenido_html', '//*[contains(@class, "article-body")]')
+        loader.add_xpath('contenido_html', '//*[contains(@id, "article-content")]')
+        loader.add_xpath('contenido_html', '//*[contains(@class, "entry-content")]') # Common in WordPress
+        loader.add_xpath('contenido_html', '//*[contains(@itemprop, "articleBody")]')
+
+        # Extract metadata using existing helper method and add to loader
+        metadata_dict = self._extract_metadata(response)
+        if metadata_dict.get('publication_date'):
+            loader.add_value('fecha_publicacion', metadata_dict.get('publication_date'))
+        if metadata_dict.get('language'):
+            loader.add_value('idioma', metadata_dict.get('language'))
+        if metadata_dict.get('keywords'):
+            # Assuming etiquetas_fuente is a list of strings
+            loader.add_value('etiquetas_fuente', metadata_dict.get('keywords'))
+
+        # Fields like 'autor', 'medio', 'pais_publicacion', 'tipo_medio', 'seccion', 
+        # 'es_opinion', 'es_oficial' are typically highly site-specific and should be 
+        # populated by the individual spiders that inherit from this base class.
+
+        # --- Load the item ---
+        article_item = loader.load_item()
+            
+        self.successful_urls.append(response.url)
+        self.logger.info(f"Successfully parsed: {response.url}. Item will be passed to pipelines for validation and processing.")
+        return article_item
+
+    def _extract_metadata(self, response: Response) -> Dict[str, Any]:
         """
-        Extract author name from the response.
+        Extract common metadata from the article page.
+        
+        Looks for meta tags (OpenGraph, Twitter Cards, standard meta) and LD+JSON.
         
         Args:
-            response: The response object
+            response: The HTTP response from the article page
             
         Returns:
-            str: The author name or None if not found
-        """
-        # Try common author selectors
-        author_selectors = [
-            'meta[name="author"]::attr(content)',
-            'meta[property="article:author"]::attr(content)',
-            '[itemprop="author"]::text',
-            '.author-name::text',
-            '.by-author::text',
-            '.article-author::text',
-            'span[class*="author"]::text',
-        ]
-        
-        for selector in author_selectors:
-            author = response.css(selector).get()
-            if author:
-                return author.strip()
-        
-        # Try XPath selectors
-        author_xpaths = [
-            '//span[@class="author"]/text()',
-            '//div[@class="author"]/text()',
-            '//p[@class="author"]/text()',
-        ]
-        
-        for xpath in author_xpaths:
-            authors = response.xpath(xpath).getall()
-            if authors:
-                return ', '.join(a.strip() for a in authors if a.strip())
-        
-        return None
-    
-    def extract_article_metadata(self, response: Response) -> Dict[str, Any]:
-        """
-        Extract additional metadata from the response.
-        
-        Args:
-            response: The response object
-            
-        Returns:
-            dict: Additional metadata
+            A dictionary containing extracted metadata.
         """
         metadata = {}
         
-        # Extract description
-        description = response.css('meta[name="description"]::attr(content)').get() or \
-                     response.css('meta[property="og:description"]::attr(content)').get()
-        if description:
-            metadata['description'] = description.strip()
+        # OpenGraph
+        metadata['og_title'] = response.xpath("//meta[@property='og:title']/@content").get()
+        metadata['og_description'] = response.xpath("//meta[@property='og:description']/@content").get()
+        metadata['og_url'] = response.xpath("//meta[@property='og:url']/@content").get()
+        metadata['og_image'] = response.xpath("//meta[@property='og:image']/@content").get()
+        metadata['og_type'] = response.xpath("//meta[@property='og:type']/@content").get()
+        metadata['og_site_name'] = response.xpath("//meta[@property='og:site_name']/@content").get()
         
-        # Extract keywords/tags
-        keywords = response.css('meta[name="keywords"]::attr(content)').get()
-        if keywords:
-            metadata['keywords'] = [k.strip() for k in keywords.split(',')]
+        # Twitter Cards
+        metadata['twitter_card'] = response.xpath("//meta[@name='twitter:card']/@content").get()
+        metadata['twitter_title'] = response.xpath("//meta[@name='twitter:title']/@content").get()
+        metadata['twitter_description'] = response.xpath("//meta[@name='twitter:description']/@content").get()
+        metadata['twitter_image'] = response.xpath("//meta[@name='twitter:image']/@content").get()
+        metadata['twitter_site'] = response.xpath("//meta[@name='twitter:site']/@content").get()
         
-        # Extract image
-        image = response.css('meta[property="og:image"]::attr(content)').get()
-        if image:
-            metadata['image'] = response.urljoin(image)
+        # Standard meta tags
+        metadata['description'] = response.xpath("//meta[@name='description']/@content").get()
+        metadata['keywords'] = response.xpath("//meta[@name='keywords']/@content").get()
+        metadata['author'] = response.xpath("//meta[@name='author']/@content").get()
         
-        # Extract language
-        lang = response.css('html::attr(lang)').get()
+        # Publication date (common meta tags)
+        pub_date_str = response.xpath("//meta[@property='article:published_time']/@content").get() or \
+                       response.xpath("//meta[@name='pubdate']/@content").get() or \
+                       response.xpath("//meta[@name='sailthru.date']/@content").get() or \
+                       response.xpath("//meta[@name='date']/@content").get()
+        
+        if pub_date_str:
+            try:
+                # Attempt to parse with timezone info if present
+                metadata['publication_date'] = datetime.fromisoformat(pub_date_str.replace('Z', '+00:00'))
+            except ValueError:
+                try:
+                    # Fallback for simpler date formats without timezone
+                    metadata['publication_date'] = datetime.strptime(pub_date_str.split('T')[0], '%Y-%m-%d')
+                except ValueError:
+                    self.logger.debug(f"Could not parse publication date: {pub_date_str}")
+                    metadata['publication_date'] = None
+        
+        # Language (from html lang attribute)
+        lang = response.xpath("/html/@lang").get()
         if lang:
             metadata['language'] = lang
         

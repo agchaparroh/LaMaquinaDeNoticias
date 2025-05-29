@@ -61,7 +61,7 @@ Original Details: 1. Implement user-agent rotation logic
 4. Implement respect for robots.txt across all classes
 5. Add common configuration options for all spiders
 
-## 6. [MIGRADO] Implement Base Spider Classes (Tarea Original 2) [in-progress]
+## 6. [MIGRADO] Implement Base Spider Classes (Tarea Original 2) [done]
 ### Dependencies: None
 ### Description: Tarea Original 2: Create base spider classes for different scraping strategies: BaseArticleSpider, BaseSitemapSpider, and BaseCrawlSpider.
 ### Details:
@@ -86,7 +86,7 @@ Actualización de estado:
 - Nota: La implementación completa depende de la subtarea 20.12 (spiders específicos)
 </info added on 2025-05-28T04:30:24.711Z>
 
-## 7. [MIGRADO] Define ArticuloInItem and ItemLoaders (Tarea Original 3) [in-progress]
+## 7. [MIGRADO] Define ArticuloInItem and ItemLoaders (Tarea Original 3) [done]
 ### Dependencies: None
 ### Description: Tarea Original 3: Create the ArticuloInItem class and corresponding ItemLoader for structured data extraction.
 ### Details:
@@ -109,13 +109,13 @@ Original Details: 1. Define ArticuloInItem in items.py with fields:
 ### Details:
 Original Details: Install supabase-py v1.0.3 using pip and add it to requirements.txt. Create a .env file template with placeholders for SUPABASE_URL and SUPABASE_KEY. Update the .gitignore to exclude the actual .env file with credentials.
 
-## 9. [MIGRADO] Create SupabaseClient utility class [in-progress]
+## 9. [MIGRADO] Create SupabaseClient utility class [done]
 ### Dependencies: None
 ### Description: Subtarea original 4.2: Implement a reusable SupabaseClient class that handles connection management and provides common operations.
 ### Details:
 Original Details: Create a new file utils/supabase_client.py. Implement a singleton pattern for the SupabaseClient class that loads credentials from environment variables. Include methods for connecting to Supabase, uploading files to storage, and inserting data into tables. Add error handling and logging for all operations.
 
-## 10. [MIGRADO] Implement SupabaseStoragePipeline [pending]
+## 10. [MIGRADO] Implement SupabaseStoragePipeline [done]
 ### Dependencies: None
 ### Description: Subtarea original 4.3: Develop the SupabaseStoragePipeline class in pipelines.py to handle storing extracted items and original HTML content.
 ### Details:

@@ -17,6 +17,7 @@ class ArticuloInItem(scrapy.Item):
     storage_path = scrapy.Field()           # Ruta en Supabase Storage
     fuente = scrapy.Field()                 # Nombre/identificador del spider que lo extrajo
     medio = scrapy.Field()                  # Nombre del medio (ej: "El País")
+    medio_url_principal = scrapy.Field()    # URL principal del medio (ej: https://elpais.com)
     pais_publicacion = scrapy.Field()       # País de publicación (ej: "España")
     tipo_medio = scrapy.Field()             # Tipo: diario, agencia, televisión, etc.
     titular = scrapy.Field()                # Título del artículo

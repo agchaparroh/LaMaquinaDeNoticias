@@ -1,1 +1,1 @@
-# Tests unitarios para module_scraper
+# This file makes this a Python package

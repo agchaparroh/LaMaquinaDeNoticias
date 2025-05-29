@@ -1,34 +1,124 @@
 # Task ID: 13
 # Title: Implement Data Validation and Cleaning Pipeline
-# Status: in-progress
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Create a pipeline for validating and cleaning extracted data before storage. IMPORTANT: Consult Context7 BEFORE beginning any work on this task.
 # Details:
 MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.
 
-MANDATORY: Review Context7 documentation before starting implementation.
+Implementation completed with the following components:
 
-1. Review module_scraper.md documentation to ensure alignment with project objectives
-2. Create DataValidationPipeline:
-   - Implement field-by-field validation for ArticuloInItem
-   - Add data type checking and conversion
-3. Create DataCleaningPipeline:
-   - Implement HTML stripping for content fields
-   - Add text normalization (e.g., removing extra whitespace)
-   - Implement date standardization
-4. Create custom exceptions for validation errors
-5. Implement logging for validation and cleaning processes
-6. Add configuration options in settings.py for validation rules
-7. Ensure implementation follows guidelines in Context7 documentation
+1. **DataValidationPipeline** implemented in `scraper_core/pipelines/validation.py`:
+   - Validación de campos requeridos
+   - Verificación y conversión de tipos de datos
+   - Validación de formato de fechas y URLs
+   - Validación de longitud mínima de contenido
+   - Aplicación de valores por defecto
+   - Manejo de excepciones personalizadas
+
+2. **DataCleaningPipeline** implemented in `scraper_core/pipelines/cleaning.py`:
+   - Eliminación de etiquetas HTML de campos de texto
+   - Normalización de texto (espacios, caracteres especiales, codificación)
+   - Estandarización de fechas a formato ISO
+   - Limpieza de URLs (parámetros de tracking, fragmentos)
+   - Normalización de nombres de autores
+   - Normalización de listas (etiquetas, categorías)
+   - Limpieza de contenido HTML preservando estructura
+
+3. **Excepciones personalizadas** in `scraper_core/pipelines/exceptions.py`:
+   - RequiredFieldMissingError
+   - DataTypeError
+   - DateFormatError
+   - ValidationError
+   - CleaningError
+
+4. **Configuración** updated in `settings.py`:
+   - Pipelines configurados en el orden correcto
+   - Opciones de configuración para validación y limpieza
+   - Integración con pipeline de almacenamiento existente
+
+5. **Documentation**:
+   - Documentación completa en `docs/pipelines_documentation.md`
+   - README.md actualizado con información de pipelines
+   - Ejemplo funcional en `examples/pipeline_example.py`
+
+6. **Dependencies** updated in requirements.txt
 
 # Test Strategy:
 MANDATORY: Consult Context7 documentation BEFORE beginning any work on this task. Review module_scraper.md to ensure alignment with project objectives.
 
-1. Verify implementation aligns with Context7 requirements
-2. Unit test DataValidationPipeline with various input scenarios
-3. Test DataCleaningPipeline with sample dirty data
-4. Verify correct handling of validation exceptions
-5. Check logging output for validation and cleaning processes
-6. Integration test with full pipeline to ensure data integrity
-7. Confirm compliance with module_scraper.md specifications
+Testing completed with the following results:
+
+1. **Unit tests** implemented and passed:
+   - `tests/test_pipelines/test_validation.py` - 16 casos de prueba
+   - `tests/test_pipelines/test_cleaning.py` - 14 casos de prueba
+
+2. Verified implementation aligns with Context7 requirements
+
+3. Tested DataValidationPipeline with various input scenarios including:
+   - Missing required fields
+   - Invalid data types
+   - Malformed dates and URLs
+   - Edge cases for content length
+
+4. Tested DataCleaningPipeline with sample dirty data including:
+   - HTML-contaminated text
+   - Inconsistent whitespace
+   - Non-standard date formats
+   - URLs with tracking parameters
+   - Inconsistent author name formats
+
+5. Verified correct handling of all custom validation exceptions
+
+6. Checked logging output for validation and cleaning processes
+
+7. Completed integration testing with full pipeline to ensure data integrity
+
+8. Confirmed compliance with module_scraper.md specifications
+
+All pipelines are fully integrated with the existing Scrapy flow and ready to process articles before storage in Supabase.
+
+# Subtasks:
+## 13.1. Implement DataValidationPipeline [completed]
+### Dependencies: None
+### Description: Created validation pipeline in `scraper_core/pipelines/validation.py` with field validation, type checking, format validation, and custom exceptions.
+### Details:
+
+
+## 13.2. Implement DataCleaningPipeline [completed]
+### Dependencies: None
+### Description: Created cleaning pipeline in `scraper_core/pipelines/cleaning.py` with HTML stripping, text normalization, date standardization, URL cleaning, and author name normalization.
+### Details:
+
+
+## 13.3. Create custom exceptions [completed]
+### Dependencies: None
+### Description: Implemented custom exceptions in `scraper_core/pipelines/exceptions.py` including RequiredFieldMissingError, DataTypeError, DateFormatError, ValidationError, and CleaningError.
+### Details:
+
+
+## 13.4. Update configuration in settings.py [completed]
+### Dependencies: None
+### Description: Added configuration options for validation rules and pipeline order in settings.py, ensuring proper integration with existing storage pipeline.
+### Details:
+
+
+## 13.5. Create unit tests [completed]
+### Dependencies: None
+### Description: Implemented comprehensive unit tests in `tests/test_pipelines/test_validation.py` and `tests/test_pipelines/test_cleaning.py` with 30 total test cases.
+### Details:
+
+
+## 13.6. Create documentation [completed]
+### Dependencies: None
+### Description: Created detailed documentation in `docs/pipelines_documentation.md`, updated README.md, and provided example usage in `examples/pipeline_example.py`.
+### Details:
+
+
+## 13.7. Update dependencies [completed]
+### Dependencies: None
+### Description: Updated requirements.txt with necessary dependencies for validation and cleaning pipelines.
+### Details:
+
+
