@@ -1,6 +1,7 @@
 """
 Items module for scrapy items definitions
 """
-from .articulo import ArticuloInItem, ArticuloAdapter
+# Import from the main items.py file
+from ..items import ArticuloInItem
 
-__all__ = ['ArticuloInItem', 'ArticuloAdapter']
+__all__ = ['ArticuloInItem']

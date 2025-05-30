@@ -275,19 +275,10 @@ class SupabaseStoragePipeline:
             
         return item
 
-class ExtractArticleItemsPipeline:
-    def process_item(self, item, spider):
-        # TODO: Implement item extraction logic for this pipeline stage.
-        # This pipeline is intended to be the first stage for item processing.
-        # See documentation: docs/Componentes/Módulo de Recopilación - Scrapy (module_scraper).md
-        spider.logger.debug(f"ExtractArticleItemsPipeline: Processing item from {spider.name}")
-        return item
-
-class CleanArticleItemsPipeline:
-    def process_item(self, item, spider):
-        # TODO: Implement item cleaning logic for this pipeline stage.
-        # This pipeline is intended for cleaning and normalizing items
-        # before they are sent to the SupabaseStoragePipeline.
-        # See documentation: docs/Componentes/Módulo de Recopilación - Scrapy (module_scraper).md
-        spider.logger.debug(f"CleanArticleItemsPipeline: Processing item from {spider.name}")
-        return item
+# --- Note ---
+# The actual implementations of data processing pipelines are now located
+# in the 'pipelines/' directory:
+# - DataValidationPipeline: pipelines/validation.py
+# - DataCleaningPipeline: pipelines/cleaning.py
+# These provide complete validation and cleaning functionality.
+# ---
