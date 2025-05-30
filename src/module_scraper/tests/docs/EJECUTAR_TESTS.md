@@ -21,7 +21,7 @@ python tests/diagnostico.py
 ```
 
 Este script verificará:
-- Que existe el archivo `.env.test` con las credenciales
+- Que existe el archivo `config/.env.test` con las credenciales
 - Que todas las importaciones funcionan
 - Que hay conexión con Supabase
 - Que existe el bucket de prueba
@@ -64,9 +64,9 @@ cd "C:\Users\DELL\Desktop\Prueba con Windsurf AI\La Máquina de Noticias\src\mod
 
 ### Error: "SUPABASE_URL not configured"
 ```bash
-# Verifica que existe .env.test
+# Verifica que existe config/.env.test
 # Y que contiene las credenciales correctas
-cat .env.test
+cat config/.env.test
 ```
 
 ### Error de conexión con Supabase

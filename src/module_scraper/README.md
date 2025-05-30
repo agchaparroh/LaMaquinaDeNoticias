@@ -2,124 +2,114 @@
 
 Este módulo es responsable de la recopilación automática de contenido periodístico de fuentes web predefinidas utilizando el framework Scrapy.
 
-## Arquitectura
+## 🚀 Quick Start
 
-El módulo está diseñado con una arquitectura de pipelines que procesa los datos en etapas:
+```bash
+# 1. Configurar el entorno
+cp config/.env.test.example config/.env.test
+# Editar config/.env.test con tus credenciales
 
-1. **Extracción** - Los spiders extraen datos de las fuentes
-2. **Validación** - Se validan los campos requeridos y tipos de datos
-3. **Limpieza** - Se normalizan y limpian los datos
-4. **Almacenamiento** - Se guardan en Supabase
+# 2. Instalar dependencias
+pip install -r requirements.txt
 
-## Estructura del Proyecto
+# 3. Ejecutar un spider de prueba
+scrapy crawl infobae
+
+# 4. Ejecutar tests
+pytest tests/
+```
+
+## 📁 Estructura del Proyecto
+
+La estructura ha sido reorganizada para mayor claridad y mantenibilidad:
 
 ```
 module_scraper/
-├── scraper_core/
-│   ├── spiders/         # Spiders para cada fuente de noticias
-│   ├── items.py         # Modelos de datos (ArticuloInItem)
-│   ├── pipelines/       # Pipelines de procesamiento
-│   │   ├── validation.py    # Pipeline de validación
-│   │   ├── cleaning.py      # Pipeline de limpieza
-│   │   └── exceptions.py    # Excepciones personalizadas
-│   ├── pipelines.py     # Pipeline de almacenamiento (Supabase)
-│   ├── itemloaders.py   # Procesadores para campos
-│   ├── middlewares.py   # Middlewares personalizados
-│   ├── settings.py      # Configuración de Scrapy
-│   └── utils/           # Utilidades
-├── tests/               # Pruebas unitarias e integración
-├── examples/            # Ejemplos de uso
-├── docs/                # Documentación
-└── requirements.txt     # Dependencias
+├── .dev/                    # Configuraciones de herramientas de desarrollo
+├── config/                  # Configuraciones del proyecto y entorno
+├── docs/                    # Documentación organizada
+│   ├── architecture/        # Documentación técnica y arquitectural
+│   └── development/         # Guías para desarrolladores
+├── examples/                # Ejemplos de uso y plantillas
+├── scraper_core/           # Código principal del scraper
+│   ├── items/              # Definiciones de items de datos
+│   ├── pipelines/          # Pipelines de procesamiento de datos
+│   ├── spiders/            # Spiders para extracción de contenido
+│   │   └── base/           # Clases base reutilizables
+│   ├── utils/              # Utilidades compartidas
+│   └── middlewares/        # Middlewares personalizados
+├── scripts/                # Scripts de utilidad
+├── tests/                  # Todo lo relacionado con testing y calidad
+│   ├── unit/               # Tests unitarios
+│   ├── integration/        # Tests de integración
+│   ├── e2e/                # Tests end-to-end
+│   ├── performance/        # Tests de rendimiento
+│   └── fixtures/           # Datos de prueba
+└── STRUCTURE.md            # Documentación detallada de la estructura
 ```
 
-## Pipelines de Procesamiento
+Ver [STRUCTURE.md](STRUCTURE.md) para documentación completa de la organización.
 
-### 1. DataValidationPipeline
+## 🏗️ Arquitectura
 
-Valida que los artículos cumplan con los requisitos mínimos:
-- Campos requeridos presentes
-- Tipos de datos correctos
-- Formato de fechas válido
-- URLs bien formadas
-- Contenido de longitud mínima
+El sistema utiliza una arquitectura de pipelines que procesa los datos en etapas secuenciales:
 
-### 2. DataCleaningPipeline
+```
+Extracción → Validación → Limpieza → Almacenamiento
+    ↓            ↓           ↓           ↓
+ Spiders   DataValidation DataCleaning SupabaseStorage
+```
 
-Normaliza y limpia los datos validados:
-- Elimina etiquetas HTML del texto
-- Normaliza espacios y caracteres especiales
-- Estandariza fechas a formato ISO
-- Limpia URLs (elimina parámetros de tracking)
-- Normaliza nombres de autores
-- Deduplica y normaliza etiquetas
+### Componentes Principales
 
-### 3. SupabaseStoragePipeline
+1. **Spiders** - Extraen datos de fuentes web específicas
+2. **Items & ItemLoaders** - Definen estructura de datos y procesamiento
+3. **Pipelines** - Procesan, validan y limpian los datos
+4. **Storage** - Almacenan datos en Supabase (PostgreSQL + Storage)
 
-Almacena los datos procesados:
-- Guarda metadatos en la tabla `articulos`
-- Comprime y almacena HTML original en Storage
-- Maneja reintentos con backoff exponencial
-
-Ver [documentación completa de pipelines](docs/pipelines_documentation.md) para más detalles.
-
-## Configuración
+## 🔧 Configuración
 
 ### Variables de Entorno
 
-Crear un archivo `.env` basado en `.env.example`:
+Las configuraciones se centralizan en `config/`:
 
+```bash
+# Copiar plantilla de configuración
+cp config/.env.test.example config/.env.test
+
+# Editar con tus credenciales (NO usar producción para tests)
+```
+
+Variables principales:
 ```env
-# Supabase
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-
-# Logging
+SUPABASE_URL=https://tu-proyecto-test.supabase.co
+SUPABASE_KEY=tu-anon-key
+SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key
 LOG_LEVEL=INFO
 ```
+
+Ver [config/README.md](config/README.md) para guía completa de configuración.
 
 ### Settings de Scrapy
 
 Configuración principal en `scraper_core/settings.py`:
 
 ```python
-# Pipelines activos y su orden
+# Orden de pipelines (prioridad por número)
 ITEM_PIPELINES = {
     "scraper_core.pipelines.validation.DataValidationPipeline": 100,
     "scraper_core.pipelines.cleaning.DataCleaningPipeline": 200,
     "scraper_core.pipelines.SupabaseStoragePipeline": 300,
 }
-
-# Configuración de validación
-VALIDATION_MIN_CONTENT_LENGTH = 100
-VALIDATION_MIN_TITLE_LENGTH = 10
-
-# Configuración de limpieza
-CLEANING_STRIP_HTML = True
-CLEANING_NORMALIZE_WHITESPACE = True
 ```
 
-## Uso
+## 🕷️ Desarrollo de Spiders
 
-### Ejecutar un Spider
+### Crear un Nuevo Spider
 
-```bash
-# Ejecutar spider específico
-scrapy crawl nombre_spider
-
-# Con configuración personalizada
-scrapy crawl nombre_spider -s LOG_LEVEL=DEBUG
-```
-
-### Desarrollo de Nuevos Spiders
-
-1. Crear archivo en `scraper_core/spiders/`
-2. Heredar de las clases base apropiadas
-3. Definir selectores para extraer campos de `ArticuloInItem`
-4. Documentar la estructura del sitio
-
-Ejemplo básico:
+1. **Usar clases base**: Hereda de `BaseArticleSpider`, `BaseSitemapSpider`, o `BaseCrawlSpider`
+2. **Definir selectores**: Configura extractores específicos del sitio
+3. **Implementar parsing**: Override métodos según tus necesidades
 
 ```python
 from scraper_core.spiders.base import BaseArticleSpider
@@ -133,88 +123,165 @@ class MiPeriodicoSpider(BaseArticleSpider):
     def parse_article(self, response):
         item = ArticuloInItem()
         item['url'] = response.url
-        item['titular'] = response.css('h1.title::text').get()
-        item['contenido_texto'] = response.css('.article-body').get()
-        # ... más campos
+        item['titular'] = response.css('h1::text').get()
+        item['contenido_texto'] = self.extract_article_content(response)
+        # Usar métodos de la clase base cuando sea posible
         yield item
 ```
 
-## Testing
+Ver [examples/example_spiders.py](examples/example_spiders.py) para ejemplos completos.
 
-### Ejecutar Pruebas
+## 🧪 Testing y Calidad
+
+### Ejecutar Tests
 
 ```bash
-# Todas las pruebas
+# Todos los tests
 pytest
 
-# Solo pipelines
-pytest tests/test_pipelines/
+# Tests específicos
+pytest tests/unit/                    # Tests unitarios
+pytest tests/integration/             # Tests de integración
+pytest tests/test_pipelines/          # Tests de pipelines
 
 # Con coverage
-pytest --cov=scraper_core
+pytest --cov=scraper_core --cov-report=html
 ```
 
-### Pruebas de Integración con Supabase
+### Estructura de Tests
 
-Ver [EJECUTAR_TESTS.md](EJECUTAR_TESTS.md) para instrucciones detalladas.
+- **`tests/unit/`**: Tests unitarios para componentes individuales
+- **`tests/integration/`**: Tests de integración con Supabase
+- **`tests/test_pipelines/`**: Tests específicos de pipelines
+- **`tests/e2e/`**: Tests end-to-end del flujo completo
+- **`tests/performance/`**: Tests de rendimiento y carga
 
-## Ejemplos
+Ver [tests/docs/README_tests.md](tests/docs/README_tests.md) para guía completa de testing.
 
-- [pipeline_example.py](examples/pipeline_example.py) - Demostración de pipelines de validación y limpieza
+## 📊 Pipelines de Procesamiento
 
-## Monitoreo y Debugging
+### 1. DataValidationPipeline
+- ✅ Valida campos requeridos
+- ✅ Verifica tipos de datos
+- ✅ Normaliza fechas y URLs
+- ✅ Rechaza contenido insuficiente
 
-### Logs
+### 2. DataCleaningPipeline
+- 🧹 Limpia HTML y texto
+- 🔧 Normaliza caracteres especiales
+- 📅 Estandariza fechas
+- 🏷️ Deduplica etiquetas
 
-Los logs se configuran en `settings.py`:
+### 3. SupabaseStoragePipeline
+- 💾 Almacena metadatos en PostgreSQL
+- 🗜️ Comprime y guarda HTML original
+- 🔄 Maneja reintentos inteligentes
+
+Ver [docs/architecture/pipelines_documentation.md](docs/architecture/pipelines_documentation.md) para documentación detallada.
+
+## 🚀 Ejecución
+
+### Comandos Básicos
+
+```bash
+# Ejecutar spider específico
+scrapy crawl infobae
+
+# Con configuración personalizada
+scrapy crawl infobae -s LOG_LEVEL=DEBUG -s CONCURRENT_REQUESTS=1
+
+# Listar spiders disponibles
+scrapy list
+
+# Verificar configuración
+scrapy check
+```
+
+### Para Desarrollo
+
+```bash
+# Ejecutar con recarga automática
+scrapy crawl infobae -s AUTOTHROTTLE_ENABLED=True
+
+# Debug mode completo
+scrapy crawl infobae -L DEBUG -s HTTPCACHE_ENABLED=False
+```
+
+## 📈 Monitoreo y Debugging
+
+### Logging
 
 ```python
+# En settings.py
 LOG_LEVEL = 'INFO'
 LOGGERS = {
     'scraper_core.pipelines.validation': 'DEBUG',
     'scraper_core.pipelines.cleaning': 'DEBUG',
+    'scraper_core.utils.supabase_client': 'INFO'
 }
 ```
 
 ### Estadísticas
 
-Ambos pipelines de validación y limpieza mantienen estadísticas:
+Los pipelines mantienen estadísticas automáticas:
 - Items procesados/válidos/inválidos
 - Tipos de errores encontrados
 - Operaciones de limpieza realizadas
+- Tiempos de procesamiento
 
-## Decisiones de Diseño
+## 🐛 Troubleshooting
 
-1. **Pipelines Modulares**: Cada pipeline tiene una responsabilidad específica
-2. **Validación Estricta**: Se prefiere rechazar datos dudosos
-3. **Limpieza No Destructiva**: Se preserva el contenido original cuando es posible
-4. **Reintentos Inteligentes**: Solo para errores de red, no para errores de datos
-5. **Estadísticas Detalladas**: Para identificar problemas comunes
+### Problemas Comunes
 
-## Troubleshooting
+| Problema | Solución |
+|----------|----------|
+| Items rechazados | Revisar logs de validación, verificar campos requeridos |
+| Conexión Supabase | Verificar credenciales en `config/.env.test` |
+| Contenido vacío | Revisar selectores CSS/XPath, considerar usar Playwright |
+| Rendimiento lento | Ajustar `CONCURRENT_REQUESTS` y delays |
 
-### Items siendo rechazados
+### Debug Tips
 
-1. Revisar logs de validación
-2. Verificar campos requeridos
-3. Ajustar reglas de validación si es necesario
+1. **Habilitar cache HTTP** para desarrollo: `HTTPCACHE_ENABLED = True`
+2. **Usar Scrapy shell** para probar selectores: `scrapy shell "https://example.com"`
+3. **Verificar logs** en orden: spider → pipelines → storage
 
-### Problemas de conexión con Supabase
+## 📚 Documentación
 
-1. Verificar credenciales en `.env`
-2. Revisar logs de Tenacity para reintentos
-3. Verificar límites de rate en Supabase
+- [**Arquitectura**](docs/architecture/) - Decisiones técnicas y componentes
+- [**Desarrollo**](docs/development/) - Guías para desarrolladores
+- [**Ejemplos**](examples/) - Código de ejemplo y plantillas
+- [**Tests**](tests/docs/) - Documentación de testing
+- [**Configuración**](config/README.md) - Guía de configuración
 
-### Rendimiento
+## 🛣️ Roadmap
 
-1. Ajustar `CONCURRENT_REQUESTS` en settings
-2. Considerar deshabilitar operaciones de limpieza innecesarias
-3. Revisar tamaño de contenido HTML
+### Próximas Mejoras
 
-## Próximos Pasos
+- [ ] Sistema de métricas avanzado (Prometheus/Grafana)
+- [ ] Cache inteligente de páginas renderizadas
+- [ ] Detección automática de sitios que requieren JavaScript
+- [ ] Rate limiting dinámico por dominio
+- [ ] Integración con Spidermon para alertas
 
-- [ ] Implementar spiders específicos para cada fuente
-- [ ] Integrar Playwright para sitios con JavaScript
-- [ ] Añadir detección de duplicados (DeltaFetch)
-- [ ] Implementar monitoreo con Spidermon
-- [ ] Configurar CI/CD
+### En Desarrollo
+
+- [ ] Spiders para más fuentes de noticias
+- [ ] Mejoras en el sistema de detección de duplicados
+- [ ] Dashboard de monitoreo en tiempo real
+
+## 🤝 Contribuir
+
+1. **Fork** el repositorio
+2. **Crear rama** para tu feature: `git checkout -b feature/nueva-funcionalidad`
+3. **Hacer commit** de cambios: `git commit -am 'Agregar nueva funcionalidad'`
+4. **Push** a la rama: `git push origin feature/nueva-funcionalidad`
+5. **Crear Pull Request**
+
+## 📄 Licencia
+
+[Especificar licencia del proyecto]
+
+---
+
+**Nota**: Este proyecto es parte de La Máquina de Noticias, un sistema integral de procesamiento de información periodística.

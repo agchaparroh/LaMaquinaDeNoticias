@@ -77,7 +77,7 @@
 ### Details:
 
 
-## 12. [MIGRADO] Develop and run integration tests for Supabase [in-progress]
+## 12. [MIGRADO] Develop and run integration tests for Supabase [deferred]
 ### Dependencies: None
 ### Description: Subtarea original 4.5: Create comprehensive integration tests that verify the end-to-end flow from spider extraction to Supabase storage.
 ### Details:

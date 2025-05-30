@@ -15,7 +15,7 @@ from scrapy.http import Response, Request
 
 from scrapy.utils.misc import arg_to_iter
 from ..items import ArticuloInItem
-from ..itemloaders import ArticuloItemLoader
+from ..itemloaders import ArticuloInItemLoader
 
 
 class BaseArticleSpider(scrapy.Spider):
@@ -200,7 +200,7 @@ class BaseArticleSpider(scrapy.Spider):
         is_playwright_retry = response.meta.get('playwright_retried', False)
         was_original_playwright_request = response.meta.get('playwright', False)
 
-        loader = ArticuloItemLoader(item=ArticuloInItem(), response=response)
+        loader = ArticuloInItemLoader(item=ArticuloInItem(), response=response)
 
         # --- Populate common fields ---
         loader.add_value('url', response.url)

@@ -6,17 +6,17 @@ Este directorio contiene los tests de integración para la funcionalidad de Supa
 
 ### 1. Configurar Credenciales de Prueba
 
-Los tests requieren un proyecto Supabase separado para pruebas. Las credenciales deben configurarse en el archivo `.env.test`:
+Los tests requieren un proyecto Supabase separado para pruebas. Las credenciales deben configurarse en el archivo `config/.env.test`:
 
 ```bash
 # Copiar el archivo de ejemplo
-cp ../.env.example ../.env.test
+cp config/.env.test.example config/.env.test
 
 # Editar con las credenciales del proyecto de prueba
 # IMPORTANTE: NO usar el proyecto de producción para tests
 ```
 
-El archivo `.env.test` debe contener:
+El archivo `config/.env.test` debe contener:
 ```env
 SUPABASE_URL=https://tu-proyecto-test.supabase.co
 SUPABASE_KEY=tu-anon-key
@@ -101,7 +101,7 @@ Los tests incluyen métodos `setUpClass` y `tearDownClass` que:
 
 Si los tests fallan:
 
-1. Verificar que las credenciales en `.env.test` son correctas
+1. Verificar que las credenciales en `config/.env.test` son correctas
 2. Verificar que el proyecto Supabase está activo
 3. Revisar los logs con `LOG_LEVEL=DEBUG`
 4. Ejecutar tests individuales para aislar problemas

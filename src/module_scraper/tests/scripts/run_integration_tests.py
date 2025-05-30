@@ -20,11 +20,12 @@ def run_integration_tests():
     # Cambiar al directorio del módulo
     os.chdir(module_dir)
     
-    # Verificar que existe el archivo .env.test
-    env_test_path = module_dir / '.env.test'
+    # Verificar que existe el archivo .env.test en la nueva ubicación
+    env_test_path = module_dir / 'config' / '.env.test'
     if not env_test_path.exists():
-        print("ERROR: No se encontró el archivo .env.test")
+        print("ERROR: No se encontró el archivo config/.env.test")
         print(f"Por favor, crea el archivo en: {env_test_path}")
+        print("Copia config/.env.test.example y edita con tus credenciales")
         return False
     
     print(f"✓ Archivo .env.test encontrado en: {env_test_path}")

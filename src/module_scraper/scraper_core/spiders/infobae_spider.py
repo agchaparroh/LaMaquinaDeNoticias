@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import Iterator, Dict, Any
+from typing import Iterator, Dict, Any, Optional
+from datetime import datetime
 
 from scrapy.http import Response
 
@@ -31,12 +32,12 @@ class InfobaeSpider(BaseArticleSpider):
         """
         self.logger.info(f"Parseando URL: {response.url}")
 
-        # Usar extractores específicos de Infobae con fallback a la clase base
+        # Usar extractores específicos de Infobae
         title = self.extract_article_title(response)
         content = self.extract_article_content(response)
         publication_date = self.extract_publication_date(response)
         author = self.extract_author(response)
-        metadata = self.extract_article_metadata(response)
+        metadata = self._extract_metadata(response)
 
         self.logger.debug(f"Título extraído: {title}")
         self.logger.debug(f"Autor extraído: {author}")
@@ -95,8 +96,16 @@ class InfobaeSpider(BaseArticleSpider):
             if title and title.strip():
                 return title.strip()
         
-        # Si no funciona, usar el método de la clase base
-        return super().extract_article_title(response)
+        # Si no funciona, usar extractores genéricos
+        title = response.css('title::text').get()
+        if title:
+            return title.strip()
+        
+        title = response.css('h1::text').get()
+        if title:
+            return title.strip()
+            
+        return None
 
     def extract_article_content(self, response: Response) -> Optional[str]:
         """
@@ -135,8 +144,16 @@ class InfobaeSpider(BaseArticleSpider):
                 if len(content) > 200:
                     return content
         
-        # Fallback a la clase base
-        return super().extract_article_content(response)
+        # Fallback con extractores genéricos
+        generic_selectors = ['article', '.content', '.main-content', 'main']
+        for selector in generic_selectors:
+            text = response.css(f'{selector} ::text').getall()
+            if text:
+                content = ' '.join(t.strip() for t in text if t.strip())
+                if len(content) > 100:
+                    return content
+        
+        return None
 
     def extract_publication_date(self, response: Response) -> Optional[datetime]:
         """
@@ -163,8 +180,22 @@ class InfobaeSpider(BaseArticleSpider):
                 if parsed_date:
                     return parsed_date
         
-        # Fallback a la clase base
-        return super().extract_publication_date(response)
+        # Fallback con extractores genéricos
+        generic_selectors = [
+            'time::attr(datetime)',
+            '[datetime]::attr(datetime)',
+            'meta[property="article:published_time"]::attr(content)',
+            'meta[name="date"]::attr(content)'
+        ]
+        
+        for selector in generic_selectors:
+            date_str = response.css(selector).get()
+            if date_str:
+                parsed_date = parse_date_string(date_str)
+                if parsed_date:
+                    return parsed_date
+                    
+        return None
 
     def extract_author(self, response: Response) -> Optional[str]:
         """
@@ -198,8 +229,24 @@ class InfobaeSpider(BaseArticleSpider):
                 if clean_authors:
                     return ', '.join(clean_authors)
         
-        # Fallback a la clase base
-        return super().extract_author(response)
+        # Fallback con extractores genéricos
+        generic_selectors = [
+            'meta[name="author"]::attr(content)',
+            '.author::text',
+            '.byline::text',
+            '[rel="author"]::text'
+        ]
+        
+        for selector in generic_selectors:
+            author = response.css(selector).get()
+            if author and author.strip():
+                # Limpiar prefijos comunes
+                for prefix in ['Por ', 'By ', 'De ']:
+                    if author.startswith(prefix):
+                        author = author[len(prefix):]
+                return author.strip()
+                
+        return None
 
     def _detect_country(self, url: str) -> str:
         """

@@ -14,9 +14,9 @@ print("=" * 60)
 print("DIAGNÓSTICO DE CONFIGURACIÓN DE TESTS")
 print("=" * 60)
 
-# 1. Verificar .env.test
-env_test_path = module_dir / '.env.test'
-print(f"\n1. Verificando archivo .env.test:")
+# 1. Verificar config/.env.test
+env_test_path = module_dir / 'config' / '.env.test'
+print(f"\n1. Verificando archivo config/.env.test:")
 if env_test_path.exists():
     print(f"   ✓ Archivo encontrado en: {env_test_path}")
     

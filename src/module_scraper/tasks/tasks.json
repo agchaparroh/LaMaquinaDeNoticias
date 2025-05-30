@@ -673,7 +673,7 @@
           "id": 12,
           "title": "[MIGRADO] Develop and run integration tests for Supabase",
           "description": "Subtarea original 4.5: Create comprehensive integration tests that verify the end-to-end flow from spider extraction to Supabase storage.",
-          "status": "in-progress",
+          "status": "deferred",
           "dependencies": [],
           "parentTaskId": 14,
           "details": "<info added on 2025-05-29T11:36:52.452Z>\nPara completar la tarea de pruebas de integración con Supabase:\n\n1. Revisar y ejecutar el archivo test_supabase_integration.py ubicado en la carpeta tests/ para verificar la funcionalidad básica de integración.\n\n2. Utilizar el spider de Infobae ya implementado para realizar pruebas de integración completas en un escenario real.\n\n3. Verificar que el contenido HTML de los artículos se almacene correctamente en formato comprimido dentro de Supabase Storage.\n\n4. Confirmar que todos los metadatos extraídos de los artículos se guarden adecuadamente en la tabla \"articulos\" de la base de datos.\n\n5. Probar escenarios de error para asegurar que el sistema maneje correctamente las excepciones y aplique la lógica de reintentos cuando sea necesario.\n\nDocumentar los resultados de las pruebas y cualquier problema encontrado durante el proceso.\n</info added on 2025-05-29T11:36:52.452Z>"

@@ -20,11 +20,14 @@ except ImportError:
 current_dir = Path.cwd()
 print(f"\nDirectorio actual: {current_dir}")
 
-# Intentar diferentes ubicaciones
+# Intentar diferentes ubicaciones (nuevas ubicaciones primero)
 locations = [
-    Path('.env.test'),
-    Path(__file__).parent / '.env.test',
-    current_dir / '.env.test'
+    Path('config/.env.test'),  # Nueva ubicación principal
+    current_dir / 'config' / '.env.test',
+    Path(__file__).parent.parent.parent / 'config' / '.env.test',  # Desde tests/config/
+    Path('.env.test'),  # Legacy
+    Path(__file__).parent / '.env.test',  # Legacy
+    current_dir / '.env.test'  # Legacy
 ]
 
 env_file = None
