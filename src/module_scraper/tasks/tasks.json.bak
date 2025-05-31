@@ -240,7 +240,7 @@
     {
       "id": 5,
       "title": "Integrate Portia Support",
-      "description": "Replace Portia integration with alternative approach for dynamic spider generation, as Portia was discontinued in 2018 and is not compatible with modern Scrapy. MANDATORY: Consult Context7 BEFORE beginning any work and verify module_scraper.md documentation to ensure alignment with project objectives.",
+      "description": "Implementación de scrapy_GUI en module_scraper para herramienta de creación de spiders. Configurar y adaptar scrapy_GUI para permitir la creación visual de spiders que sean compatibles con la arquitectura del proyecto.",
       "status": "pending",
       "dependencies": [
         1
@@ -249,26 +249,38 @@
       "subtasks": [
         {
           "id": "5.1",
-          "title": "Evaluate alternatives and select approach",
-          "description": "MANDATORY: Consult Context7 BEFORE beginning this evaluation. Evaluate Scrapely vs JSON configuration approach and document decision with rationale. Verify alignment with module_scraper.md documentation.",
+          "title": "Verificar integración de scrapy_GUI",
+          "description": "Confirmar que scrapy_GUI está correctamente instalado a través de requirements.txt y verificar su funcionamiento básico en el entorno del proyecto.",
           "status": "pending"
         },
         {
           "id": "5.2",
-          "title": "Update project dependencies",
-          "description": "MANDATORY: Consult Context7 BEFORE beginning this task. Add required dependencies for the selected approach (Scrapely or other libraries needed) after verifying compatibility with existing project architecture in module_scraper.md.",
+          "title": "Configurar interfaz gráfica para creación de spiders",
+          "description": "Configurar y personalizar la interfaz gráfica de scrapy_GUI para adaptarla a las necesidades específicas del proyecto, asegurando que sea intuitiva y funcional.",
           "status": "pending"
         },
         {
           "id": "5.3",
-          "title": "Implement dynamic spider loader",
-          "description": "MANDATORY: Consult Context7 BEFORE beginning implementation. Create loader class for the selected approach that can generate spiders dynamically, ensuring alignment with module_scraper.md documentation.",
+          "title": "Adaptar spiders generados a clases base",
+          "description": "Implementar mecanismo para que los spiders generados por scrapy_GUI hereden o utilicen las clases base definidas en module_scraper, asegurando compatibilidad con la arquitectura existente.",
           "status": "pending"
         },
         {
           "id": "5.4",
-          "title": "Create data adapter",
-          "description": "MANDATORY: Consult Context7 BEFORE beginning implementation. Implement adapter to convert extracted data to ArticuloInItem format, following guidelines in module_scraper.md.",
+          "title": "Crear workflow para generación visual de spiders",
+          "description": "Diseñar y documentar un flujo de trabajo paso a paso para que los usuarios puedan crear spiders visualmente, desde la selección de URLs hasta la definición de campos a extraer.",
+          "status": "pending"
+        },
+        {
+          "id": "5.5",
+          "title": "Implementar exportación de spiders al proyecto",
+          "description": "Desarrollar funcionalidad para exportar los spiders creados visualmente al directorio correcto del proyecto, con la estructura y formato adecuados.",
+          "status": "pending"
+        },
+        {
+          "id": "5.6",
+          "title": "Documentar proceso de uso",
+          "description": "Crear documentación detallada sobre cómo utilizar scrapy_GUI en el contexto del proyecto, incluyendo ejemplos, capturas de pantalla y solución de problemas comunes.",
           "status": "pending"
         }
       ]
@@ -384,7 +396,67 @@
         4
       ],
       "priority": "high",
-      "subtasks": []
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement domain-specific rate limiting",
+          "description": "Create a configurable rate limiting system that applies different request rates based on target domains",
+          "dependencies": [],
+          "details": "Design and implement a domain registry that stores rate limits for different websites. Include default conservative limits for unknown domains. Implement a request queue system that enforces these domain-specific limits. Consider using token bucket or leaky bucket algorithms for implementation.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Develop adaptive throttling based on server responses",
+          "description": "Create a system that dynamically adjusts request rates based on server response patterns",
+          "dependencies": [
+            1
+          ],
+          "details": "Implement monitoring of HTTP response codes, particularly 429 (Too Many Requests) and 503 (Service Unavailable). Create an algorithm that automatically reduces request rates when these responses are detected. Include exponential backoff strategies and recovery mechanisms when servers become responsive again.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Implement randomized delays between requests",
+          "description": "Add variable timing between requests to mimic human browsing patterns",
+          "dependencies": [
+            1
+          ],
+          "details": "Create a delay generator that produces random intervals within configurable bounds. Implement Gaussian or other non-uniform distributions to better simulate human behavior. Ensure delays are properly integrated with the rate limiting system without causing conflicts.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Implement robots.txt parser and enforcer",
+          "description": "Create a system to fetch, parse and respect robots.txt directives for each domain",
+          "dependencies": [],
+          "details": "Develop a robots.txt parser that handles all standard directives. Implement a caching system to avoid repeatedly fetching robots.txt files. Create enforcement logic that prevents requests to disallowed paths. Include support for crawl-delay directives and integrate with the rate limiting system.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Develop retry handling mechanisms",
+          "description": "Implement intelligent retry logic for failed requests with appropriate backoff strategies",
+          "dependencies": [
+            2
+          ],
+          "details": "Create a classification system for different types of failures (network errors, server errors, etc.). Implement different retry strategies based on failure types. Add exponential backoff with jitter for retries. Set maximum retry attempts and handle permanent failures gracefully.",
+          "status": "pending"
+        },
+        {
+          "id": 6,
+          "title": "Create request pattern monitoring and reporting",
+          "description": "Implement a system to track, analyze and report on request patterns and rate limiting effectiveness",
+          "dependencies": [
+            1,
+            2,
+            3,
+            5
+          ],
+          "details": "Design a logging system that captures all request metadata including timing, success/failure, and rate limiting decisions. Create analytics to identify potential issues or optimization opportunities. Implement dashboards or reports that provide visibility into scraping behavior. Include alerts for potential ethical concerns or excessive request patterns.",
+          "status": "pending"
+        }
+      ]
     },
     {
       "id": 10,
@@ -448,7 +520,51 @@
         3
       ],
       "priority": "medium",
-      "subtasks": []
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create CLI Interface for Spider Execution",
+          "description": "Develop a command-line interface that allows users to execute individual spiders with customizable parameters.",
+          "dependencies": [],
+          "details": "Implement a CLI using argparse or click library that accepts parameters such as spider name, output format, and runtime configurations. The CLI should provide clear help documentation and validate inputs before execution. Include options for verbosity levels and output destinations.",
+          "status": "pending",
+          "testStrategy": "Write unit tests for argument parsing and integration tests that verify spider execution with different parameter combinations."
+        },
+        {
+          "id": 2,
+          "title": "Implement Job Configuration Management",
+          "description": "Create a system to manage and store job configurations, allowing users to save, load, and modify scraping job parameters.",
+          "dependencies": [
+            1
+          ],
+          "details": "Design a configuration format (YAML or JSON) to store job parameters. Implement functions to read configurations from files, validate them against a schema, and apply them when executing spiders. Include support for environment-specific configurations and secret management.",
+          "status": "pending",
+          "testStrategy": "Test configuration loading with valid and invalid files, verify schema validation, and ensure configurations are correctly applied to spider execution."
+        },
+        {
+          "id": 3,
+          "title": "Develop Status Reporting and Logging System",
+          "description": "Create a comprehensive logging and status reporting system that tracks job execution and provides real-time feedback.",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "Implement structured logging with different severity levels. Create status reporting that captures spider progress, item counts, errors, and performance metrics. Design a consistent output format that can be parsed by other tools. Include timestamps and job identifiers in all logs.",
+          "status": "pending",
+          "testStrategy": "Test log capture during normal operation and error conditions. Verify that all required metrics are properly recorded and formatted."
+        },
+        {
+          "id": 4,
+          "title": "Integrate with Spidermon Monitoring",
+          "description": "Connect the job management system with the existing Spidermon monitoring to enable automated validation and alerting.",
+          "dependencies": [
+            3
+          ],
+          "details": "Extend the CLI to support Spidermon monitor execution after spider runs. Configure monitors to validate scraping results and performance metrics. Implement hooks to trigger alerts based on monitor results. Ensure monitoring results are included in job status reports.",
+          "status": "pending",
+          "testStrategy": "Create test spiders with known validation issues to verify monitor detection. Test alert triggering and ensure monitoring results are properly captured in logs and reports."
+        }
+      ]
     },
     {
       "id": 12,
@@ -469,7 +585,83 @@
         11
       ],
       "priority": "high",
-      "subtasks": []
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create User Documentation",
+          "description": "Develop comprehensive user documentation including installation guides, feature explanations, and common workflows.",
+          "dependencies": [],
+          "details": "Include screenshots, step-by-step instructions, FAQs, and troubleshooting tips. Ensure documentation is accessible for different user skill levels and covers all user-facing features.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Develop Technical Documentation for Developers",
+          "description": "Create detailed developer guides including codebase structure, contribution guidelines, and development environment setup.",
+          "dependencies": [
+            1
+          ],
+          "details": "Include code examples, design patterns used, and explanation of key architectural decisions. Document build processes, testing frameworks, and code style guidelines.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Generate API Reference Documentation",
+          "description": "Document all API endpoints, request/response formats, authentication methods, and error handling.",
+          "dependencies": [
+            2
+          ],
+          "details": "Include sample requests and responses, parameter descriptions, rate limiting information, and versioning details. Ensure documentation is generated from code where possible to maintain accuracy.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Create Architecture and Deployment Documentation",
+          "description": "Develop system architecture diagrams and detailed deployment instructions for all environments.",
+          "dependencies": [
+            2
+          ],
+          "details": "Include component diagrams, data flow diagrams, infrastructure requirements, configuration management, and scaling considerations. Document deployment procedures for development, staging, and production environments.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Conduct End-to-End Testing",
+          "description": "Design and execute comprehensive end-to-end test scenarios covering all critical user journeys.",
+          "dependencies": [
+            1,
+            3,
+            4
+          ],
+          "details": "Create test plans documenting test cases, expected results, and validation criteria. Include edge cases, error scenarios, and cross-browser/device testing. Document all test results and issues found.",
+          "status": "pending"
+        },
+        {
+          "id": 6,
+          "title": "Perform Performance and Security Testing",
+          "description": "Conduct thorough performance testing and security validation of the entire system.",
+          "dependencies": [
+            5
+          ],
+          "details": "Include load testing, stress testing, and scalability analysis. Perform security audits, vulnerability assessments, and penetration testing. Document performance benchmarks, security findings, and remediation steps.",
+          "status": "pending"
+        },
+        {
+          "id": 7,
+          "title": "Final Quality Assurance and Documentation Review",
+          "description": "Conduct final review of all documentation and test results to ensure completeness, accuracy, and quality.",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "details": "Verify all documentation is up-to-date with the final implementation. Ensure consistency across all documentation types. Create a final quality assurance report summarizing test results, known issues, and recommendations for future improvements.",
+          "status": "pending"
+        }
+      ]
     },
     {
       "id": 13,
@@ -629,7 +821,7 @@
           "id": 12,
           "title": "[MIGRADO] Develop and run integration tests for Supabase",
           "description": "Subtarea original 4.5: Create comprehensive integration tests that verify the end-to-end flow from spider extraction to Supabase storage.",
-          "status": "pending",
+          "status": "deferred",
           "dependencies": [],
           "parentTaskId": 14,
           "details": "<info added on 2025-05-29T11:36:52.452Z>\nPara completar la tarea de pruebas de integración con Supabase:\n\n1. Revisar y ejecutar el archivo test_supabase_integration.py ubicado en la carpeta tests/ para verificar la funcionalidad básica de integración.\n\n2. Utilizar el spider de Infobae ya implementado para realizar pruebas de integración completas en un escenario real.\n\n3. Verificar que el contenido HTML de los artículos se almacene correctamente en formato comprimido dentro de Supabase Storage.\n\n4. Confirmar que todos los metadatos extraídos de los artículos se guarden adecuadamente en la tabla \"articulos\" de la base de datos.\n\n5. Probar escenarios de error para asegurar que el sistema maneje correctamente las excepciones y aplique la lógica de reintentos cuando sea necesario.\n\nDocumentar los resultados de las pruebas y cualquier problema encontrado durante el proceso.\n</info added on 2025-05-29T11:36:52.452Z>"
@@ -638,7 +830,7 @@
           "id": 13,
           "title": "[MIGRADO] Implement Supabase Integration (Tarea Original 4)",
           "description": "Tarea Original 4: Set up Supabase integration for storing extracted data and compressed HTML.",
-          "status": "pending",
+          "status": "in-progress",
           "dependencies": [],
           "parentTaskId": 14,
           "details": "<info added on 2025-05-29T11:36:40.326Z>\nLa integración con Supabase ya está implementada en scraper_core/pipelines.py a través de la clase SupabaseStoragePipeline, que incluye funcionalidades de reintentos mediante Tenacity y compresión de HTML para optimizar el almacenamiento. \n\nPara activar y probar esta integración:\n\n1. Descomentar el pipeline SupabaseStoragePipeline en settings.py (aproximadamente en la línea 90)\n2. Verificar que las siguientes variables de entorno estén correctamente configuradas en el archivo .env:\n   - SUPABASE_URL\n   - SUPABASE_KEY\n   - SUPABASE_BUCKET_NAME\n\n3. Probar la conexión con Supabase ejecutando una pequeña extracción de prueba\n4. Ejecutar las pruebas de integración específicas para la funcionalidad de Supabase\n\nNota: Asegurarse de que la compresión de HTML funciona correctamente y que los reintentos se comportan según lo esperado en caso de fallos de conexión.\n</info added on 2025-05-29T11:36:40.326Z>"
@@ -655,7 +847,7 @@
           "id": 15,
           "title": "[MIGRADO] Fix Database Schema Issue in Articulos Table (Tarea Original 18)",
           "description": "Tarea Original 18: Add the missing contenido_texto column to the articulos table in Supabase and fix field mapping inconsistencies in module_scraper to ensure proper data storage.",
-          "status": "pending",
+          "status": "in-progress",
           "dependencies": [],
           "parentTaskId": 14
         },
@@ -692,7 +884,7 @@
           "id": 18,
           "title": "Completar Documentación General del Módulo Scraper",
           "description": "Crear un README.md principal para el module_scraper que describa su arquitectura, configuración, uso y cómo extenderlo.",
-          "status": "pending",
+          "status": "in-progress",
           "dependencies": [],
           "parentTaskId": 14
         },

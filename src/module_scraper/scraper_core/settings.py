@@ -13,6 +13,8 @@ nest_asyncio.apply()
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from config.rate_limits.domain_config import DOMAIN_RATE_LIMITS
+from scraper_core.logging_config import LoggingConfig
 
 # Load environment variables - check multiple locations in order of preference
 # 1. Environment variables (highest priority)
@@ -69,15 +71,27 @@ DEFAULT_REQUEST_HEADERS = {
 
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-#SPIDER_MIDDLEWARES = {
-#    "scraper_core.middlewares.ScraperCoreSpiderMiddleware": 543,
-#}
+SPIDER_MIDDLEWARES = {
+    # Enable scrapy-crawl-once for duplicate prevention
+    'scrapy_crawl_once.CrawlOnceMiddleware': 100,
+    # Custom spider middlewares can be added here
+    # "scraper_core.middlewares.ScraperCoreSpiderMiddleware": 543,
+}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    "scraper_core.middlewares.ScraperCoreDownloaderMiddleware": 543,
-#}
+DOWNLOADER_MIDDLEWARES = {
+    # Enable scrapy-crawl-once for duplicate prevention
+    'scrapy_crawl_once.CrawlOnceMiddleware': 50,
+    # Disable default user agent middleware
+    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+    # Enable random user agent middleware
+    'scrapy_user_agents.middlewares.RandomUserAgentMiddleware': 400,
+    # Rate limit monitoring middleware (optional, enable for debugging)
+    # 'scraper_core.middlewares.rate_limit_monitor.RateLimitMonitorMiddleware': 543,
+    # Custom middlewares can be added here
+    # "scraper_core.middlewares.ScraperCoreDownloaderMiddleware": 543,
+}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -159,6 +173,27 @@ AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
 AUTOTHROTTLE_DEBUG = False
 
 # =============================================================================
+# ROBOTS.TXT COMPLIANCE
+# =============================================================================
+# Obey robots.txt rules (already set above, but documented here for clarity)
+# ROBOTSTXT_OBEY = True  # This is already set at the top of the file
+# The RobotsTxtMiddleware is enabled by default in DOWNLOADER_MIDDLEWARES_BASE
+# with priority 100, so we don't need to add it explicitly
+
+# =============================================================================
+# DOMAIN-SPECIFIC RATE LIMITING
+# =============================================================================
+# Configure per-domain download delays and concurrency settings
+# This allows fine-grained control over request rates for specific domains
+# Import configuration from domain_config module for better organization
+DOWNLOAD_SLOTS = DOMAIN_RATE_LIMITS
+
+# Global download delay randomization settings
+# When randomize_delay is True, the actual delay will be:
+# 0.5 * DOWNLOAD_DELAY to 1.5 * DOWNLOAD_DELAY
+RANDOMIZE_DOWNLOAD_DELAY = True
+
+# =============================================================================
 # SUPABASE CONFIGURATION
 # =============================================================================
 # Supabase connection details (loaded from .env)
@@ -228,19 +263,23 @@ CLEANING_PRESERVE_HTML_CONTENT = True # Clean but preserve HTML structure
 # LOGGING CONFIGURATION
 # =============================================================================
 
-# Configure logging
-LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
-LOG_FORMAT = '%(levelname)s:%(name)s: %(message)s'
+# Get logging configuration from centralized config
+logging_settings = LoggingConfig.get_scrapy_settings()
 
-# Log specific components at different levels
-LOGGERS = {
-    'scrapy': 'INFO',
-    'scrapy.core.engine': 'INFO',
-    'scrapy.downloadermiddlewares': 'INFO',
-    'scrapy.spidermiddlewares': 'INFO',
-    'scraper_core.pipelines.supabase_pipeline': 'DEBUG',
-    'scraper_core.utils.supabase_client': 'DEBUG',
-}
+# Apply logging settings
+LOG_LEVEL = logging_settings['LOG_LEVEL']
+LOG_FORMAT = logging_settings['LOG_FORMAT']
+LOG_DATEFORMAT = logging_settings['LOG_DATEFORMAT']
+LOG_STDOUT = logging_settings.get('LOG_STDOUT', False)
+LOG_SHORT_NAMES = logging_settings.get('LOG_SHORT_NAMES', False)
+
+# File logging (if enabled)
+if 'LOG_FILE' in logging_settings:
+    LOG_FILE = logging_settings['LOG_FILE']
+    LOG_FILE_ENCODING = logging_settings.get('LOG_FILE_ENCODING', 'utf-8')
+
+# Component-specific log levels
+LOGGERS = logging_settings['LOGGERS']
 
 # =============================================================================
 # ERROR HANDLING CONFIGURATION
@@ -253,6 +292,34 @@ RETRY_HTTP_CODES = [500, 502, 503, 504, 408, 429]
 
 # Download timeout
 DOWNLOAD_TIMEOUT = 30
+
+# =============================================================================
+# USER AGENT ROTATION CONFIGURATION
+# =============================================================================
+
+# scrapy-user-agents configuration
+# The middleware will randomly select user agents from a predefined list
+# This helps prevent detection and blocking by websites
+
+# Optional: You can specify fallback user agents if needed
+# If not specified, the middleware uses its internal list
+# RANDOM_UA_TYPE = 'random'  # Options: 'random', 'desktop', 'mobile'
+
+# =============================================================================
+# SCRAPY-CRAWL-ONCE CONFIGURATION
+# =============================================================================
+
+# Enable scrapy-crawl-once middleware for duplicate prevention
+CRAWL_ONCE_ENABLED = True
+
+# Path to store crawled requests database
+# By default uses .scrapy/crawl_once/ directory
+CRAWL_ONCE_PATH = project_root / '.scrapy' / 'crawl_once'
+
+# Default value for crawl_once meta key (False by default)
+# When True, all requests are handled by this middleware unless disabled explicitly
+# We keep it False to have explicit control over which requests to track
+CRAWL_ONCE_DEFAULT = False
 
 # =============================================================================
 # CUSTOM SETTINGS FOR PRODUCTION

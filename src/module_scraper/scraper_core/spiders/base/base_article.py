@@ -14,7 +14,7 @@ import scrapy
 from scrapy.http import Response, Request
 
 from scrapy.utils.misc import arg_to_iter
-from ..items import ArticuloInItem
+from scraper_core.items import ArticuloInItem
 from ..itemloaders import ArticuloInItemLoader
 
 

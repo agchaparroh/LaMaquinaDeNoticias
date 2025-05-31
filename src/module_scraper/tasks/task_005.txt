@@ -1,9 +1,9 @@
 # Task ID: 5
 # Title: Integrate Portia Support
-# Status: pending
+# Status: cancelled
 # Dependencies: 1
 # Priority: medium
-# Description: Replace Portia integration with alternative approach for dynamic spider generation, as Portia was discontinued in 2018 and is not compatible with modern Scrapy. MANDATORY: Consult Context7 BEFORE beginning any work and verify module_scraper.md documentation to ensure alignment with project objectives.
+# Description: Configure basic scrapy_gui_guide setup as specified in the original plan for simple spider creation, following the module_scraper.md specification.
 # Details:
 
 
@@ -11,27 +11,21 @@
 
 
 # Subtasks:
-## 5.1. Evaluate alternatives and select approach [pending]
+## 5.1. Install and verify scrapy-GUI dependency [pending]
 ### Dependencies: None
-### Description: MANDATORY: Consult Context7 BEFORE beginning this evaluation. Evaluate Scrapely vs JSON configuration approach and document decision with rationale. Verify alignment with module_scraper.md documentation.
+### Description: Install the basic scrapy-GUI package through requirements.txt and verify its functionality in the project environment.
 ### Details:
 
 
-## 5.2. Update project dependencies [pending]
+## 5.2. Configure basic spider generation workflow [pending]
 ### Dependencies: None
-### Description: MANDATORY: Consult Context7 BEFORE beginning this task. Add required dependencies for the selected approach (Scrapely or other libraries needed) after verifying compatibility with existing project architecture in module_scraper.md.
+### Description: Set up a simple workflow for creating spiders using the basic scrapy_gui_guide functionality, ensuring compatibility with the project's architecture.
 ### Details:
 
 
-## 5.3. Implement dynamic spider loader [pending]
+## 5.3. Test basic spider creation and export functionality [pending]
 ### Dependencies: None
-### Description: MANDATORY: Consult Context7 BEFORE beginning implementation. Create loader class for the selected approach that can generate spiders dynamically, ensuring alignment with module_scraper.md documentation.
-### Details:
-
-
-## 5.4. Create data adapter [pending]
-### Dependencies: None
-### Description: MANDATORY: Consult Context7 BEFORE beginning implementation. Implement adapter to convert extracted data to ArticuloInItem format, following guidelines in module_scraper.md.
+### Description: Test the creation of simple spiders using the GUI and verify that they can be properly exported to the project structure.
 ### Details:
 
 
