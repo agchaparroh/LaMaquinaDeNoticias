@@ -87,17 +87,28 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
     # Enable random user agent middleware
     'scrapy_user_agents.middlewares.RandomUserAgentMiddleware': 400,
+    
+    # NUEVO: Middleware personalizado para Playwright para manejar respuestas vacías
+    'scraper_core.middlewares.playwright_custom_middleware.PlaywrightCustomDownloaderMiddleware': 550,
+    
     # Rate limit monitoring middleware (optional, enable for debugging)
-    # 'scraper_core.middlewares.rate_limit_monitor.RateLimitMonitorMiddleware': 543,
+    # 'scraper_core.middlewares.rate_limit_monitor.RateLimitMonitorMiddleware': 543, 
     # Custom middlewares can be added here
     # "scraper_core.middlewares.ScraperCoreDownloaderMiddleware": 543,
 }
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
-#EXTENSIONS = {
-#    "scrapy.extensions.telnet.TelnetConsole": None,
-#}
+EXTENSIONS = {
+    # Disable telnet console for security
+    "scrapy.extensions.telnet.TelnetConsole": None,
+    # Enable log rotation extension
+    "scraper_core.extensions.log_rotation.LogRotationExtension": 500,
+}
+
+# Log rotation settings
+LOG_ROTATION_ENABLED = True  # Enable/disable log rotation
+LOG_ROTATION_PER_SPIDER = False  # Create separate rotating logs per spider
 
 # =============================================================================
 # ITEM PIPELINES CONFIGURATION
@@ -129,16 +140,18 @@ ITEM_PIPELINES = {
 # PLAYWRIGHT CONFIGURATION (TWISTED_REACTOR)
 # =============================================================================
 # For Playwright support
-#TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
-# DOWNLOAD_HANDLERS = {
-#     "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-#     "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-# }
-# PLAYWRIGHT_BROWSER_TYPE = "chromium"  # Or "firefox", "webkit"
-# PLAYWRIGHT_LAUNCH_OPTIONS = {
-#     "headless": True,
-#     "timeout": 30 * 1000,  # 30 seconds
-# }
+TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
+DOWNLOAD_HANDLERS = {
+    "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+    "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+}
+
+PLAYWRIGHT_BROWSER_TYPE = "chromium"
+PLAYWRIGHT_LAUNCH_OPTIONS = {
+    "headless": True,
+    "timeout": 30 * 1000,  # 30 seconds
+}
+
 # PLAYWRIGHT_CONTEXT_OPTIONS = {
 #     "ignore_https_errors": True,
 # }

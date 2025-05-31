@@ -16,9 +16,10 @@ from scrapy.http import Response, Request
 from scrapy.utils.misc import arg_to_iter
 from scraper_core.items import ArticuloInItem
 from ..itemloaders import ArticuloInItemLoader
+from scraper_core.utils.logging_utils import LoggerMixin, log_exceptions, SpiderLoggerAdapter
 
 
-class BaseArticleSpider(scrapy.Spider):
+class BaseArticleSpider(scrapy.Spider, LoggerMixin):
     """
     Base spider class for article extraction.
     
@@ -59,8 +60,9 @@ class BaseArticleSpider(scrapy.Spider):
         self.feed_url = kwargs.get('feed_url') # For RSS/Atom feeds
         self.sitemap_urls = list(arg_to_iter(kwargs.get('sitemap_urls', []))) # For sitemap spiders
         
-        # Initialize logger
-        self.logger = logging.getLogger(self.name)
+        # Initialize logger with spider adapter for better context
+        base_logger = logging.getLogger(self.name)
+        self.logger = SpiderLoggerAdapter(base_logger, {'spider': self})
         
         # Tracking URLs
         self.successful_urls = []
@@ -119,6 +121,7 @@ class BaseArticleSpider(scrapy.Spider):
             dont_filter=dont_filter
         )
 
+    @log_exceptions(include_traceback=True)
     def parse_article_list(self, response: Response) -> Iterator[Request]:
         """
         Parse a page listing multiple articles and yield requests for each article.
@@ -180,6 +183,7 @@ class BaseArticleSpider(scrapy.Spider):
         # 3. If URL sitemap, extract article URLs and yield requests for them (to self.parse_article).
         raise NotImplementedError(f"{self.name} should use SitemapSpider or implement sitemap parsing.")
 
+    @log_exceptions(include_traceback=True)
     def parse_article(self, response: Response) -> Optional[ArticuloInItem]:
         """
         Parse the article page and extract data using ArticuloItemLoader.
@@ -196,6 +200,10 @@ class BaseArticleSpider(scrapy.Spider):
             An ArticuloInItem instance or None if retrying.
         """
         self.logger.info(f"Parsing article: {response.url}")
+        
+        # Log response statistics for debugging
+        from scraper_core.utils.logging_utils import log_response_stats
+        log_response_stats(response, self.logger)
 
         is_playwright_retry = response.meta.get('playwright_retried', False)
         was_original_playwright_request = response.meta.get('playwright', False)
@@ -259,6 +267,11 @@ class BaseArticleSpider(scrapy.Spider):
 
         # Si llegamos aquí, el contenido se extrajo o es un reintento de Playwright, o no se reintenta.
         self.successful_urls.append(response.url)
+        
+        # Log item statistics
+        from scraper_core.utils.logging_utils import log_item_stats
+        log_item_stats(dict(article_item), self.logger)
+        
         self.logger.info(f"Successfully parsed: {response.url}. Item will be passed to pipelines for validation and processing.")
         return article_item
 

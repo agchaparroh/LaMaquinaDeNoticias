@@ -1,12 +1,11 @@
 # scraper_core/middlewares/playwright_custom_middleware.py
 from scrapy import signals
-from scrapy.http import HtmlResponse
-from playwright.async_api import async_playwright
+from scrapy.http import HtmlResponse, Request
 
 class PlaywrightCustomDownloaderMiddleware:
     """
-    Middleware personalizado para decidir cuándo usar Playwright para una solicitud
-    y para manejar la representación de la página.
+    Middleware personalizado para detectar respuestas con contenido vacío y reintentar
+    la solicitud utilizando Playwright para el renderizado de JavaScript.
     """
 
     # Nota: scrapy-playwright ya proporciona su propio DownloaderHandler.
@@ -57,15 +56,41 @@ class PlaywrightCustomDownloaderMiddleware:
     #     # Ejemplo: return "render_js" in request.url or request.meta.get("render_js_flag")
     #     return False # Por defecto, no fuerces Playwright aquí
 
-    # process_response podría usarse para interactuar con la página de Playwright
-    # si 'playwright_include_page' fue True.
-    # async def process_response(self, request, response, spider):
-    #     if request.meta.get('playwright_include_page') and hasattr(response, 'playwright_page'):
-    #         page = response.playwright_page
-    #         # Aquí puedes interactuar con la página, por ejemplo, tomar una captura de pantalla
-    #         # await page.screenshot(path=f"screenshot_{spider.name}.png")
-    #         await page.close() # Importante cerrar la página si la incluiste
-    #     return response
+    async def process_response(self, request, response, spider):
+        # Solo procesar respuestas HTML
+        if not isinstance(response, HtmlResponse):
+            return response
+
+        # Condición 1: La respuesta actual NO fue generada por una solicitud de Playwright
+        # (evita bucles si Playwright también devuelve contenido vacío)
+        is_playwright_request = request.meta.get('playwright')
+
+        # Condición 2: El cuerpo de la respuesta está vacío después de quitar espacios en blanco.
+        body_is_empty = not response.body.strip()
+
+        if not is_playwright_request and body_is_empty:
+            spider.logger.info(
+                f"Respuesta vacía (o solo espacios en blanco) detectada para {response.url}. "
+                f"Reintentando con Playwright."
+            )
+            
+            # Crear una nueva solicitud para la misma URL, pero forzando Playwright
+            new_meta = request.meta.copy()
+            new_meta['playwright'] = True
+            # Opcional: puedes añadir otras configuraciones de Playwright aquí si es necesario, como:
+            # new_meta['playwright_include_page'] = True 
+            # new_meta['playwright_page_coroutines'] = [ page.wait_for_load_state('networkidle') ]
+
+            return Request(
+                response.url,
+                callback=request.callback,
+                errback=request.errback,
+                priority=request.priority, # Mantener la prioridad original
+                meta=new_meta,
+                dont_filter=True # Importante para permitir que la misma URL sea solicitada de nuevo
+            )
+
+        return response
 
     # Si no necesitas lógica personalizada en un middleware separado,
     # la configuración de DOWNLOAD_HANDLERS y el uso de meta={'playwright': True}
