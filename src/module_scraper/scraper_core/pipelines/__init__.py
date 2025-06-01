@@ -3,7 +3,12 @@
 This package contains all the pipeline components for processing scraped items.
 """
 
-from .validation import DataValidationPipeline
 from .cleaning import DataCleaningPipeline
+from .validation import DataValidationPipeline
+from .storage import SupabaseStoragePipeline
 
-__all__ = ['DataValidationPipeline', 'DataCleaningPipeline']
+__all__ = [
+    'DataCleaningPipeline',
+    'DataValidationPipeline',
+    'SupabaseStoragePipeline',
+]

@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 from itemadapter import ItemAdapter
 from scrapy import Spider
 
-from ..items import ArticuloInItem
+from scraper_core.items import ArticuloInItem
 from .exceptions import (
     RequiredFieldMissingError,
     DataTypeError,
@@ -116,6 +116,7 @@ class DataValidationPipeline:
         
         # Load date format from settings
         instance.date_format = crawler.settings.get('VALIDATION_DATE_FORMAT', '%Y-%m-%dT%H:%M:%S')
+        instance.drop_invalid_items = crawler.settings.getbool('VALIDATION_DROP_INVALID_ITEMS', False)
         
         logger.info(
             f"DataValidationPipeline initialized with {len(instance.REQUIRED_FIELDS)} required fields, "
@@ -173,8 +174,12 @@ class DataValidationPipeline:
             adapter['error_detalle'] = str(e)
             adapter['estado_procesamiento'] = 'error'
             
-            # Re-raise to drop the item
-            raise
+            if self.drop_invalid_items:
+                logger.warning(f"Validation failed for {item_url} and VALIDATION_DROP_INVALID_ITEMS is True. Dropping item: {e}")
+                raise # Re-raise to drop the item
+            else:
+                logger.warning(f"Validation failed for {item_url} but VALIDATION_DROP_INVALID_ITEMS is False. Passing item with error details: {e}")
+                return item # Pass the item to the next stage
         
         return item
     

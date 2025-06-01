@@ -19,9 +19,9 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 from requests.exceptions import RequestException # Ejemplo, si aplica
 import httpx # supabase-py usa httpx, por lo que sus excepciones de red serían relevantes
 
-from .items import ArticuloInItem
-from .utils.compression import compress_html
-from .utils.supabase_client import SupabaseClient
+from scraper_core.items import ArticuloInItem
+from ..utils.compression import compress_html
+from ..utils.supabase_client import SupabaseClient
 
 logger = logging.getLogger(__name__)
 
