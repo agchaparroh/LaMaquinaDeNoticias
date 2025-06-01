@@ -158,6 +158,25 @@ PLAYWRIGHT_LAUNCH_OPTIONS = {
 # PLAYWRIGHT_NAVIGATION_TIMEOUT = 30 * 1000 # 30 seconds
 
 # =============================================================================
+# PLAYWRIGHT ERROR HANDLING CONFIGURATION
+# =============================================================================
+
+# Maximum number of retries for Playwright-specific errors
+PLAYWRIGHT_MAX_RETRIES = int(os.getenv('PLAYWRIGHT_MAX_RETRIES', 2))
+
+# Timeout for Playwright operations (milliseconds)
+PLAYWRIGHT_TIMEOUT = int(os.getenv('PLAYWRIGHT_TIMEOUT', 30000))  # 30 seconds
+
+# Enable fallback to non-Playwright requests when Playwright fails
+PLAYWRIGHT_ENABLE_FALLBACK = os.getenv('PLAYWRIGHT_ENABLE_FALLBACK', 'True').lower() == 'true'
+
+# Maximum number of retries for empty content detection
+PLAYWRIGHT_MAX_EMPTY_RETRIES = int(os.getenv('PLAYWRIGHT_MAX_EMPTY_RETRIES', 1))
+
+# Enable Playwright for empty content detection (BaseArticleSpider compatibility)
+USE_PLAYWRIGHT_FOR_EMPTY_CONTENT = os.getenv('USE_PLAYWRIGHT_FOR_EMPTY_CONTENT', 'True').lower() == 'true'
+
+# =============================================================================
 # HTTP CACHE CONFIGURATION
 # =============================================================================
 # Enable and configure HTTP caching (disabled by default)

@@ -1,0 +1,427 @@
+# tests/test_playwright/test_playwright_middleware.py
+import unittest
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
+import pytest
+from scrapy.http import HtmlResponse, Request
+from scrapy.exceptions import IgnoreRequest, NotConfigured
+from scrapy.utils.test import get_crawler
+from scrapy import Spider
+
+from scraper_core.middlewares.playwright_custom_middleware import (
+    PlaywrightCustomDownloaderMiddleware,
+    PlaywrightError,
+    PlaywrightTimeoutError,
+    PlaywrightNavigationError,
+    PlaywrightResourceError
+)
+
+
+class TestPlaywrightCustomDownloaderMiddleware(unittest.TestCase):
+    """Test suite for Playwright Custom Downloader Middleware."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.crawler = get_crawler()
+        self.spider = Spider('test_spider')
+        
+        # Mock crawler.stats
+        self.crawler.stats = Mock()
+        self.crawler.stats.get_value = Mock(return_value=0)
+        self.crawler.stats.set_value = Mock()
+        
+        # Mock the scrapy-playwright availability check
+        with patch('scraper_core.middlewares.playwright_custom_middleware.load_object'):
+            self.middleware = PlaywrightCustomDownloaderMiddleware.from_crawler(self.crawler)
+    
+    def test_from_crawler_without_playwright(self):
+        """Test middleware initialization fails when scrapy-playwright is not available."""
+        with patch('scraper_core.middlewares.playwright_custom_middleware.load_object') as mock_load:
+            mock_load.side_effect = ImportError("scrapy-playwright not found")
+            
+            with self.assertRaises(NotConfigured):
+                PlaywrightCustomDownloaderMiddleware.from_crawler(self.crawler)
+    
+    def test_spider_opened_logging(self):
+        """Test spider opened event logging."""
+        with patch.object(self.middleware.logger, 'info') as mock_log:
+            self.middleware.spider_opened(self.spider)
+            
+            self.assertEqual(mock_log.call_count, 2)
+            mock_log.assert_any_call('PlaywrightCustomDownloaderMiddleware opened for spider test_spider')
+    
+    def test_spider_closed_statistics(self):
+        """Test spider closed event statistics logging."""
+        # Set some test statistics
+        self.middleware.empty_content_detections = 5
+        self.middleware.playwright_retries = 3
+        self.middleware.playwright_failures = 1
+        self.middleware.successful_recoveries = 4
+        
+        with patch.object(self.middleware.logger, 'info') as mock_log:
+            self.middleware.spider_closed(self.spider)
+            
+            # Verify statistics were logged
+            mock_log.assert_any_call('PlaywrightCustomDownloaderMiddleware closed for spider test_spider')
+            mock_log.assert_any_call('Playwright statistics - Empty content detections: 5, '
+                                   'Retries: 3, Failures: 1, Successful recoveries: 4')
+            
+            # Verify stats were set
+            self.crawler.stats.set_value.assert_any_call('playwright/empty_content_detections', 5)
+            self.crawler.stats.set_value.assert_any_call('playwright/retries', 3)
+            self.crawler.stats.set_value.assert_any_call('playwright/failures', 1)
+            self.crawler.stats.set_value.assert_any_call('playwright/successful_recoveries', 4)
+
+
+class TestPlaywrightConfiguration(unittest.TestCase):
+    """Test Playwright configuration methods."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.crawler = get_crawler()
+        self.spider = Spider('test_spider')
+        self.crawler.stats = Mock()
+        
+        with patch('scraper_core.middlewares.playwright_custom_middleware.load_object'):
+            self.middleware = PlaywrightCustomDownloaderMiddleware.from_crawler(self.crawler)
+    
+    def test_process_request_playwright_configuration(self):
+        """Test process_request adds robust Playwright configuration."""
+        request = Request('http://example.com')
+        request.meta['playwright'] = True
+        
+        result = self.middleware.process_request(request, self.spider)
+        
+        # Should return None to continue processing
+        self.assertIsNone(result)
+        
+        # Should have added robust configuration
+        self.assertTrue(request.meta['playwright_include_page'])
+        self.assertIn('playwright_page_methods', request.meta)
+        self.assertIn('playwright_page_coroutines', request.meta)
+        self.assertIn('playwright_context_kwargs', request.meta)
+    
+    def test_get_robust_playwright_config_basic(self):
+        """Test basic robust Playwright configuration generation."""
+        request = Request('http://example.com')
+        request.headers['User-Agent'] = b'Test Agent'
+        
+        config = self.middleware._get_robust_playwright_config(request, self.spider)
+        
+        self.assertTrue(config['playwright'])
+        self.assertTrue(config['playwright_include_page'])
+        self.assertIn('playwright_page_methods', config)
+        self.assertIn('playwright_page_coroutines', config)
+        self.assertEqual(config['playwright_context_kwargs']['user_agent'], 'Test Agent')
+    
+    def test_get_robust_playwright_config_spa_detection(self):
+        """Test SPA-specific configuration for React/Angular/Vue sites."""
+        request = Request('http://example.com/react-app')
+        
+        config = self.middleware._get_robust_playwright_config(request, self.spider)
+        
+        # Should have additional timeout for SPA
+        has_extra_timeout = any(
+            coroutine.get('method') == 'wait_for_timeout' 
+            for coroutine in config['playwright_page_coroutines']
+        )
+        self.assertTrue(has_extra_timeout)
+
+
+class TestErrorDetection(unittest.TestCase):
+    """Test error detection capabilities."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.crawler = get_crawler()
+        self.spider = Spider('test_spider')
+        self.crawler.stats = Mock()
+        
+        with patch('scraper_core.middlewares.playwright_custom_middleware.load_object'):
+            self.middleware = PlaywrightCustomDownloaderMiddleware.from_crawler(self.crawler)
+    
+    def test_detect_timeout_error(self):
+        """Test detection of timeout errors."""
+        response = HtmlResponse('http://example.com', status=524, body=b'<html><body>timeout error</body></html>')
+        
+        error_type = self.middleware._detect_playwright_error(response, self.spider)
+        
+        self.assertEqual(error_type, 'timeout')
+    
+    def test_detect_navigation_error(self):
+        """Test detection of navigation errors."""
+        response = HtmlResponse('http://example.com', status=502)
+        response._headers = {'playwright-error': ['navigation failed']}
+        
+        error_type = self.middleware._detect_playwright_error(response, self.spider)
+        
+        self.assertEqual(error_type, 'navigation')
+    
+    def test_detect_browser_error(self):
+        """Test detection of browser errors."""
+        response = HtmlResponse('http://example.com', body=b'<html><body>playwright error: browser context closed</body></html>')
+        
+        error_type = self.middleware._detect_playwright_error(response, self.spider)
+        
+        self.assertEqual(error_type, 'browser_error')
+    
+    def test_detect_resource_limit_error(self):
+        """Test detection of resource limit errors."""
+        response = HtmlResponse('http://example.com', body=b'<html><body>out of memory error</body></html>')
+        
+        error_type = self.middleware._detect_playwright_error(response, self.spider)
+        
+        self.assertEqual(error_type, 'resource_limit')
+    
+    def test_no_error_detected(self):
+        """Test normal response without errors."""
+        response = HtmlResponse('http://example.com', body=b'<html><body>Normal content</body></html>')
+        
+        error_type = self.middleware._detect_playwright_error(response, self.spider)
+        
+        self.assertIsNone(error_type)
+
+
+class TestEmptyContentDetection(unittest.TestCase):
+    """Test empty content detection logic."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.crawler = get_crawler()
+        self.spider = Spider('test_spider')
+        self.crawler.stats = Mock()
+        
+        with patch('scraper_core.middlewares.playwright_custom_middleware.load_object'):
+            self.middleware = PlaywrightCustomDownloaderMiddleware.from_crawler(self.crawler)
+    
+    def test_is_content_empty_completely_empty(self):
+        """Test detection of completely empty content."""
+        response = HtmlResponse('http://example.com', body=b'   ')
+        
+        is_empty = self.middleware._is_content_empty(response, self.spider)
+        
+        self.assertTrue(is_empty)
+    
+    def test_is_content_empty_minimal_content(self):
+        """Test detection of minimal content."""
+        response = HtmlResponse('http://example.com', body=b'<html><body>Hi</body></html>')
+        
+        is_empty = self.middleware._is_content_empty(response, self.spider)
+        
+        self.assertTrue(is_empty)  # Less than 100 characters
+    
+    def test_is_content_empty_javascript_required(self):
+        """Test detection of JavaScript-required pages."""
+        response = HtmlResponse('http://example.com', 
+                              body=b'<html><body><p>Please enable JavaScript to view this page.</p></body></html>')
+        
+        is_empty = self.middleware._is_content_empty(response, self.spider)
+        
+        self.assertTrue(is_empty)
+    
+    def test_is_content_empty_sufficient_content(self):
+        """Test normal content that should not be considered empty."""
+        content = "This is a normal article with sufficient content. " * 10  # Over 100 chars
+        response = HtmlResponse('http://example.com', body=f'<html><body><p>{content}</p></body></html>'.encode())
+        
+        is_empty = self.middleware._is_content_empty(response, self.spider)
+        
+        self.assertFalse(is_empty)
+    
+    def test_should_check_empty_content_conditions(self):
+        """Test conditions for checking empty content."""
+        request = Request('http://example.com')
+        response = HtmlResponse('http://example.com')
+        
+        # Normal case - should check
+        should_check = self.middleware._should_check_empty_content(request, response, 0)
+        self.assertTrue(should_check)
+        
+        # Max retries exceeded - should not check
+        should_check = self.middleware._should_check_empty_content(request, response, 2)
+        self.assertFalse(should_check)
+        
+        # Playwright failed - should not check
+        request.meta['playwright_failed'] = True
+        should_check = self.middleware._should_check_empty_content(request, response, 0)
+        self.assertFalse(should_check)
+
+
+class TestErrorHandling(unittest.TestCase):
+    """Test error handling and recovery strategies."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.crawler = get_crawler()
+        self.spider = Spider('test_spider')
+        self.crawler.stats = Mock()
+        
+        with patch('scraper_core.middlewares.playwright_custom_middleware.load_object'):
+            self.middleware = PlaywrightCustomDownloaderMiddleware.from_crawler(self.crawler)
+    
+    def test_handle_timeout_error_retry(self):
+        """Test handling of timeout errors with retry."""
+        request = Request('http://example.com')
+        request.meta['playwright'] = True
+        response = HtmlResponse('http://example.com', status=524)
+        
+        result = self.middleware._handle_playwright_error(request, response, self.spider, 'timeout', 0)
+        
+        self.assertIsInstance(result, Request)
+        self.assertEqual(result.url, 'http://example.com')
+        self.assertEqual(result.meta['playwright_retry_count'], 1)
+        # Should have increased timeout
+        self.assertIn('playwright_page_methods', result.meta)
+    
+    def test_handle_resource_limit_error_retry(self):
+        """Test handling of resource limit errors with lighter configuration."""
+        request = Request('http://example.com')
+        request.meta['playwright'] = True
+        response = HtmlResponse('http://example.com')
+        
+        result = self.middleware._handle_playwright_error(request, response, self.spider, 'resource_limit', 0)
+        
+        self.assertIsInstance(result, Request)
+        # Should use lighter configuration
+        coroutines = result.meta['playwright_page_coroutines']
+        self.assertEqual(len(coroutines), 1)
+        self.assertEqual(coroutines[0]['args'], ['domcontentloaded'])
+    
+    def test_handle_max_retries_exceeded_with_fallback(self):
+        """Test fallback when max retries are exceeded."""
+        self.middleware.enable_fallback_on_error = True
+        request = Request('http://example.com')
+        request.meta['playwright'] = True
+        response = HtmlResponse('http://example.com')
+        
+        result = self.middleware._handle_playwright_error(request, response, self.spider, 'timeout', 3)
+        
+        self.assertIsInstance(result, Request)
+        self.assertTrue(result.meta['playwright_fallback'])
+        self.assertEqual(result.meta['playwright_fallback_reason'], 'max_retries_exceeded')
+        # Should not have playwright meta
+        self.assertNotIn('playwright', [k for k in result.meta.keys() if 'fallback' not in k])
+    
+    def test_handle_max_retries_exceeded_without_fallback(self):
+        """Test no fallback when disabled."""
+        self.middleware.enable_fallback_on_error = False
+        request = Request('http://example.com')
+        request.meta['playwright'] = True
+        response = HtmlResponse('http://example.com')
+        
+        result = self.middleware._handle_playwright_error(request, response, self.spider, 'timeout', 3)
+        
+        self.assertEqual(result, response)  # Should return original response
+        self.assertTrue(request.meta['playwright_failed'])
+
+
+@pytest.mark.asyncio
+class TestAsyncProcessResponse(unittest.TestCase):
+    """Test async process_response method."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.crawler = get_crawler()
+        self.spider = Spider('test_spider')
+        self.crawler.stats = Mock()
+        
+        with patch('scraper_core.middlewares.playwright_custom_middleware.load_object'):
+            self.middleware = PlaywrightCustomDownloaderMiddleware.from_crawler(self.crawler)
+    
+    async def test_process_response_non_html(self):
+        """Test processing non-HTML responses."""
+        from scrapy.http import Response
+        request = Request('http://example.com/api.json')
+        response = Response('http://example.com/api.json', body=b'{"data": "test"}')
+        
+        result = await self.middleware.process_response(request, response, self.spider)
+        
+        self.assertEqual(result, response)  # Should pass through unchanged
+    
+    async def test_process_response_empty_content_triggers_playwright(self):
+        """Test empty content triggers Playwright retry."""
+        request = Request('http://example.com')
+        response = HtmlResponse('http://example.com', body=b'   ')  # Empty content
+        
+        result = await self.middleware.process_response(request, response, self.spider)
+        
+        self.assertIsInstance(result, Request)
+        self.assertTrue(result.meta['playwright'])
+        self.assertTrue(result.meta['playwright_retried'])
+        self.assertEqual(result.meta['empty_retry_count'], 1)
+    
+    async def test_process_response_playwright_error_triggers_retry(self):
+        """Test Playwright error triggers retry."""
+        request = Request('http://example.com')
+        request.meta['playwright'] = True
+        response = HtmlResponse('http://example.com', status=524, body=b'timeout error')
+        
+        result = await self.middleware.process_response(request, response, self.spider)
+        
+        self.assertIsInstance(result, Request)
+        self.assertEqual(result.meta['playwright_retry_count'], 1)
+        self.assertEqual(self.middleware.playwright_failures, 1)
+    
+    async def test_process_response_successful_playwright(self):
+        """Test successful Playwright response."""
+        request = Request('http://example.com')
+        request.meta['playwright'] = True
+        content = "This is successful content from Playwright. " * 10
+        response = HtmlResponse('http://example.com', body=f'<html><body>{content}</body></html>'.encode())
+        
+        result = await self.middleware.process_response(request, response, self.spider)
+        
+        self.assertEqual(result, response)
+        self.assertEqual(self.middleware.successful_recoveries, 1)
+
+
+class TestExceptionHandling(unittest.TestCase):
+    """Test exception handling during request processing."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.crawler = get_crawler()
+        self.spider = Spider('test_spider')
+        self.crawler.stats = Mock()
+        
+        with patch('scraper_core.middlewares.playwright_custom_middleware.load_object'):
+            self.middleware = PlaywrightCustomDownloaderMiddleware.from_crawler(self.crawler)
+    
+    def test_process_exception_non_playwright_request(self):
+        """Test exception handling for non-Playwright requests."""
+        request = Request('http://example.com')
+        exception = Exception("Network error")
+        
+        result = self.middleware.process_exception(request, exception, self.spider)
+        
+        self.assertIsNone(result)  # Should not handle non-Playwright exceptions
+    
+    def test_process_exception_playwright_timeout(self):
+        """Test handling of Playwright timeout exceptions."""
+        request = Request('http://example.com')
+        request.meta['playwright'] = True
+        exception = Exception("playwright timeout error")
+        
+        result = self.middleware.process_exception(request, exception, self.spider)
+        
+        self.assertIsInstance(result, Request)
+        self.assertEqual(result.meta['playwright_retry_count'], 1)
+        self.assertEqual(self.middleware.playwright_retries, 1)
+        self.assertEqual(self.middleware.playwright_failures, 1)
+    
+    def test_process_exception_max_retries_exceeded(self):
+        """Test exception handling when max retries exceeded."""
+        self.middleware.enable_fallback_on_error = True
+        request = Request('http://example.com')
+        request.meta['playwright'] = True
+        request.meta['playwright_retry_count'] = 3  # Exceeds max retries
+        exception = Exception("playwright browser crash")
+        
+        result = self.middleware.process_exception(request, exception, self.spider)
+        
+        self.assertIsInstance(result, Request)
+        self.assertTrue(result.meta['playwright_fallback'])
+
+
+if __name__ == '__main__':
+    # Run specific test classes
+    unittest.main(verbosity=2)
