@@ -1,4 +1,7 @@
-fastapi>=0.100.0
-uvicorn[standard]>=0.20.0
-# Add other dependencies for the connector module here
-# For example: supabase, psycopg2-binary
+aiohttp==3.12.6
+tenacity==9.1.2
+loguru==0.7.3
+python-dotenv==1.1.0
+pydantic==2.11.5
+sentry-sdk==2.29.1
+watchdog==6.0.0

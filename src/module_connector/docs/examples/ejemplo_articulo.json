@@ -1,0 +1,30 @@
+{
+    "url": "https://www.ejemplo.com/noticia/123",
+    "storage_path": "/articulos/2023/10/noticia_123.json.gz",
+    "fuente": "spider_ejemplo_news",
+    "medio": "Diario Ejemplo",
+    "medio_url_principal": "https://www.ejemplo.com",
+    "pais_publicacion": "País Ficticio",
+    "tipo_medio": "Diario Digital",
+    "titular": "Titular de Ejemplo para la Noticia",
+    "fecha_publicacion": "2023-10-26T10:00:00Z",
+    "autor": "Autor de Ejemplo",
+    "idioma": "es",
+    "seccion": "Actualidad",
+    "etiquetas_fuente": ["ejemplo", "noticias", "ficticio"],
+    "es_opinion": false,
+    "es_oficial": false,
+    "resumen": "Este es un resumen generado automáticamente del artículo de ejemplo.",
+    "categorias_asignadas": ["tecnología", "innovación"],
+    "puntuacion_relevancia": 8.5,
+    "fecha_recopilacion": "2023-10-26T10:05:00Z",
+    "fecha_procesamiento": null,
+    "estado_procesamiento": "pendiente_connector",
+    "error_detalle": null,
+    "contenido_texto": "Este es el contenido completo en texto plano del artículo de ejemplo. Aquí iría todo el cuerpo de la noticia...",
+    "contenido_html": "<html><body><h1>Titular de Ejemplo</h1><p>Este es el contenido HTML original...</p></body></html>",
+    "metadata": {
+        "palabras_clave_seo": ["ejemplo", "noticia", "desarrollo"],
+        "fuente_original_id": "ext-789xyz"
+    }
+}
