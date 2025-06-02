@@ -49,6 +49,37 @@ def extract_text_from_html(html: str) -> str:
     return text
 
 
+def parse_and_format_date_processor(date_str_list):
+    """
+    Procesador para ItemLoader que parsea fechas y las formatea a ISO 8601 UTC.
+    Compatible con el formato esperado por los ItemLoaders (recibe lista).
+    """
+    if not date_str_list:
+        return None
+    
+    # Tomar la primera cadena de fecha si es una lista
+    date_str = date_str_list[0] if isinstance(date_str_list, list) else date_str_list
+    
+    if not date_str:
+        return None
+    
+    # Usar normalize_date para el procesamiento
+    parsed_date = normalize_date(date_str)
+    
+    if parsed_date:
+        # Convertir a UTC si es necesario
+        from datetime import timezone
+        if parsed_date.tzinfo is None or parsed_date.tzinfo.utcoffset(parsed_date) is None:
+            parsed_date = parsed_date.replace(tzinfo=timezone.utc)
+        else:
+            parsed_date = parsed_date.astimezone(timezone.utc)
+        
+        # Formatear a ISO 8601 UTC
+        return parsed_date.strftime('%Y-%m-%dT%H:%M:%SZ')
+    
+    return None
+
+
 def normalize_date(date_string: Union[str, datetime]) -> Optional[datetime]:
     """
     Normaliza diferentes formatos de fecha a datetime.
@@ -139,17 +170,16 @@ def normalize_date(date_string: Union[str, datetime]) -> Optional[datetime]:
             continue
     
     # Try dateparser as a last resort if available and other methods fail
-    # This part is commented out as per the instruction to prioritize re/datetime
-    # try:
-    #     import dateparser
-    #     parsed_date = dateparser.parse(original_date_str_cleaned)
-    #     if parsed_date:
-    #         return parsed_date
-    # except ImportError:
-    #     pass # dateparser not installed
-    # except Exception as e: # Other dateparser errors
-    #     # Log this error if needed: logger.warning(f"Dateparser failed for '{original_date_str_cleaned}': {e}")
-    #     pass
+    try:
+        import dateparser
+        parsed_date = dateparser.parse(original_date_str_cleaned)
+        if parsed_date:
+            return parsed_date
+    except ImportError:
+        pass # dateparser not installed
+    except Exception as e: # Other dateparser errors
+        # Log this error if needed: logger.warning(f"Dateparser failed for '{original_date_str_cleaned}': {e}")
+        pass
 
     # Si no se pudo parsear con formatos estándar, y no era relativo, retornar None
     return None
@@ -357,8 +387,8 @@ class ArticuloInItemLoader(ItemLoader):
     # Autor: extraer y normalizar
     autor_in = MapCompose(extract_author)
     
-    # Fecha: normalizar a datetime
-    fecha_publicacion_in = MapCompose(normalize_date)
+    # Fecha: normalizar a datetime y formatear a ISO 8601
+    fecha_publicacion_in = MapCompose(parse_and_format_date_processor)
     
     # Medio: limpiar texto
     medio_in = MapCompose(clean_text)

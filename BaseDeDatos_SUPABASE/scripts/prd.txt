@@ -1,0 +1,343 @@
+# Product Requirements Document (PRD)
+# Implementación de Base de Datos para la Máquina de Noticias en Supabase
+
+## 1. Resumen Ejecutivo
+
+### 1.1. Objetivo del Proyecto
+Implementar la arquitectura completa de base de datos del sistema "Máquina de Noticias" en Supabase, incluyendo todas las tablas, índices, funciones, triggers, vistas materializadas y configuraciones necesarias para soportar el procesamiento inteligente de noticias y documentos.
+
+### 1.2. Alcance
+- Implementación completa del esquema de base de datos PostgreSQL
+- Configuración de extensiones (pgvector, pg_trgm, pg_cron)
+- Creación de 25+ tablas con particionamiento estratégico
+- Implementación de 50+ índices optimizados
+- Desarrollo de funciones RPC críticas para operaciones atómicas
+- Configuración de 6 vistas materializadas para rendimiento
+- Scripts de migración y mantenimiento
+- Validación completa de integridad de datos
+
+### 1.3. Stakeholders
+- **Propietario del Producto**: Equipo de desarrollo de la Máquina de Noticias
+- **Equipo Técnico**: Desarrolladores backend y administradores de BD
+- **Usuarios Finales**: Periodistas y editores que utilizarán el sistema
+
+## 2. Contexto y Justificación
+
+### 2.1. Necesidad del Negocio
+La Máquina de Noticias requiere una base de datos robusta y escalable que pueda:
+- Procesar grandes volúmenes de artículos periodísticos diariamente
+- Mantener relaciones complejas entre hechos, entidades y fuentes
+- Soportar búsquedas semánticas mediante embeddings vectoriales
+- Facilitar análisis de tendencias y generación de hilos narrativos
+- Garantizar trazabilidad completa de la información
+
+### 2.2. Arquitectura Objetivo
+Sistema de base de datos PostgreSQL con:
+- **Memoria Profunda**: Almacenamiento de contenido original en Supabase Storage
+- **Memoria Relacional**: Datos estructurados en PostgreSQL
+- **Memoria Superficial**: Vistas materializadas y cachés para acceso rápido
+
+## 3. Requerimientos Funcionales
+
+### 3.1. Gestión de Contenido
+- **RF-001**: Almacenar artículos periodísticos con metadatos completos
+- **RF-002**: Gestionar documentos extensos segmentados en fragmentos
+- **RF-003**: Mantener trazabilidad entre fuentes originales y datos extraídos
+- **RF-004**: Soportar versionado y actualización de contenido
+
+### 3.2. Procesamiento de Información
+- **RF-005**: Almacenar hechos extraídos con fechas de ocurrencia complejas (TSTZRANGE)
+- **RF-006**: Gestionar entidades con capacidad de fusión automática
+- **RF-007**: Mantener relaciones entre hechos, entidades y fuentes
+- **RF-008**: Detectar y gestionar duplicados y contradicciones
+
+### 3.3. Análisis Semántico
+- **RF-009**: Almacenar embeddings vectoriales para búsqueda semántica
+- **RF-010**: Facilitar clustering y análisis de similitud
+- **RF-011**: Soportar normalización automática de entidades
+- **RF-012**: Generar recomendaciones de vinculación
+
+### 3.4. Hilos Narrativos
+- **RF-013**: Gestionar hilos narrativos con criterios dinámicos
+- **RF-014**: Actualizar automáticamente elementos relevantes por hilo
+- **RF-015**: Mantener histórico de evolución narrativa
+- **RF-016**: Generar sugerencias de nuevos hilos
+
+### 3.5. Sistema de Feedback Editorial
+- **RF-017**: Registrar feedback de importancia de hechos
+- **RF-018**: Gestionar evaluación editorial (verificado/falso)
+- **RF-019**: Calcular consenso automático entre fuentes
+- **RF-020**: Facilitar aprendizaje del modelo de ML
+
+### 3.6. Efemérides y Eventos Programados
+- **RF-021**: Gestionar eventos recurrentes anuales
+- **RF-022**: Programar alertas de proximidad
+- **RF-023**: Vincular eventos con cobertura periodística
+- **RF-024**: Facilitar consultas por fechas específicas
+
+## 4. Requerimientos No Funcionales
+
+### 4.1. Rendimiento
+- **RNF-001**: Consultas de búsqueda < 500ms para 95% de casos
+- **RNF-002**: Inserción de artículos completos < 2 segundos
+- **RNF-003**: Búsquedas vectoriales < 1 segundo para 1M+ embeddings
+- **RNF-004**: Refresco de vistas materializadas < 5 minutos
+
+### 4.2. Escalabilidad
+- **RNF-005**: Soportar 10M+ hechos con particionamiento por año
+- **RNF-006**: Manejar 1M+ entidades con fusión automática
+- **RNF-007**: Procesar 10K+ artículos diarios sin degradación
+- **RNF-008**: Escalar a 100GB+ de datos estructurados
+
+### 4.3. Disponibilidad
+- **RNF-009**: Uptime > 99.5% en producción
+- **RNF-010**: Backup automático diario con retención 30 días
+- **RNF-011**: Recuperación ante desastres < 4 horas RTO
+- **RNF-012**: Monitoreo proactivo de salud del sistema
+
+### 4.4. Seguridad
+- **RNF-013**: Encriptación en reposo y tránsito
+- **RNF-014**: Control de acceso basado en roles
+- **RNF-015**: Auditoría de cambios críticos
+- **RNF-016**: Anonimización de datos sensibles
+
+## 5. Arquitectura Técnica
+
+### 5.1. Componentes Principales
+
+#### 5.1.1. Tablas Centrales
+- **hechos**: Particionada por fecha_ocurrencia (por año)
+- **entidades**: Con soporte para fusión (fusionada_en_id)
+- **articulos**: Con referencias a Supabase Storage
+- **documentos_extensos/fragmentos_extensos**: Para contenido largo
+- **hilos_narrativos**: Con criterios dinámicos JSONB
+
+#### 5.1.2. Tablas de Relación
+- **hecho_entidad**: Vínculos con tipos de relación
+- **hecho_articulo**: Trazabilidad de fuentes
+- **hecho_hilo**: Vinculación dinámica a narrativas
+- **entidad_relacion**: Relaciones estructurales
+
+#### 5.1.3. Tablas de Soporte
+- **citas_textuales**: Declaraciones atribuidas
+- **datos_cuantitativos**: Información numérica estructurada
+- **contradicciones**: Conflictos detectados automáticamente
+- **eventos_recurrentes_anuales**: Efemérides gestionadas
+
+#### 5.1.4. Sistema de Monitoreo
+- **system_status**: Estado en tiempo real
+- **alert_inbox**: Alertas pendientes
+- **system_status_daily_snapshot**: Histórico diario
+
+### 5.2. Índices Estratégicos
+
+#### 5.2.1. Índices B-Tree
+- Claves primarias y foráneas
+- Filtros frecuentes (fecha, tipo, país)
+- Ordenación (importancia, relevancia)
+
+#### 5.2.2. Índices GIN
+- Arrays (pais, etiquetas, alias)
+- Búsqueda de texto completo (contenido, citas)
+- JSONB (metadata, criterios)
+
+#### 5.2.3. Índices pg_trgm
+- Búsqueda por similitud de nombres
+- Normalización de entidades
+- Búsquedas flexibles
+
+#### 5.2.4. Índices pgvector
+- IVFFlat para embeddings grandes
+- HNSW para búsquedas precisas
+- Configuración adaptativa por volumen
+
+### 5.3. Funciones RPC Críticas
+
+#### 5.3.1. insertar_articulo_completo(jsonb)
+- Inserción atómica de artículo completo
+- Gestión de transacciones complejas
+- Validación de integridad referencial
+- Manejo de errores robustos
+
+#### 5.3.2. insertar_fragmento_completo(jsonb)
+- Inserción de fragmentos de documentos
+- Vinculación con documento padre
+- Gestión de relaciones específicas
+
+#### 5.3.3. buscar_entidad_similar(text, text, float)
+- Búsqueda por similitud para normalización
+- Configuración de umbrales
+- Optimización de rendimiento
+
+#### 5.3.4. obtener_info_hilo(integer, boolean, integer)
+- Recuperación completa de hilos narrativos
+- Detalles opcionales de elementos
+- Paginación integrada
+
+### 5.4. Vistas Materializadas
+
+#### 5.4.1. resumen_hilos_activos
+- Estado consolidado de hilos narrativos
+- Métricas agregadas de actividad
+- Actualización diaria
+
+#### 5.4.2. entidades_relevantes_recientes
+- Entidades con alta actividad
+- Scores de relevancia calculados
+- Base para tendencias
+
+#### 5.4.3. tendencias_temas
+- Análisis de etiquetas emergentes
+- Comparación temporal
+- Detección de cambios
+
+#### 5.4.4. agenda_eventos_proximos
+- Eventos futuros programados
+- Categorización por horizonte temporal
+- Alertas de proximidad
+
+#### 5.4.5. estadisticas_globales
+- Métricas generales del sistema
+- Distribuciones por tipo
+- Actividad reciente
+
+#### 5.4.6. hilos_sugeridos_hechos
+- Sugerencias de vinculación automática
+- Scoring de compatibilidad
+- Base para recomendaciones
+
+## 6. Especificaciones de Implementación
+
+### 6.1. Fases de Desarrollo
+
+#### Fase 1: Infraestructura Base (Semana 1-2)
+- Configuración de extensiones PostgreSQL
+- Creación de tablas principales sin particiones
+- Índices básicos para funcionalidad core
+- Funciones RPC fundamentales
+
+#### Fase 2: Características Avanzadas (Semana 3-4)
+- Implementación de particionamiento
+- Índices vectoriales y de similitud
+- Triggers y automatizaciones
+- Vistas materializadas básicas
+
+#### Fase 3: Optimización y Monitoreo (Semana 5-6)
+- Configuración de pg_cron
+- Vistas materializadas avanzadas
+- Sistema de alertas
+- Optimización de rendimiento
+
+#### Fase 4: Validación y Testing (Semana 7-8)
+- Tests de carga e integridad
+- Validación de funciones RPC
+- Scripts de migración
+- Documentación de operaciones
+
+### 6.2. Scripts de Migración
+- Migraciones idempotentes numeradas
+- Rollback procedures para cada cambio
+- Validación de integridad en cada paso
+- Logging detallado de operaciones
+
+### 6.3. Testing Strategy
+- Unit tests para funciones PL/pgSQL
+- Integration tests para operaciones complejas
+- Performance tests con datos sintéticos
+- Stress tests para concurrencia
+
+## 7. Criterios de Aceptación
+
+### 7.1. Funcionalidad Core
+- [ ] Todas las tablas creadas según especificación
+- [ ] Funciones RPC funcionando correctamente
+- [ ] Triggers activándose apropiadamente
+- [ ] Vistas materializadas refrescándose automáticamente
+
+### 7.2. Rendimiento
+- [ ] Inserción de artículos completos < 2 segundos
+- [ ] Búsquedas vectoriales < 1 segundo
+- [ ] Consultas complejas < 500ms
+- [ ] Refresco de vistas < 5 minutos
+
+### 7.3. Integridad
+- [ ] Todas las foreign keys válidas
+- [ ] Constraints de validación funcionando
+- [ ] Particionamiento operativo
+- [ ] Índices optimizados
+
+### 7.4. Operaciones
+- [ ] Scripts de backup automático
+- [ ] Monitoreo de salud funcional
+- [ ] Alertas configuradas
+- [ ] Documentación completa
+
+## 8. Riesgos y Mitigaciones
+
+### 8.1. Riesgos Técnicos
+- **Límites de Supabase**: Monitoreo continuo de recursos
+- **Complejidad de esquema**: Implementación por fases
+- **Rendimiento de particiones**: Testing extensivo
+- **Consistencia de vistas**: Validación automática
+
+### 8.2. Riesgos Operacionales
+- **Tiempo de desarrollo**: Buffer del 20% en estimaciones
+- **Curva de aprendizaje**: Documentación detallada
+- **Dependencias externas**: Planes de contingencia
+- **Escalabilidad**: Monitoreo proactivo
+
+## 9. Métricas de Éxito
+
+### 9.1. Métricas Técnicas
+- Tiempo de respuesta promedio < 500ms
+- Throughput > 100 operaciones/segundo
+- Disponibilidad > 99.5%
+- Uso de espacio < 80% del límite
+
+### 9.2. Métricas de Negocio
+- Reducción del 50% en tiempo de consulta manual
+- Aumento del 30% en detección de conexiones
+- Mejora del 40% en precisión de sugerencias
+- Soporte para 10x más volumen de datos
+
+## 10. Cronograma y Recursos
+
+### 10.1. Timeline
+- **Semanas 1-2**: Infraestructura base
+- **Semanas 3-4**: Características avanzadas  
+- **Semanas 5-6**: Optimización
+- **Semanas 7-8**: Testing y validación
+- **Total**: 8 semanas para implementación completa
+
+### 10.2. Recursos Requeridos
+- 1 Database Engineer (tiempo completo)
+- 1 Backend Developer (medio tiempo)
+- 1 DevOps Engineer (consulta)
+- Instancia Supabase Pro o superior
+
+## 11. Entregables
+
+### 11.1. Código y Scripts
+- Scripts de migración completos
+- Funciones PL/pgSQL documentadas
+- Tests automatizados
+- Scripts de mantenimiento
+
+### 11.2. Documentación
+- Manual de administración
+- Guía de troubleshooting
+- Documentación de API
+- Runbooks operacionales
+
+### 11.3. Monitoreo
+- Dashboards de métricas
+- Alertas configuradas
+- Reportes de rendimiento
+- Documentación de SLAs
+
+## 12. Aprobaciones Requeridas
+
+- [ ] Arquitecto de Soluciones: Diseño técnico
+- [ ] Product Owner: Requerimientos funcionales
+- [ ] DevOps Lead: Estrategia de despliegue
+- [ ] Security Team: Revisión de seguridad

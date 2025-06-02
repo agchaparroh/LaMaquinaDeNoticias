@@ -16,6 +16,7 @@ supabase==2.4.6  # Stable version
 
 # Date and time handling
 python-dateutil==2.9.0
+dateparser==1.2.0  # Advanced date parsing for complex formats
 
 # Data validation
 pydantic==2.10.3

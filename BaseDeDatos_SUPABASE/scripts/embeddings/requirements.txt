@@ -1,0 +1,25 @@
+# Dependencias para generación de embeddings vectoriales
+# Tarea 26: Generate Vector Embeddings for All Existing Database Records
+
+# Modelos de embeddings
+sentence-transformers>=2.2.0
+
+# Procesamiento numérico
+numpy>=1.21.0
+
+# Base de datos PostgreSQL
+psycopg2-binary>=2.9.0
+
+# Utilidades
+python-dotenv>=0.19.0
+tqdm>=4.64.0
+dataclasses>=0.6
+
+# Logging mejorado (opcional)
+coloredlogs>=15.0
+
+# Validación y testing
+pytest>=7.0.0
+
+# Conexión a Supabase (opcional, usar psycopg2 es suficiente)
+# supabase>=1.0.0

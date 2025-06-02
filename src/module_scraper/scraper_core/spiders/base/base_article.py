@@ -15,7 +15,7 @@ from scrapy.http import Response, Request
 
 from scrapy.utils.misc import arg_to_iter
 from scraper_core.items import ArticuloInItem
-from ..itemloaders import ArticuloInItemLoader
+from scraper_core.itemloaders import ArticuloInItemLoader
 from scraper_core.utils.logging_utils import LoggerMixin, log_exceptions, SpiderLoggerAdapter
 
 

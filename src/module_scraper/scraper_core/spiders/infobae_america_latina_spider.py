@@ -26,28 +26,14 @@ Notas Esenciales:
 import scrapy
 from urllib.parse import urljoin
 from datetime import datetime
-import dateparser # Para parsear fechas de forma flexible
 
 from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst, MapCompose, Join
 from w3lib.html import remove_tags
 
-# Importar el Item desde la estructura de proyecto de maquina_spiders
-# Esta ruta asume que el spider generado estará en un nivel que pueda ver 'maquina_spiders_project'
-# o que el PYTHONPATH está configurado adecuadamente al ejecutarlo dentro de este entorno.
-from maquina_spiders_project.items import ArticuloInItem
-
-def limpiar_html_y_espacios(texto):
-    if texto is None:
-        return ''
-    return remove_tags(texto).strip()
-
-def parse_fecha_iso(fecha_str):
-    if fecha_str:
-        dt = dateparser.parse(fecha_str)
-        if dt:
-            return dt.isoformat()
-    return None
+# Importar desde la estructura correcta del proyecto
+from scraper_core.items import ArticuloInItem
+from scraper_core.itemloaders import ArticuloInItemLoader
 
 class InfobaeAmericaLatinaSpider(scrapy.Spider):
     name = 'infobae_america_latina_spider'
@@ -90,26 +76,23 @@ class InfobaeAmericaLatinaSpider(scrapy.Spider):
     def parse_article(self, response):
         self.logger.debug(f"Procesando artículo: {response.url}")
         
-        loader = ItemLoader(item=ArticuloInItem(), response=response)
+        loader = ArticuloInItemLoader(item=ArticuloInItem(), response=response)
 
-        loader.add_css('titular', 'h1.article-headline::text', MapCompose(limpiar_html_y_espacios), TakeFirst())
-        loader.add_xpath('titular', '//meta[@property="og:title"]/@content', MapCompose(limpiar_html_y_espacios), TakeFirst())
+        # Simplificar usando el ItemLoader centralizado
+        loader.add_css('titular', 'h1.article-headline::text')
+        loader.add_xpath('titular', '//meta[@property="og:title"]/@content')
 
-        contenido_selectors_css = [
-            'div.article-body p',
-            'div.article-body div[data-testid="richtext-paragraph"]'
-        ]
-        loader.add_css('contenido_texto', ', '.join(contenido_selectors_css), MapCompose(limpiar_html_y_espacios), Join(separator='\n'))
+        loader.add_css('contenido_texto', 'div.article-body p, div.article-body div[data-testid="richtext-paragraph"]')
         
-        loader.add_css('fecha_publicacion', 'time.article-date::attr(datetime)', MapCompose(parse_fecha_iso), TakeFirst())
-        loader.add_xpath('fecha_publicacion', '//meta[@property="article:published_time"]/@content', MapCompose(parse_fecha_iso), TakeFirst())
+        loader.add_css('fecha_publicacion', 'time.article-date::attr(datetime)')
+        loader.add_xpath('fecha_publicacion', '//meta[@property="article:published_time"]/@content')
 
-        loader.add_xpath('autor', '//meta[@property="article:author"]/@content', MapCompose(limpiar_html_y_espacios), TakeFirst())
-        loader.add_xpath('autor', '//meta[@name="author"]/@content', MapCompose(limpiar_html_y_espacios), TakeFirst())
+        loader.add_xpath('autor', '//meta[@property="article:author"]/@content')
+        loader.add_xpath('autor', '//meta[@name="author"]/@content')
 
         loader.add_value('url', response.url)
         loader.add_value('fuente', self.name)
-        loader.add_xpath('seccion', '//meta[@property="article:section"]/@content', MapCompose(limpiar_html_y_espacios), TakeFirst())
+        loader.add_xpath('seccion', '//meta[@property="article:section"]/@content')
 
         item = loader.load_item()
 

@@ -4,9 +4,9 @@ from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst, MapCompose
 from w3lib.html import remove_tags
 
-# Asumiendo que items.py está en maquina_spiders_project, como indica la plantilla base
-# y la memoria del proyecto.
-from maquina_spiders_project.items import ArticuloInItem
+# Importar desde la estructura correcta del proyecto
+from scraper_core.items import ArticuloInItem
+from scraper_core.itemloaders import ArticuloInItemLoader
 
 class ElpaisLatinoamericaSpider(scrapy.Spider):
     """
@@ -76,47 +76,30 @@ class ElpaisLatinoamericaSpider(scrapy.Spider):
         """
         self.logger.info(f'Parseando artículo: {response.url}')
 
-        loader = ItemLoader(item=ArticuloInItem(), response=response)
+        loader = ArticuloInItemLoader(item=ArticuloInItem(), response=response)
 
-        # Procesadores comunes
-        # Ayudante para limpiar HTML, espacios y tomar el primer elemento no vacío.
-        def limpiar_texto_y_tomar_primero(value):
-            if isinstance(value, list):
-                value = ' '.join(value) # Unir si es una lista de segmentos de texto
-            cleaned_value = remove_tags(str(value)).strip()
-            return cleaned_value if cleaned_value else None
+        # Titular: usar selectores múltiples, el ItemLoader manejará la limpieza
+        loader.add_css('titular', 'h1.a_t::text')
+        loader.add_xpath('titular', '//h1[contains(@class, "a_t")]/text()')
+        loader.add_css('titular', 'h1[itemprop="headline"]::text')
 
-        # Ayudante para limpiar párrafos de HTML, espacios, y unirlos con doble salto de línea.
-        def limpiar_parrafos_y_unir(values):
-            cleaned_paragraphs = [remove_tags(p).strip() for p in values if remove_tags(p).strip()]
-            return '\n\n'.join(cleaned_paragraphs) if cleaned_paragraphs else None
+        # Contenido_texto: el ItemLoader unirá y limpiará automáticamente
+        loader.add_css('contenido_texto', 'div.a_c.clearfix p')
+        loader.add_xpath('contenido_texto', '//div[contains(@class, "a_c")]//p')
+        loader.add_css('contenido_texto', 'div[itemprop="articleBody"] p')
 
-        # Titular
-        # Titular: Selector principal 'h1.a_t::text'
-        loader.add_css('titular', 'h1.a_t::text', MapCompose(limpiar_texto_y_tomar_primero), TakeFirst())
-        loader.add_xpath('titular', '//h1[contains(@class, "a_t")]/text()', MapCompose(limpiar_texto_y_tomar_primero), TakeFirst()) # Fallback
-        loader.add_css('titular', 'h1[itemprop="headline"]::text', MapCompose(limpiar_texto_y_tomar_primero), TakeFirst()) # Otro fallback
+        # Fecha_publicacion: el ItemLoader parseara las fechas automáticamente
+        loader.add_css('fecha_publicacion', 'div.a_md_f a time::attr(datetime)')
+        loader.add_css('fecha_publicacion', 'span.a_ti._df.a_ti_df time::attr(datetime)')
+        loader.add_xpath('fecha_publicacion', '//meta[@property="article:published_time"]/@content')
+        loader.add_xpath('fecha_publicacion', '//meta[@name="date"]/@content')
+        loader.add_css('fecha_publicacion', 'time[itemprop="datePublished"]::attr(datetime)')
 
-        # Contenido_texto
-        # Contenido_texto: Selector principal 'div.a_c.clearfix p' para los párrafos del cuerpo.
-        loader.add_css('contenido_texto', 'div.a_c.clearfix p', limpiar_parrafos_y_unir)
-        loader.add_xpath('contenido_texto', '//div[contains(@class, "a_c")]//p', limpiar_parrafos_y_unir) # Fallback
-        loader.add_css('contenido_texto', 'div[itemprop="articleBody"] p', limpiar_parrafos_y_unir) # Otro fallback
-
-        # Fecha_publicacion
-        # Fecha_publicacion: Selector principal 'div.a_md_f a time::attr(datetime)' para el timestamp.
-        loader.add_css('fecha_publicacion', 'div.a_md_f a time::attr(datetime)', MapCompose(str.strip, lambda x: x if x else None), TakeFirst())
-        loader.add_css('fecha_publicacion', 'span.a_ti._df.a_ti_df time::attr(datetime)', MapCompose(str.strip, lambda x: x if x else None), TakeFirst()) 
-        loader.add_xpath('fecha_publicacion', '//meta[@property="article:published_time"]/@content', MapCompose(str.strip, lambda x: x if x else None), TakeFirst())
-        loader.add_xpath('fecha_publicacion', '//meta[@name="date"]/@content', MapCompose(str.strip, lambda x: x if x else None), TakeFirst())
-        loader.add_css('fecha_publicacion', 'time[itemprop="datePublished"]::attr(datetime)', MapCompose(str.strip, lambda x: x if x else None), TakeFirst())
-
-        # Autor
-        # Autor: Selector principal 'div.a_a_txt span.a_a_n a::text' para el nombre del autor.
-        loader.add_css('autor', 'div.a_a_txt span.a_a_n a::text', MapCompose(limpiar_texto_y_tomar_primero), TakeFirst())
-        loader.add_css('autor', 'div.a_a_txt span.a_a_n::text', MapCompose(limpiar_texto_y_tomar_primero), TakeFirst()) # Si no es un enlace
-        loader.add_xpath('autor', '//meta[@name="author"]/@content', MapCompose(limpiar_texto_y_tomar_primero), TakeFirst())
-        loader.add_css('autor', 'span[itemprop="name"]::text', MapCompose(limpiar_texto_y_tomar_primero), TakeFirst()) # Microdatos
+        # Autor: el ItemLoader limpiará automáticamente
+        loader.add_css('autor', 'div.a_a_txt span.a_a_n a::text')
+        loader.add_css('autor', 'div.a_a_txt span.a_a_n::text')
+        loader.add_xpath('autor', '//meta[@name="author"]/@content')
+        loader.add_css('autor', 'span[itemprop="name"]::text')
 
         loader.add_value('url', response.url)
         loader.add_value('fuente', response.meta.get('fuente', self.name))
