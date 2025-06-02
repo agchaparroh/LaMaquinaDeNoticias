@@ -1,0 +1,150 @@
+<context>
+# Overview  
+Module Connector es un componente crítico del sistema "La Máquina de Noticias" que actúa como puente entre el module_scraper y el module_pipeline. Su función principal es monitorizar un directorio específico donde el scraper deposita archivos comprimidos (.json.gz) con datos de artículos extraídos, procesarlos y enviarlos de forma confiable a la API del module_pipeline.
+
+El sistema debe ser robusto, simple y directo - sin piezas móviles innecesarias. Su éxito se mide por su capacidad de procesar archivos de manera continua sin fallos, validar datos correctamente y gestionar el ciclo de vida de archivos eficientemente.
+
+# Core Features  
+## 1. Monitorización de Archivos
+- Vigila continuamente el directorio SCRAPER_OUTPUT_DIR usando polling simple (cada POLLING_INTERVAL segundos)
+- Detecta automáticamente nuevos archivos .json.gz depositados por el module_scraper
+- Mueve inmediatamente archivos detectados a PIPELINE_PENDING_DIR para evitar procesamiento duplicado
+
+## 2. Procesamiento de Archivos
+- Lee y descomprime archivos .json.gz usando gzip
+- Parsea contenido JSON (objeto único o lista de objetos)
+- Valida cada artículo contra el modelo ArticuloInItem usando Pydantic
+- Asigna IDs y timestamps por defecto cuando falten
+
+## 3. Comunicación con Pipeline API
+- Envía cada artículo validado individualmente al endpoint /procesar del module_pipeline
+- Usa HTTP POST con formato JSON: {"articulo": {...}}
+- Implementa reintentos robustos con tenacity (backoff exponencial)
+- Maneja respuestas 202 (éxito), 400 (error validación), 500 (error interno), 503 (no disponible)
+
+## 4. Gestión de Ciclo de Vida de Archivos
+- Mueve archivos a PIPELINE_COMPLETED_DIR si al menos un artículo se envió exitosamente
+- Mueve archivos a PIPELINE_ERROR_DIR si todos los artículos fallaron o hay errores irrecuperables
+- Registra todas las operaciones con logging estructurado usando loguru
+
+# User Experience  
+## Usuario Principal: Sistema Automatizado
+- No hay interfaz gráfica - es un proceso de background
+- Interacción principal a través de logs y estado de directorios
+- Los operadores del sistema monitorean a través de logs y métricas de archivos procesados
+
+## Flujo de Operación
+1. Sistema inicia y comienza polling del directorio de entrada
+2. Al detectar archivo nuevo, lo procesa inmediatamente
+3. Logs indican progreso: archivo detectado → movido → procesado → artículos enviados → archivo movido a destino final
+4. Operadores pueden verificar estado monitoreando directorios completed/error y logs
+</context>
+<PRD>
+# Technical Architecture  
+## Componentes del Sistema
+- **main.py**: Script principal con toda la lógica de procesamiento
+- **models.py**: Definición del modelo ArticuloInItem usando Pydantic
+- **config.py**: Configuración centralizada con variables de entorno
+
+## Stack Tecnológico Definido
+- Python 3.8+ con asyncio para operaciones asíncronas
+- aiohttp para cliente HTTP asíncrono
+- tenacity para reintentos robustos
+- loguru para logging estructurado
+- pydantic para validación de datos
+- gzip + json para manejo de archivos comprimidos
+- shutil para operaciones de archivos
+- python-dotenv para variables de entorno
+
+## Modelo de Datos
+ArticuloInItem con campos obligatorios: titular, medio, pais_publicacion, tipo_medio, fecha_publicacion, contenido_texto
+
+## API Integration
+- Endpoint: {PIPELINE_API_URL}/procesar
+- Método: POST
+- Headers: Content-Type: application/json
+- Body: {"articulo": {objeto_ArticuloInItem}}
+- Respuestas esperadas: 202 (éxito), 400 (error validación), 500 (error interno), 503 (no disponible)
+
+## Infraestructura
+- Directorios de trabajo: scraper_output/pending, pipeline_input/pending, pipeline_input/completed, pipeline_input/error
+- Variables de entorno para todas las configuraciones
+- Deployment via Docker con volúmenes compartidos
+
+# Development Roadmap  
+## Implementación Directa (Sin Fases MVP)
+El desarrollo sigue un orden lógico secuencial para implementar exactamente lo especificado en la documentación técnica:
+
+### 1. Setup y Estructura Base
+- Crear estructura de archivos del proyecto
+- Configurar requirements.txt y variables de entorno
+- Setup de logging con loguru
+
+### 2. Modelos y Configuración
+- Implementar ArticuloInItem en models.py exactamente como especificado
+- Crear config.py para cargar todas las variables de entorno
+- Validar que la configuración cargue correctamente
+
+### 3. Core Logic Implementation
+- Implementar función monitor_directory() con polling simple
+- Implementar función process_file() para leer/parsear/validar archivos .json.gz
+- Implementar función send_to_pipeline() con aiohttp y tenacity para reintentos
+- Implementar función move_file() para gestión de archivos processed/error
+- Crear loop principal async main()
+
+### 4. Integración y Testing
+- Probar flujo completo usando archivo de ejemplo existente (ejemplo_articulo.json)
+- Verificar movimiento correcto de archivos entre directorios
+- Validar comunicación con mock del Pipeline API
+
+### 5. Dockerización y Deployment
+- Crear Dockerfile básico para containerización
+- Configurar variables de entorno para deployment
+- Testing final del container
+
+# Logical Dependency Chain
+1. **Setup Base**: Estructura de proyecto y configuración - sin esto no se puede desarrollar nada
+2. **Modelos**: ArticuloInItem debe estar definido antes de poder validar datos
+3. **Configuración**: Variables de entorno deben cargarse antes de usar paths y URLs
+4. **File Monitor**: Debe funcionar antes de poder procesar archivos
+5. **File Processing**: Debe leer/parsear antes de poder enviar datos
+6. **API Client**: Debe enviar datos antes de poder gestionar ciclo de vida de archivos
+7. **File Management**: Movimiento de archivos es el paso final del flujo
+8. **Main Loop**: Orquesta todo el flujo una vez que todos los componentes están listos
+9. **Docker**: Packaging final una vez que la aplicación funciona
+
+# Risks and Mitigations  
+## Riesgos Técnicos Identificados
+- **Over-engineering**: Evitado mediante implementación directa según especificación
+- **Complejidad innecesaria**: Mitigado manteniendo todo en archivos simples sin abstracciones
+- **Dependencias frágiles**: Resuelto usando solo las librerías especificadas en requirements.txt
+- **Errors en parsing de archivos**: Manejado con validación Pydantic y logging detallado
+- **Fallos de red con Pipeline API**: Cubierto por tenacity con backoff exponencial
+- **Problemas de concurrencia**: Evitado con diseño single-threaded usando asyncio
+
+## Resource Constraints
+- Desarrollo directo sin MVP reduce tiempo de desarrollo
+- Un solo desarrollador puede completar implementación en 1-2 días intensivos
+- Testing manual suficiente usando archivo ejemplo existente
+
+# Appendix  
+## Especificación Técnica de Referencia
+La implementación debe seguir EXACTAMENTE lo descrito en "Explicación técnica - module_connector.md":
+- Flujo de procesamiento interno (sección 4)
+- Estructura de ArticuloInItem (sección Input)
+- Contrato API del Pipeline (sección Output)
+- Variables de entorno (sección 7)
+
+## Archivos de Referencia Existentes
+- docs/examples/ejemplo_articulo.json: Archivo de prueba para testing
+- requirements.txt: Dependencias exactas a usar
+- Documentación técnica completa ya disponible
+
+## Criterios de Terminación
+Sistema completo cuando:
+- Lee archivos .json.gz del directorio de entrada
+- Valida artículos con Pydantic
+- Envía artículos al Pipeline API exitosamente
+- Mueve archivos a directorios apropiados según resultado
+- Logs todas las operaciones claramente
+- Funciona como proceso continuo de background

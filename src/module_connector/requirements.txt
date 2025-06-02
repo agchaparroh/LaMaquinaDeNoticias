@@ -1,7 +1,23 @@
+# HTTP client for async API calls
 aiohttp==3.12.6
+
+# Robust retry logic
 tenacity==9.1.2
+
+# Logging
 loguru==0.7.3
+
+# Environment variables
 python-dotenv==1.1.0
+
+# Data validation
 pydantic==2.11.5
+
+# Date parsing utilities
+python-dateutil==2.8.2
+
+# Error monitoring (optional)
 sentry-sdk==2.29.1
+
+# File system monitoring (for future use)
 watchdog==6.0.0
