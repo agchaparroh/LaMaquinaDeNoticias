@@ -1,0 +1,9 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.3 # [standard] para dependencias opcionales como websockets y cython
+groq==0.9.0
+supabase==2.15.2
+pydantic==2.11.5
+loguru==0.7.3
+python-dotenv==1.1.0
+spacy==3.8.7 # Si USE_SPACY_FILTER=true, descargar un modelo, ej: python -m spacy download en_core_web_sm
+json-repair-llm==0.2.0
