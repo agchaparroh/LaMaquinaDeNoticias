@@ -325,9 +325,9 @@ El procesamiento se divide en fases secuenciales. Cada fase toma la salida de la
         
     - **Prompt:** [[8 de mayo/La Máquina 2/Prompts/Prompt_3_citas_datos]]
         
-4. **Fase 4: Normalización, Vinculación, Deduplicación L1 y Relaciones (ejecutar_fase_4)**
+4. **Fase 4: Normalización, Vinculación y Relaciones (ejecutar_fase_4)**
     
-    - **Objetivo:** Consolidar la información, vincular entidades a la base de datos, detectar posibles duplicados de hechos y extraer relaciones entre elementos.
+    - **Objetivo:** Consolidar la información, vincular entidades a la base de datos, extraer relaciones entre elementos.
         
     - **Entrada:** Salidas de Fase 2 y Fase 3, contexto del artículo/fragmento.
         
@@ -341,13 +341,13 @@ El procesamiento se divide en fases secuenciales. Cada fase toma la salida de la
             
         - relaciones: Estructura Relaciones (hecho-entidad, hecho-hecho, entidad-entidad, contradicciones) usando IDs temporales.
             
-        - posibles_duplicados: Mapeo de ID temporal de hecho a lista de IDs de hechos existentes en BD que podrían ser duplicados.
+
             
     - **Interacciones:**
         
         - Base de Datos (tabla cache_entidades y RPC buscar_entidad_similar para normalización de entidades).
             
-        - Base de Datos (RPC buscar_posibles_duplicados_lote para deduplicación L1).
+        - Base de Datos (RPC  para consultas especializadas).
             
         - LLM Groq (para extraer relaciones y contradicciones).
             
