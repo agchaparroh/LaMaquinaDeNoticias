@@ -1,3 +1,5 @@
+# 🔌 Interfaz API
+
 # Especificación de la API REST del `module_pipeline`
 
 ## 1. Información General
@@ -5,8 +7,8 @@
 El `module_pipeline` debe exponer una API REST usando **FastAPI** que permita recibir y procesar artículos de noticias y fragmentos de documentos.
 
 **Configuración del servidor:**
-- **Host:** `0.0.0.0` (configurable via `API_HOST`)
-- **Puerto:** `8000` (configurable via `API_PORT`) 
+- **Host:** `0.0.0.0` (configurable mediante `API_HOST`)
+- **Puerto:** `8000` (configurable mediante `API_PORT`) 
 - **Framework:** FastAPI
 - **Servidor ASGI:** Uvicorn
 
@@ -175,20 +177,21 @@ El `module_pipeline` debe exponer una API REST usando **FastAPI** que permita re
 
 El pipeline debe implementar **procesamiento asíncrono** con las siguientes características:
 
-1. **Aceptación inmediata:** Los endpoints `/procesar` y `/procesar_fragmento` deben:
-   - Validar la entrada de forma síncrona
-   - Enviar el elemento a una cola de procesamiento
-   - Responder inmediatamente con **202 Accepted**
+### 3.1. Aceptación Inmediata
+Los endpoints `/procesar` y `/procesar_fragmento` deben:
+- Validar la entrada de forma síncrona
+- Enviar el elemento a una cola de procesamiento
+- Responder inmediatamente con **202 Accepted**
 
-2. **Cola de procesamiento:** 
-   - Implementar una cola asíncrona (recomendado: `asyncio.Queue`)
-   - Configurar workers concurrentes para procesar elementos de la cola
-   - Número de workers configurable via `WORKER_COUNT` (default: 3)
-   - Tamaño máximo de cola configurable via `QUEUE_MAX_SIZE` (default: 100)
+### 3.2. Cola de Procesamiento
+- Implementar una cola asíncrona (recomendado: `asyncio.Queue`)
+- Configurar workers concurrentes para procesar elementos de la cola
+- Número de workers configurable mediante `WORKER_COUNT` (default: 3)
+- Tamaño máximo de cola configurable mediante `QUEUE_MAX_SIZE` (default: 100)
 
-3. **Manejo de sobrecarga:**
-   - Si la cola está llena, responder con **503 Service Unavailable**
-   - El cliente (module_connector) está configurado para reintentar automáticamente
+### 3.3. Manejo de Sobrecarga
+- Si la cola está llena, responder con **503 Service Unavailable**
+- El cliente (module_connector) está configurado para reintentar automáticamente
 
 ## 4. Variables de Entorno Requeridas
 
@@ -236,12 +239,12 @@ if __name__ == "__main__":
 - Usar **Pydantic** para validar los modelos de entrada
 - **Campos requeridos** deben validarse estrictamente
 - **Errores de validación** deben retornar 400 con detalles específicos del error
-- **Contenido de texto** debe tener límites mínimos y máximos (configurables via `MIN_CONTENT_LENGTH`, `MAX_CONTENT_LENGTH`)
+- **Contenido de texto** debe tener límites mínimos y máximos (configurables mediante `MIN_CONTENT_LENGTH`, `MAX_CONTENT_LENGTH`)
 
 ## 8. Integración con el module_connector
 
 El `module_connector` está configurado para:
-- **URL base:** `http://localhost:8001` (configurable via `PIPELINE_API_URL`)
+- **URL base:** `http://localhost:8001` (configurable mediante `PIPELINE_API_URL`)
 - **Endpoint usado:** `POST /procesar`
 - **Reintentos:** Máximo 3 intentos con backoff exponencial
 - **Timeout:** 30 segundos por request
