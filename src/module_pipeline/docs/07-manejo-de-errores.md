@@ -1,54 +1,161 @@
 # ⚠️ Manejo de Errores
 
-# Sistema Integral de Manejo de Errores del `module_pipeline`
+# Sistema Robusto de Manejo de Errores del `module_pipeline`
 
-## 1. Errores por Fase de Procesamiento
+## 1. Principios de Diseño Obligatorios
 
-### 1.1. Fase 1 (Triaje/Preprocesamiento)
-- **Descarte incorrecto:** Artículos relevantes marcados como irrelevantes o viceversa
-- **Errores de detección de idioma:** Identificación incorrecta del idioma del contenido
-- **Traducción fallida:** Fallos en el proceso de traducción automática
-- **Evaluación de relevancia:** Fallo en la evaluación de relevancia por parte del LLM
+El desarrollador DEBE implementar el `module_pipeline` siguiendo estos principios:
 
-### 1.2. Fases 2/3/4 (Procesamiento LLM)
-- **Errores de API de Groq:** Timeouts, rate limits, errores internos del servicio
-- **Respuestas del LLM problemáticas:** Respuestas vacías, incompletas o en formato JSON inválido
-- **Fallos de parsing:** Errores en la limpieza/parseo del JSON (`json_cleaner`)
-- **Errores de validación Pydantic:** LLM no sigue la estructura esperada de datos
-- **Extracción incompleta:** Información incorrecta o incompleta extraída por el LLM
+- **Regla del "Nunca Fallar Completamente"**: Si una fase falla, el pipeline debe continuar con datos por defecto
+- **Regla de "Configuración Mínima"**: El sistema debe funcionar solo con GROQ_API_KEY, SUPABASE_URL y SUPABASE_KEY
+- **Regla de "Un Artículo = Una Transacción"**: El fallo de un artículo no debe afectar el procesamiento de otros
+- **Regla de "Logs Accionables"**: Cada error debe loggear suficiente información para ser debuggeado
+- **Regla de "Degradación Visible"**: Cuando se usan fallbacks, debe quedar registrado claramente
 
-### 1.3. Fase 4 (Normalización/Vinculación)
-- **Errores de base de datos:** Fallos al consultar `cache_entidades` o RPCs de búsqueda
-- **Identificación de entidades:** Falsos positivos/negativos en entidades existentes
-- **Detección de duplicados:** Fallo en la identificación de posibles duplicados
+## 2. Estrategia de Fallbacks por Fase
 
-### 1.4. Fase 4.5 (Evaluación ML)
-- **Carga del modelo ML:** Errores en la carga del modelo de machine learning
-- **Consulta de tendencias:** Fallo en la consulta a `tendencias_contexto_diario`
-- **Características malformadas:** Datos de entrada fuera del formato esperado del modelo
-- **Predicciones inválidas:** Valores de importancia fuera del rango esperado
+### Instrucciones Específicas por Fase:
 
-### 1.5. Fase 5 (Persistencia)
-- **Errores de RPC:** Fallos en la ejecución de funciones RPC de base de datos
-- **Violación de constraints:** Restricciones de base de datos violadas
-- **Timeouts de base de datos:** Operaciones que exceden el tiempo límite
-- **Errores de transacción:** Fallos en la atomicidad de las operaciones
+**Fase 1 (Triaje):**
+- Si Groq falla → Aceptar artículo automáticamente (no descartar)
+- Si traducción falla → Procesar en idioma original
+- Si detección de idioma falla → Asumir español
+- NUNCA descartar un artículo por fallo técnico
 
-## 2. Errores Generales del Sistema
+**Fase 2 (Elementos Básicos):**
+- Si Groq falla → Crear un hecho básico usando el titular del artículo
+- Si extracción de entidades falla → Crear entidad genérica con el nombre del medio
+- Si JSON es inválido → Un reintento, luego usar datos mínimos
 
-### 2.1. Problemas de Rendimiento
-- **Cuello de botella:** Velocidad de procesamiento limitada por API de Groq y número de workers
-- **Saturación de cola:** Avalancha de artículos que llena la cola de procesamiento
-- **Consumo excesivo de API:** Alto consumo de tokens/créditos de la API de Groq
+**Fase 3 (Citas y Datos):**
+- Si Groq falla → Continuar sin citas ni datos cuantitativos (no es error crítico)
+- Si no se extraen citas → Continuar normalmente
 
-### 2.2. Errores de Sistema
-- **Excepciones no controladas:** Errores inesperados en cualquier fase
-- **Gestión de estado inconsistente:** Inconsistencias cuando un artículo falla a mitad del pipeline
-- **Problemas de conectividad:** Fallos de red con servicios externos
+**Fase 4 (Relaciones y Normalización):**
+- Si búsqueda de entidades en BD falla → Crear todas las entidades como nuevas
+- Si extracción de relaciones falla → Continuar sin relaciones
 
-## 3. Sistema de Registro de Errores
+**Fase 4.5 (Importancia):**
+- Si modelo ML no existe → Usar importancia por defecto (valor: 5)
+- Si consulta a tendencias_contexto_diario falla → Usar importancia por defecto
 
-### 3.1. Tabla `articulos_error_persistente`
+**Fase 5 (Persistencia):**
+- Si RPC completa falla → Guardar en tabla de errores para revisión manual
+- NUNCA perder datos completamente
+
+## 3. Configuración Robusta
+
+### Variables de Entorno Obligatorias:
+
+**Mínimo Absoluto (3 variables):**
+- `GROQ_API_KEY` (sin default, requerida)
+- `SUPABASE_URL` (sin default, requerida)  
+- `SUPABASE_KEY` (sin default, requerida)
+
+**Con Defaults Seguros:**
+- `API_TIMEOUT=60` (generoso para evitar timeouts)
+- `MAX_RETRIES=2` (máximo)
+- `IMPORTANCE_DEFAULT=5` (valor neutro)
+- `MODEL_ID=llama-3.1-8b-instant`
+- `WORKER_COUNT=3`
+
+### Carga de Recursos Opcional:
+
+**Modelo ML de Importancia:**
+- Si no existe → Usar importancia por defecto
+- Si falla la carga → Loggear warning y continuar
+
+**Prompts Externos:**
+- Si fallan → Usar prompts embebidos en el código
+- Nunca fallar por prompts faltantes
+
+**spaCy (Opcional):**
+- Si no está instalado → Continuar sin spaCy
+- Solo loggear warning
+
+## 4. Manejo de Errores de APIs
+
+### Para Groq API:
+
+**Reintentos Simples:**
+- Máximo 2 reintentos con pausa de 5 segundos
+- Timeout de 60 segundos
+- Después de fallos → Usar fallback inmediatamente
+
+**JSON Malformado:**
+- Usar `json_repair.loads()` antes de parsear
+- Si falla → Un reintento
+- Si falla segunda vez → Fallback
+
+### Para Supabase:
+
+**Reintentos Mínimos:**
+- Solo 1 reintento para errores de conexión
+- 0 reintentos para errores de validación
+- Timeout de 30 segundos
+
+## 5. Validación con Pydantic
+
+### Validación Básica:
+
+**Después de cada fase:**
+- Validar estructura con modelos Pydantic simples
+- Si `ValidationError` → Usar datos por defecto mínimos
+- Loggear qué se reemplazó
+
+**Manejo de Fechas:**
+- Usar `python-dateutil` para parsing robusto
+- Si falla → Usar fecha actual
+
+## 6. Logging Simple con Loguru
+
+### Configuración Básica:
+
+**Setup:**
+- Usar solo Loguru (no mixing)
+- Un archivo de log simple: `pipeline.log`
+- Rotación automática por tamaño (10MB)
+
+**Niveles:**
+- **INFO:** Inicio/fin de procesamiento, uso de fallbacks
+- **WARNING:** Fallos que se resuelven con reintentos
+- **ERROR:** Fallos que requieren fallbacks críticos
+
+**Variables:**
+- `LOG_LEVEL=INFO`
+- `LOG_DIR=./logs`
+
+## 7. Persistencia Simple
+
+### Estrategia de 2 Niveles:
+
+**Nivel 1:** Intentar RPC completa (`insertar_articulo_completo`)
+**Nivel 2:** Si falla → Guardar en tabla `pipeline_errores` con:
+- Timestamp
+- Datos JSON completos
+- Motivo del fallo
+
+**No implementar:** Guardado tabla por tabla (demasiado complejo)
+
+## 8. Verificaciones de Arranque
+
+### Al Iniciar el Sistema:
+
+1. **Verificar Supabase** → Si falla, no arrancar (crítico)
+2. **Verificar Groq** → Si falla, loggear warning pero arrancar
+3. **Cargar recursos opcionales** → Si fallan, continuar sin ellos
+
+### Health Check Simple:
+
+Endpoint `/health` debe reportar:
+- Estado: "healthy" o "degraded"
+- Conectividad con Supabase
+- Número de workers activos
+- Tamaño actual de la cola
+
+## 9. Sistema de Registro de Errores
+
+### 8.1. Tabla `articulos_error_persistente`
 
 El sistema registra errores persistentes para facilitar el reintento o la intervención manual.
 
@@ -59,7 +166,7 @@ El sistema registra errores persistentes para facilitar el reintento o la interv
 - Timestamp del error
 - Stack trace completo del error
 
-### 3.2. Campos de Error en Modelos de Entrada
+### 8.2. Campos de Error en Modelos de Entrada
 
 **Para artículos (`ArticuloInItem`):**
 - `error_detalle`: Registra detalles del error durante el procesamiento
@@ -67,29 +174,48 @@ El sistema registra errores persistentes para facilitar el reintento o la interv
 **Para fragmentos (`FragmentoProcesableItem`):**
 - `error_detalle_fragmento`: Registra errores específicos del procesamiento del fragmento
 
-## 4. Sistema de Logging
+## 9. Sistema de Logging y Observabilidad (Usar Loguru)
 
-### 4.1. Configuración de Logging
-**Biblioteca:** Loguru (`0.7.3`)
+### 9.1. Configuración Obligatoria de Loguru:
+
+**Setup Inicial:**
+- Usar Loguru como único sistema de logging (no mixing con logging estándar)
+- Configurar con contexto automático: `logger.bind()` para cada artículo
+- Usar structured logging con campos consistentes
+- Configurar rotación automática de archivos
+
+### 9.2. Niveles de Log Requeridos:
+
+**INFO (con logger.bind()):** 
+- Inicio y fin de procesamiento: `logger.bind(articulo_id=id, medio=medio).info("Procesamiento iniciado")`
+- Tiempo de procesamiento por fase con métricas
+- Uso de fallbacks con contexto: `logger.bind(fase=2, razon="groq_timeout").info("Usando fallback")`
+
+**WARNING:**
+- Fallos de API que se resuelven con reintentos
+- Uso de json-repair para reparar JSON
+- Recursos opcionales no disponibles (modelo ML, spaCy)
+- Circuit breakers activados
+
+**ERROR:**
+- Fallos que requieren fallbacks críticos
+- Errores de persistencia con stack trace completo
+- ValidationError de Pydantic no recuperables
+- Pérdida de datos o procesamiento incompleto
+
+### 9.3. Configuración de Archivos de Log:
+
+- Usar `logger.add()` para configurar rotación por tamaño y tiempo
+- Logs separados por nivel (info.log, error.log)
+- Formato JSON para logs de producción
+- Retención configurable via variable de entorno
 
 **Variables de entorno:**
 - `LOG_LEVEL=INFO`: Nivel de logging del sistema
 - `LOG_DIR=./logs`: Directorio de almacenamiento de logs
 - `ENABLE_DETAILED_LOGGING=false`: Logging detallado para debugging
 
-### 4.2. Tipos de Logs
-
-**Logs de API:**
-- **Requests:** Todas las solicitudes HTTP loggeadas con nivel INFO
-- **Errores de procesamiento:** Loggeados con nivel ERROR
-- **Formato consistente:** Estructura uniforme con el resto del sistema
-
-**Logs de Procesamiento:**
-- **Errores por fase:** Registro detallado de fallos en cada etapa del pipeline
-- **Timeouts y servicios externos:** Fallos de conectividad y tiempo de respuesta
-- **Validación de datos:** Errores en la validación de entrada y salida
-
-### 4.3. Estructura de Logs
+### 9.4. Estructura de Logs
 ```json
 {
   "timestamp": "2024-01-15T10:30:00Z",
@@ -107,9 +233,18 @@ El sistema registra errores persistentes para facilitar el reintento o la interv
 }
 ```
 
-## 5. Monitoreo de Errores
+### 9.5. Métricas Mínimas Requeridas:
 
-### 5.1. Sentry (Opcional)
+- Artículos procesados total
+- Artículos completados exitosamente
+- Artículos completados con fallbacks
+- Artículos fallidos completamente
+- Tiempo promedio de procesamiento
+- Errores por fase (contador)
+
+## 10. Monitoreo de Errores
+
+### 10.1. Sentry (Opcional)
 **Variables de entorno:**
 - `USE_SENTRY=false`: Activación del monitoreo con Sentry
 - `SENTRY_DSN=https://your-sentry-dsn-here@sentry.io/project`: URL de configuración
@@ -120,7 +255,7 @@ El sistema registra errores persistentes para facilitar el reintento o la interv
 - Alertas en tiempo real
 - Análisis de rendimiento
 
-### 5.2. Notificaciones
+### 10.2. Notificaciones
 **Variable de entorno:** `ENABLE_NOTIFICATIONS=false`
 
 **Canales de notificación:**
@@ -128,9 +263,9 @@ El sistema registra errores persistentes para facilitar el reintento o la interv
 - Webhooks para integración con sistemas de monitoreo
 - Alertas de Slack/Discord para el equipo de desarrollo
 
-## 6. Respuestas de Error en la API
+## 11. Respuestas de Error en la API
 
-### 6.1. Error de Validación (400 Bad Request)
+### 11.1. Error de Validación (400 Bad Request)
 ```json
 {
   "error": "validation_error",
@@ -144,7 +279,7 @@ El sistema registra errores persistentes para facilitar el reintento o la interv
 }
 ```
 
-### 6.2. Error Interno (500 Internal Server Error)
+### 11.2. Error Interno (500 Internal Server Error)
 ```json
 {
   "error": "internal_error",
@@ -155,7 +290,7 @@ El sistema registra errores persistentes para facilitar el reintento o la interv
 }
 ```
 
-### 6.3. Servicio No Disponible (503 Service Unavailable)
+### 11.3. Servicio No Disponible (503 Service Unavailable)
 ```json
 {
   "error": "service_unavailable",
@@ -166,9 +301,9 @@ El sistema registra errores persistentes para facilitar el reintento o la interv
 }
 ```
 
-## 7. Gestión de Estado de Procesamiento
+## 12. Gestión de Estado de Procesamiento
 
-### 7.1. Estados de Artículos
+### 12.1. Estados de Artículos
 El `module_pipeline` actualiza el campo `estado_procesamiento` para reflejar el progreso:
 
 **Estados de progreso:**
@@ -181,83 +316,71 @@ El `module_pipeline` actualiza el campo `estado_procesamiento` para reflejar el 
 - `"error_fase4"`, `"error_fase4.5"`, `"error_fase5"`
 - `"error_critico"`
 
-### 7.2. Estados de Fragmentos
+### 12.2. Estados de Fragmentos
 Para fragmentos, se utiliza `estado_procesamiento_fragmento` con estados similares:
 - `"procesando_fase1_fragmento"` hasta `"procesando_fase5_fragmento"`
 - `"completado_fragmento"`
 - `"error_fragmento"`
 
-## 8. Estrategias de Recuperación
+## 13. Comportamiento de Arranque del Sistema
 
-### 8.1. Reintentos Automáticos
+### Verificaciones al Inicio:
+
+1. **Verificar conectividad a Groq** → Si falla, loggear warning pero continuar
+2. **Verificar conectividad a Supabase** → Si falla, fallar el arranque (crítico)
+3. **Cargar modelo ML si existe** → Si falla, loggear warning y continuar sin modelo
+4. **Cargar prompts externos** → Si fallan, usar prompts embebidos
+5. **Verificar spaCy si está habilitado** → Si falla, continuar sin spaCy
+
+### Health Check:
+
+El endpoint `/health` debe reportar:
+- Estado de conectividad con servicios externos
+- Disponibilidad de recursos opcionales (modelo ML, spaCy)
+- Número de workers activos
+- Tamaño actual de la cola
+
+## 14. Testing de Robustez Requerido
+
+### Tests Obligatorios:
+
+**Test de Fallos de Groq:**
+- Simular timeout de Groq → Verificar que usa fallbacks
+- Simular JSON malformado → Verificar reintento y fallback
+- Simular API no disponible → Verificar fallback inmediato
+
+**Test de Fallos de BD:**
+- Simular fallo de RPC → Verificar inserción básica
+- Simular fallo de inserción básica → Verificar guardado en tabla errores
+- Simular desconexión temporal → Verificar recuperación
+
+**Test de Recursos Faltantes:**
+- Arrancar sin modelo ML → Verificar uso de importancia por defecto
+- Arrancar sin prompts externos → Verificar uso de prompts embebidos
+- Arrancar sin spaCy → Verificar funcionamiento sin filtro adicional
+
+**Test de Carga:**
+- Procesar 100 artículos simultáneos → Verificar que todos se procesan
+- Saturar cola → Verificar respuesta 503 adecuada
+- Fallos intermitentes → Verificar que no afectan otros artículos
+
+## 15. Criterios de Aceptación
+
+El sistema se considera robusto cuando:
+
+1. **Funciona con configuración mínima** (solo 3 variables de entorno)
+2. **Nunca pierde artículos** (siempre persiste algo, aunque sea mínimo)
+3. **Se recupera automáticamente** de fallos temporales
+4. **Degrada elegantemente** cuando fallan componentes opcionales
+5. **Proporciona logs útiles** para debugging
+6. **Mantiene métricas claras** sobre su funcionamiento
+7. **Responde a health checks** indicando su estado real
+
+El desarrollador debe implementar estas especificaciones de manera que el sistema sea **confiable en producción** sin requerir intervención manual frecuente.
+
+## 16. Estrategias de Recuperación (Legacy)
+
+### 16.1. Reintentos Automáticos
 
 **Para llamadas a Groq API:**
-- `MAX_RETRIES=3`: Número máximo de reintentos
-- `MAX_WAIT_SECONDS=60`: Tiempo máximo de espera
-- **Backoff exponencial:** Incremento progresivo del tiempo entre reintentos
-- **Circuit breaker:** Suspensión temporal de llamadas tras fallos consecutivos
-
-**Para operaciones de base de datos:**
-- Reintentos automáticos para errores transitorios
-- Verificación de conectividad antes de reintento
-- Timeouts configurables por tipo de operación
-
-### 8.2. Reintentos Manuales
-- **Registro en `articulos_error_persistente`:** Permite reintento manual posterior
-- **Análisis de errores:** Revisión para mejora de prompts y configuración
-- **Intervención manual:** Para casos complejos que requieren ajuste humano
-
-### 8.3. Estrategias de Degradación
-- **Procesamiento parcial:** Guardar resultados parciales en caso de fallo
-- **Modo de recuperación:** Continuar desde la última fase exitosa
-- **Bypass temporal:** Omitir fases problemáticas con flagging apropiado
-
-## 9. Configuración de Directorios y Logs
-
-### 9.1. Estructura de Directorios
-```
-logs/
-├── pipeline.log              # Log principal del pipeline
-├── errors/
-│   ├── fase_1_errors.log     # Errores específicos por fase
-│   ├── fase_2_errors.log
-│   └── ...
-├── api/
-│   ├── requests.log          # Logs de requests HTTP
-│   └── responses.log         # Logs de responses HTTP
-└── external/
-    ├── groq_api.log          # Logs de interacción con Groq
-    └── supabase.log          # Logs de base de datos
-```
-
-### 9.2. Rotación de Logs
-- **Rotación diaria:** Archivos de log rotados cada 24 horas
-- **Retención:** Mantener logs por 30 días por defecto
-- **Compresión:** Logs antiguos comprimidos automáticamente
-- **Limpieza automática:** Eliminación de logs más antiguos que el período de retención
-
-## 10. Métricas de Error
-
-### 10.1. Métricas por Fase
-```json
-{
-  "error_metrics": {
-    "fase_1": {
-      "total_errors": 45,
-      "error_rate": 0.02,
-      "most_common_error": "language_detection_failed"
-    },
-    "fase_2": {
-      "total_errors": 78,
-      "error_rate": 0.04,
-      "most_common_error": "groq_api_timeout"
-    }
-  }
-}
-```
-
-### 10.2. Alertas Automáticas
-- **Tasa de error elevada:** Alerta cuando la tasa supera umbrales configurados
-- **Fallos consecutivos:** Notificación tras múltiples fallos seguidos
-- **Recursos críticos:** Monitoreo de espacio en disco, memoria, etc.
-- **Servicios externos:** Alertas por indisponibilidad de Groq o Supabase
+- `MAX_RETRIES=3`: Núm
