@@ -18,6 +18,7 @@ psycopg2-binary==2.9.10             # Context7: /psycopg/psycopg2
 
 # === VALIDACION Y CONFIGURACION ===
 pydantic==2.11.5                    # Context7: /pydantic/pydantic (Sync: module_connector)
+pydantic-settings==2.3.0            # For BaseSettings in Pydantic V2+
 python-dotenv==1.1.0                # Context7: /theskumar/python-dotenv (Sync: module_connector)
 
 # === HTTP CLIENTS ===
