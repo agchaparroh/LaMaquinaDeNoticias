@@ -847,3 +847,219 @@ def no_retry(func):
         return async_wrapper
     else:
         return wrapper
+
+# FALLBACK LOGGING EVENT EXCEPTIONS
+# ============================================================================
+
+class SpaCyModelLoadFallbackLog(PipelineException):
+    def __init__(self, message, article_id=None, model_name=None, original_exception_message=None):
+        super().__init__(message, error_type=ErrorType.PROCESSING_ERROR,
+                         phase=ErrorPhase.FASE_1_TRIAJE,
+                         details={"model_name": model_name, "reason": "SpaCy model load failed, fallback used", "original_error": original_exception_message},
+                         article_id=article_id)
+
+class GroqRelevanceFallbackLog(PipelineException):
+    def __init__(self, message, article_id=None, text_cleaned_excerpt=None, original_exception_message=None):
+        super().__init__(message, error_type=ErrorType.GROQ_API_ERROR,
+                         phase=ErrorPhase.FASE_1_TRIAJE,
+                         details={"reason": "Groq API for relevance failed, fallback used", "text_cleaned_excerpt": text_cleaned_excerpt, "original_error": original_exception_message},
+                         article_id=article_id)
+
+class GroqTranslationFallbackLogEvent(PipelineException):
+    def __init__(self, message, article_id=None, original_language=None, original_exception_message=None):
+        super().__init__(message, error_type=ErrorType.PROCESSING_ERROR, # This will make format_error_for_logging use WARNING
+                         phase=ErrorPhase.FASE_1_TRIAJE,
+                         details={"reason": "Groq translation failed, using original text", "original_language": original_language, "original_error": original_exception_message},
+                         article_id=article_id)
+
+# ============================================================================
+# FALLBACK HANDLERS
+# ============================================================================
+
+def handle_spacy_load_error_fase1(
+    article_id: Optional[str],
+    model_name: str,
+    exception: Exception
+) -> Dict[str, Any]:
+    """
+    Handles spaCy model loading errors in Fase 1.
+    Returns a partial ResultadoFase1Triaje dictionary.
+    """
+    log_event = SpaCyModelLoadFallbackLog(
+        message=f"Fallback: spaCy model '{model_name}' loading failed for article {article_id}. Preprocessing degraded, article accepted by policy.",
+        article_id=article_id,
+        model_name=model_name,
+        original_exception_message=str(exception)
+    )
+    log_details = format_error_for_logging(log_event, context={"model_name": model_name, "original_exception_type": type(exception).__name__})
+    logger.bind(**log_details).warning(log_details.get("message"))
+
+    # Previous simple logs are replaced by the structured one above.
+    # logger.info(
+    #     f"Usando fallback para Fase 1 (Artículo: {article_id}) debido a fallo en carga de modelo spaCy. Artículo aceptado por política de fallback.",
+    #     article_id=article_id
+    # )
+
+    return {
+        "id_fragmento": article_id,
+        "es_relevante": True,  # Changed to True
+        "decision_triaje": "FALLBACK_ACEPTADO_ERROR_PREPROCESO", # Changed decision
+        "justificacion_triaje": f"Fallo al cargar modelo spaCy '{model_name}': {str(exception)}. Preprocesamiento degradado, artículo aceptado automáticamente.", # Updated justification
+        "categoria_principal": "INDETERMINADO",
+        "palabras_clave_triaje": [],
+        "puntuacion_triaje": 0.0,
+        "confianza_triaje": 0.0,
+        "texto_para_siguiente_fase": "[PREPROCESAMIENTO_FALLIDO]", # Placeholder, original text to be handled by caller
+        "metadatos_specificos_triaje": {
+            "error_type": "SPACY_MODEL_LOAD_FAILURE",
+            "model_name": model_name,
+            "details": str(exception),
+            "message": "SpaCy model loading failed, preprocessing degraded. Article accepted by fallback."
+        }
+    }
+
+def handle_groq_relevance_error_fase1(
+    article_id: Optional[str],
+    text_cleaned: str,
+    exception: Exception
+) -> Dict[str, Any]:
+    """
+    Handles Groq API errors during relevance evaluation in Fase 1.
+    Returns a partial ResultadoFase1Triaje dictionary.
+    Now defaults to accepting the article.
+    """
+    log_event = GroqRelevanceFallbackLog(
+        message=f"Fallback: Groq API relevance evaluation failed for article {article_id}. Accepting article by policy.",
+        article_id=article_id,
+        text_cleaned_excerpt=text_cleaned[:100] if text_cleaned else "N/A",
+        original_exception_message=str(exception)
+    )
+    log_details = format_error_for_logging(log_event, context={"original_exception_type": type(exception).__name__})
+    logger.bind(**log_details).error(log_details.get("message"))
+
+    # Previous simple logs are replaced by the structured one above.
+    # logger.info(
+    #    f"Usando fallback para Fase 1 (Artículo: {article_id}) debido a fallo en API Groq para relevancia. Artículo aceptado por política de fallback.",
+    #    article_id=article_id
+    # )
+
+    return {
+        "id_fragmento": article_id,
+        "es_relevante": True,  # Changed to True
+        "decision_triaje": "FALLBACK_ACEPTADO_ERROR_LLM", # Changed decision
+        "justificacion_triaje": f"Fallo en API Groq para evaluación de relevancia: {str(exception)}. Artículo aceptado automáticamente por política de fallback.", # Updated justification
+        "categoria_principal": "INDETERMINADO",
+        "palabras_clave_triaje": [],
+        "puntuacion_triaje": 0.0, # Neutral default
+        "confianza_triaje": 0.0, # Neutral default
+        "texto_para_siguiente_fase": text_cleaned, # Cleaning was successful
+        "metadatos_specificos_triaje": {
+            "error_type": "GROQ_RELEVANCE_API_FAILURE",
+            "details": str(exception),
+            "message": "Groq API failed during relevance evaluation. Article accepted by fallback."
+        }
+    }
+
+def handle_groq_translation_fallback_fase1(
+    article_id: Optional[str],
+    text_cleaned: str,
+    original_language: str,
+    exception: Optional[Exception]
+) -> Dict[str, Any]:
+    """
+    Handles translation failures in Fase 1 by logging and returning original text.
+    """
+    log_event = GroqTranslationFallbackLogEvent(
+        message=f"Fallback: Groq translation from '{original_language}' failed for article {article_id}. Using original text.",
+        article_id=article_id,
+        original_language=original_language,
+        original_exception_message=str(exception) if exception else "N/A"
+    )
+    log_details = format_error_for_logging(log_event, context={"original_language": original_language, "original_exception_type": type(exception).__name__ if exception else "N/A"})
+    # Logged as WARNING because ErrorType.PROCESSING_ERROR is used, and format_error_for_logging converts this to "WARNING" level in its output.
+    logger.bind(**log_details).warning(log_details.get("message"))
+
+    # Previous simple logs are replaced by the structured one above.
+    # logger.info(
+    #     f"Se usará texto original para Fase 1 (Artículo: {article_id}) debido a fallo en traducción.",
+    #     article_id=article_id
+    # )
+
+    return {
+        "status": "TRANSLATION_FALLBACK_APPLIED",
+        "message": f"Traducción de '{original_language}' falló. Se usará texto original.",
+        "original_text_used": True,
+        "texto_para_siguiente_fase": text_cleaned,
+        "error_details": str(exception) if exception else None,
+        "article_id": article_id
+    }
+
+def handle_generic_phase_error(
+    article_id: Optional[str],
+    phase: ErrorPhase,
+    step_failed: str,
+    exception: Exception
+) -> Dict[str, Any]:
+    """
+    Generic error handler for Fase 2, 3, 4.
+    Returns a generic error structure for that phase's result.
+    """
+    # Use the original exception for logging if it's a PipelineException, otherwise wrap it for context.
+    log_event = exception
+    if not isinstance(exception, PipelineException):
+        # Wrap generic exception for more structured logging if needed, though format_error_for_logging handles basic Exception
+        # For now, we'll let format_error_for_logging handle it.
+        # However, providing phase and article_id to the log context is crucial.
+        pass
+
+    log_message = f"Fallback: Failure in {phase.value} during step '{step_failed}' for article {article_id}. Exception: {str(exception)}"
+
+    # If original exception is not PipelineException, format_error_for_logging will assign default error_type
+    # We can provide more context here.
+    current_context = {
+        "article_id": article_id,
+        "phase_value": phase.value,
+        "step_failed": step_failed,
+        "original_exception_type": type(exception).__name__
+    }
+    if isinstance(exception, PipelineException): # It will already have phase, error_type, details
+        log_details = format_error_for_logging(exception, context=current_context)
+    else: # Generic exception, ensure phase is part of the main log details if possible
+        log_details = format_error_for_logging(
+            ProcessingError(message=str(exception), phase=phase, processing_step=step_failed, article_id=article_id),
+            context=current_context
+        )
+        # Override message if the generic one from ProcessingError is not what we want for the top-level log
+        log_details["message"] = log_message
+
+
+    # The level in log_details will be determined by format_error_for_logging.
+    # We use logger.error() here to ensure it's treated as an error in sinks if not overridden by log_details' level.
+    actual_log_level = log_details.get("level", "ERROR").upper()
+    if actual_log_level == "WARNING":
+        logger.bind(**log_details).warning(log_details.get("message", log_message))
+    else:
+        logger.bind(**log_details).error(log_details.get("message", log_message))
+
+    # Determine error type for the returned dictionary based on exception
+    error_type_str = "PROCESSING_ERROR"
+    if isinstance(exception, GroqAPIError):
+        error_type_str = ErrorType.GROQ_API_ERROR.value
+    elif isinstance(exception, SupabaseRPCError):
+        error_type_str = ErrorType.SUPABASE_ERROR.value
+    elif isinstance(exception, ValidationError): # Pydantic or custom
+        error_type_str = ErrorType.VALIDATION_ERROR.value
+    elif isinstance(exception, PipelineException):
+        error_type_str = exception.error_type.value
+
+    return {
+        "id_fragmento": article_id,
+        "status": "ERROR",
+        "phase_name": phase.value,
+        "error_type": error_type_str,
+        "message": f"Fallo en {phase.value} durante {step_failed}: {str(exception)}.",
+        "step_failed": step_failed,
+        "exception_type": type(exception).__name__,
+        "details": str(exception),
+        "data": {} # Empty data or minimal required structure for that phase's output model
+    }

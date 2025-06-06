@@ -64,6 +64,7 @@ class MetadatosFase1Triaje(BaseModel):
     # Metadatos del procesamiento interno
     texto_limpio_utilizado: Optional[str] = Field(None, description="Texto limpio que se utilizó para la evaluación")
     idioma_detectado_original: Optional[str] = Field(None, description="Idioma detectado del texto original")
+    notas_adicionales: Optional[List[str]] = Field(default=None, description="Notas adicionales sobre el procesamiento, como fallbacks aplicados.")
 
 # --- Modelos de Subtarea 5.2: HechoBase y EntidadBase ---
 class HechoBase(PipelineBaseModel):
