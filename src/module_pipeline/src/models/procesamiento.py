@@ -1,6 +1,11 @@
 """
 Módulo que define los modelos de datos Pydantic para el pipeline de procesamiento de noticias.
 
+SOLUCIÓN IMPLEMENTADA: Preservación de Información Estructurada
+===============================================================
+ANTES: 43 campos específicos del LLM se perdían en metadata_*: Dict[str, Any]
+DESPUÉS: Información preservada al 100% con modelos Pydantic específicos
+
 Patrón de Diseño para Metadatos de Fases:
 -----------------------------------------
 Para asegurar una estructura de datos robusta, validada y clara, los metadatos específicos
@@ -22,6 +27,9 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, model_validator, constr, confloat, HttpUrl
 from typing_extensions import Self # Para el tipo de retorno en model_validator de Pydantic v2
+
+# IMPORTAR MODELOS DE METADATOS ESPECÍFICOS
+from .metadatos import MetadatosHecho, MetadatosEntidad, MetadatosCita, MetadatosDato
 
 # Para asegurar que las fechas sean "aware" (con zona horaria)
 AwareDatetime = datetime
@@ -64,15 +72,24 @@ class MetadatosFase1Triaje(BaseModel):
     # Metadatos del procesamiento interno
     texto_limpio_utilizado: Optional[str] = Field(None, description="Texto limpio que se utilizó para la evaluación")
     idioma_detectado_original: Optional[str] = Field(None, description="Idioma detectado del texto original")
+    notas_adicionales: Optional[List[str]] = Field(default=None, description="Notas adicionales sobre el procesamiento, como fallbacks aplicados.")
 
 # --- Modelos de Subtarea 5.2: HechoBase y EntidadBase ---
+# SOLUCIÓN ARQUITECTÓNICA: IDs Secuenciales para optimización LLM
+# Los IDs secuenciales (1, 2, 3...) son más eficientes para LLMs que UUIDs
+# La conversión a UUIDs/strings se hace solo en PayloadBuilder para persistencia
 class HechoBase(PipelineBaseModel):
-    id_hecho: UUID = Field(default_factory=uuid4, description="Identificador único del hecho.")
+    id_hecho: int = Field(..., description="Identificador secuencial del hecho dentro del fragmento (1, 2, 3...).")
     texto_original_del_hecho: constr(min_length=1) = Field(..., description="Texto literal del hecho extraído.")
     confianza_extraccion: confloat(ge=0.0, le=1.0) = Field(..., description="Nivel de confianza de la extracción del hecho (0.0 a 1.0).")
     offset_inicio_hecho: Optional[int] = Field(default=None, description="Posición inicial del hecho en el texto original del fragmento.", ge=0)
     offset_fin_hecho: Optional[int] = Field(default=None, description="Posición final del hecho en el texto original del fragmento.", ge=0)
-    metadata_hecho: Dict[str, Any] = Field(default_factory=dict, description="Metadatos adicionales sobre el hecho.")
+    
+    # ✅ CAMBIO CRÍTICO: Reemplazar Dict[str, Any] con modelo específico
+    metadata_hecho: MetadatosHecho = Field(
+        default_factory=MetadatosHecho,
+        description="Metadatos específicos del hecho extraído por LLM"
+    )
 
     @model_validator(mode='after')
     def check_offsets_hecho(self) -> Self:
@@ -82,13 +99,18 @@ class HechoBase(PipelineBaseModel):
         return self
 
 class EntidadBase(PipelineBaseModel):
-    id_entidad: UUID = Field(default_factory=uuid4, description="Identificador único de la entidad.")
+    id_entidad: int = Field(..., description="Identificador secuencial de la entidad dentro del fragmento (1, 2, 3...).")
     texto_entidad: constr(min_length=1) = Field(..., description="Texto literal de la entidad extraída.")
     tipo_entidad: constr(min_length=1) = Field(..., description="Tipo de entidad (ej: PERSONA, ORGANIZACION, LUGAR).")
     relevancia_entidad: confloat(ge=0.0, le=1.0) = Field(..., description="Nivel de relevancia de la entidad (0.0 a 1.0).")
     offset_inicio_entidad: Optional[int] = Field(default=None, description="Posición inicial de la entidad en el texto original del fragmento.", ge=0)
     offset_fin_entidad: Optional[int] = Field(default=None, description="Posición final de la entidad en el texto original del fragmento.", ge=0)
-    metadata_entidad: Dict[str, Any] = Field(default_factory=dict, description="Metadatos adicionales sobre la entidad.")
+    
+    # ✅ CAMBIO CRÍTICO: Reemplazar Dict[str, Any] con modelo específico
+    metadata_entidad: MetadatosEntidad = Field(
+        default_factory=MetadatosEntidad,
+        description="Metadatos específicos de la entidad extraída por LLM"
+    )
 
     @model_validator(mode='after')
     def check_offsets_entidad(self) -> Self:
@@ -101,7 +123,7 @@ class EntidadBase(PipelineBaseModel):
 class HechoProcesado(HechoBase):
     id_fragmento_origen: UUID = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo este hecho.")
     id_articulo_fuente: Optional[UUID] = Field(default=None, description="ID del artículo original en Supabase del cual proviene el fragmento (si está disponible).")
-    vinculado_a_entidades: List[UUID] = Field(default_factory=list, description="Lista de IDs de EntidadProcesada relacionadas con este hecho.")
+    vinculado_a_entidades: List[int] = Field(default_factory=list, description="Lista de IDs secuenciales de EntidadProcesada relacionadas con este hecho.")
     prompt_utilizado: Optional[str] = Field(default=None, description="Prompt de Groq API usado para extraer o procesar este hecho.")
     respuesta_llm_bruta: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Respuesta completa (o relevante) del LLM asociada a este hecho.")
 
@@ -115,15 +137,20 @@ class EntidadProcesada(EntidadBase):
 
 # --- Modelos de Subtarea 5.4: CitaTextual y DatosCuantitativos ---
 class CitaTextual(PipelineBaseModel):
-    id_cita: UUID = Field(default_factory=uuid4, description="Identificador único de la cita textual.")
+    id_cita: int = Field(..., description="Identificador secuencial de la cita textual dentro del fragmento.")
     id_fragmento_origen: UUID = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo esta cita.")
     texto_cita: constr(min_length=5) = Field(..., description="El contenido textual exacto de la cita.")
     persona_citada: Optional[str] = Field(default=None, description="Nombre de la persona o entidad que realiza la cita.")
-    id_entidad_citada: Optional[UUID] = Field(default=None, description="ID de la EntidadProcesada (persona/organización) que realiza la cita, si está identificada.")
+    id_entidad_citada: Optional[int] = Field(default=None, description="ID secuencial de la EntidadProcesada (persona/organización) que realiza la cita, si está identificada.")
     offset_inicio_cita: Optional[int] = Field(default=None, description="Posición inicial de la cita en el texto original del fragmento.", ge=0)
     offset_fin_cita: Optional[int] = Field(default=None, description="Posición final de la cita en el texto original del fragmento.", ge=0)
     contexto_cita: Optional[str] = Field(default=None, description="Contexto breve que rodea la cita para mejor entendimiento.")
-    metadata_cita: Dict[str, Any] = Field(default_factory=dict, description="Metadatos adicionales sobre la cita.")
+    
+    # ✅ CAMBIO CRÍTICO: Reemplazar Dict[str, Any] con modelo específico
+    metadata_cita: MetadatosCita = Field(
+        default_factory=MetadatosCita,
+        description="Metadatos específicos de la cita extraída por LLM"
+    )
 
     @model_validator(mode='after')
     def check_offsets_cita(self) -> Self:
@@ -133,7 +160,7 @@ class CitaTextual(PipelineBaseModel):
         return self
 
 class DatosCuantitativos(PipelineBaseModel):
-    id_dato_cuantitativo: UUID = Field(default_factory=uuid4, description="Identificador único del dato cuantitativo.")
+    id_dato_cuantitativo: int = Field(..., description="Identificador secuencial del dato cuantitativo dentro del fragmento.")
     id_fragmento_origen: UUID = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo este dato.")
     descripcion_dato: constr(min_length=3) = Field(..., description="Descripción del dato cuantitativo (ej: 'Número de empleados', 'Porcentaje de aumento').")
     valor_dato: float = Field(..., description="Valor numérico del dato.")
@@ -142,7 +169,12 @@ class DatosCuantitativos(PipelineBaseModel):
     fuente_especifica_dato: Optional[str] = Field(default=None, description="Fuente específica mencionada para este dato dentro del texto, si la hay.")
     offset_inicio_dato: Optional[int] = Field(default=None, description="Posición inicial del dato en el texto original del fragmento.", ge=0)
     offset_fin_dato: Optional[int] = Field(default=None, description="Posición final del dato en el texto original del fragmento.", ge=0)
-    metadata_dato: Dict[str, Any] = Field(default_factory=dict, description="Metadatos adicionales sobre el dato cuantitativo.")
+    
+    # ✅ CAMBIO CRÍTICO: Reemplazar Dict[str, Any] con modelo específico
+    metadata_dato: MetadatosDato = Field(
+        default_factory=MetadatosDato,
+        description="Metadatos específicos del dato cuantitativo extraído por LLM"
+    )
 
     @model_validator(mode='after')
     def check_offsets_dato(self) -> Self:
@@ -162,7 +194,7 @@ class ResultadoFase1Triaje(PipelineBaseModel):
     justificacion_triaje: Optional[str] = Field(default=None, description="Explicación o justificación proporcionada por el LLM para la decisión de relevancia.")
     categoria_principal: Optional[str] = Field(default=None, description="Categoría principal asignada al fragmento durante el triaje.")
     palabras_clave_triaje: List[str] = Field(default_factory=list, description="Lista de palabras clave identificadas en el fragmento durante el triaje.")
-    puntuacion_triaje: Optional[int] = Field(default=None, description="Puntuación numérica asignada por el LLM")
+    puntuacion_triaje: Optional[float] = Field(default=None, description="Puntuación numérica asignada por el LLM")
     confianza_triaje: Optional[confloat(ge=0.0, le=1.0)] = Field(default=None, description="Nivel de confianza del LLM en la decisión de triaje (0.0 a 1.0).")
     
     # Campo para el texto procesado que se pasará a la siguiente fase

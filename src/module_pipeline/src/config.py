@@ -48,6 +48,9 @@ class Settings:
         
         # Logging
         self.LOG_LEVEL = LOG_LEVEL
+        
+        # Debug mode
+        self.DEBUG_MODE = True  # Default True for development
 
 # Instancia global para compatibilidad
 settings = Settings()
