@@ -1,10 +1,14 @@
 import os
 from groq import Groq, APIConnectionError, RateLimitError, APIStatusError
-from tenacity import retry, stop_after_attempt, wait_exponential, RetryError
 from loguru import logger
 
 # Importar configuración usando import relativo
 from ..config import settings
+# Importar excepciones personalizadas y decoradores
+from ..utils.error_handling import (
+    ValidationError, GroqAPIError, ErrorPhase,
+    retry_groq_api
+)
 
 class GroqService:
     """
@@ -21,11 +25,19 @@ class GroqService:
             self.api_key = api_key or settings.GROQ_API_KEY
         except AttributeError:
             logger.error("GROQ_API_KEY no encontrada en settings.py. Asegúrate de que esté definida.")
-            raise ValueError("GROQ_API_KEY es requerida y no se encontró en la configuración.")
+            raise ValidationError(
+                message="GROQ_API_KEY es requerida y no se encontró en la configuración.",
+                validation_errors=[{"field": "GROQ_API_KEY", "error": "Missing in settings"}],
+                phase=ErrorPhase.GENERAL
+            )
         
         if not self.api_key:
             logger.error("GROQ_API_KEY está vacía en la configuración.")
-            raise ValueError("GROQ_API_KEY no puede estar vacía.")
+            raise ValidationError(
+                message="GROQ_API_KEY no puede estar vacía.",
+                validation_errors=[{"field": "GROQ_API_KEY", "error": "Empty value"}],
+                phase=ErrorPhase.GENERAL
+            )
 
         self.client = Groq(api_key=self.api_key)
         
@@ -38,11 +50,7 @@ class GroqService:
         
         logger.info(f"GroqService inicializado. Modelo por defecto: {self.model_id}")
 
-    @retry(
-        wait=wait_exponential(multiplier=1, min=2, max=60), # Espera exponencial: 2s, 4s, ..., hasta 60s
-        stop=stop_after_attempt(5), # Reintentar hasta 5 veces
-        reraise=True # Volver a lanzar la última excepción si todos los reintentos fallan
-    )
+    @retry_groq_api(max_attempts=2, wait_seconds=5)  # Según documentación: máximo 2 reintentos
     def _create_chat_completion_with_retry(self, messages: list, model: str, max_tokens: int, temperature: float, timeout: float):
         logger.debug(f"Intentando llamada a Groq API. Modelo: {model}, Timeout: {timeout}s")
         try:
@@ -55,15 +63,19 @@ class GroqService:
             )
         except APIConnectionError as e:
             logger.error(f"Error de conexión con Groq API: {e}")
+            # El decorador @retry_groq_api manejará la conversión a GroqAPIError
             raise
         except RateLimitError as e:
-            logger.warning(f"Límite de tasa de Groq API excedido: {e}. Reintentando según configuración de tenacity.")
+            logger.warning(f"Límite de tasa de Groq API excedido: {e}. Reintentando según configuración.")
+            # El decorador @retry_groq_api manejará la conversión a GroqAPIError
             raise
         except APIStatusError as e:
             logger.error(f"Error de estado de Groq API: {e.status_code} - {e.response}. Mensaje: {e.message}")
+            # El decorador @retry_groq_api manejará la conversión a GroqAPIError
             raise
         except Exception as e:
             logger.error(f"Error inesperado durante la llamada a Groq API: {e}")
+            # El decorador @retry_groq_api manejará la conversión a GroqAPIError
             raise
 
     def send_prompt(self, prompt: str, system_prompt: str = None, model_id: str = None, 
@@ -122,45 +134,35 @@ class GroqService:
             logger.info("Respuesta recibida exitosamente de Groq.")
             logger.debug(f"Respuesta de Groq (primeros 100 chars): {response_content[:100]}...")
             return response_content
-        except RetryError as e: 
-            logger.error(f"Fallo al obtener respuesta de Groq después de múltiples reintentos: {e.last_attempt.exception()}")
-            return None
+        except GroqAPIError as e:
+            # Ya es una excepción personalizada del decorador, re-lanzar con fase correcta
+            raise GroqAPIError(
+                message=e.message,
+                phase=ErrorPhase.GENERAL,  # Se debe establecer en el contexto de uso
+                retry_count=e.details.get('retry_count', 0),
+                timeout_seconds=e.details.get('timeout_seconds', 60)
+            ) from e
         except Exception as e:
             logger.error(f"Fallo al enviar prompt a Groq: {e}")
-            return None
+            # Convertir a GroqAPIError para manejo consistente
+            raise GroqAPIError(
+                message=f"Error al enviar prompt a Groq: {str(e)}",
+                phase=ErrorPhase.GENERAL,
+                retry_count=0,
+                timeout_seconds=60
+            ) from e
 
-# Ejemplo de cómo se podría configurar loguru en el punto de entrada de la aplicación (ej: main.py)
-# if __name__ == "__main__":
-#     logger.remove() # Remover el handler por defecto
-#     logger.add(sys.stderr, level="INFO") # Agregar un handler para stderr con nivel INFO
-#     logger.add("file_{time}.log", rotation="500 MB", level="DEBUG") # Log a archivo con rotación y nivel DEBUG
-
-#     # Para probar (asegúrate de que settings.py y GROQ_API_KEY estén configurados):
-#     # from src.config.settings import settings # Necesitarías configurar esto
-#     # settings.GROQ_API_KEY = os.environ.get("GROQ_API_KEY") # Ejemplo de carga
-#     # settings.GROQ_DEFAULT_MODEL_ID = "mixtral-8x7b-32768"
-     
-#     if not os.environ.get("GROQ_API_KEY"):
-#         print("Por favor, establece la variable de entorno GROQ_API_KEY para ejecutar este ejemplo.")
-#     else:
-#         # Simular que settings tiene la clave API para prueba local sin settings.py completo
-#         class MockSettings:
-#             GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-#             GROQ_DEFAULT_MODEL_ID = "mixtral-8x7b-32768"
-#             # GROQ_DEFAULT_MAX_TOKENS = 200 # Descomentar para probar
-
-#         # Temporalmente sobreescribir settings para la prueba
-#         original_settings = settings
-#         settings = MockSettings()
-
-#         groq_service = GroqService()
-#         test_prompt = "¿Cuál es la capital de Francia?"
-#         logger.info(f"Enviando prompt de prueba: {test_prompt}")
-#         response = groq_service.send_prompt(test_prompt)
-#         if response:
-#             logger.info(f"Respuesta del prompt de prueba: {response}")
-#         else:
-#             logger.error("No se recibió respuesta para el prompt de prueba.")
+# Método de compatibilidad para código existente
+def create_groq_service(api_key: str = None, model_id: str = None) -> 'GroqService':
+    """
+    Factory method para crear instancias de GroqService.
+    Mantiene compatibilidad con código existente.
+    
+    Args:
+        api_key: API key de Groq (opcional)
+        model_id: ID del modelo a usar (opcional)
         
-#         # Restaurar settings originales
-#         settings = original_settings
+    Returns:
+        GroqService: Instancia configurada del servicio
+    """
+    return GroqService(api_key=api_key, model_id=model_id)

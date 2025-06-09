@@ -2,6 +2,23 @@
 
 # Sistema Robusto de Manejo de Errores del `module_pipeline`
 
+## 📝 Resumen Ejecutivo
+
+El sistema de manejo de errores del `module_pipeline` implementa:
+
+- **Excepciones Personalizadas**: Jerarquía plana con `PipelineException` como base
+- **Decoradores de Retry**: `@retry_groq_api` y `@retry_supabase_rpc` con configuración específica
+- **Fallback Handlers**: Un handler específico por cada posible fallo en cada fase
+- **Logging Estructurado**: Con Loguru, contexto enriquecido y support codes
+- **Degradación Elegante**: El pipeline nunca falla completamente
+
+### 🔗 Referencias Rápidas
+
+- **Código de Implementación**: `/src/utils/error_handling.py`
+- **Documentación de Excepciones**: `/docs/excepciones-personalizadas.md`
+- **Configuración de Retry**: `/docs/retry_decorators_config.md`
+- **Test de Verificación**: `/tests/test_retry_decorators_verify.py`
+
 ## 1. Principios de Diseño Obligatorios
 
 El desarrollador DEBE implementar el `module_pipeline` siguiendo estos principios:
@@ -18,30 +35,49 @@ El desarrollador DEBE implementar el `module_pipeline` siguiendo estos principio
 
 **Fase 1 (Triaje):**
 - Si Groq falla → Aceptar artículo automáticamente (no descartar)
+  - Handler: `handle_groq_relevance_error_fase1()`
 - Si traducción falla → Procesar en idioma original
+  - Handler: `handle_groq_translation_fallback_fase1()`
 - Si detección de idioma falla → Asumir español
+- Si spaCy falla → Preprocesamiento degradado, aceptar artículo
+  - Handler: `handle_spacy_load_error_fase1()`
 - NUNCA descartar un artículo por fallo técnico
 
 **Fase 2 (Elementos Básicos):**
 - Si Groq falla → Crear un hecho básico usando el titular del artículo
+  - Handler: `handle_groq_extraction_error_fase2()`
 - Si extracción de entidades falla → Crear entidad genérica con el nombre del medio
 - Si JSON es inválido → Un reintento, luego usar datos mínimos
+  - Handler: `handle_json_parsing_error_fase2()`
 
 **Fase 3 (Citas y Datos):**
 - Si Groq falla → Continuar sin citas ni datos cuantitativos (no es error crítico)
+  - Handler: `handle_groq_citas_error_fase3()`
 - Si no se extraen citas → Continuar normalmente
 
 **Fase 4 (Relaciones y Normalización):**
 - Si búsqueda de entidades en BD falla → Crear todas las entidades como nuevas
+  - Handler: `handle_normalization_error_fase4()`
 - Si extracción de relaciones falla → Continuar sin relaciones
+  - Handler: `handle_groq_relations_error_fase4()`
 
 **Fase 4.5 (Importancia):**
 - Si modelo ML no existe → Usar importancia por defecto (valor: 5)
+  - Handler: `handle_importance_ml_error()`
 - Si consulta a tendencias_contexto_diario falla → Usar importancia por defecto
 
 **Fase 5 (Persistencia):**
 - Si RPC completa falla → Guardar en tabla de errores para revisión manual
+  - Handler: `handle_persistence_error_fase5()`
 - NUNCA perder datos completamente
+
+### Fallback Handlers Implementados
+
+Todos los handlers están en `/src/utils/error_handling.py` y:
+- Retornan estructuras de datos mínimas válidas
+- Loggean el uso de fallback con contexto completo
+- Incluyen metadata indicando que se usó fallback
+- Preservan el flujo del pipeline
 
 ## 3. Configuración Robusta
 
@@ -77,9 +113,11 @@ El desarrollador DEBE implementar el `module_pipeline` siguiendo estos principio
 
 ### Para Groq API:
 
-**Reintentos Simples:**
-- Máximo 2 reintentos con pausa de 5 segundos
+**Reintentos con Decorador @retry_groq_api:**
+- Máximo 2 reintentos con pausa de 5 segundos + jitter (0-1s)
 - Timeout de 60 segundos
+- Logging automático de intentos (WARNING) y éxitos (INFO)
+- Conversión automática a GroqAPIError con support_code
 - Después de fallos → Usar fallback inmediatamente
 
 **JSON Malformado:**
@@ -89,10 +127,12 @@ El desarrollador DEBE implementar el `module_pipeline` siguiendo estos principio
 
 ### Para Supabase:
 
-**Reintentos Mínimos:**
-- Solo 1 reintento para errores de conexión
-- 0 reintentos para errores de validación
+**Reintentos con Decorador @retry_supabase_rpc:**
+- Solo 1 reintento para errores de conexión (ConnectionError, TimeoutError)
+- 0 reintentos para errores de validación (ValueError)
 - Timeout de 30 segundos
+- Diferenciación automática de tipos de error
+- Conversión a SupabaseRPCError con contexto
 
 ## 5. Validación con Pydantic
 
@@ -155,7 +195,7 @@ Endpoint `/health` debe reportar:
 
 ## 9. Sistema de Registro de Errores
 
-### 8.1. Tabla `articulos_error_persistente`
+### 9.1. Tabla `articulos_error_persistente`
 
 El sistema registra errores persistentes para facilitar el reintento o la intervención manual.
 
@@ -166,7 +206,7 @@ El sistema registra errores persistentes para facilitar el reintento o la interv
 - Timestamp del error
 - Stack trace completo del error
 
-### 8.2. Campos de Error en Modelos de Entrada
+### 9.2. Campos de Error en Modelos de Entrada
 
 **Para artículos (`ArticuloInItem`):**
 - `error_detalle`: Registra detalles del error durante el procesamiento
@@ -215,7 +255,7 @@ El sistema registra errores persistentes para facilitar el reintento o la interv
 - `LOG_DIR=./logs`: Directorio de almacenamiento de logs
 - `ENABLE_DETAILED_LOGGING=false`: Logging detallado para debugging
 
-### 9.4. Estructura de Logs
+### 9.4. Estructura de Logs (Implementado con format_error_for_logging)
 ```json
 {
   "timestamp": "2024-01-15T10:30:00Z",
@@ -263,7 +303,7 @@ El sistema registra errores persistentes para facilitar el reintento o la interv
 - Webhooks para integración con sistemas de monitoreo
 - Alertas de Slack/Discord para el equipo de desarrollo
 
-## 11. Respuestas de Error en la API
+## 11. Respuestas de Error en la API (Implementado con create_error_response)
 
 ### 11.1. Error de Validación (400 Bad Request)
 ```json
@@ -378,9 +418,78 @@ El sistema se considera robusto cuando:
 
 El desarrollador debe implementar estas especificaciones de manera que el sistema sea **confiable en producción** sin requerir intervención manual frecuente.
 
-## 16. Estrategias de Recuperación (Legacy)
+## 16. Excepciones Personalizadas Implementadas
 
-### 16.1. Reintentos Automáticos
+### 16.1. Jerarquía de Excepciones
+
+El sistema implementa una jerarquía plana de excepciones personalizadas:
+
+- **PipelineException**: Excepción base con soporte para phases, support_codes y contexto
+- **ValidationError**: Errores de validación de datos de entrada
+- **GroqAPIError**: Errores específicos de la API de Groq
+- **SupabaseRPCError**: Errores de llamadas RPC a Supabase
+- **ProcessingError**: Errores durante el procesamiento
+- **ServiceUnavailableError**: Servicio temporalmente no disponible
+- **FallbackExecuted**: Señal de uso de fallback (no es error)
+
+### 16.2. Decoradores de Retry Implementados
+
+**@retry_groq_api**:
+- Máximo 2 reintentos (3 intentos totales)
+- Espera de 5 segundos + jitter aleatorio (0-1s)
+- Convierte RetryError a GroqAPIError automáticamente
+- Logging integrado con before_log y after_log
+
+**@retry_supabase_rpc**:
+- 1 reintento para errores de conexión
+- 0 reintentos para errores de validación
+- Espera de 2 segundos fija
+- Diferencia automáticamente tipos de error
+
+**@no_retry**:
+- Decorador de documentación para operaciones no idempotentes
+
+### 16.3. Documentación Adicional
+
+Para información detallada sobre excepciones personalizadas, decoradores y guía de troubleshooting, consultar:
+- `/docs/excepciones-personalizadas.md`: Documentación completa de excepciones
+- `/docs/retry_decorators_config.md`: Configuración de decoradores de retry
+- `/tests/test_retry_decorators_verify.py`: Script de verificación
+
+## 17. Resumen de Implementación
+
+### Componentes Clave Implementados:
+
+1. **Sistema de Excepciones**:
+   - 7 excepciones personalizadas principales
+   - 5 excepciones de logging de fallback
+   - Support codes automáticos para debugging
+
+2. **Decoradores de Retry**:
+   - `@retry_groq_api`: 2 reintentos, 5s + jitter
+   - `@retry_supabase_rpc`: 1 reintento conexión, 0 validación
+   - Logging automático integrado
+
+3. **Fallback Handlers**:
+   - 10 handlers específicos por fase/error
+   - Retornan datos mínimos válidos
+   - Preservan el flujo del pipeline
+
+4. **Utilidades**:
+   - `create_error_response()`: Respuestas API consistentes
+   - `format_error_for_logging()`: Logs estructurados
+   - `extract_validation_errors()`: Errores Pydantic legibles
+
+### Próximos Pasos:
+
+1. Monitorear métricas de errores en producción
+2. Ajustar parámetros de retry según comportamiento real
+3. Revisar y optimizar fallbacks basado en uso
+4. Implementar alertas para patrones de error recurrentes
+
+## 18. Estrategias de Recuperación (Legacy)
+
+### 17.1. Reintentos Automáticos
 
 **Para llamadas a Groq API:**
-- `MAX_RETRIES=3`: Núm
+- `MAX_RETRIES=2`: Núm

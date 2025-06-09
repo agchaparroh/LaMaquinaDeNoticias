@@ -8,6 +8,10 @@ from pathlib import Path
 
 # Importar el modelo de resultado de la fase 1 desde el módulo de modelos
 from ..models.procesamiento import ResultadoFase1Triaje, MetadatosFase1Triaje
+from ..models.entrada import FragmentoProcesableItem
+
+# Importar funciones de validación
+from ..utils.validation import escape_html, clean_text, validate_input_data
 
 # Importar manejadores de errores y tipos necesarios
 from ..utils.error_handling import (
@@ -154,6 +158,21 @@ def ejecutar_fase_1(
     """
     logger.info(f"Iniciando Fase 1: Triaje para fragmento ID: {id_fragmento_original}")
     notas_procesamiento: List[str] = []
+    
+    # Validación inicial de entrada usando FragmentoProcesableItem
+    try:
+        # Crear y validar el fragmento
+        fragmento_validado = FragmentoProcesableItem(
+            id_fragmento=str(id_fragmento_original),
+            texto_original=texto_original_fragmento,
+            id_articulo_fuente=str(id_fragmento_original)  # Usando el mismo ID por ahora
+        )
+        texto_original_fragmento = fragmento_validado.texto_original  # Usar texto limpio
+        logger.debug(f"Fragmento {id_fragmento_original}: Texto validado y limpiado por FragmentoProcesableItem")
+    except Exception as e:
+        logger.warning(f"Error al validar FragmentoProcesableItem para {id_fragmento_original}: {e}")
+        # Continuar con el texto original si la validación falla
+        notas_procesamiento.append(f"Validación inicial falló: {str(e)}")
 
     try:
         nlp_model = _cargar_modelo_spacy(modelo_spacy_nombre)
@@ -177,6 +196,12 @@ def ejecutar_fase_1(
             notas_adicionales=[] # Start with an empty list for metadatos, will be populated by notas_procesamiento at the end or in fallbacks
         )
 
+        # Validar idioma detectado
+        idiomas_soportados = ["es", "en", "fr", "de", "it", "pt", "und"]
+        if idioma_detectado not in idiomas_soportados:
+            logger.warning(f"Idioma detectado '{idioma_detectado}' no está en la lista de soportados para {id_fragmento_original}")
+            idioma_detectado = "und"
+            
         if idioma_detectado == "und":
             logger.info(f"Idioma detectado como 'und' para fragmento {id_fragmento_original}. Asumiendo 'es' por defecto según documentación.")
             idioma_detectado = "es"
@@ -276,16 +301,34 @@ def ejecutar_fase_1(
     prompt_formateado = None
     respuesta_llm_cruda = None
     evaluacion_triaje = {}
+    
+    # Sanitizar texto antes de enviar a Groq
+    texto_para_groq = escape_html(texto_limpio)
+    logger.debug(f"Texto sanitizado para Groq API en fragmento {id_fragmento_original}")
 
     try:
         prompt_formateado, respuesta_llm_cruda = _llamar_groq_api_triaje(
             config=groq_config_with_id, # Use config with article_id
-            texto_contenido=texto_limpio,
+            texto_contenido=texto_para_groq,  # Usar texto sanitizado
             titulo="No disponible (fragmento)",
             medio="No disponible (fragmento)",
             pais="No disponible (fragmento)",
             fecha_pub="No disponible (fragmento)"
         )
+        # Validar respuesta del LLM antes de parsear
+        if not respuesta_llm_cruda or not isinstance(respuesta_llm_cruda, str):
+            logger.error(f"Respuesta LLM inválida para {id_fragmento_original}: tipo {type(respuesta_llm_cruda)}")
+            raise GroqAPIError(
+                message="Respuesta LLM no es una cadena de texto válida",
+                phase=ErrorPhase.FASE_1_TRIAJE,
+                article_id=str(id_fragmento_original)
+            )
+            
+        # Validar longitud mínima de respuesta
+        if len(respuesta_llm_cruda.strip()) < 50:
+            logger.warning(f"Respuesta LLM sospechosamente corta para {id_fragmento_original}: {len(respuesta_llm_cruda)} caracteres")
+            notas_procesamiento.append("Respuesta LLM más corta de lo esperado")
+            
         logger.trace(f"Respuesta LLM (cruda) para triaje de {id_fragmento_original}:\n{respuesta_llm_cruda}")
         evaluacion_triaje = _parsear_respuesta_triaje(respuesta_llm_cruda)
 
@@ -332,9 +375,11 @@ def ejecutar_fase_1(
         if texto_limpio and texto_limpio.strip():
             logger.info(f"Traduciendo texto de '{idioma_detectado}' a 'es' para fragmento {id_fragmento_original}.")
             try:
+                # Sanitizar texto antes de traducir
+                texto_sanitizado_traduccion = escape_html(texto_limpio)
                 texto_traducido_llm = _llamar_groq_api_traduccion( # Use _llamar_groq_api_traduccion
                     config=groq_config_with_id, # Use config with article_id
-                    texto_a_traducir=texto_limpio,
+                    texto_a_traducir=texto_sanitizado_traduccion,
                     idioma_origen=idioma_detectado
                 )
                 # _llamar_groq_api_traduccion now raises GroqAPIError if translation is empty/failed
@@ -421,62 +466,8 @@ def _get_groq_config() -> Dict[str, Any]:
         "max_wait_seconds": int(os.getenv("GROQ_MAX_WAIT_SECONDS", "60")),
     }
 
-def _llamar_groq_api_triaje(
-    config: Dict[str, Any],
-    texto_contenido: str,
-    titulo: str = "No disponible",
-    medio: str = "No disponible",
-    pais: str = "No disponible",
-    fecha_pub: str = "No disponible"
-) -> tuple[str, str]:
-    """
-    Llama a la API de Groq para evaluación de triaje.
-    Retries son manejados por @retry_groq_api.
-    Levanta GroqAPIError en caso de fallo persistente o configuración incorrecta.
-    """
-    article_id_log = config.get("article_id", "N/A") # For logging purposes
-    if not Groq:
-        logger.error(f"SDK de Groq no instalado. Artículo: {article_id_log}")
-        raise GroqAPIError("SDK de Groq no instalado.", phase=ErrorPhase.FASE_1_TRIAJE, article_id=config.get("article_id"))
-    if not config.get("api_key"):
-        logger.error(f"GROQ_API_KEY no configurada. Artículo: {article_id_log}")
-        raise GroqAPIError("GROQ_API_KEY no configurada.", phase=ErrorPhase.FASE_1_TRIAJE, article_id=config.get("article_id"))
-
-    try:
-        prompt_template = _load_prompt_template()
-    except ErrorFase1 as e_prompt:
-        logger.error(f"Fallo al cargar plantilla de prompt para triaje. Artículo: {article_id_log}. Error: {e_prompt}")
-        raise GroqAPIError(f"Fallo al cargar plantilla de prompt para triaje: {e_prompt}", phase=ErrorPhase.FASE_1_TRIAJE, article_id=config.get("article_id")) from e_prompt
-
-    prompt_formateado = prompt_template.replace("{{TITULO}}", titulo)\
-                                     .replace("{{MEDIO}}", medio)\
-                                     .replace("{{PAIS}}", pais)\
-                                     .replace("{{FECHA_PUB}}", fecha_pub)\
-                                     .replace("{{CONTENIDO}}", texto_contenido)
-    
-    client = Groq(api_key=config["api_key"], timeout=config["timeout"])
-    
-    logger.info(f"Enviando solicitud a Groq API para triaje (modelo: {config['model_id']}). Artículo: {article_id_log}")
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "user",
-                "content": prompt_formateado,
-            }
-        ],
-        model=config["model_id"],
-        temperature=config["temperature"],
-        max_tokens=config["max_tokens"],
-    )
-    respuesta_contenido = chat_completion.choices[0].message.content
-    if not respuesta_contenido or not respuesta_contenido.strip():
-        logger.warning(f"Groq API para triaje devolvió una respuesta vacía. Artículo: {article_id_log}")
-        raise GroqAPIError("Respuesta vacía de Groq API para triaje.", phase=ErrorPhase.FASE_1_TRIAJE, article_id=config.get("article_id"))
-    logger.info(f"Respuesta recibida de Groq API para triaje. Artículo: {article_id_log}")
-    return prompt_formateado, respuesta_contenido
-
 @retry_groq_api()
-def _llamar_groq_api_triaje( # Add decorator here
+def _llamar_groq_api_triaje(
     config: Dict[str, Any],
     texto_contenido: str,
     titulo: str = "No disponible",
@@ -534,7 +525,19 @@ def _parsear_respuesta_triaje(respuesta_llm: str) -> Dict[str, Any]:
     """
     Parsea la respuesta textual del LLM para el triaje.
     Si la respuesta es un JSON string, intenta parsearlo.
+    Incluye validación de la respuesta.
     """
+    # Validación de entrada
+    if not respuesta_llm or not isinstance(respuesta_llm, str):
+        logger.error("Respuesta LLM para parsear no es válida")
+        return {
+            "decision": "ERROR_TRIAGE",
+            "justificacion": "Respuesta LLM no válida para parseo",
+            "tipo_articulo": "INDETERMINADO",
+            "total_puntuacion": None,
+            "elementos_clave": []
+        }
+        
     parsed_data = {
         "exclusion": None, "exclusion_categoria": None,
         "tipo_articulo": "INDETERMINADO", # Default
@@ -593,9 +596,20 @@ def _parsear_respuesta_triaje(respuesta_llm: str) -> Dict[str, Any]:
             if val is not None:
                 try:
                     parsed_data[score_field] = float(val) if '.' in str(val) else int(val)
+                    # Validar rango de puntuaciones individuales (0-5)
+                    if score_field != "total_puntuacion" and parsed_data[score_field] is not None:
+                        if not 0 <= parsed_data[score_field] <= 5:
+                            logger.warning(f"Puntuación '{score_field}' fuera de rango [0-5]: {parsed_data[score_field]}")
+                            parsed_data[score_field] = max(0, min(5, parsed_data[score_field]))  # Clamp al rango
                 except (ValueError, TypeError):
                     logger.warning(f"Valor de puntuación JSON '{score_field}' ('{val}') no es numérico. Usando None.")
                     parsed_data[score_field] = None
+                    
+        # Validar puntuación total (0-25)
+        if parsed_data.get("total_puntuacion") is not None:
+            if not 0 <= parsed_data["total_puntuacion"] <= 25:
+                logger.warning(f"Puntuación total fuera de rango [0-25]: {parsed_data['total_puntuacion']}")
+                parsed_data["total_puntuacion"] = max(0, min(25, parsed_data["total_puntuacion"]))
         return parsed_data
 
     except json.JSONDecodeError:
@@ -674,12 +688,6 @@ def _parsear_respuesta_triaje(respuesta_llm: str) -> Dict[str, Any]:
 
 
 
-def _llamar_groq_api_traduccion(
-    config: Dict[str, Any],
-    texto_a_traducir: str,
-    idioma_origen: str,
-    idioma_destino: str = "español"
-) -> Optional[str]: # This Optional[str] will be changed to str
 @retry_groq_api()
 def _llamar_groq_api_traduccion(
     config: Dict[str, Any],
@@ -724,8 +732,18 @@ def _llamar_groq_api_traduccion(
         logger.warning(f"Groq API para traducción devolvió una respuesta vacía. Idioma origen: {idioma_origen}. Artículo: {article_id_log}")
         raise GroqAPIError("Respuesta vacía o solo espacios de Groq API para traducción.", phase=ErrorPhase.FASE_1_TRIAJE, article_id=config.get("article_id"))
 
+    # Validar que la respuesta no contenga prefijos comunes de error
+    respuesta_limpia = respuesta_contenido.strip()
+    prefijos_error = ["lo siento", "i'm sorry", "no puedo", "i cannot", "error:", "traducción:"]
+    for prefijo in prefijos_error:
+        if respuesta_limpia.lower().startswith(prefijo):
+            logger.warning(f"Respuesta de traducción parece contener un mensaje de error para {article_id_log}: {respuesta_limpia[:50]}...")
+            # Intentar extraer solo el texto traducido si es posible
+            if ":\n" in respuesta_limpia:
+                respuesta_limpia = respuesta_limpia.split(":\n", 1)[1].strip()
+                
     logger.info(f"Respuesta de traducción recibida de Groq API. Idioma origen: {idioma_origen}. Artículo: {article_id_log}")
-    return respuesta_contenido.strip()
+    return respuesta_limpia
 
 
 # Bloque para pruebas directas del módulo (opcional)

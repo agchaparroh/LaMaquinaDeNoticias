@@ -3,6 +3,11 @@ from loguru import logger
 
 # Importar SupabaseService para type hinting y posible instanciación
 from .supabase_service import SupabaseService
+# Importar excepciones personalizadas y decoradores
+from ..utils.error_handling import (
+    ValidationError, ProcessingError, SupabaseRPCError, ErrorPhase,
+    retry_supabase_rpc, handle_normalization_error_fase4
+)
 
 class NormalizadorEntidades:
     """
@@ -21,6 +26,7 @@ class NormalizadorEntidades:
         self.logger = logger.bind(service="NormalizadorEntidades")
         self.logger.info("NormalizadorEntidades inicializado.")
 
+    @retry_supabase_rpc(connection_retries=1)  # Según documentación: 1 reintento para conexión
     def normalizar_entidad(
         self,
         nombre_entidad: str,
@@ -59,6 +65,14 @@ class NormalizadorEntidades:
                 "score_similitud": 0.0
             }
         """
+        # Validación de entrada
+        if not nombre_entidad or not nombre_entidad.strip():
+            raise ValidationError(
+                message="El nombre de la entidad no puede estar vacío",
+                validation_errors=[{"field": "nombre_entidad", "error": "Empty or None"}],
+                phase=ErrorPhase.FASE_4_NORMALIZACION
+            )
+        
         self.logger.debug(
             f"Intentando normalizar entidad: '{nombre_entidad}' (Tipo: {tipo_entidad})"
         )
@@ -103,11 +117,26 @@ class NormalizadorEntidades:
                     "score_similitud": 0.0
                 }
 
-        except Exception as e:
+        except (ConnectionError, TimeoutError) as e:
+            # El decorador @retry_supabase_rpc manejará estos errores
             self.logger.error(
-                f"Error durante la normalización de '{nombre_entidad}': {e}"
+                f"Error de conexión durante la normalización de '{nombre_entidad}': {e}"
             )
             raise
+        except SupabaseRPCError:
+            # Ya es una excepción personalizada, re-lanzar
+            raise
+        except Exception as e:
+            self.logger.error(
+                f"Error inesperado durante la normalización de '{nombre_entidad}': {e}"
+            )
+            # Convertir a ProcessingError
+            raise ProcessingError(
+                message=f"Error al normalizar entidad '{nombre_entidad}': {str(e)}",
+                phase=ErrorPhase.FASE_4_NORMALIZACION,
+                processing_step="entity_normalization",
+                fallback_used=False
+            ) from e
 
 
 if __name__ == '__main__':

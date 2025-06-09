@@ -144,6 +144,14 @@ USE_SPACY_FILTER = _get_bool_env('USE_SPACY_FILTER', False)
 STORE_METRICS = _get_bool_env('STORE_METRICS', True)
 
 # =============================================================================
+# CONFIGURACIÓN DE JOB TRACKING
+# =============================================================================
+
+JOB_RETENTION_MINUTES = _get_int_env('JOB_RETENTION_MINUTES', 60)  # Default: 1 hora  
+JOB_CLEANUP_INTERVAL_MINUTES = _get_int_env('JOB_CLEANUP_INTERVAL_MINUTES', 5)  # Default: cada 5 minutos
+JOB_MAX_STORED = _get_int_env('JOB_MAX_STORED', 10000)  # Límite máximo de jobs en memoria
+
+# =============================================================================
 # CONFIGURACIÓN DE MONITOREO (OPCIONAL)
 # =============================================================================
 
@@ -188,6 +196,24 @@ LLM_CONCURRENT_REQUESTS = _get_int_env('LLM_CONCURRENT_REQUESTS', 3)
 # =============================================================================
 
 ENABLE_DEV_ENDPOINTS = _get_bool_env('ENABLE_DEV_ENDPOINTS', False)
+
+# =============================================================================
+# CONFIGURACIÓN DE ALERTAS
+# =============================================================================
+
+# Umbrales de alertas
+ALERT_ERROR_RATE_THRESHOLD = _get_float_env('ALERT_ERROR_RATE_THRESHOLD', 0.10)  # 10%
+ALERT_LATENCY_THRESHOLD_SECONDS = _get_float_env('ALERT_LATENCY_THRESHOLD_SECONDS', 30.0)  # 30 segundos
+ALERT_THROTTLE_MINUTES = _get_int_env('ALERT_THROTTLE_MINUTES', 1)  # 1 minuto entre alertas del mismo tipo
+ALERT_RETENTION_HOURS = _get_int_env('ALERT_RETENTION_HOURS', 24)  # Retener alertas por 24 horas
+
+# Habilitación de alertas
+ENABLE_ALERTS = _get_bool_env('ENABLE_ALERTS', True)
+ENABLE_ALERT_NOTIFICATIONS = _get_bool_env('ENABLE_ALERT_NOTIFICATIONS', False)
+
+# Directorio de alertas
+ALERT_CONFIG_DIR = Path(os.getenv('ALERT_CONFIG_DIR', '.alerts'))
+ALERT_CONFIG_DIR.mkdir(exist_ok=True)
 
 # =============================================================================
 # FUNCIONES DE UTILIDAD
@@ -235,6 +261,18 @@ def get_logging_config() -> dict:
         'log_dir': LOG_DIR,
         'use_sentry': USE_SENTRY,
         'sentry_dsn': SENTRY_DSN
+    }
+
+def get_alert_config() -> dict:
+    """Retorna configuración para sistema de alertas."""
+    return {
+        'enabled': ENABLE_ALERTS,
+        'error_rate_threshold': ALERT_ERROR_RATE_THRESHOLD,
+        'latency_threshold_seconds': ALERT_LATENCY_THRESHOLD_SECONDS,
+        'throttle_minutes': ALERT_THROTTLE_MINUTES,
+        'retention_hours': ALERT_RETENTION_HOURS,
+        'notifications_enabled': ENABLE_ALERT_NOTIFICATIONS,
+        'config_dir': ALERT_CONFIG_DIR
     }
 
 def validate_configuration() -> bool:
