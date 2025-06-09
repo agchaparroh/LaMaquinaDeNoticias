@@ -1,0 +1,57 @@
+# Task ID: 10
+# Title: Implement error handling utilities
+# Status: done
+# Dependencies: 2
+# Priority: medium
+# Description: Create error handling utilities in src/utils/error_handling.py, following the patterns established in module_connector/src/main.py.
+# Details:
+1. Create src/utils/error_handling.py
+2. Implement custom exception classes for different error types (e.g., APIError, DatabaseError, GroqAPIError, SupabaseRPCError)
+3. Create utility functions for standardized error responses
+4. Implement a global exception handler for FastAPI
+5. Implement retry logic using tenacity library with exponential backoff strategy
+6. Create decorators for common retry patterns (e.g., @retry_with_backoff)
+7. Add specific exception handling for Groq API calls
+8. Add specific exception handling for Supabase RPC calls
+9. Ensure architectural consistency with the module_connector container
+
+# Test Strategy:
+Write unit tests for each custom exception and utility function. Test retry logic with mocked services that fail intermittently. Ensure the global exception handler catches and formats errors correctly. Verify that backoff strategies work as expected under various failure scenarios.
+
+# Subtasks:
+## 1. Create basic custom exception classes [done]
+### Dependencies: None
+### Description: Define the core custom exception classes needed for the pipeline following the documentation in docs/07-manejo-de-errores.md.
+### Details:
+Implement BaseAppException as the root exception and derived exceptions like ValidationError, ExternalAPIError, DataProcessingError, etc. Each exception should have appropriate attributes for error codes, messages, and context data. Follow the simplicity principle by keeping the exception hierarchy flat and focused.
+
+## 2. Implement standardized error response utilities [done]
+### Dependencies: 10.1
+### Description: Create utility functions that convert exceptions into standardized API responses.
+### Details:
+Develop functions that transform exceptions into consistent JSON response objects with appropriate HTTP status codes, error messages, and error codes. Include utilities for both synchronous and asynchronous contexts. Ensure the response format follows the documentation guidelines with fields like 'error_code', 'message', and optional 'details'.
+
+## 3. Implement retry decorators with tenacity [done]
+### Dependencies: 10.1
+### Description: Create retry decorators using the tenacity library for handling transient failures.
+### Details:
+Implement decorators that can be applied to functions interacting with external services. Configure appropriate retry strategies with exponential backoff, jitter, and maximum retry attempts. Create specific decorators for different types of operations (e.g., database operations, API calls) with appropriate timeout settings as specified in the documentation.
+
+## 4. Implement global exception handler for FastAPI [done]
+### Dependencies: 10.1, 10.2
+### Description: Create a global exception handler that integrates with FastAPI's exception handling system.
+### Details:
+Develop exception handlers that catch both custom exceptions and standard exceptions, converting them to appropriate HTTP responses. Register these handlers with FastAPI's exception_handler decorator. Ensure proper logging of exceptions and implement different handling strategies based on exception types.
+
+## 5. Implement pipeline-specific fallback functions [done]
+### Dependencies: 10.1, 10.3
+### Description: Create fallback mechanisms for each phase of the pipeline to handle specific failure scenarios.
+### Details:
+Develop fallback functions for Groq API failures, Supabase operations, and other critical pipeline components. Implement graceful degradation strategies that allow the system to continue operation with reduced functionality when specific components fail. Follow the documentation guidelines for implementing simple but robust fallback mechanisms.
+
+## 6. Create basic unit tests for error handling system [done]
+### Dependencies: 10.1, 10.2, 10.3, 10.4, 10.5
+### Description: Develop unit tests to verify the functionality of the error handling components.
+### Details:
+Create test cases for custom exceptions, error response utilities, retry decorators, and fallback functions. Include tests for the global exception handler using FastAPI's TestClient. Verify that exceptions are properly caught, transformed into appropriate responses, and that retry logic works as expected under different failure scenarios.
+

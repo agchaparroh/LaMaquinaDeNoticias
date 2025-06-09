@@ -1,0 +1,112 @@
+# Task ID: 4
+# Title: Implement Pydantic models for input data
+# Status: done
+# Dependencies: 3
+# Priority: high
+# Description: Create Pydantic models for FragmentoProcesableItem in the models/entrada.py file, using ArticuloInItem from module_connector as a reference.
+# Details:
+1. Create src/models/entrada.py
+2. Reference ArticuloInItem from module_connector/src/models.py as a pattern
+3. Implement FragmentoProcesableItem model for processing document fragments
+4. Adapt the model to meet specific pipeline needs while maintaining consistency with module_connector patterns
+5. Use Pydantic v2 features for optimal performance and validation
+6. Follow the same validation patterns and nomenclature as in module_connector
+7. Add appropriate field constraints and validators
+
+# Test Strategy:
+Write unit tests to ensure models correctly validate sample input data and raise appropriate validation errors for invalid data. Verify compatibility with the existing ArticuloInItem model from module_connector.
+
+# Subtasks:
+## 1. Define Pydantic model structure [done]
+### Dependencies: None
+### Description: Create the basic structure of Pydantic models with appropriate class definitions and inheritance patterns
+### Details:
+Define the base model classes and their relationships. Identify which models should inherit from others. Determine the overall structure of your data models, including naming conventions and organization. Include proper type annotations for all attributes.
+<info added on 2025-06-05T02:06:27.163Z>
+```python
+# src/models/entrada.py
+
+from typing import Dict, List, Optional, Any
+from pydantic import BaseModel
+
+class FragmentoProcesableItem(BaseModel):
+    """
+    Modelo Pydantic que representa un fragmento de documento procesable en el pipeline.
+    Sirve como contrato de datos para las primeras etapas del procesamiento.
+    """
+    id_fragmento: str
+    texto_original: str
+    id_articulo_fuente: str
+    orden_en_articulo: Optional[int] = None
+    metadata_adicional: Optional[Dict[str, Any]] = None
+```
+</info added on 2025-06-05T02:06:27.163Z>
+
+## 2. Implement field constraints [done]
+### Dependencies: 4.1
+### Description: Add field-level constraints and validations to the Pydantic models
+### Details:
+For each field in the models, define appropriate constraints such as min/max values, string patterns, length limits, etc. Use Pydantic's Field class to specify constraints. Add descriptive metadata like field descriptions and examples. Consider using Pydantic's specialized field types for common data formats.
+<info added on 2025-06-05T02:07:18.027Z>
+To enrich the FragmentoProcesableItem model defined in src/models/entrada.py, modify the file to:
+
+1. Import the necessary components:
+```python
+from pydantic import BaseModel, Field, constr, conint
+from typing import Dict, Optional
+```
+
+2. Update the model definition with field-level constraints:
+```python
+class FragmentoProcesableItem(BaseModel):
+    id_fragmento: constr(strip_whitespace=True, min_length=1, max_length=255) = Field(
+        ..., 
+        description="Identificador único del fragmento, sin espacios al inicio/final y longitud entre 1 y 255 caracteres."
+    )
+    texto_original: constr(strip_whitespace=True, min_length=1) = Field(
+        ..., 
+        description="Contenido textual original del fragmento, no debe estar vacío."
+    )
+    id_articulo_fuente: constr(strip_whitespace=True, min_length=1) = Field(
+        ..., 
+        description="Identificador único del artículo fuente, sin espacios al inicio/final y no debe estar vacío."
+    )
+    orden_en_articulo: Optional[conint(ge=0)] = Field(
+        default=None, 
+        description="Posición ordinal del fragmento dentro del artículo fuente, debe ser un entero no negativo si se provee."
+    )
+    metadata_adicional: Optional[Dict] = Field(
+        default_factory=dict, 
+        description="Metadatos adicionales asociados al fragmento en formato de diccionario."
+    )
+```
+</info added on 2025-06-05T02:07:18.027Z>
+
+## 3. Create custom validation logic [done]
+### Dependencies: 4.1, 4.2
+### Description: Implement model-level validation methods for complex business rules
+### Details:
+Develop validator methods using Pydantic's @validator or @root_validator decorators. Implement cross-field validations that depend on multiple attributes. Create custom error messages for validation failures. Add conditional validation logic based on business requirements. Test the validation logic with various input scenarios.
+<info added on 2025-06-05T02:08:14.033Z>
+Implement custom validation logic for the `FragmentoProcesableItem` model in `src/models/entrada.py` using Pydantic v2's `field_validator` and `model_validator` decorators. These validators will enforce complex business rules involving interdependent fields and conditional logic beyond the individual field constraints defined in subtask 4.2.
+
+Key implementation requirements:
+1. Import `field_validator`, `model_validator`, `ValidationInfo`, `Any`, and `Self` from Pydantic
+2. Create field validators with the signature: `def validator_name(cls, v, info: ValidationInfo): ...`
+3. Implement model validators with appropriate signatures:
+   - For `mode='before'`: `def model_validator_name(cls, data: Any) -> Any:`
+   - For `mode='after'`: `def model_validator_name(self) -> Self:`
+4. Raise `ValueError` with descriptive messages when validation fails
+5. Return the appropriate value from validators:
+   - Field validators: return the validated value
+   - Model validators (before): return the data dictionary
+   - Model validators (after): return the model instance
+
+Apply validators to handle complex scenarios such as:
+- Conditional validation based on metadata fields
+- Cross-field validation where one field's validity depends on others
+- Business logic that requires access to multiple model attributes
+
+Ensure validators properly handle optional fields and provide clear, informative error messages that help identify validation failures.
+</info added on 2025-06-05T02:08:14.033Z>
+

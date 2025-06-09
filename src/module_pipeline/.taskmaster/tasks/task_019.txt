@@ -1,0 +1,113 @@
+# Task ID: 19
+# Title: Implement main processing controller
+# Status: done
+# Dependencies: 15, 16, 17, 18, 13, 14
+# Priority: high
+# Description: Create the main processing controller in src/controller.py to orchestrate the pipeline phases, using existing services and a simplified approach.
+# Details:
+Implement a simplified controller that focuses on core functionality without unnecessary complexity:
+
+1. Create src/controller.py with basic initialization
+2. Implement process_fragment() as the core processing method
+3. Implement process_article() as a simple wrapper
+4. Add minimal persistence integration
+5. Use existing services and models
+6. Focus on functional implementation first, with minimal error handling
+
+Note: The controller.py is already implemented but requires specific improvements as detailed in the subtasks.
+
+# Test Strategy:
+Write integration tests that run through the pipeline with sample articles and fragments. Focus on testing the happy path first, then add tests for error handling. Verify correct phase execution and persistence. Create a dedicated test_controller_integration.py file to validate the complete controller functionality.
+
+# Subtasks:
+## 19.1. Optimizar integración entre fases [done]
+### Dependencies: None
+### Description: 
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/controller.py` - Revisar método process_fragment() actual
+  - `/src/utils/fragment_processor.py` - Sistema de IDs secuenciales
+  - `/src/pipeline/fase_*.py` - Interfaces de cada fase
+- **📚 Documentación Context7**:
+  - Sección 5.3: "Flujo de Datos entre Fases"
+  - Sección 11.4: "Optimización de Pipeline"
+- **🔧 Especificaciones de implementación**:
+  - Integrar FragmentProcessor en el controller para gestión coherente de IDs
+  - Pasar resultado_fase_1 a fase_3 para acceso al texto original
+  - Mejorar el paso de contexto entre fases
+  - Validar que todas las fases reciban los datos necesarios
+  - Sin cambios en la lógica de negocio, solo mejoras en el flujo
+
+## 19.2. Mejorar manejo de errores y fallbacks [done]
+### Dependencies: None
+### Description: 
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/controller.py` - Bloques try/except actuales
+  - `/src/utils/error_handling.py` - Sistema de manejo de errores
+  - `/docs/07-manejo-de-errores.md` - Especificación de errores
+- **📚 Documentación Context7**:
+  - Sección 11.2: "Manejo de Errores en Pipeline"
+  - Sección 11.3: "Políticas de Fallback"
+- **🔧 Especificaciones de implementación**:
+  - Envolver cada llamada a fase en try/except específico
+  - Implementar fallbacks parciales cuando una fase falle
+  - Asegurar que el pipeline continúe aunque una fase falle
+  - Registrar todos los errores pero permitir procesamiento parcial
+  - Agregar campo "advertencias" al resultado final
+
+## 19.3. Completar persistencia de relaciones [done]
+### Dependencies: None
+### Description: 
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/pipeline/fase_4_normalizacion.py` - Extracción de relaciones
+  - `/src/services/payload_builder.py` - Construcción de payloads
+  - `/docs/Persistencia/*.md` - Especificación de persistencia
+- **📚 Documentación Context7**:
+  - Sección 9.2: "Estructuras de Payload para Relaciones"
+  - Sección 9.3: "RPCs de Persistencia Completa"
+- **🔧 Especificaciones de implementación**:
+  - Extraer relaciones del metadata de fase 4
+  - Adaptar PayloadBuilder para incluir relaciones
+  - Mapear relaciones a formato esperado por RPC
+  - Incluir en el payload: relaciones_hechos, relaciones_entidades, contradicciones
+  - Actualizar logging para mostrar relaciones persistidas
+
+## 19.4. Añadir métricas y logging estructurado [done]
+### Dependencies: None
+### Description: 
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/controller.py` - Logging actual con loguru
+  - `/src/utils/logging_config.py` - Configuración de logging
+  - `/docs/sistema_logging_implementado.md` - Sistema de logging
+- **📚 Documentación Context7**:
+  - Sección 12.1: "Métricas de Pipeline"
+  - Sección 12.2: "Logging Estructurado"
+- **🔧 Especificaciones de implementación**:
+  - Medir tiempo de ejecución por fase
+  - Contar elementos procesados en cada fase
+  - Usar logger.bind() para contexto estructurado
+  - Agregar métricas al resultado final: tiempos, conteos, tasas de éxito
+  - Log de inicio y fin de cada fase con métricas
+
+## 19.5. Test de verificación del controller completo [done]
+### Dependencies: None
+### Description: 
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/controller.py` - Controller implementado
+  - `/tests/test_pipeline/*.py` - Tests existentes
+  - `/tests/conftest.py` - Fixtures de pytest
+- **📚 Documentación Context7**:
+  - Sección 13.1: "Testing de Integración"
+  - Sección 13.2: "Fixtures y Mocks"
+- **🔧 Especificaciones de implementación**:
+  - Crear test_controller_integration.py
+  - Test con artículo completo (process_article)
+  - Test con fragmento (process_fragment)
+  - Verificar flujo completo con mocks de servicios
+  - Validar métricas y manejo de errores
+  - Ejecutable con: pytest tests/test_controller_integration.py -v
+

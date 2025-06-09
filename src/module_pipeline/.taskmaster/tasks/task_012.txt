@@ -1,0 +1,17 @@
+# Task ID: 12
+# Title: Implement prompt loader utility
+# Status: done
+# Dependencies: 2
+# Priority: medium
+# Description: Create a utility for loading external prompt files in src/utils/prompt_loader.py following established project patterns for modularity, file handling, encoding, and error management.
+# Details:
+1. Create src/utils/prompt_loader.py following the modular patterns observed in other project modules
+2. Implement a function to load prompt files from a specified directory, maintaining consistency with existing file handling patterns
+3. Use the same encoding standards for reading files as established in the project
+4. Implement error handling that follows project conventions for missing or unreadable prompt files
+5. Add caching mechanism to avoid repeated disk reads
+6. Ensure the module structure and API design aligns with other utility modules in the project
+7. Create utility functions for prompt templating if required, following project patterns
+
+# Test Strategy:
+Write unit tests with sample prompt files. Test caching behavior and error handling for missing files. Ensure tests follow the same patterns as other utility module tests in the project.

@@ -1,0 +1,11 @@
+# Task ID: 13
+# Title: Implement Entity Normalizer service
+# Status: done
+# Dependencies: 9
+# Priority: high
+# Description: Create entity normalization service using the existing buscar_entidad_similar RPC.
+# Details:
+Create src/services/entity_normalizer.py with NormalizadorEntidades class that uses the existing buscar_entidad_similar RPC to normalize entities during Phase 4. Include logic for matching thresholds, handling new vs existing entities, and preparing normalized entity data for persistence. This replaces the complex entity cache management that was planned.
+
+# Test Strategy:
+Create integration tests with mock RPC responses to verify entity normalization logic, similarity thresholds, and proper handling of different matching scenarios.

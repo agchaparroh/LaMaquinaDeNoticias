@@ -1,0 +1,162 @@
+# Task ID: 16
+# Title: Implement Phase 2: Basic Element Extraction
+# Status: done
+# Dependencies: 5, 8, 12
+# Priority: high
+# Description: Create the second phase of the processing pipeline in src/pipeline/fase_2_extraccion.py.
+# Details:
+1. Create src/pipeline/fase_2_extraccion.py
+2. Implement ejecutar_fase_2() function
+3. Integrate with Groq API using the prompt from 'Prompt_2_elementos_basicos.md'
+4. Extract main facts and mentioned entities
+5. Assign temporary IDs to HechoBase and EntidadBase objects
+6. Return ResultadoFase2 object with lists of extracted facts and entities
+
+# Test Strategy:
+Create unit tests with sample preprocessed text. Verify correct extraction of facts and entities. Test ID assignment logic.
+
+# Subtasks:
+## 1. Create basic structure and ResultadoFase2 class definition [done]
+### Dependencies: None
+### Description: Implement the basic structure of fase_2_extraccion.py following the pattern established in fase_1_triaje.py, and define the ResultadoFase2 Pydantic class.
+### Details:
+Review fase_1_triaje.py for structural patterns. Create fase_2_extraccion.py with necessary imports. Define ResultadoFase2 Pydantic class with fields for extracted facts and entities. Include appropriate type hints and validation. Ensure the class structure aligns with the expected output format for Phase 2.
+<info added on 2025-06-06T03:02:43.995Z>
+## DOCUMENTOS DEL REPOSITORIO A REVISAR:
+- `src/pipeline/fase_1_triaje.py` - Para seguir el patrón estructural establecido (imports, organización de funciones, manejo de errores)
+- `src/models/procesamiento.py` - Para entender `ResultadoFase2Extraccion` ya definido y sus campos
+- `prompts/Prompt_2_elementos_basicos.md` - Para entender el formato de salida JSON esperado
+
+## CONTEXT7 DOCUMENTATION A CONSULTAR:
+- **Pydantic**: BaseModel inheritance patterns, field validation, model_config best practices
+- **Python typing**: Type hints con UUID, Optional, List, Dict
+- **Python pathlib**: Manejo de rutas de archivos para imports relativos
+
+## IMPLEMENTACIÓN ESPECÍFICA:
+- Crear archivo `src/pipeline/fase_2_extraccion.py` siguiendo estructura de fase_1_triaje.py
+- Importar dependencias necesarias desde `..models.procesamiento`, servicios de Groq, utils de error handling
+- Definir función `ejecutar_fase_2()` con signatura similar a `ejecutar_fase_1()`
+- Crear funciones helper privadas (_función_privada) para cada etapa del proceso
+- NOTA: `ResultadoFase2Extraccion` ya existe en procesamiento.py, no crear duplicado
+</info added on 2025-06-06T03:02:43.995Z>
+
+## 2. Implement Groq API integration with specific prompt [done]
+### Dependencies: 16.1
+### Description: Set up the connection to Groq API and implement the function to send the existing prompt for fact and entity extraction.
+### Details:
+Review existing Groq API integration code. Implement a function to connect to Groq API using the provided credentials. Set up the specific prompt for fact and entity extraction. Handle API errors and rate limiting appropriately. Ensure the prompt engineering is optimized for extracting structured data from unstructured text.
+<info added on 2025-06-06T03:03:09.752Z>
+## DOCUMENTOS DEL REPOSITORIO A REVISAR:
+- `src/services/groq_service.py` - Para entender el servicio Groq existente y cómo usarlo
+- `src/utils/prompt_loader.py` - Para cargar plantillas de prompt desde archivos externos
+- `src/pipeline/fase_1_triaje.py` - Funciones `_llamar_groq_api_triaje()` y `_get_groq_config()` como referencia
+- `prompts/Prompt_2_elementos_basicos.md` - Para entender las variables a formatear en el prompt
+- `src/utils/error_handling.py` - Para usar decoradores de retry y manejo de errores
+
+## CONTEXT7 DOCUMENTATION A CONSULTAR:
+- **Groq SDK**: Client initialization, authentication, error handling, rate limits, timeout configuration
+- **Python json module**: JSON parsing, handling malformed responses, json.loads() best practices
+- **Tenacity library**: Retry patterns con exponential backoff, stop conditions, wait strategies
+
+## IMPLEMENTACIÓN ESPECÍFICA:
+- Crear función `_llamar_groq_api_extraccion()` siguiendo patrón de fase_1_triaje.py
+- Usar prompt_loader para cargar `Prompt_2_elementos_basicos.md`
+- Formatear prompt con variables: {{TITULO_O_DOCUMENTO}}, {{FUENTE_O_TIPO}}, {{PAIS_ORIGEN}}, {{FECHA_FUENTE}}, {{CONTENIDO}}
+- Implementar retry logic usando decorador `@retry_groq_api()` existente
+- Manejar errores específicos: timeout, rate limit, API key missing, malformed response
+- Configurar parámetros Groq: model_id, temperature, max_tokens apropiados para extracción
+</info added on 2025-06-06T03:03:09.752Z>
+
+## 3. Develop fact extraction logic [done]
+### Dependencies: 16.2
+### Description: Implement the logic to parse and extract facts from the Groq API response and convert them to the required Pydantic model format.
+### Details:
+Create a function to parse the JSON response from Groq API. Extract fact data according to the defined schema. Implement validation to ensure extracted facts meet the required format. Create mapping functions to convert raw API response to Pydantic models. Handle edge cases such as missing or malformed data in the API response.
+<info added on 2025-06-06T03:03:35.987Z>
+## DOCUMENTOS DEL REPOSITORIO A REVISAR:
+- `prompts/Prompt_2_elementos_basicos.md` - Para entender la estructura exacta de hechos en el JSON de respuesta
+- `src/models/procesamiento.py` - Modelos `HechoBase` y `HechoProcesado`, campos requeridos y validaciones
+- `src/pipeline/fase_1_triaje.py` - Función `_parsear_respuesta_triaje()` como referencia de parsing
+
+## CONTEXT7 DOCUMENTATION A CONSULTAR:
+- **Pydantic**: Model validation, field constraints, model creation from dict, validation errors
+- **Python datetime**: Parsing dates en diferentes formatos (YYYY-MM-DD), timezone handling
+- **Python json**: Safe JSON parsing, handling nested objects, KeyError management
+- **Python UUID**: uuid4() generation para IDs temporales
+
+## IMPLEMENTACIÓN ESPECÍFICA:
+- Crear función `_parsear_hechos_from_json(response_json, id_fragmento_origen)`
+- Mapear campos JSON a modelo Pydantic:
+  * `id` (del JSON) → generar UUID temporal nuevo con uuid4()
+  * `contenido` → `texto_original_del_hecho`
+  * `fecha.inicio`, `fecha.fin` → almacenar en `metadata_hecho`
+  * `tipo_hecho`, `pais`, `region`, `ciudad`, `es_futuro`, `estado_programacion` → `metadata_hecho`
+  * `precision_temporal` → `metadata_hecho`
+- Asignar `confianza_extraccion` por defecto (ej: 0.8)
+- Crear instancias de `HechoProcesado` con `id_fragmento_origen` asignado
+- Manejar casos edge: hechos con campos faltantes, fechas malformadas, arrays vacíos
+</info added on 2025-06-06T03:03:35.987Z>
+
+## 4. Develop entity extraction logic [done]
+### Dependencies: 16.2
+### Description: Implement the logic to parse and extract entities from the Groq API response and convert them to the required Pydantic model format.
+### Details:
+Create a function to parse entities from the Groq API response. Implement entity categorization according to the defined schema. Ensure proper validation of extracted entities. Create mapping functions to convert raw entity data to Pydantic models. Handle edge cases such as duplicate entities or entities with missing attributes.
+<info added on 2025-06-06T03:04:09.764Z>
+## DOCUMENTOS DEL REPOSITORIO A REVISAR:
+- `prompts/Prompt_2_elementos_basicos.md` - Para entender la estructura exacta de entidades en el JSON de respuesta
+- `src/models/procesamiento.py` - Modelos `EntidadBase` y `EntidadProcesada`, campos requeridos y validaciones
+- Mapping de tipos: PERSONA, ORGANIZACION, INSTITUCION, LUGAR, EVENTO, NORMATIVA, CONCEPTO
+
+## CONTEXT7 DOCUMENTATION A CONSULTAR:
+- **Pydantic**: String constraints (constr), field validation, model creation from dict
+- **Pydantic HttpUrl**: URL validation para campos como uri_wikidata
+- **Python json**: Handling arrays, optional fields, null values
+- **Python UUID**: uuid4() generation para IDs temporales
+
+## IMPLEMENTACIÓN ESPECÍFICA:
+- Crear función `_parsear_entidades_from_json(response_json, id_fragmento_origen)`
+- Mapear campos JSON a modelo Pydantic:
+  * `id` (del JSON) → generar UUID temporal nuevo con uuid4()
+  * `nombre` → `texto_entidad`
+  * `tipo` → `tipo_entidad` (validar contra tipos permitidos)
+  * `descripcion`, `alias`, `fecha_nacimiento`, `fecha_disolucion` → `metadata_entidad`
+- Asignar `relevancia_entidad` por defecto (ej: 0.7)
+- Crear instancias de `EntidadProcesada` con `id_fragmento_origen` asignado
+- Manejar casos edge: entidades duplicadas, tipos de entidad inválidos, fechas en formato incorrecto
+- Validar que `alias` sea array de strings, manejar valores null correctamente
+- Procesar campo `descripcion` que viene con guiones separados
+</info added on 2025-06-06T03:04:09.764Z>
+
+## 5. Implement temporary ID assignment and result assembly [done]
+### Dependencies: 16.3, 16.4
+### Description: Develop the logic to assign temporary IDs to facts and entities, and assemble the final ResultadoFase2 object.
+### Details:
+Create a function to assign unique temporary IDs to extracted facts and entities. Implement the main processing function that orchestrates the entire extraction process. Assemble the final ResultadoFase2 object with all extracted and processed data. Add basic tests to verify the correctness of the extraction process. Document the implementation with appropriate comments and docstrings.
+<info added on 2025-06-06T03:04:39.888Z>
+## DOCUMENTOS DEL REPOSITORIO A REVISAR:
+- `src/models/procesamiento.py` - Modelo `ResultadoFase2Extraccion` completo y sus campos requeridos
+- `src/pipeline/fase_1_triaje.py` - Función `ejecutar_fase_1()` para patrón de ensamblaje final y manejo de errores
+- `src/utils/error_handling.py` - Patterns de manejo de errores y fallbacks para fase 2
+
+## CONTEXT7 DOCUMENTATION A CONSULTAR:
+- **Python UUID**: uuid4() generation, UUID serialization, uniqueness guarantees
+- **Loguru**: Structured logging patterns, log levels (info, error, debug), contextual information
+- **Python Exception handling**: Custom exceptions, error propagation, try-catch patterns
+- **Pydantic**: Model validation, .touch() method, timestamp handling
+
+## IMPLEMENTACIÓN ESPECÍFICA:
+- Implementar función principal `ejecutar_fase_2(resultado_fase_1: ResultadoFase1Triaje) -> ResultadoFase2Extraccion`
+- Usar `resultado_fase_1.texto_para_siguiente_fase` como input para Groq API
+- Generar UUIDs únicos para hechos y entidades usando `uuid4()`
+- Ensamblar `ResultadoFase2Extraccion`:
+  * `id_fragmento` desde `resultado_fase_1.id_fragmento`
+  * `hechos_extraidos` y `entidades_extraidas` desde funciones parser
+  * `prompt_extraccion_usado` con prompt formateado usado
+  * `metadata_extraccion` con info técnica (tokens, duración, modelo usado)
+- Llamar `.touch()` para actualizar timestamps antes de retornar
+- Manejo de errores con fallbacks apropiados usando error_handling existente
+- Logging estructurado en puntos clave: inicio, éxito, errores
+- Validar que todas las listas no sean None antes de asignar a resultado
+</info added on 2025-06-06T03:04:39.888Z>
+

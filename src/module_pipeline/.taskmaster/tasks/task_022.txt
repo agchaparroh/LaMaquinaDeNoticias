@@ -1,0 +1,129 @@
+# Task ID: 22
+# Title: Implement GET /status/{job_id} endpoint
+# Status: done
+# Dependencies: 7
+# Priority: medium
+# Description: Create the API endpoint for querying processing status in src/main.py, with a robust job tracking service to manage job states throughout the processing pipeline.
+# Details:
+1. In src/main.py, implement the GET /status/{job_id} endpoint
+2. Create a job tracking service to manage job status (in-memory store with thread safety)
+3. Implement logic to retrieve and return job status with appropriate formatting
+4. Handle cases for non-existent job IDs with proper error responses
+5. Ensure proper error handling, response formatting, and automatic cleanup of old jobs
+6. Integrate job tracking with existing processing endpoints
+
+# Test Strategy:
+Write API tests to check status retrieval for existing and non-existing job IDs. Verify correct status updates through the processing pipeline. Create a comprehensive test script to validate the entire job tracking flow from creation to completion or failure.
+
+# Subtasks:
+## 22.1. Crear servicio de tracking de jobs [done]
+### Dependencies: None
+### Description: Implementar un servicio para el seguimiento y gestión del estado de los trabajos de procesamiento.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/services/groq_service.py` - [Revisar estructura de servicio para mantener consistencia]
+  - `/src/services/supabase_service.py` - [Revisar patrón singleton si aplica]
+  - `/src/utils/logging_config.py` - [Entender sistema de logging estructurado]
+- **📚 Documentación Context7**:
+  - Sección de patrones de diseño de servicios
+  - Mejores prácticas para almacenamiento in-memory
+- **🔧 Especificaciones de implementación**:
+  - Crear archivo `/src/services/job_tracker_service.py`
+  - Implementar clase `JobTrackerService` con patrón singleton
+  - Definir estados: `pending`, `processing`, `completed`, `failed`
+  - Almacenar: job_id, status, created_at, updated_at, result (opcional), error (opcional)
+  - Métodos: `create_job()`, `update_status()`, `get_status()`, `delete_job()`
+  - Usar threading.Lock para thread-safety
+  - Logger estructurado con contexto de job_id
+
+## 22.2. Integrar tracking con endpoints existentes [done]
+### Dependencies: None
+### Description: Modificar los endpoints de procesamiento existentes para crear y actualizar jobs en el servicio de tracking.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/main.py` - [Endpoints procesar_articulo y procesar_fragmento]
+  - `/src/controller.py` - [Métodos process_article y process_fragment]
+  - `/src/utils/error_handling.py` - [Manejo de excepciones]
+- **📚 Documentación Context7**:
+  - Patrones de integración de servicios
+  - Manejo de estados asíncronos
+- **🔧 Especificaciones de implementación**:
+  - Modificar `procesar_articulo` para crear job con request_id
+  - Actualizar estado a `processing` antes de llamar al controller
+  - Actualizar a `completed` con resultado al finalizar
+  - Actualizar a `failed` con error en caso de excepción
+  - Mantener compatibilidad con respuesta síncrona actual
+  - Añadir campo `job_id` en respuesta para tracking opcional
+  - Aplicar mismo patrón a `procesar_fragmento`
+
+## 22.3. Implementar endpoint GET /status/{job_id} [done]
+### Dependencies: None
+### Description: Desarrollar el endpoint para consultar el estado de un job específico por su ID.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/main.py` - [Endpoint placeholder get_status]
+  - `/src/utils/error_handling.py` - [Funciones create_error_response]
+  - Otros endpoints para referencia de formato de respuesta
+- **📚 Documentación Context7**:
+  - Formato estándar de respuestas API
+  - Manejo de errores HTTP
+- **🔧 Especificaciones de implementación**:
+  - Reemplazar NotImplementedError con implementación real
+  - Obtener instancia de JobTrackerService
+  - Consultar estado del job_id
+  - Si no existe: HTTPException 404 con mensaje descriptivo
+  - Si existe: retornar estado con formato consistente
+  - Incluir: status, created_at, updated_at, progress (opcional)
+  - Si completed: incluir resumen del resultado
+  - Si failed: incluir mensaje de error
+  - Logging estructurado de consultas
+
+## 22.4. Añadir limpieza automática de jobs antiguos [done]
+### Dependencies: None
+### Description: Implementar un mecanismo para eliminar automáticamente los jobs que superen un tiempo de retención configurable.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/services/job_tracker_service.py` - [Servicio creado en 22.1]
+  - `/src/main.py` - [Eventos startup/shutdown]
+  - `/src/config.py` - [Configuraciones del sistema]
+- **📚 Documentación Context7**:
+  - Gestión de memoria en aplicaciones Python
+  - Mejores prácticas para background tasks
+- **🔧 Especificaciones de implementación**:
+  - Añadir configuración JOB_RETENTION_MINUTES (default: 60)
+  - Implementar método `cleanup_old_jobs()` en JobTrackerService
+  - Eliminar jobs más antiguos que el tiempo de retención
+  - Crear tarea background con asyncio que ejecute limpieza cada 5 minutos
+  - Iniciar tarea en evento startup de FastAPI
+  - Detener tarea en evento shutdown
+  - Logging de jobs eliminados
+  - Considerar límite máximo de jobs almacenados
+
+## 22.5. Test de verificación simple [done]
+### Dependencies: None
+### Description: Crear un script de prueba para verificar el funcionamiento correcto del sistema de tracking de jobs.
+### Details:
+- **📁 Documentos del repositorio**:
+  - Todos los archivos implementados en subtareas anteriores
+  - `/src/main.py` - [Endpoints modificados]
+  - `/src/services/job_tracker_service.py` - [Servicio de tracking]
+- **📚 Documentación Context7**:
+  - Sección de testing de APIs
+  - Verificación de integración
+- **🔧 Especificaciones de implementación**:
+  - Crear script `/tests/test_job_tracking.py`
+  - Test 1: Crear job y verificar estado inicial
+  - Test 2: Procesar artículo y verificar job_id en respuesta
+  - Test 3: Consultar estado durante procesamiento
+  - Test 4: Verificar estado completed después de procesamiento
+  - Test 5: Consultar job_id inexistente (esperar 404)
+  - Test 6: Simular error y verificar estado failed
+  - Usar httpx o requests para llamadas HTTP
+  - Imprimir resultados claros de cada test
+
+## 23.5. Subtarea 22.2 COMPLETADA - Integrar tracking con endpoints existentes [done]
+### Dependencies: None
+### Description: ✅ COMPLETADA: Se integró exitosamente el tracking de jobs con ambos endpoints (procesar_articulo y procesar_fragmento). Los endpoints ahora crean jobs, actualizan estados durante el procesamiento y añaden job_id a las respuestas.
+### Details:
+
+

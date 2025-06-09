@@ -1,0 +1,161 @@
+# Task ID: 24
+# Title: Implement comprehensive error handling
+# Status: done
+# Dependencies: 10, 11
+# Priority: high
+# Description: Enhance error handling throughout the application for improved reliability and debugging.
+# Details:
+1. Review and update all error handling in the application
+2. Implement custom exception classes for specific error scenarios
+3. Ensure all external API calls (Groq, Supabase) have proper error handling
+4. Implement graceful degradation for non-critical failures
+5. Enhance logging for all error scenarios with appropriate context
+
+# Test Strategy:
+Create a test suite that simulates various error conditions (API failures, database errors, etc.). Verify correct error handling, logging, and system recovery. The comprehensive test script will be implemented as `test_error_handling_integral.py` to validate the entire error handling system.
+
+# Subtasks:
+## 24.1. Auditoría de Manejo de Errores en Servicios Externos [done]
+### Dependencies: None
+### Description: Realizar una auditoría completa del manejo de errores en todos los servicios externos de la aplicación.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/services/groq_service.py` - [Identificar puntos sin manejo de errores apropiado]
+  - `/src/services/supabase_service.py` - [Verificar uso de excepciones personalizadas]
+  - `/src/services/entity_normalizer.py` - [Revisar manejo de errores actual]
+  - `/src/services/job_tracker_service.py` - [Evaluar robustez del tracking]
+- **📚 Documentación Context7**:
+  - No aplicable para esta subtarea de auditoría
+- **🔧 Especificaciones de implementación**:
+  - Crear checklist de puntos críticos sin manejo de errores
+  - Identificar usos de logging estándar que deberían usar loguru
+  - Documentar lugares donde faltan decoradores de retry
+  - Verificar que todos los try-except tengan logging apropiado
+
+## 24.2. Integrar Excepciones Personalizadas en Servicios [done]
+### Dependencies: None
+### Description: Implementar y utilizar excepciones personalizadas en todos los servicios para mejorar la especificidad del manejo de errores.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/utils/error_handling.py` - [Usar GroqAPIError, SupabaseRPCError, etc.]
+  - `/src/services/groq_service.py` - [Reemplazar excepciones genéricas]
+  - `/src/services/supabase_service.py` - [Migrar a excepciones personalizadas]
+- **📚 Documentación Context7**:
+  - Buscar patrones de manejo de errores en servicios similares
+- **🔧 Especificaciones de implementación**:
+  - Importar excepciones personalizadas en cada servicio
+  - Reemplazar `raise Exception` por excepciones específicas
+  - Usar decoradores `@retry_groq_api` y `@retry_supabase_rpc`
+  - Mantener retrocompatibilidad con código existente
+  - Revisar el documento de auditoría (docs/audit_error_handling_24_1.md) para implementar las recomendaciones priorizadas
+
+## 24.3. Implementar Fallbacks en Fases del Pipeline [done]
+### Dependencies: None
+### Description: Desarrollar mecanismos de fallback para cada fase del pipeline que permitan una degradación elegante ante fallos.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/docs/07-manejo-de-errores.md` - [Seguir estrategias de fallback por fase]
+  - `/src/pipeline/fase_1_triaje.py` - [Aplicar fallbacks fase 1]
+  - `/src/pipeline/fase_2_extraccion.py` - [Aplicar fallbacks fase 2]
+  - `/src/pipeline/fase_3_citas_datos.py` - [Aplicar fallbacks fase 3]
+  - `/src/pipeline/fase_4_normalizacion.py` - [Aplicar fallbacks fase 4]
+  - `/src/utils/error_handling.py` - [Usar handlers de fallback existentes]
+- **📚 Documentación Context7**:
+  - Revisar patrones de degradación elegante en sistemas distribuidos
+- **🔧 Especificaciones de implementación**:
+  - Implementar try-except con fallbacks específicos por fase
+  - Usar funciones handle_* de error_handling.py
+  - Loggear claramente cuando se usa un fallback
+  - Asegurar que el pipeline continúa con datos mínimos
+  - Integrar con las excepciones personalizadas ya implementadas (ValidationError, GroqAPIError, SupabaseRPCError, ProcessingError)
+
+## 24.4. Mejorar Logging con Contexto Enriquecido [done]
+### Dependencies: None
+### Description: Optimizar el sistema de logging para incluir contexto enriquecido que facilite el diagnóstico de problemas.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/utils/logging_config.py` - [Usar LogContext y log_phase]
+  - `/src/pipeline/pipeline_coordinator.py` - [Ejemplo de buen uso de logging]
+  - `/src/services/*.py` - [Añadir contexto a todos los logs]
+- **📚 Documentación Context7**:
+  - Buscar mejores prácticas de structured logging
+- **🔧 Especificaciones de implementación**:
+  - Usar logger.bind() para añadir contexto (article_id, phase, etc.)
+  - Implementar format_error_for_logging() en puntos críticos
+  - Asegurar que cada error incluye support_code para debugging
+  - Añadir métricas de tiempo de ejecución en operaciones costosas
+  - Extender el uso de loguru a otros servicios siguiendo el patrón implementado en supabase_service.py
+  - Asegurar que los logs de excepciones personalizadas (ValidationError, GroqAPIError, SupabaseRPCError, ProcessingError) incluyen toda la información relevante
+
+## 24.5. Manejo de Errores en Controller y API [done]
+### Dependencies: None
+### Description: Implementar manejo de errores consistente en las capas de controller y API para garantizar respuestas adecuadas al cliente.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/controller.py` - [Integrar global exception handler]
+  - `/src/main.py` - [Configurar FastAPI exception handlers]
+  - `/src/utils/error_handling.py` - [Usar create_error_response()]
+- **📚 Documentación Context7**:
+  - Revisar patrones de manejo de errores en FastAPI
+- **🔧 Especificaciones de implementación**:
+  - Registrar exception handlers globales en FastAPI
+  - Usar create_error_response() para respuestas consistentes
+  - Implementar request_id tracking end-to-end
+  - Validar formato de respuestas según sección 11 de docs
+  - Configurar handlers específicos para las excepciones personalizadas ya implementadas (ValidationError, GroqAPIError, SupabaseRPCError, ProcessingError)
+
+## 24.6. Test de Verificación Integral de Errores [done]
+### Dependencies: None
+### Description: Desarrollar un test integral que verifique el correcto funcionamiento de todo el sistema de manejo de errores.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/tests/test_utils/test_error_handling.py` - [Tests existentes]
+  - `/tests/demo_error_handling.py` - [Demo existente]
+  - Todos los archivos modificados en subtareas anteriores
+- **📚 Documentación Context7**:
+  - Patrones de testing para manejo de errores
+- **🔧 Especificaciones de implementación**:
+  - Crear script `test_error_handling_integral.py`
+  - Simular fallos en cada servicio externo
+  - Verificar que los fallbacks funcionan correctamente
+  - Comprobar que los logs contienen información suficiente
+  - Validar respuestas de error de la API
+  - El test debe ser ejecutable con: `python tests/test_error_handling_integral.py`
+  - Incluir pruebas específicas para las excepciones personalizadas implementadas (ValidationError, GroqAPIError, SupabaseRPCError, ProcessingError)
+  - Verificar el funcionamiento de los decoradores @retry_groq_api y @retry_supabase_rpc
+
+## 24.7. Verificar Implementación de Decoradores de Retry [done]
+### Dependencies: None
+### Description: Verificar la correcta implementación de los decoradores de retry en todos los servicios y realizar ajustes si es necesario.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/utils/error_handling.py` - [Revisar implementación de decoradores existentes]
+  - `/src/services/groq_service.py` - [Verificar @retry_groq_api]
+  - `/src/services/supabase_service.py` - [Verificar @retry_supabase_rpc]
+  - `/src/services/entity_normalizer.py` - [Verificar @retry_supabase_rpc]
+  - `/src/services/job_tracker_service.py` - [Aplicar decoradores si es necesario]
+- **📚 Documentación Context7**:
+  - Patrones de retry en sistemas distribuidos
+- **🔧 Especificaciones de implementación**:
+  - Verificar que los decoradores estén aplicados correctamente en todos los servicios
+  - Ajustar parámetros de retry (max_retries, backoff_factor) según criticidad
+  - Asegurar que los decoradores loguean intentos y fallos adecuadamente
+  - Comprobar que los decoradores funcionan correctamente con las excepciones personalizadas
+  - Aplicar decoradores en job_tracker_service.py si es necesario
+
+## 24.8. Documentar Sistema de Manejo de Errores [done]
+### Dependencies: None
+### Description: Crear documentación completa sobre el sistema de manejo de errores implementado.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/docs/07-manejo-de-errores.md` - [Actualizar con nuevas implementaciones]
+  - `/docs/excepciones-personalizadas.md` - [Crear nuevo documento]
+- **📚 Documentación Context7**:
+  - Ejemplos de documentación de sistemas de manejo de errores
+- **🔧 Especificaciones de implementación**:
+  - Documentar todas las excepciones personalizadas implementadas (ValidationError, GroqAPIError, SupabaseRPCError, ProcessingError)
+  - Explicar el funcionamiento de los decoradores @retry_groq_api y @retry_supabase_rpc
+  - Detallar las estrategias de fallback por fase del pipeline
+  - Incluir ejemplos de uso de las excepciones y decoradores
+  - Crear guía de troubleshooting para desarrolladores
+

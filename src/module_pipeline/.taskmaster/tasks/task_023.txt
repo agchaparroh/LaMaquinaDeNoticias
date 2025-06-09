@@ -1,0 +1,117 @@
+# Task ID: 23
+# Title: Implement asynchronous processing
+# Status: done
+# Dependencies: 19, 20, 21
+# Priority: medium
+# Description: Modify the controller and API endpoints to support asynchronous processing of articles and fragments.
+# Details:
+1. Update controller.py to use async/await syntax
+2. Modify process_article() and process_fragment() to be asynchronous
+3. Update API endpoints to use background tasks for processing
+4. Implement a job queue system (e.g., using Redis or RabbitMQ) if required
+5. Ensure proper handling of concurrent requests
+
+# Test Strategy:
+Create tests that simulate concurrent API calls. Verify that processing occurs asynchronously and that the system handles multiple simultaneous requests correctly.
+
+# Subtasks:
+## 23.1. Crear métodos de procesamiento en background en el controller [done]
+### Dependencies: None
+### Description: Implementar métodos de procesamiento en background para artículos y fragmentos en el controller.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/controller.py` - Añadir métodos _process_article_background y _process_fragment_background
+  - `/src/services/job_tracker_service.py` - Entender cómo actualizar estados del job
+- **📚 Documentación Context7**:
+  - No aplica específicamente - usar patrones del código existente
+- **🔧 Especificaciones de implementación**:
+  - Crear método `_process_article_background(self, articulo_data: Dict, job_id: str)`
+  - Crear método `_process_fragment_background(self, fragmento_data: Dict, job_id: str)`
+  - Ambos métodos deben actualizar el job tracker al inicio, durante y al final
+  - Manejar errores y actualizar job status a FAILED si algo falla
+  - Usar el mismo flujo que los métodos síncronos existentes
+
+## 23.2. Implementar lógica de decisión para procesamiento asíncrono [done]
+### Dependencies: None
+### Description: Definir cuándo usar procesamiento asíncrono basado en el tamaño del contenido.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/main.py` - Modificar endpoint `/procesar_articulo` (líneas ~380-400 tienen ejemplo)
+  - `/src/utils/config.py` - Verificar si hay configuración para thresholds
+- **📚 Documentación Context7**:
+  - Sección de optimización para artículos largos mencionada en comentarios
+- **🔧 Especificaciones de implementación**:
+  - Definir constante `ASYNC_PROCESSING_THRESHOLD = 10_000` caracteres
+  - En endpoint `procesar_articulo`: si len(contenido) > threshold, usar BackgroundTasks
+  - En endpoint `procesar_fragmento`: aplicar misma lógica
+  - Retornar respuesta inmediata con job_id y endpoint de status
+  - Mantener procesamiento síncrono para contenido pequeño
+
+## 23.3. Actualizar endpoints para usar BackgroundTasks [done]
+### Dependencies: None
+### Description: Modificar los endpoints para soportar procesamiento en segundo plano con FastAPI BackgroundTasks.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/main.py` - Modificar endpoints procesar_articulo y procesar_fragmento
+  - `/src/main.py` - Seguir el patrón del ejemplo comentado en líneas 380-400
+- **📚 Documentación Context7**:
+  - FastAPI BackgroundTasks documentation pattern
+- **🔧 Especificaciones de implementación**:
+  - Usar `background_tasks.add_task()` cuando se detecte contenido largo
+  - Pasar el método del controller apropiado como task
+  - Incluir job_id y todos los datos necesarios
+  - Retornar respuesta con estructura: success, job_id, status="processing", tracking info
+  - Estimar tiempo de procesamiento basado en longitud (ejemplo: longitud/100 segundos)
+
+## 23.4. Asegurar manejo robusto de concurrencia [done]
+### Dependencies: None
+### Description: Verificar y mejorar el manejo de concurrencia en el sistema para evitar problemas con múltiples solicitudes simultáneas.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/controller.py` - Revisar si hay estado compartido que pueda causar problemas
+  - `/src/services/job_tracker_service.py` - Verificar thread-safety (ya implementado)
+- **📚 Documentación Context7**:
+  - Patrones de concurrencia y thread-safety
+- **🔧 Especificaciones de implementación**:
+  - Verificar que GroqService y SupabaseService manejen concurrencia correctamente
+  - Asegurar que cada procesamiento tenga su propio contexto (request_id único)
+  - No compartir estado mutable entre procesamiento de diferentes requests
+  - Documentar cualquier limitación de concurrencia encontrada
+
+## 23.5. Test de Verificación Simple [completed]
+### Dependencies: None
+### Description: Crear pruebas para verificar el funcionamiento correcto del procesamiento asíncrono.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/tests/` - Crear script test_async_processing.py
+  - `/src/main.py` - Endpoints a probar
+  - `/src/controller.py` - Métodos background a verificar
+- **📚 Documentación Context7**:
+  - Patrones de testing existentes en el proyecto
+- **🔧 Especificaciones de implementación**:
+  - Crear script que envíe un artículo largo (>10k caracteres) vía POST
+  - Verificar que retorna inmediatamente con status="processing"
+  - Consultar endpoint /status/{job_id} periódicamente
+  - Verificar que el job pasa por estados: pending -> processing -> completed
+  - Crear segundo test con múltiples requests concurrentes
+  - Verificar que el sistema maneja correctamente múltiples jobs
+  - Output claro: "✅ Test asíncrono exitoso" o "❌ Error: [detalles]"
+
+## 23.6. Revisar resultados de pruebas y ajustar implementación [done]
+### Dependencies: None
+### Description: Analizar los resultados de las pruebas completadas y realizar ajustes necesarios en la implementación.
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/tests/test_async_processing.py` - Revisar resultados de pruebas completadas
+  - `/src/controller.py` - Ajustar implementación según resultados
+  - `/src/main.py` - Refinar endpoints según feedback de pruebas
+- **📚 Documentación Context7**:
+  - Patrones de optimización basados en resultados de pruebas
+- **🔧 Especificaciones de implementación**:
+  - Revisar los resultados de las pruebas completadas en test_async_processing.py
+  - Verificar que el procesamiento asíncrono funciona correctamente para artículos largos
+  - Confirmar que el procesamiento síncrono se mantiene para artículos pequeños
+  - Asegurar que el manejo de múltiples requests concurrentes es robusto
+  - Realizar ajustes en la implementación basados en cualquier problema identificado
+  - Documentar cualquier optimización adicional realizada
+

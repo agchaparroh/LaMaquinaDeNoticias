@@ -1,0 +1,106 @@
+# Task ID: 21
+# Title: Implement POST /procesar_fragmento endpoint
+# Status: done
+# Dependencies: 4, 7, 19
+# Priority: high
+# Description: Create the API endpoint for processing document fragments in src/main.py.
+# Details:
+1. In src/main.py, implement the POST /procesar_fragmento endpoint
+2. Use FragmentoProcesableItem Pydantic model for request validation
+3. Call the process_fragment() function from the controller
+4. Implement proper error handling and response formatting
+5. Use FastAPI's background tasks for asynchronous processing if required
+
+# Test Strategy:
+Create API tests using TestClient. Test with valid and invalid fragment inputs. Verify correct response formats and error handling.
+
+# Subtasks:
+## 21.1. Implementar endpoint básico con validación Pydantic [done]
+### Dependencies: None
+### Description: 
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/main.py` - Reemplazar el NotImplementedError actual del endpoint
+  - `/src/models/entrada.py` - Importar y usar FragmentoProcesableItem
+  - `/src/main.py` líneas 370-406 - Usar endpoint /procesar_articulo como referencia
+- **📚 Documentación Context7**:
+  - Sección 7.1: "Endpoints del Pipeline" - Estructura de endpoints FastAPI
+  - Sección 7.2: "Validación de Entrada" - Uso de modelos Pydantic
+- **🔧 Especificaciones de implementación**:
+  - Reemplazar la función `procesar_fragmento()` actual que lanza NotImplementedError
+  - Importar FragmentoProcesableItem desde models.entrada
+  - Definir parámetro de entrada con tipo FragmentoProcesableItem
+  - Generar request_id único para tracking
+  - Crear logger con contexto del request_id
+  - Log inicial con información básica del fragmento recibido
+
+## 21.2. Integrar llamada al controller y manejo de respuesta [done]
+### Dependencies: None
+### Description: 
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/controller.py` método `process_fragment()` - Entender firma y respuesta esperada
+  - `/src/main.py` líneas 470-530 - Copiar patrón de llamada al controller de /procesar_articulo
+- **📚 Documentación Context7**:
+  - Sección 8.1: "Integración con Controller" - Patrones de llamada
+  - Sección 11.1: "Respuestas Estructuradas" - Formato de respuesta API
+- **🔧 Especificaciones de implementación**:
+  - Convertir FragmentoProcesableItem a diccionario con model_dump()
+  - Añadir request_id al diccionario de datos
+  - Llamar await pipeline_controller.process_fragment(fragmento_dict)
+  - Estructurar respuesta con campos: success, request_id, timestamp, api_version, data
+  - Log de éxito con métricas básicas del procesamiento
+
+## 21.3. Implementar manejo robusto de errores [done]
+### Dependencies: None
+### Description: 
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/main.py` líneas 531-575 - Copiar estructura try/except de /procesar_articulo
+  - `/src/utils/error_handling.py` - Entender tipos de excepciones del pipeline
+- **📚 Documentación Context7**:
+  - Sección 11.2: "Manejo de Errores en API" - Patrones de error handling
+  - Sección 11.3: "Logging de Errores" - Estructura de logs de error
+- **🔧 Especificaciones de implementación**:
+  - Envolver llamada al controller en bloque try/except
+  - Capturar ValidationError, PipelineException, PydanticValidationError específicamente
+  - Re-lanzar excepciones para que los handlers globales las procesen
+  - Para errores inesperados, log detallado con exc_info=True
+  - Asegurar que todas las excepciones incluyan el request_id para tracking
+
+## 21.4. Optimizar para fragmentos pequeños y logging detallado [done]
+### Dependencies: None
+### Description: 
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/main.py` líneas 420-440 - Referencia de logging estructurado
+  - `/src/utils/logging_config.py` - Sistema de logging con contexto
+- **📚 Documentación Context7**:
+  - Sección 12.1: "Métricas de Performance" - Qué métricas registrar
+  - Sección 12.2: "Logging Estructurado" - Mejores prácticas de logging
+- **🔧 Especificaciones de implementación**:
+  - Detectar fragmentos muy pequeños (<100 caracteres) y loguear advertencia
+  - Añadir campos al log inicial: longitud_texto, tiene_metadata, orden_en_articulo
+  - En respuesta exitosa, incluir métricas del resultado en el log
+  - Documentar en docstring que fragmentos <50 chars fallarán por validación
+  - No implementar caché ni optimizaciones complejas (KISS)
+
+## 21.5. Test de Verificación Simple [done]
+### Dependencies: None
+### Description: 
+### Details:
+- **📁 Documentos del repositorio**:
+  - `/src/main.py` - Endpoint implementado en subtareas anteriores
+  - `/tests/` - Directorio de tests existentes para referencia
+- **📚 Documentación Context7**:
+  - Sección 13.1: "Testing de Endpoints" - Uso de TestClient de FastAPI
+  - Sección 13.2: "Casos de Prueba API" - Qué escenarios probar
+- **🔧 Especificaciones de implementación**:
+  - Crear archivo `test_endpoint_fragmento.py` en raíz del proyecto
+  - Test 1: Fragmento válido - verificar respuesta exitosa y estructura
+  - Test 2: Fragmento sin campos requeridos - verificar error 400
+  - Test 3: Fragmento con texto muy corto - verificar error de validación
+  - Usar httpx o TestClient para las pruebas
+  - El test debe ejecutarse con: `python test_endpoint_fragmento.py`
+  - Incluir print statements claros de éxito/fallo
+

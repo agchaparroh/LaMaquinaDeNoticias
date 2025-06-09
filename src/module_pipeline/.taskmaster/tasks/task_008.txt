@@ -1,0 +1,20 @@
+# Task ID: 8
+# Title: Implement Groq API integration
+# Status: done
+# Dependencies: 2, 3
+# Priority: high
+# Description: Create the Groq API service integration in src/services/groq_service.py, using the centralized configuration for API keys and following the module_connector pattern.
+# Details:
+1. Create src/services/groq_service.py
+2. Implement GroqService class using groq==0.26.0 SDK
+3. Use the centralized configuration (Task 3) to load GROQ_API_KEY and other settings
+4. Follow the module_connector pattern for HTTP/API integration
+5. Implement methods for initializing the client with API key and model ID
+6. Implement method for sending prompts and receiving responses
+7. Add retry logic using tenacity with exponential backoff
+8. Implement proper timeout handling following module_connector pattern
+9. Implement error handling for timeouts, rate limits, and malformed responses
+10. Use loguru for structured logging of API interactions
+
+# Test Strategy:
+Write unit tests mocking the Groq API responses. Test error handling and retry logic with simulated failures. Ensure tests verify proper loading of configuration from the centralized config system.

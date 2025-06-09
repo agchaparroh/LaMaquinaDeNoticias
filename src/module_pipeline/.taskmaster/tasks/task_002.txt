@@ -1,0 +1,148 @@
+# Task ID: 2
+# Title: Install and configure dependencies
+# Status: done
+# Dependencies: 1
+# Priority: high
+# Description: Install all required dependencies and configure the project settings, ensuring version consistency with existing modules.
+# Details:
+1. Install dependencies from requirements.txt using pip, referencing versions from module_connector and module_scraper for shared libraries:
+   - fastapi==0.116.2
+   - uvicorn[standard]==0.35.1
+   - groq==0.26.0
+   - spacy==3.8.7
+   - sentence-transformers==2.9.0
+   - supabase (use same version as in module_connector/module_scraper)
+   - psycopg2-binary==2.9.10
+   - pydantic (use same version as in module_connector/module_scraper)
+   - python-dotenv==1.1.0
+   - httpx==0.27.2
+   - tenacity (use same version as in module_connector/module_scraper)
+   - loguru (use same version as in module_connector/module_scraper)
+   - numpy>=1.21.0,<2.0.0
+2. Check module_connector and module_scraper repositories to identify the specific versions of shared libraries (supabase, tenacity, pydantic, loguru) to maintain consistency.
+3. Update requirements.txt with the consistent versions.
+4. Configure settings in src/config/settings.py to load environment variables.
+
+# Test Strategy:
+1. Run 'pip freeze' to verify all dependencies are installed correctly.
+2. Compare versions of shared libraries with those in module_connector and module_scraper to ensure consistency.
+3. Test importing key libraries in a Python shell to verify compatibility.
+
+# Subtasks:
+## 1. Review dependency versions in existing modules [done]
+### Dependencies: None
+### Description: Check module_connector and module_scraper repositories to identify the specific versions of shared libraries.
+### Details:
+🎯 OBJETIVO ESPECÍFICO: 
+Identificar las versiones exactas de las librerías compartidas (supabase, tenacity, pydantic, loguru) utilizadas en module_connector y module_scraper para garantizar compatibilidad arquitectónica y evitar conflictos de versiones que puedan causar fallos en integración entre módulos.
+
+📚 REFERENCIAS OBLIGATORIAS:
+* Context7 ID: /supabase/supabase-py (Supabase Python SDK)
+* Context7 ID: /jd/tenacity (Retry library)
+* Context7 ID: /pydantic/pydantic (Data validation)
+* Context7 ID: /delgan/loguru (Logging framework)
+* Archivo: ../module_connector/requirements.txt (para versiones de referencia)
+* Archivo: ../module_scraper/requirements.txt (para versiones de referencia)
+* Documentación: docs/08-configuracion-e-infraestructura.md (dependencias críticas)
+* Patrón: Consistencia de versiones entre módulos del ecosistema La Máquina de Noticias
+
+⚙️ IMPLEMENTACIÓN GUIADA:
+1. Navegar a ../module_connector/ y examinar requirements.txt para extraer versiones de: supabase, tenacity, pydantic, loguru
+2. Navegar a ../module_scraper/ y examinar requirements.txt para las mismas librerías
+3. Crear tabla comparativa documentando versiones encontradas en cada módulo
+4. Identificar conflictos potenciales o discrepancias entre versiones
+5. Seleccionar versión más restrictiva/estable para cada librería compartida
+6. Documentar decisiones de versionado en archivo temporal version_analysis.md
+
+✅ CRITERIOS DE ACEPTACIÓN:
+* Versiones exactas identificadas para supabase, tenacity, pydantic, loguru en ambos módulos
+* Tabla comparativa creada mostrando versiones por módulo
+* Decisión documentada sobre versión final a usar para cada librería
+* No hay conflictos de compatibilidad identificados entre versiones seleccionadas
+* Verificación de que las versiones son compatibles con Python 3.8+
+
+⚠️ NOTAS CRÍTICAS:
+* Priorizar versiones que mantengan compatibilidad con APIs ya implementadas en module_connector
+* Si hay discrepancias, elegir versión más reciente que sea compatible con ambos módulos
+* Considerar que Supabase SDK debe ser compatible con RPCs existentes (insertar_articulo_completo, etc.)
+* Loguru debe mantener formato de logs consistente con el ecosistema
+
+## 2. Update requirements.txt with consistent versions [done]
+### Dependencies: None
+### Description: Modify requirements.txt to use the same versions of shared libraries (supabase, tenacity, pydantic, loguru) as in other modules.
+### Details:
+🎯 OBJETIVO ESPECÍFICO:
+Actualizar requirements.txt del module_pipeline con las versiones exactas identificadas en la subtarea anterior, asegurando compatibilidad total con module_connector y module_scraper para evitar conflictos de versiones durante la integración.
+
+📚 REFERENCIAS OBLIGATORIAS:
+* Context7 ID: /tiangolo/fastapi (FastAPI framework)
+* Context7 ID: /encode/uvicorn (ASGI server)
+* Context7 ID: /groq/groq-typescript (Groq SDK)
+* Archivo: version_analysis.md (resultado de subtarea 2.1)
+* Archivo: requirements.txt (archivo actual a modificar)
+* Documentación: docs/08-configuracion-e-infraestructura.md (lista completa de dependencias)
+* Patrón: Versionado semántico y lock de versiones en ecosistema Python
+
+⚙️ IMPLEMENTACIÓN GUIADA:
+1. Usar resultados de version_analysis.md para identificar versiones finales
+2. Actualizar requirements.txt manteniendo comentarios explicativos sobre Context7 IDs
+3. Agrupar dependencias por categoría (Web Framework, IA/ML, Base de Datos, etc.)
+4. Mantener comentario IMPORTANTE sobre NumPy <2.0.0 para compatibilidad con spaCy
+5. Verificar que todas las versiones específicas están documentadas con Context7 IDs
+6. Añadir notas de compatibilidad para dependencias críticas
+
+✅ CRITERIOS DE ACEPTACIÓN:
+* requirements.txt actualizado con versiones exactas identificadas
+* Todas las librerías compartidas usan mismas versiones que otros módulos
+* Comentarios Context7 IDs mantenidos para trazabilidad
+* Nota crítica sobre NumPy <2.0.0 preservada
+* Agrupación por categorías mantenida para legibilidad
+* No hay dependencias duplicadas o conflictivas
+
+⚠️ NOTAS CRÍTICAS:
+* NO cambiar versiones de fastapi, uvicorn, groq que ya están especificadas correctamente
+* Mantener restricción numpy>=1.21.0,<2.0.0 para evitar conflictos con spaCy 3.8.7
+* Verificar que versiones actualizadas no introduzcan breaking changes en APIs ya utilizadas
+* Documentar cualquier cambio de versión que pueda afectar funcionalidad existente
+
+## 3. Install dependencies with version consistency [done]
+### Dependencies: None
+### Description: Install all dependencies ensuring version consistency with existing modules.
+### Details:
+🎯 OBJETIVO ESPECÍFICO:
+Instalar todas las dependencias del module_pipeline usando las versiones actualizadas, verificando que la instalación es exitosa y que no hay conflictos de versiones que comprometan la funcionalidad del sistema o la integración con otros módulos.
+
+📚 REFERENCIAS OBLIGATORIAS:
+* Context7 ID: /python/pip (Package installer)
+* Context7 ID: /explosion/spacy (NLP models download)
+* Archivo: requirements.txt (versiones finales)
+* Script: scripts/setup_env.py (para verificación post-instalación)
+* Script: scripts/test_connections.py (para verificar conectividad)
+* Documentación: docs/08-configuracion-e-infraestructura.md (proceso de instalación)
+* Patrón: Instalación en entorno virtual aislado
+
+⚙️ IMPLEMENTACIÓN GUIADA:
+1. Verificar que entorno virtual está activo usando scripts/setup_env.py
+2. Ejecutar pip install -r requirements.txt y capturar salida
+3. Verificar instalación exitosa con pip freeze > installed_versions.txt
+4. Comparar versiones instaladas vs. requeridas para detectar discrepancias
+5. Instalar modelos spaCy si USE_SPACY_FILTER=true: python -m spacy download es_core_news_lg
+6. Ejecutar scripts/setup_env.py para verificación completa post-instalación
+7. Ejecutar import tests básicos para librerías críticas
+
+✅ CRITERIOS DE ACEPTACIÓN:
+* Todas las dependencias instaladas sin errores de pip
+* Versiones instaladas coinciden exactamente con requirements.txt
+* No hay advertencias de conflictos de versiones en pip
+* scripts/setup_env.py pasa todas las verificaciones de dependencias
+* Imports exitosos de fastapi, groq, supabase, pydantic, loguru, tenacity
+* Modelos spaCy instalados si están habilitados en configuración
+* Archivo installed_versions.txt generado para auditoría
+
+⚠️ NOTAS CRÍTICAS:
+* Si pip reporta conflictos de versiones, DETENER y revisar requirements.txt
+* NumPy debe instalarse como <2.0.0 para evitar problemas con spaCy
+* No instalar dependencias globalmente - usar siempre entorno virtual
+* Si falla instalación de alguna dependencia, verificar compatibilidad con Python 3.8+
+* Documentar cualquier warning o mensaje durante instalación para troubleshooting futuro
+

@@ -1,0 +1,215 @@
+# Task ID: 17
+# Title: Implement Phase 3: Quote and Quantitative Data Extraction
+# Status: done
+# Dependencies: 5, 8, 12
+# Priority: high
+# Description: Create the third phase of the processing pipeline in src/pipeline/fase_3_citas_datos.py.
+# Details:
+1. Create src/pipeline/fase_3_citas_datos.py
+2. Implement ejecutar_fase_3() function that receives a FragmentProcessor parameter
+3. Integrate with Groq API using the prompt from 'Prompt_3_citas_datos.md'
+4. Extract direct textual quotes and structured numerical data
+5. Create CitaTextual and DatosCuantitativos objects with references using MetadatosCita and MetadatosDato models
+6. Maintain sequential IDs from phase 2 (don't generate UUIDs)
+7. Return ResultadoFase3 object with lists of extracted quotes and quantitative data
+
+# Test Strategy:
+Develop unit tests with text containing quotes and numerical data. Verify accurate extraction and reference assignment. Ensure IDs are maintained consistently between phases and cross-references are valid.
+
+# Subtasks:
+## 1. Create basic structure and ResultadoFase3 class definition [done]
+### Dependencies: None
+### Description: Analyze inputs/outputs and create the basic structure for Phase 3 following the pattern of previous phases, including the ResultadoFase3CitasDatos class definition.
+### Details:
+Review the structure of Phase 1 and 2 implementations to maintain consistency. Define the ResultadoFase3CitasDatos class with appropriate properties to store quotes and quantitative data. Include proper typing for all properties and implement necessary constructors. Ensure the class follows the same patterns as previous phase result classes for consistency.
+<info added on 2025-06-06T03:19:12.978Z>
+## DOCUMENTOS DEL REPOSITORIO A REVISAR:
+- `src/pipeline/fase_1_triaje.py` y `src/pipeline/fase_2_extraccion.py` - Para seguir el patrón estructural establecido
+- `src/models/procesamiento.py` - Para entender `ResultadoFase3CitasDatos`, `CitaTextual` y `DatosCuantitativos` ya definidos
+- `prompts/Prompt_3_citas_datos.md` - Para entender el formato de input (JSON_PASO_1) y output esperado
+
+## CONTEXT7 DOCUMENTATION A CONSULTAR:
+- **Pydantic**: BaseModel inheritance patterns, field validation, UUID handling
+- **Python typing**: Type hints con List, Optional, Dict para citas y datos cuantitativos
+- **Python pathlib**: Manejo de rutas para imports relativos
+
+## IMPLEMENTACIÓN ESPECÍFICA:
+- Crear archivo `src/pipeline/fase_3_citas_datos.py` siguiendo estructura de fases anteriores
+- Importar dependencias necesarias: `CitaTextual`, `DatosCuantitativos`, `ResultadoFase3CitasDatos` desde models
+- Definir función `ejecutar_fase_3(resultado_fase_2: ResultadoFase2Extraccion)` 
+- IMPORTANTE: Esta fase necesita el JSON de la fase anterior como input para el prompt
+- Crear funciones helper privadas para cada etapa: `_formatear_json_paso_1()`, `_parsear_citas()`, `_parsear_datos_cuantitativos()`
+- NOTA: `ResultadoFase3CitasDatos`, `CitaTextual` y `DatosCuantitativos` ya están definidos en procesamiento.py
+</info added on 2025-06-06T03:19:12.978Z>
+
+## 2. Implement Groq API integration with specific prompt [done]
+### Dependencies: 17.1
+### Description: Integrate with Groq API using the Prompt_3_citas_datos.md file that requires JSON_PASO_1 as input.
+### Details:
+Create a service method to call Groq API with the specific prompt from Prompt_3_citas_datos.md. Ensure the method accepts JSON_PASO_1 as input and properly formats it for the API call. Handle API responses and errors appropriately. Document the API integration process and any configuration requirements.
+<info added on 2025-06-06T03:19:42.284Z>
+## DOCUMENTOS DEL REPOSITORIO A REVISAR:
+- `prompts/Prompt_3_citas_datos.md` - Para entender el formato del prompt que requiere JSON_PASO_1 como input
+- `src/pipeline/fase_1_triaje.py` y `fase_2_extraccion.py` - Funciones `_llamar_groq_api_*()` como referencia
+- `src/utils/prompt_loader.py` - Para cargar plantillas de prompt desde archivos externos  
+- `src/utils/error_handling.py` - Para usar decoradores de retry y manejo de errores
+
+## CONTEXT7 DOCUMENTATION A CONSULTAR:
+- **Groq SDK**: Client configuration, chat completions, error handling para prompts complejos
+- **Python json**: JSON serialization para formatear JSON_PASO_1 en el prompt
+- **Tenacity library**: Retry patterns específicos para APIs con prompts largos
+
+## IMPLEMENTACIÓN ESPECÍFICA:
+- Crear función `_llamar_groq_api_citas_datos()` siguiendo patrón de fases anteriores
+- CRÍTICO: Formatear JSON_PASO_1 desde `resultado_fase_2` (hechos y entidades extraídos)
+- Variables del prompt: {{TITULO_O_DOCUMENTO}}, {{FUENTE_O_TIPO}}, {{FECHA_FUENTE}}, {{CONTENIDO}}, {{JSON_PASO_1}}
+- Configurar parámetros Groq apropiados para análisis de texto complejo (mayor max_tokens)
+- Implementar retry logic usando decorador `@retry_groq_api()` existente
+- Manejar respuestas JSON complejas que incluyen arrays de citas y datos cuantitativos
+- IMPORTANTE: Validar que JSON_PASO_1 tenga el formato correcto antes de enviar a Groq
+</info added on 2025-06-06T03:19:42.284Z>
+
+## 3. Implement quote extraction logic [done]
+### Dependencies: 17.1, 17.2
+### Description: Develop logic to extract textual quotes from the API response and map them to CitaTextual objects using MetadatosCita model.
+### Details:
+Create a parser to identify and extract quotes from the API response. Implement the CitaTextual class with appropriate properties (text, source reference, context, etc.) using MetadatosCita for structured metadata. Develop mapping logic to convert raw quote data into properly structured CitaTextual objects. Include validation to ensure quotes are properly formatted and contain required information. Maintain sequential IDs from phase 2 instead of generating UUIDs.
+<info added on 2025-06-06T03:20:14.421Z>
+## DOCUMENTOS DEL REPOSITORIO A REVISAR:
+- `prompts/Prompt_3_citas_datos.md` - Para entender la estructura exacta de citas en el JSON de respuesta
+- `src/models/procesamiento.py` - Modelo `CitaTextual` con campos requeridos y validaciones
+- Ejemplo en prompt: estructura de cita con id, cita, entidad_id, hecho_id, fecha, contexto, relevancia
+
+## CONTEXT7 DOCUMENTATION A CONSULTAR:
+- **Pydantic**: Model validation, field constraints (constr min_length), handling optional fields
+- **Python datetime**: Date parsing y validation para fechas de citas
+- **Python json**: Parsing arrays, handling missing fields en estructura de citas
+- **Python UUID**: uuid4() generation para IDs únicos de citas
+
+## IMPLEMENTACIÓN ESPECÍFICA:
+- Crear función `_parsear_citas_textuales_from_json(response_json, id_fragmento_origen)`
+- Mapear campos JSON a modelo `CitaTextual`:
+  * `id` (del JSON) → generar UUID temporal nuevo con uuid4()
+  * `cita` → `texto_cita`
+  * `entidad_id` → `id_entidad_citada` (mapear desde ID temporal de fase 2)
+  * `hecho_id` → almacenar en `metadata_cita` 
+  * `fecha`, `contexto`, `relevancia` → `metadata_cita`
+- Validar que `texto_cita` cumpla constr(min_length=5)
+- Asignar `id_fragmento_origen` desde resultado de fase anterior
+- Manejar casos edge: citas sin entidad_id, fechas en formato incorrecto, contextos largos
+- CRÍTICO: Los entidad_id y hecho_id deben corresponder a IDs reales de la fase 2
+</info added on 2025-06-06T03:20:14.421Z>
+<info added on 2025-06-06T13:45:22.727Z>
+Modificar la implementación para usar IDs secuenciales en lugar de UUIDs. En la función `_parsear_citas_textuales_from_json`, mantener los IDs originales de la fase 2 tanto para las citas como para las referencias a entidades y hechos. Utilizar la clase MetadatosCita para estructurar los campos de metadatos (fecha, contexto, relevancia, hecho_id) de manera organizada. Integrar el processor existente para garantizar la coherencia de IDs entre fases, asegurando que cada CitaTextual mantenga su relación con las entidades y hechos previamente identificados. Verificar que los entidad_id y hecho_id correspondan exactamente a los IDs generados en la fase 2, sin crear nuevos identificadores.
+</info added on 2025-06-06T13:45:22.727Z>
+
+## 4. Implement quantitative data extraction logic [done]
+### Dependencies: 17.1, 17.2
+### Description: Develop logic to extract quantitative data from the API response and map them to DatosCuantitativos objects using MetadatosDato model.
+### Details:
+Create a parser to identify and extract numerical data from the API response. Implement the DatosCuantitativos class with appropriate properties (value, unit, context, source reference, etc.) using MetadatosDato for structured metadata. Develop mapping logic to convert raw numerical data into properly structured DatosCuantitativos objects. Include validation to ensure numerical data is properly formatted and contains required information. Maintain sequential IDs from phase 2 instead of generating UUIDs.
+<info added on 2025-06-06T03:20:44.987Z>
+## DOCUMENTOS DEL REPOSITORIO A REVISAR:
+- `prompts/Prompt_3_citas_datos.md` - Para entender la estructura de datos cuantitativos en JSON de respuesta
+- `src/models/procesamiento.py` - Modelo `DatosCuantitativos` con campos requeridos y validaciones
+- Ejemplo en prompt: estructura compleja con hecho_id, indicador, categoria, valor, unidad, periodo, variaciones
+
+## CONTEXT7 DOCUMENTATION A CONSULTAR:
+- **Pydantic**: Float validation, string constraints (constr min_length), nested object handling
+- **Python datetime**: Date range parsing para campos periodo (inicio/fin)
+- **Python json**: Parsing complex nested objects, handling arrays y null values
+- **Python UUID**: uuid4() generation para IDs únicos de datos cuantitativos
+
+## IMPLEMENTACIÓN ESPECÍFICA:
+- Crear función `_parsear_datos_cuantitativos_from_json(response_json, id_fragmento_origen)`
+- Mapear campos JSON a modelo `DatosCuantitativos`:
+  * `id` (del JSON) → generar UUID temporal nuevo con uuid4()
+  * `indicador` → `descripcion_dato`
+  * `valor` → `valor_dato` (validar como float)
+  * `unidad` → `unidad_dato`
+  * `categoria`, `ambito_geografico`, `tipo_periodo` → `metadata_dato`
+  * `periodo.inicio`, `periodo.fin` → `fecha_dato` (formatear como rango)
+  * `valor_anterior`, `variacion_absoluta`, `variacion_porcentual`, `tendencia` → `metadata_dato`
+- Validar que `descripcion_dato` cumpla constr(min_length=3)
+- Asignar `id_fragmento_origen` desde resultado de fase anterior
+- Manejar casos edge: valores no numéricos, fechas malformadas, arrays de ámbito geográfico
+- CRÍTICO: Validar categorías permitidas (económico, demográfico, electoral, etc.)
+</info added on 2025-06-06T03:20:44.987Z>
+<info added on 2025-06-06T13:45:44.952Z>
+Implement sequential ID handling for quantitative data extraction by using the integer IDs directly from the JSON response instead of generating UUIDs. Ensure the DatosCuantitativos objects maintain the same ID sequence from the previous phase. Use the MetadatosDato structure to store all specific fields including categoria, ambito_geografico, tipo_periodo, valor_anterior, variacion_absoluta, variacion_porcentual, and tendencia. Configure the processor to maintain ID coherence between processing phases, preserving the relationship between fragments and their extracted quantitative data. When mapping JSON to DatosCuantitativos objects, extract the 'id' field directly from the source JSON and convert it to an integer type if needed.
+</info added on 2025-06-06T13:45:44.952Z>
+
+## 5. Implement reference assignment and result assembly [done]
+### Dependencies: 17.1, 17.3, 17.4
+### Description: Develop logic to assign references to extracted data and assemble the final ResultadoFase3CitasDatos object.
+### Details:
+Create logic to maintain references between extracted quotes/data and their original sources. Implement the final assembly process to combine all extracted information into a complete ResultadoFase3CitasDatos object. Ensure proper validation of the final result. Add comprehensive documentation explaining the structure and relationships in the final output. Implement any necessary utility methods for accessing or filtering the assembled data.
+<info added on 2025-06-06T03:21:16.420Z>
+## DOCUMENTOS DEL REPOSITORIO A REVISAR:
+- `src/models/procesamiento.py` - Modelo `ResultadoFase3CitasDatos` completo y sus campos requeridos
+- `src/pipeline/fase_1_triaje.py` y `fase_2_extraccion.py` - Patrones de ensamblaje final y manejo de errores
+- `src/utils/error_handling.py` - Patterns de manejo de errores específicos para fase 3
+
+## CONTEXT7 DOCUMENTATION A CONSULTAR:
+- **Python UUID**: uuid4() generation, UUID uniqueness en referencias cruzadas
+- **Loguru**: Structured logging para fase de extracción de citas y datos
+- **Python Exception handling**: Error handling para procesos de múltiples componentes
+- **Pydantic**: Model validation, .touch() method, relationship handling entre modelos
+
+## IMPLEMENTACIÓN ESPECÍFICA:
+- Implementar función principal `ejecutar_fase_3(resultado_fase_2: ResultadoFase2Extraccion) -> ResultadoFase3CitasDatos`
+- CRÍTICO: Formatear JSON_PASO_1 desde `resultado_fase_2.hechos_extraidos` y `entidades_extraidas`
+- Generar UUIDs únicos para citas y datos cuantitativos usando `uuid4()`
+- Ensamblar `ResultadoFase3CitasDatos`:
+  * `id_fragmento` desde `resultado_fase_2.id_fragmento`
+  * `citas_textuales_extraidas` desde parser de citas
+  * `datos_cuantitativos_extraidos` desde parser de datos
+  * `prompt_citas_datos_usado` con prompt formateado usado
+  * `metadata_citas_datos` con info técnica (tokens, duración, modelo)
+- Validar referencias cruzadas: que entidad_id y hecho_id en citas/datos existan en fase 2
+- Llamar `.touch()` para actualizar timestamps antes de retornar
+- Manejo de errores con fallbacks apropiados
+- Logging detallado para debugging de referencias entre fases
+</info added on 2025-06-06T03:21:16.420Z>
+<info added on 2025-06-06T13:46:55.395Z>
+## ACTUALIZACIÓN DE IMPLEMENTACIÓN:
+- Modificar la función principal a `ejecutar_fase_3(resultado_fase_2: ResultadoFase2Extraccion, processor: FragmentProcessor) -> ResultadoFase3CitasDatos`
+- NO generar UUIDs para citas y datos cuantitativos
+- Utilizar IDs secuenciales del JSON para citas y datos cuantitativos
+- Mantener los IDs secuenciales de fase 2 en JSON_PASO_1
+- Asegurar que el formateo de JSON_PASO_1 preserve los IDs originales de `resultado_fase_2.hechos_extraidos` y `entidades_extraidas`
+- Implementar lógica de mapeo entre IDs secuenciales y referencias en el ensamblaje final
+- Adaptar la validación de referencias cruzadas para trabajar con IDs secuenciales en lugar de UUIDs
+- Integrar el parámetro processor: FragmentProcessor en el flujo de procesamiento
+</info added on 2025-06-06T13:46:55.395Z>
+
+## 6. Implement FragmentProcessor integration [done]
+### Dependencies: 17.1
+### Description: Update ejecutar_fase_3 function to receive and use FragmentProcessor for maintaining sequential IDs.
+### Details:
+Modify the ejecutar_fase_3 function signature to accept processor: FragmentProcessor as a parameter. Use the processor to maintain sequential IDs that are coherent with previous phases. Update all ID generation logic to use the processor instead of generating UUIDs. Ensure that the processor is properly used throughout the implementation to maintain ID consistency across all phases of processing.
+<info added on 2025-06-06T13:47:13.863Z>
+El processor debe utilizarse para generar IDs secuenciales para citas y datos cuantitativos mediante los métodos processor.next_cita_id() y processor.next_dato_id() respectivamente. Esto garantiza que los identificadores sean coherentes con los generados en las fases anteriores del procesamiento. Asegúrate de reemplazar cualquier generación de UUID o ID personalizada con estas llamadas al processor para mantener la trazabilidad de los elementos a lo largo de todo el flujo de procesamiento.
+</info added on 2025-06-06T13:47:13.863Z>
+
+## 7. Implement structured metadata models [done]
+### Dependencies: 17.1, 17.3, 17.4
+### Description: Use MetadatosCita and MetadatosDato models instead of Dict[str, Any] for metadata fields.
+### Details:
+Update the implementation to use the structured MetadatosCita and MetadatosDato models for storing metadata instead of generic dictionaries. Ensure all metadata fields are properly mapped to the appropriate fields in these models. Update validation logic to take advantage of the structured models. Document the structure and usage of these metadata models in the code.
+
+## 8. Implement JSON_PASO_1 formatting with sequential IDs [done]
+### Dependencies: 17.2, 17.6
+### Description: Format JSON_PASO_1 from resultado_fase_2 while maintaining sequential IDs.
+### Details:
+Develop the _formatear_json_paso_1 function to properly format the JSON input for the Groq API from resultado_fase_2. Ensure that all IDs from phase 2 are maintained in the JSON_PASO_1 format. Validate that the JSON structure matches the expected input format for the prompt. Implement proper error handling for cases where the input data doesn't match the expected structure.
+<info added on 2025-06-06T13:48:11.268Z>
+Es crucial que la función _formatear_json_paso_1 preserve los IDs secuenciales exactos provenientes de fase 2, sin realizar ninguna modificación o conversión. Los identificadores numéricos originales de hechos_extraidos y entidades_extraidas deben mantenerse como los mismos valores enteros en el formato JSON_PASO_1, garantizando así la trazabilidad completa entre las fases del procesamiento. Esta preservación de IDs es esencial para mantener la integridad referencial a lo largo de todo el pipeline de extracción.
+</info added on 2025-06-06T13:48:11.268Z>
+
+## 9. Implement cross-reference validation [done]
+### Dependencies: 17.3, 17.4, 17.8
+### Description: Ensure entidad_id and hecho_id references correspond to actual IDs from phase 2.
+### Details:
+Develop validation logic to ensure that all entidad_id and hecho_id references in quotes and quantitative data correspond to actual IDs from phase 2. Implement error handling for cases where references don't match. Add logging to track reference validation. Create utility functions to help with reference validation if needed.
+
