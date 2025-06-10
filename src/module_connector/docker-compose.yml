@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  module-connector:
+    build: .
+    container_name: module-connector
+    restart: unless-stopped
+    volumes:
+      # Mount data directories
+      - ./data:/data
+      # Mount logs directory
+      - ./logs:/app/logs
+    environment:
+      # Directory paths
+      - SCRAPER_OUTPUT_DIR=/data/scrapy_output/pending
+      - PIPELINE_PENDING_DIR=/data/pipeline_input/pending
+      - PIPELINE_COMPLETED_DIR=/data/pipeline_input/completed
+      - PIPELINE_ERROR_DIR=/data/pipeline_input/error
+      
+      # Pipeline API configuration
+      - PIPELINE_API_URL=http://module-pipeline:8001
+      
+      # Operational settings
+      - POLLING_INTERVAL=5
+      - MAX_RETRIES=3
+      - RETRY_BACKOFF=2.0
+      - LOG_LEVEL=INFO
+      
+      # Optional Sentry configuration
+      - ENABLE_SENTRY=false
+      - SENTRY_DSN=
+    depends_on:
+      - module-pipeline
+    networks:
+      - module-network
+
+  # Mock Pipeline API for testing (replace with real module-pipeline)
+  module-pipeline:
+    image: python:3.9-slim
+    container_name: mock-pipeline
+    working_dir: /app
+    volumes:
+      - ./mock_pipeline.py:/app/mock_pipeline.py
+    command: python mock_pipeline.py
+    ports:
+      - "8001:8001"
+    networks:
+      - module-network
+
+  # Nginx for reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: module-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - module-pipeline
+    networks:
+      - module-network
+    profiles:
+      - production
+
+volumes:
+  data_volume:
+    driver: local
+
+networks:
+  module-network:
+    driver: bridge

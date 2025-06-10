@@ -3,45 +3,9 @@ import scrapy
 from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst, MapCompose, Join
 from w3lib.html import remove_tags
-import dateparser
-from datetime import timezone
-
-# Importar el Item desde la estructura de proyecto de maquina_spiders
-# según lo especificado en prompt_generador_spider.md
-# Asegúrate de que esta ruta sea correcta en tu proyecto 'La Máquina de Noticias'
-# cuando integres este spider.
-from maquina_spiders_project.items import ArticuloInItem
-
-# Helper function to parse dates and format them to ISO 8601 UTC
-def parse_and_format_date_processor(date_str_list):
-    """
-    Intenta parsear una cadena de fecha (o la primera de una lista) usando dateparser 
-    y la formatea a ISO 8601 UTC.
-    Espera una lista de cadenas de fecha como entrada (comportamiento de ItemLoader).
-    """
-    if not date_str_list:
-        return None
-    
-    # Tomar la primera cadena de fecha si es una lista
-    date_str = date_str_list[0] if isinstance(date_str_list, list) else date_str_list
-
-    if not date_str:
-        return None
-    try:
-        dt = dateparser.parse(date_str)
-        if dt:
-            # Si la fecha es naive (sin zona horaria), se asume UTC.
-            # Si tiene zona horaria, se convierte a UTC.
-            if dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None:
-                dt = dt.replace(tzinfo=timezone.utc)
-            else:
-                dt = dt.astimezone(timezone.utc)
-            return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-    except Exception as e:
-        # El logging de este fallo se hará en el spider si el campo resulta None
-        # self.logger.debug(f"Error parseando fecha '{date_str}': {e}") # Necesitaría acceso al logger del spider
-        pass
-    return None
+# Importar el Item desde la estructura correcta del proyecto
+from scraper_core.items import ArticuloInItem
+from scraper_core.itemloaders import ArticuloInItemLoader, parse_and_format_date_processor
 
 class ElnacionalLatinoamericaSpider(scrapy.Spider):
     """
@@ -122,7 +86,7 @@ class ElnacionalLatinoamericaSpider(scrapy.Spider):
         """
         self.logger.info(f'Parseando artículo: {response.url}')
 
-        loader = ItemLoader(item=ArticuloInItem(), response=response)
+        loader = ArticuloInItemLoader(item=ArticuloInItem(), response=response)
 
         loader.default_input_processor = MapCompose(str.strip) # Limpieza básica para todos los campos
         loader.default_output_processor = TakeFirst() # Tomar el primer valor no nulo
@@ -143,16 +107,14 @@ class ElnacionalLatinoamericaSpider(scrapy.Spider):
                         'div.content-modules p'], # Añadido por si acaso
                        MapCompose(remove_tags, str.strip), Join('\n'))
 
-        # Para la fecha, el procesador se define directamente en el ItemLoader
-        # para que MapCompose reciba la lista de selectores y aplique la función a cada uno.
+        # Para la fecha, usar el procesador centralizado del ItemLoader
         loader.add_css('fecha_publicacion', 
                        ['meta[property="article:published_time"]::attr(content)',
                         'time.s-post-time::attr(datetime)',
                         'time.entry-date::attr(datetime)',
                         'span.date::text',
                         'span.s-post-date::text',
-                        'div.date-simple::text'], # Otro selector común
-                       parse_and_format_date_processor) # Usar la función directamente
+                        'div.date-simple::text']) # El procesador ya está definido en ArticuloInItemLoader
 
         loader.add_css('autor', 
                        ['meta[name="author"]::attr(content)',

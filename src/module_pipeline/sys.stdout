@@ -1,0 +1,27 @@
+2025-06-05 16:22:51.566 | INFO     | __main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:22:51.567 | INFO     | __main__:<module>:80 - Iniciando servidor Uvicorn directamente desde main.py en http://0.0.0.0:8000
+2025-06-05 16:22:52.213 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:23:22.245 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:24:03.734 | INFO     | __main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:24:03.734 | INFO     | __main__:<module>:80 - Iniciando servidor Uvicorn directamente desde main.py en http://0.0.0.0:8000
+2025-06-05 16:24:04.232 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:24:04.263 | INFO     | src.main:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:24:04.263 | INFO     | src.main:startup_event:49 - Iniciando aplicación FastAPI: La Maquina De Noticias - Module Pipeline v0.1.0
+2025-06-05 16:24:04.263 | INFO     | src.main:startup_event:50 - LOG_LEVEL actual: INFO
+2025-06-05 16:31:45.511 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:33:30.579 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:33:40.556 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:38:23.126 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:46:52.226 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:47:54.829 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:48:48.986 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 16:49:32.305 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 17:03:55.647 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 17:04:00.910 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 17:04:05.953 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 17:04:24.750 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 17:17:18.938 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 17:17:37.620 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 17:20:26.596 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 17:21:12.926 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *
+2025-06-05 17:23:24.385 | INFO     | __mp_main__:<module>:31 - CORS middleware configurado para orígenes: *

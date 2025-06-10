@@ -26,9 +26,9 @@ from urllib.parse import urljoin
 from datetime import datetime
 from dateutil import parser as dateparser # Para parseo de fechas flexible
 
-# Se asume que esta es la ruta correcta al Item dentro del proyecto 'maquina_spiders'
-# según la estructura definida en las plantillas.
-from maquina_spiders_project.items import ArticuloInItem
+# Importar desde la estructura correcta del proyecto
+from scraper_core.items import ArticuloInItem
+from scraper_core.itemloaders import ArticuloInItemLoader
 from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst, MapCompose, Join
 from w3lib.html import remove_tags, replace_escape_chars
@@ -91,7 +91,7 @@ class EuropapressSudamericaSpider(scrapy.Spider):
         """
         self.logger.info(f"Procesando artículo: {response.url}")
 
-        loader = ItemLoader(item=ArticuloInItem(), response=response)
+        loader = ArticuloInItemLoader(item=ArticuloInItem(), response=response)
 
         # Selectores identificados:
         # Titular: h1.titu-width::text
@@ -105,28 +105,9 @@ class EuropapressSudamericaSpider(scrapy.Spider):
         # Para contenido_texto, extraemos todos los textos dentro del div y los unimos.
         loader.add_css('contenido_texto', 'div.articulo-cuerpo ::text', MapCompose(str.strip), unir_parrafos)
 
-        # Fecha de publicación (priorizar meta tag)
-        fecha_str_meta = response.xpath('//meta[@property="article:published_time"]/@content').get()
-        fecha_str_span = response.css('span.fecha-publicacion::text').get()
-        
-        fecha_publicacion_iso = None
-        if fecha_str_meta:
-            try:
-                fecha_publicacion_iso = dateparser.parse(fecha_str_meta).isoformat()
-            except Exception as e:
-                self.logger.warning(f"No se pudo parsear fecha (meta) '{fecha_str_meta}' en {response.url}: {e}")
-        elif fecha_str_span:
-            try:
-                # Ejemplo de formato en span: "Viernes, 31 mayo 2024 00:00" - dateparser debería manejarlo
-                fecha_publicacion_iso = dateparser.parse(fecha_str_span, languages=['es']).isoformat()
-            except Exception as e:
-                self.logger.warning(f"No se pudo parsear fecha (span) '{fecha_str_span}' en {response.url}: {e}")
-        
-        if fecha_publicacion_iso:
-            loader.add_value('fecha_publicacion', fecha_publicacion_iso)
-        else:
-            self.logger.error(f"No se pudo extraer fecha de publicación para {response.url}")
-            loader.add_value('fecha_publicacion', None) # O manejar de otra forma
+        # Usar el procesador de fechas centralizado
+        loader.add_css('fecha_publicacion', 'meta[property="article:published_time"]::attr(content)')
+        loader.add_css('fecha_publicacion', 'span.fecha-publicacion::text')
 
         # Autor
         autor_raw = response.css('div.firma::text').get()

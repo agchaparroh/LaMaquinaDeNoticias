@@ -1,0 +1,77 @@
+{
+  "alerts": [
+    {
+      "id": "c84eb867-23ea-4c86-b492-144ad771b32a",
+      "alert_type": "groq_api_failure",
+      "severity": "critical",
+      "title": "Groq API Failure Detected",
+      "description": "Error en Groq API: Test: Groq API connection failed",
+      "timestamp": "2025-06-10T06:02:43.996948",
+      "labels": {
+        "service": "groq_api",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "Test: Groq API connection failed",
+        "timestamp": "2025-06-10T06:02:43.994949+08:00"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "3db71992-d39b-452c-8780-9e7345fa5b96",
+      "alert_type": "supabase_failure",
+      "severity": "critical",
+      "title": "Supabase Service Failure Detected",
+      "description": "Error en Supabase: Test: Supabase RPC call failed",
+      "timestamp": "2025-06-10T06:02:44.001946",
+      "labels": {
+        "service": "supabase",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "Test: Supabase RPC call failed",
+        "rpc_name": "unknown"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "b9aa9ebd-d2ee-4b6f-936e-bffa780c37f5",
+      "alert_type": "groq_api_failure",
+      "severity": "critical",
+      "title": "Groq API Failure Detected",
+      "description": "Error en Groq API: Test: Groq API connection failed",
+      "timestamp": "2025-06-10T06:05:56.358046",
+      "labels": {
+        "service": "groq_api",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "Test: Groq API connection failed",
+        "timestamp": "2025-06-10T06:05:56.357045+08:00"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "39dd0d42-123d-410f-96ec-04c0974fbdb2",
+      "alert_type": "supabase_failure",
+      "severity": "critical",
+      "title": "Supabase Service Failure Detected",
+      "description": "Error en Supabase: Test: Supabase RPC call failed",
+      "timestamp": "2025-06-10T06:05:56.361048",
+      "labels": {
+        "service": "supabase",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "Test: Supabase RPC call failed",
+        "rpc_name": "unknown"
+      },
+      "resolved": false,
+      "resolved_at": null
+    }
+  ],
+  "last_updated": "2025-06-10T06:05:56.361048"
+}

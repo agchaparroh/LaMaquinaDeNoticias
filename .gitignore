@@ -39,3 +39,9 @@ __pycache__/
 venv/
 env/
 ENV/
+
+# Added by Task Master AI
+# Environment variables
+# Task files
+tasks.json
+tasks/ 

@@ -15,7 +15,7 @@ from scrapy import Spider
 from bs4 import BeautifulSoup
 import unicodedata
 
-from ..items import ArticuloInItem
+from scraper_core.items import ArticuloInItem
 from .exceptions import CleaningError
 
 logger = logging.getLogger(__name__)
