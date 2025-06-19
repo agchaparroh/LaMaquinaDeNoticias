@@ -1,78 +1,103 @@
 # La Máquina de Noticias
 
-Este proyecto es un sistema integral para la recopilación, procesamiento y análisis de noticias. Está diseñado para ser una herramienta poderosa para periodistas, permitiendo la extracción de conocimiento estructurado desde grandes volúmenes de texto. Incluye módulos para la extracción de datos (web scraping), un pipeline de procesamiento, una base de datos para almacenar la información y varias interfaces para la interacción y revisión de datos.
+Sistema modular para recopilación, procesamiento y análisis de noticias. Herramienta diseñada para periodistas que permite extracción de conocimiento estructurado desde grandes volúmenes de texto.
 
-## 🏗️ Arquitectura Modular
+## 🐳 Arquitectura de Contenedores Docker
 
-El proyecto sigue una arquitectura modular donde cada componente tiene responsabilidades específicas y bien definidas:
+**Cada módulo es un contenedor Docker independiente y autónomo, conectado mediante APIs.**
 
-### **Módulos del Sistema:**
+### Principios de Diseño
 
-1. **`module_scraper`** - Sistema de recopilación de noticias (Scrapy)
-2. **`module_connector`** - Conector entre scraper y pipeline  
-3. **`module_pipeline`** - Pipeline principal de procesamiento con LLMs
-4. **`module_maintenance_scripts`** - Scripts de mantenimiento ("IA Nocturna")
-5. **`module_orchestration_agent`** - Orquestación y scheduling (Prefect)
-6. **`nginx_reverse_proxy`** - Proxy reverso y balanceador
-7. **`module_dashboard_review_backend/frontend`** - Dashboard para periodistas
-8. **`module_chat_interface_backend/frontend`** - Interfaz de investigación
-9. **`module_dev_interface_backend/frontend`** - Herramientas de desarrollo
+- **Independencia Total:** Cada contenedor selecciona sus tecnologías óptimas
+- **Comunicación por Red:** Intercambio únicamente por APIs REST/HTTP  
+- **Autonomía de Configuración:** Variables de entorno específicas por módulo
+- **Seguridad Uniforme:** Prácticas consistentes (usuarios no-root, health checks)
 
-## 📋 Gestión de Proyectos con TaskMaster-AI
+### Ejemplos de Especialización Apropiada
+- `module_scraper`: Python 3.10 (óptimo para Scrapy + Playwright)
+- `module_pipeline`: Python 3.9 (estable para ML + spaCy)
+- `module_connector`: Worker service (procesamiento de archivos)
 
-### **División de Proyectos**
+## 📋 Módulos del Sistema
 
-Para una gestión más eficiente, el proyecto se divide en **dos proyectos TaskMaster-AI independientes pero complementarios**:
+### Estado de Implementación
 
-#### **🎯 Proyecto Principal** (Orquestación y Arquitectura General)
-- **Ubicación:** `C:\Users\DELL\Desktop\Prueba con Windsurf AI\La Máquina de Noticias\`
-- **Enfoque:** Desarrollo de módulos principales, integración, y despliegue
+- [x] module_scraper - Sistema de recopilación de noticias (Scrapy)
+- [x] module_connector - Conector entre scraper y pipeline  
+- [x] module_pipeline - Pipeline principal de procesamiento con LLMs
+- [ ] module_orchestration_agent - Orquestación y scheduling (Prefect)
+- [ ] module_maintenance_scripts - Scripts de mantenimiento
+- [ ] module_chat_interface_backend - API interfaz de investigación
+- [ ] module_chat_interface_frontend - UI interfaz de investigación
+- [ ] module_dashboard_review_backend - API dashboard periodistas
+- [ ] module_dashboard_review_frontend - UI dashboard periodistas
+- [ ] module_dev_interface_backend - API herramientas desarrollo
+- [ ] module_dev_interface_frontend - UI herramientas desarrollo
+- [ ] nginx_reverse_proxy - Proxy reverso y balanceador
 
-#### **🎯 Proyecto module_scraper** (Desarrollo Específico Scraper)
-- **Ubicación:** `C:\Users\DELL\Desktop\Prueba con Windsurf AI\La Máquina de Noticias\src\module_scraper\`
-- **Enfoque:** Desarrollo específico del sistema de scraping
+## 🚀 Quick Start
 
-## 📁 Arquitectura del Directorio
+### Prerrequisitos
+- Docker y Docker Compose
+- Variables de entorno configuradas en `.env`
 
-El proyecto está estructurado de la siguiente manera:
+### Ejecución
+```bash
+# Construir y ejecutar todos los servicios
+docker-compose up --build
 
-### **Directorios Principales:**
--   **`.github/`** - Flujos de trabajo y configuraciones GitHub Actions
--   **`.venv/`** - Entorno virtual de Python aislado
--   **`Base de datos_SUPABASE/`** - Scripts SQL, migraciones y documentación BD
-    -   `documentación/` - Arquitectura de BD, seguridad, etc.
-    -   `migrations/` - Scripts de versioning del esquema
-    -   `scripts/` - Scripts de mantenimiento (embeddings, etc.)
--   **`docs/`** - Documentación completa del proyecto
-    -   `Arquitectura/` - Documentos de arquitectura técnica
-    -   `Componentes/` - Descripción de módulos principales
-    -   `En detalle/` - Documentación específica de componentes
-    -   `Guías/` - Guías prácticas para desarrolladores
-    -   `Prompts/` - Prompts de IA del sistema
-    -   `Revisiones/` - Informes de auditoría y revisión
+# Servicios disponibles:
+# - module_pipeline: http://localhost:8003 (FastAPI server)
+# - module_connector: Worker service (procesa archivos)
+# - module_scraper: Scrapy crawler
+```
 
-### **Código Fuente (`src/`):**
--   **`module_scraper/`** - Sistema Scrapy (68.6% completado)
--   **`module_connector/`** - Conector scraper→pipeline (próximo)
--   **`module_pipeline/`** - Pipeline de procesamiento LLM
--   **`module_maintenance_scripts/`** - Scripts "IA Nocturna"
--   **`module_orchestration_agent/`** - Orquestación Prefect
--   **`nginx_reverse_proxy/`** - Proxy reverso
--   **`module_dashboard_review_backend/`** - API dashboard periodistas
--   **`module_dashboard_review_frontend/`** - UI dashboard periodistas  
--   **`module_chat_interface_backend/`** - API chat investigación
--   **`module_chat_interface_frontend/`** - UI chat investigación
--   **`module_dev_interface_backend/`** - API herramientas dev
--   **`module_dev_interface_frontend/`** - UI herramientas dev
+## 📁 Estructura del Proyecto
 
-### **Gestión y Control:**
--   **`tasks/`** - Archivos TaskMaster-AI del proyecto principal
-    -   `tasks.json` - Estado actual del progreso general
-    -   `task_001.txt` a `task_015.txt` - Archivos individuales
--   **`tests/`** - Pruebas de integración inter-módulos
+```
+├── src/                          # Módulos implementados
+│   ├── module_scraper/           # Web scraping (Python 3.10)
+│   ├── module_connector/         # Worker service (Python 3.9)
+│   ├── module_pipeline/          # ML processing (Python 3.9)
+│   └── [otros módulos]/          # Pendientes de implementación
+├── BaseDeDatos_SUPABASE/         # Configuración y migraciones BD
+├── docs/                         # Documentación técnica
+├── Borrar/                       # Backup de código obsoleto
+├── docker-compose.yml            # Orquestación de servicios
+└── .env                          # Variables de entorno
+```
 
-### **Archivos de Configuración:**
--   `.gitignore` - Archivos ignorados por Git
--   `docker-compose.yml` - Servicios Docker del sistema completo
--   `requirements.txt` - Dependencias Python del proyecto principal
--   `README.md` - Este archivo de documentación
+## 🔗 Comunicación entre Servicios
+
+Los contenedores se comunican usando nombres de servicios Docker:
+
+```python
+# ✅ Correcto - comunicación entre contenedores
+PIPELINE_API_URL = "http://module_pipeline:8003"
+
+# ❌ Incorrecto - no funciona entre contenedores  
+PIPELINE_API_URL = "http://localhost:8003"
+```
+
+## 📚 Documentación
+
+- `docs/filosofia_contenedores_docker.md` - Principios arquitecturales
+- `BaseDeDatos_SUPABASE/` - Configuración base de datos Supabase
+- `Limpieza/soluciones_implementadas.md` - Historial de problemas resueltos
+
+## ⚙️ Configuración
+
+Cada módulo mantiene su configuración específica:
+- Variables compartidas: `SUPABASE_URL`, `SUPABASE_KEY`, `LOG_LEVEL`
+- Variables específicas: `PLAYWRIGHT_TIMEOUT`, `API_PORT`, `PIPELINE_API_URL`
+
+## 🛡️ Seguridad
+
+- Variables sensibles en `.env` (excluido del repositorio)
+- Usuarios no-root en todos los contenedores
+- Health checks específicos por tipo de servicio
+- Comunicación por red interna Docker
+
+---
+
+**Arquitectura:** Microservicios Docker independientes con especializaciones apropiadas por dominio tecnológico.

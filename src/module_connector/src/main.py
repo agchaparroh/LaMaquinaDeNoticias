@@ -292,11 +292,11 @@ async def send_to_pipeline(session: aiohttp.ClientSession, article: ArticuloInIt
     Returns:
         Boolean indicating success (True) or failure (False)
     """
-    endpoint = f"{PIPELINE_API_URL}/procesar"
+    endpoint = f"{PIPELINE_API_URL}/procesar_articulo"
     
     try:
         # Convert Pydantic model to dict
-        article_dict = article.dict()
+        article_dict = article.model_dump()
         payload = {"articulo": article_dict}
         
         # Log with article identifier

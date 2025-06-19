@@ -10,6 +10,17 @@ import re
 from typing import Union, List, Optional
 import unicodedata
 
+# Import SpiderDefaults for validation limits
+try:
+    from module_scraper.spider_factory.config import SpiderDefaults
+    DEFAULT_SPIDER_VALUES = SpiderDefaults()
+except ImportError:
+    # Fallback values if import fails
+    class DefaultValues:
+        author_db_max_length = 200
+        title_slug_max_length = 100
+    DEFAULT_SPIDER_VALUES = DefaultValues()
+
 
 def clean_text(text: str) -> str:
     """
@@ -53,6 +64,7 @@ def parse_and_format_date_processor(date_str_list):
     """
     Procesador para ItemLoader que parsea fechas y las formatea a ISO 8601 UTC.
     Compatible con el formato esperado por los ItemLoaders (recibe lista).
+    Maneja timezones de forma robusta usando dateutil.
     """
     if not date_str_list:
         return None
@@ -63,19 +75,33 @@ def parse_and_format_date_processor(date_str_list):
     if not date_str:
         return None
     
-    # Usar normalize_date para el procesamiento
+    # Usar normalize_date mejorado para el procesamiento
     parsed_date = normalize_date(date_str)
     
     if parsed_date:
-        # Convertir a UTC si es necesario
+        # Importar aquí para evitar imports circulares
         from datetime import timezone
+        from dateutil import tz
+        
+        # Si no tiene timezone info, asumir timezone local del servidor
+        # Esto es más preciso que asumir UTC directamente
         if parsed_date.tzinfo is None or parsed_date.tzinfo.utcoffset(parsed_date) is None:
-            parsed_date = parsed_date.replace(tzinfo=timezone.utc)
-        else:
-            parsed_date = parsed_date.astimezone(timezone.utc)
+            # Intentar detectar si la fecha es muy reciente (últimas 24h)
+            # para usar timezone local, sino asumir UTC
+            now = datetime.now()
+            if abs((now - parsed_date.replace(tzinfo=None)).total_seconds()) < 86400:  # 24 horas
+                # Fecha reciente, probablemente en timezone local
+                local_tz = tz.tzlocal()
+                parsed_date = parsed_date.replace(tzinfo=local_tz)
+            else:
+                # Fecha antigua o futura, asumir UTC
+                parsed_date = parsed_date.replace(tzinfo=timezone.utc)
+        
+        # Convertir a UTC
+        parsed_date_utc = parsed_date.astimezone(timezone.utc)
         
         # Formatear a ISO 8601 UTC
-        return parsed_date.strftime('%Y-%m-%dT%H:%M:%SZ')
+        return parsed_date_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
     
     return None
 
@@ -84,6 +110,7 @@ def normalize_date(date_string: Union[str, datetime]) -> Optional[datetime]:
     """
     Normaliza diferentes formatos de fecha a datetime.
     Soporta múltiples formatos comunes en medios de comunicación.
+    Manejo mejorado de timezones usando dateutil.
     """
     if isinstance(date_string, datetime):
         return date_string
@@ -169,10 +196,58 @@ def normalize_date(date_string: Union[str, datetime]) -> Optional[datetime]:
         except ValueError:
             continue
     
+    # Intentar con dateutil.parser que maneja timezones de forma más robusta
+    try:
+        from dateutil import parser as dateutil_parser
+        from dateutil import tz
+        
+        # Diccionario de zonas horarias comunes en medios de comunicación
+        # Esto ayuda a resolver ambigüedades como IST (India vs Israel)
+        tzinfos = {
+            'EST': tz.gettz('America/New_York'),
+            'EDT': tz.gettz('America/New_York'),
+            'CST': tz.gettz('America/Chicago'),
+            'CDT': tz.gettz('America/Chicago'),
+            'MST': tz.gettz('America/Denver'),
+            'MDT': tz.gettz('America/Denver'),
+            'PST': tz.gettz('America/Los_Angeles'),
+            'PDT': tz.gettz('America/Los_Angeles'),
+            'GMT': tz.UTC,
+            'UTC': tz.UTC,
+            'CET': tz.gettz('Europe/Madrid'),  # Central European Time
+            'CEST': tz.gettz('Europe/Madrid'), # Central European Summer Time
+            'BST': tz.gettz('Europe/London'),  # British Summer Time
+            'IST': tz.gettz('Asia/Kolkata'),   # Indian Standard Time (más común en noticias)
+            'JST': tz.gettz('Asia/Tokyo'),     # Japan Standard Time
+            'AEST': tz.gettz('Australia/Sydney'), # Australian Eastern Standard Time
+            'AEDT': tz.gettz('Australia/Sydney'), # Australian Eastern Daylight Time
+        }
+        
+        # Intentar parsear con dateutil que es más flexible
+        parsed_date = dateutil_parser.parse(original_date_str_cleaned, 
+                                          fuzzy=True,  # Permite texto adicional
+                                          tzinfos=tzinfos,  # Resuelve zonas horarias ambiguas
+                                          dayfirst=True)  # Formato europeo DD/MM/YYYY
+        if parsed_date:
+            return parsed_date
+    except (ValueError, TypeError):
+        pass  # Continuar con dateparser si falla
+    except ImportError:
+        pass  # dateutil no disponible (aunque está en requirements)
+    
     # Try dateparser as a last resort if available and other methods fail
     try:
         import dateparser
-        parsed_date = dateparser.parse(original_date_str_cleaned)
+        # Configuración mejorada para dateparser
+        settings = {
+            'TIMEZONE': 'UTC',  # Timezone por defecto si no se especifica
+            'RETURN_AS_TIMEZONE_AWARE': True,  # Siempre retornar con timezone
+            'TO_TIMEZONE': None,  # No convertir, mantener timezone original
+            'PREFER_DATES_FROM': 'past',  # Para fechas ambiguas, preferir pasadas
+            'PREFER_DAY_OF_MONTH': 'first',
+            'PREFER_LOCALE_DATE_ORDER': False,  # No usar locale, puede ser inconsistente
+        }
+        parsed_date = dateparser.parse(original_date_str_cleaned, settings=settings)
         if parsed_date:
             return parsed_date
     except ImportError:
@@ -226,8 +301,8 @@ def extract_author(author_string: str) -> str:
             author = author[len(prefix):].strip()
     
     # Limitar longitud (campo en BD es VARCHAR(200))
-    if len(author) > 200:
-        author = author[:197] + '...'
+    if len(author) > DEFAULT_SPIDER_VALUES.author_db_max_length:
+        author = author[:DEFAULT_SPIDER_VALUES.author_db_max_length - 3] + '...'
     
     return author
 
@@ -352,7 +427,7 @@ def generate_storage_path(item_dict: dict) -> str:
     # Generar slug del título
     titulo_slug = re.sub(r'[^\w\s-]', '', titulo.lower())
     titulo_slug = re.sub(r'[-\s]+', '-', titulo_slug)
-    titulo_slug = titulo_slug[:100]  # Limitar longitud
+    titulo_slug = titulo_slug[:DEFAULT_SPIDER_VALUES.title_slug_max_length]  # Limitar longitud
     
     # Si el slug está vacío, usar timestamp
     if not titulo_slug:

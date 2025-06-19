@@ -1,0 +1,1 @@
+export { HechoCard } from './HechoCard';

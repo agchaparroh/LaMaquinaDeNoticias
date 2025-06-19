@@ -155,12 +155,12 @@ JOB_MAX_STORED = _get_int_env('JOB_MAX_STORED', 10000)  # Límite máximo de job
 # CONFIGURACIÓN DE MONITOREO (OPCIONAL)
 # =============================================================================
 
-USE_SENTRY = _get_bool_env('USE_SENTRY', False)
+USE_SENTRY = _get_bool_env('SENTRY_ENABLED', False)
 SENTRY_DSN = os.getenv('SENTRY_DSN', '')
 
 # Validar configuración de Sentry
 if USE_SENTRY and not SENTRY_DSN:
-    print("⚠️  WARNING: USE_SENTRY=true pero SENTRY_DSN no configurado. Deshabilitando Sentry.")
+    print("⚠️  WARNING: SENTRY_ENABLED=true pero SENTRY_DSN no configurado. Deshabilitando Sentry.")
     USE_SENTRY = False
 
 # =============================================================================

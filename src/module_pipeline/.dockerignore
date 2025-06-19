@@ -1,0 +1,80 @@
+# .dockerignore for module_pipeline
+# Excluir archivos y directorios innecesarios del contexto de Docker
+
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+tests/
+*_test.py
+test_*.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs y métricas locales
+logs/*.log
+metrics/*.json
+*.log
+
+# Configuración local
+.env
+.env.local
+.env.development
+.env.test
+
+# Archivos temporales
+*.tmp
+*.temp
+.tmp/
+temp/
+
+# Documentación
+README.md
+*.md
+docs/
+
+# Scripts de desarrollo
+scripts/dev_*
+scripts/test_*
+*.bat
+*.sh
+
+# Alertas y caché
+.alerts/
+.cursor/
+.roo/
+
+# Archivos de salida
+sys.stdout

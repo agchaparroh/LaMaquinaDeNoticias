@@ -1,47 +1,330 @@
-# Ignore Obsidian user-specific settings and cache files
-docs/.obsidian/
-# Ignore environment variables
+# =============================================================================
+# SECURITY CRITICAL - API KEYS AND SENSITIVE DATA
+# =============================================================================
 .env
 .env.test
+.env.local
+.env.production
+.env.staging
+.env.development
 
-# Added by Claude Task Master
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-dev-debug.log
+# Backup environment files
+.env.backup
+.env.bak
+*.env.backup
+*.env.bak
 
-# Dependency directories
-node_modules/
+# API Keys and secrets
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.csr
+secrets/
+config/secrets/
+secrets.json
+credentials.json
+auth.json
 
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Database credentials and connection strings
+database.ini
+db.conf
+connection_strings.txt
 
-# OS specific
-.DS_Store
+# SSL/TLS certificates
+ssl/
+certs/
+certificates/
 
-# Python specific
+# =============================================================================
+# PYTHON RUNTIME AND DEPENDENCIES
+# =============================================================================
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 
-# Virtual Environments
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+test-results/
+test_output.txt
+
+# Virtual environments (large, recreatable)
 .venv/
 venv/
 env/
 ENV/
+env.bak/
+venv.bak/
+.virtualenv/
 
-# Added by Task Master AI
-# Environment variables
-# Task files
-tasks.json
-tasks/ 
+# =============================================================================
+# NODE.JS / FRONTEND DEPENDENCIES
+# =============================================================================
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Build outputs
+build/
+dist/
+out/
+
+# Next.js
+.next/
+
+# Nuxt.js
+.nuxt/
+
+# Gatsby files
+.cache/
+public/
+
+# =============================================================================
+# DOCKER AND CONTAINERIZATION
+# =============================================================================
+# Docker volumes data
+docker-data/
+volumes/
+
+# Docker override files
+docker-compose.override.yml
+docker-compose.prod.yml
+docker-compose.dev.yml
+
+# =============================================================================
+# LOGS AND TEMPORARY FILES
+# =============================================================================
+# Log files
+*.log
+logs/
+log/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# =============================================================================
+# DATABASE FILES
+# =============================================================================
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Database dumps
+*.sql.gz
+*.dump
+dumps/
+
+# =============================================================================
+# IDE AND EDITOR FILES
+# =============================================================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =============================================================================
+# OPERATING SYSTEM FILES
+# =============================================================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Linux
+*~
+
+# =============================================================================
+# DATA AND CACHE DIRECTORIES
+# =============================================================================
+# Cache directories
+.cache/
+*.cache
+cache/
+
+# Data directories that might contain sensitive information
+data/scraped/
+data/processed/
+data/raw/
+downloads/
+uploads/
+
+# Session files
+sessions/
+*.session
+
+# =============================================================================
+# DOCUMENTATION PERSONAL PREFERENCES
+# =============================================================================
+# Obsidian vault (personal notes)
+docs/.obsidian/
+.obsidian/
+
+# =============================================================================
+# BACKUP AND ARCHIVE FILES
+# =============================================================================
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+backup/
+backups/
+
+# Archive files
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# =============================================================================
+# MACHINE LEARNING AND AI MODELS
+# =============================================================================
+# Large model files
+*.model
+*.h5
+*.pkl
+*.pickle
+models/
+checkpoints/
+weights/
+
+# =============================================================================
+# PREFECT / WORKFLOW ORCHESTRATION
+# =============================================================================
+# Prefect specific
+.prefect/
+prefect.db
+
+# =============================================================================
+# PROJECT SPECIFIC - LA MÁQUINA DE NOTICIAS
+# =============================================================================
+# Temporary test files
+temp_test_*.py
+
+# Scraped content that might contain sensitive data
+scraped_data/
+news_cache/
+article_cache/
+
+# Processing results
+processed_articles/
+analysis_results/
+
+# Keep important project files
+# (These are explicitly NOT ignored to ensure they're tracked)
+# !src/
+# !BaseDeDatos_SUPABASE/
+# !tests/
+# !README.md
+# !requirements.txt
+# !docker-compose.yml
+# !.env.example

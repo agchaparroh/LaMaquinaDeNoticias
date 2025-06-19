@@ -24,16 +24,15 @@ services:
       context: ./src/module_connector
       dockerfile: Dockerfile
     container_name: lamacquina_connector
-    command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
     volumes:
       - ./src/module_connector:/app
-    ports:
-      - "8002:8002"
     env_file:
       - .env
     networks:
       - lamacquina_network
     restart: unless-stopped
+    depends_on:
+      - module_pipeline
 
   module_pipeline:
     build:

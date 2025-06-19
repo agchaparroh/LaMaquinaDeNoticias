@@ -364,3 +364,45 @@ if os.getenv('ENVIRONMENT') == 'production':
     DOWNLOAD_DELAY = 1
     AUTOTHROTTLE_TARGET_CONCURRENCY = 4.0
     LOG_LEVEL = 'WARNING'
+
+# =============================================================================
+# SECTION-SPECIFIC RSS ARTIFICIAL SPIDER CONFIGURATION
+# =============================================================================
+
+# Configuration for section-specific RSS artificial spiders
+# These settings optimize scrapy-crawl-once for section monitoring
+
+# Section-specific crawl-once configuration
+CRAWL_ONCE_SECTION_PREFIX = "section"  # Prefix for section-specific duplicate tracking
+CRAWL_ONCE_SECTION_TTL = int(os.getenv('CRAWL_ONCE_SECTION_TTL', 86400))  # 24 hours default
+
+# RSS detection timeouts for section analysis
+RSS_DETECTION_TIMEOUT = int(os.getenv('RSS_DETECTION_TIMEOUT', 15))  # 15 seconds
+RSS_VALIDATION_TIMEOUT = int(os.getenv('RSS_VALIDATION_TIMEOUT', 10))  # 10 seconds
+
+# Section analysis configuration
+SECTION_ANALYSIS_MAX_SAMPLES = int(os.getenv('SECTION_ANALYSIS_MAX_SAMPLES', 5))  # Max article samples per section
+SECTION_ANALYSIS_TIMEOUT = int(os.getenv('SECTION_ANALYSIS_TIMEOUT', 30))  # 30 seconds
+
+# Spider Factory section-specific settings
+SPIDER_FACTORY_SECTION_MODE = True  # Enable section-specific spider generation
+SPIDER_FACTORY_DEFAULT_SCOPE = "section"  # Default scope for new factory usage
+SPIDER_FACTORY_RSS_PRIORITY = True  # Prioritize RSS detection over scraping
+
+# Section URL pattern detection
+SECTION_URL_PATTERNS = {
+    'common_sections': [
+        'nacional', 'internacional', 'politica', 'economia', 'deportes',
+        'tecnologia', 'cultura', 'sociedad', 'mundo', 'local', 'opinion',
+        'entretenimiento', 'salud', 'educacion', 'medio-ambiente'
+    ],
+    'section_indicators': [
+        '/seccion/', '/categoria/', '/section/', '/category/', '/tema/',
+        '/tag/', '/area/', '/departamento/'
+    ]
+}
+
+# RSS artificial spider execution settings
+RSS_ARTIFICIAL_DEFAULT_DELAY = float(os.getenv('RSS_ARTIFICIAL_DEFAULT_DELAY', 3.0))  # Conservative delay
+RSS_ARTIFICIAL_CONCURRENT_REQUESTS = int(os.getenv('RSS_ARTIFICIAL_CONCURRENT_REQUESTS', 1))  # Very conservative
+RSS_ARTIFICIAL_RESPECT_ROBOTS = True  # Always respect robots.txt for RSS artificial

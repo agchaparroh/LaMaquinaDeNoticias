@@ -1,0 +1,46 @@
+# Dashboard Review Backend - Docker Compose
+# La Máquina de Noticias
+# Servicio FastAPI para revisión editorial
+
+version: '3.8'
+
+services:
+  module_dashboard_review_backend:
+    build: .
+    container_name: module_dashboard_review_backend
+    ports:
+      - "8004:8004"
+    environment:
+      # Supabase connection
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      # Server configuration
+      - API_HOST=0.0.0.0
+      - API_PORT=8004
+      # CORS configuration
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3001}
+      # Optional settings
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    # Optional: add resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+networks:
+  lamacquina_network:
+    external: true

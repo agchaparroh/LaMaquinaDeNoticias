@@ -11,7 +11,7 @@ PIPELINE_COMPLETED_DIR = os.getenv('PIPELINE_COMPLETED_DIR', '/data/pipeline_inp
 PIPELINE_ERROR_DIR = os.getenv('PIPELINE_ERROR_DIR', '/data/pipeline_input/error')
 
 # API configuration
-PIPELINE_API_URL = os.getenv('PIPELINE_API_URL', 'http://localhost:8001')
+PIPELINE_API_URL = os.getenv('PIPELINE_API_URL', 'http://module_pipeline:8003')
 
 # Polling interval in seconds
 POLLING_INTERVAL = int(os.getenv('POLLING_INTERVAL', '5'))
@@ -24,5 +24,5 @@ RETRY_BACKOFF = float(os.getenv('RETRY_BACKOFF', '2.0'))
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 
 # Optional Sentry configuration
-ENABLE_SENTRY = os.getenv('ENABLE_SENTRY', 'false').lower() == 'true'
+SENTRY_ENABLED = os.getenv('SENTRY_ENABLED', 'false').lower() == 'true'
 SENTRY_DSN = os.getenv('SENTRY_DSN', '')

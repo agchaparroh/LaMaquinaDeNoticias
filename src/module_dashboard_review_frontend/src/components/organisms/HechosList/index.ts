@@ -1,0 +1,1 @@
+export { HechosList } from './HechosList';

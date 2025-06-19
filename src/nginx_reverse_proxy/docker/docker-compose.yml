@@ -1,0 +1,41 @@
+# docker-compose.yml - Nginx Reverse Proxy
+# Configuración standalone para testing y desarrollo
+# También puede ser integrado en el docker-compose principal
+
+version: '3.9'
+
+services:
+  nginx_reverse_proxy:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: nginx_reverse_proxy
+    ports:
+      - "80:80"
+      - "443:443"  # Preparado para SSL futuro
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/health-check.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      # Logs para debugging
+      - nginx_logs:/var/log/nginx
+    environment:
+      - NGINX_HOST=${NGINX_HOST:-localhost}
+      - NGINX_PORT=${NGINX_PORT:-80}
+    # Solo depende de los servicios si están en el mismo compose
+    # En modo standalone, estos servicios deben estar corriendo externamente
+
+networks:
+  lamacquina_network:
+    driver: bridge
+    # Crear la red si no existe, conectar si existe
+
+volumes:
+  nginx_logs:
+    driver: local

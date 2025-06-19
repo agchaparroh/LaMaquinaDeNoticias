@@ -39,6 +39,7 @@ httpx==0.26.0  # HTTP client used by supabase-py
 unicodedata2==15.1.0  # Better unicode normalization support
 nest-asyncio==1.6.0 # For playwright/asyncio compatibility in certain environments
 python-dotenv==1.0.1 # For loading .env files
+defusedxml==0.7.1  # Secure XML parsing to prevent XML bombs and entity expansion attacks
 
 # Slack integration for Spidermon
 slack_sdk>=3.0.0

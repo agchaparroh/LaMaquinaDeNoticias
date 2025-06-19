@@ -1,0 +1,1 @@
+export { HechoDetailModal } from './HechoDetailModal';

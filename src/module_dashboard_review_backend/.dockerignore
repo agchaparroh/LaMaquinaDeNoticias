@@ -1,0 +1,61 @@
+# Dashboard Review Backend - Docker Ignore
+# Files and directories to exclude from Docker build context
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Git files
+.git
+.gitignore
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Documentation
+*.md
+docs/
+
+# TaskMaster files
+.taskmaster/
+.roo/
+
+# Test files (if any)
+tests/
+pytest.ini
+.coverage
+
+# Development files
+*.bak
+verify_*.py
+
+# Docker files
+Dockerfile
+docker-compose*.yml

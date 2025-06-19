@@ -1,5 +1,51 @@
 # 🗄️ Base de Datos Máquina de Noticias - Supabase
 
+## ☁️ **UBICACIÓN DE LA BASE DE DATOS**
+
+> **📍 IMPORTANTE**: Esta base de datos está **implementada y funcionando** en **Supabase** (servicio externo en la nube). No es una instalación local.
+
+### 🔗 **Acceso**
+- **Servidor**: `db.[tu-proyecto-id].supabase.co`  
+- **Conexión**: Requiere internet
+- **Estado**: ✅ **OPERATIVA** (verificado Junio 2025)
+
+### ⚙️ **Para conectar desde aplicaciones**
+
+**Variables de entorno principales:**
+```bash
+# === INFORMACIÓN DEL PROYECTO ===
+export PROJECT_NAME="tu-proyecto-nombre"
+export PROJECT_ID="tu-proyecto-id"
+export PROJECT_URL="https://tu-proyecto.supabase.co"
+
+# === AUTENTICACIÓN SUPABASE ===
+export SUPABASE_URL="https://tu-proyecto.supabase.co"
+export SUPABASE_ANON_KEY="eyJhbG..."  # Clave anónima
+export SUPABASE_SERVICE_ROLE_KEY="eyJhbG..."  # Clave de servicio
+
+# === CONEXIÓN POSTGRESQL DIRECTA ===
+export PGHOST="db.tu-proyecto.supabase.co"
+export PGPORT="5432"
+export PGDATABASE="postgres"
+export PGUSER="postgres"
+export PGPASSWORD="tu-password-seguro"
+export SUPABASE_DB_PASSWORD="tu-password-seguro"  # Alias
+```
+
+**Variables opcionales (configuración avanzada):**
+```bash
+# Pool de conexiones
+export DB_POOL_SIZE="10"
+export DB_MAX_OVERFLOW="20"
+export DB_POOL_TIMEOUT="30"
+```
+
+> 📁 **Ver ejemplos completos en**: `.env.example` y `src/module_pipeline/.env.example`
+
+---
+
+**✅ La base de datos está completamente funcional y lista para usar.**
+
 ## 📖 Introducción
 
 Esta documentación contiene todo lo necesario para entender, implementar y operar la base de datos PostgreSQL de la **Máquina de Noticias** en Supabase. El sistema está diseñado para procesar grandes volúmenes de información periodística mediante inteligencia artificial y proporcionar interfaces avanzadas de consulta.

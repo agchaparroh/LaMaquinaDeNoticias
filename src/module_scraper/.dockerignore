@@ -1,0 +1,55 @@
+# Development files
+.dev/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+
+# Test files and outputs
+test_*.json
+*_test_run*.json
+tests/output/
+examples/output/
+
+# Git
+.git/
+.gitignore
+
+# Docker files (avoid recursion)
+Dockerfile*
+docker-compose*.yml
+
+# Documentation
+README.md
+STRUCTURE.md
+docs/
+
+# Scrapy cache
+.scrapy/
+
+# Environment files with sensitive data
+.env
+
+# Large data files that shouldn't be in container
+data/
+output/
+downloads/
