@@ -1,15 +1,39 @@
-# Development files
-.dev/
-*.pyc
+# Python
 __pycache__/
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Testing
 .pytest_cache/
 .coverage
 htmlcov/
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
 
-# IDE files
+# Development tools
+.dev/
 .vscode/
 .idea/
 *.swp
@@ -19,37 +43,90 @@ htmlcov/
 # OS files
 .DS_Store
 Thumbs.db
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+$RECYCLE.BIN/
+
+# Environment and secrets
+.env
+.env.local
+.env.production
+config/.env
+config/.env.local
 
 # Log files
 *.log
 logs/
+
+# Scrapy cache (puede ser grande)
+.scrapy/
 
 # Test files and outputs
 test_*.json
 *_test_run*.json
 tests/output/
 examples/output/
+output/
+data/
+downloads/
 
 # Git
 .git/
 .gitignore
+.gitattributes
 
-# Docker files (avoid recursion)
+# Docker files (evitar recursión)
 Dockerfile*
 docker-compose*.yml
+.dockerignore
 
-# Documentation
+# Documentation (no necesaria en runtime)
 README.md
 STRUCTURE.md
 docs/
+@generador-spiders/
 
-# Scrapy cache
-.scrapy/
+# Scripts de desarrollo
+scripts/test_*.py
+scripts/demo_*.py
+scripts/audit_*.py
+scripts/configure_*.py
+scripts/verify_*.py
 
-# Environment files with sensitive data
-.env
+# Archivos temporales y backups
+*.tmp
+*.temp
+*.bak
+*.backup
 
-# Large data files that shouldn't be in container
-data/
-output/
-downloads/
+# Archivos comprimidos grandes
+*.gz
+*.zip
+*.tar
+
+# Archivos específicos de testing
+tests/reports/
+tests/.pytest_cache/
+tests/fixtures/
+tests/performance/
+tests/e2e/
+
+# Configuración específica de herramientas
+.editorconfig
+.roo/
+.cursor/
+.roomodes
+.taskmasterconfig
+.windsurfrules
+
+# Archivos de configuración de IDE
+*.sublime-*
+.project
+.pydevproject
+
+# Archivos de base de datos locales
+*.sqlite
+*.sqlite3
+*.db

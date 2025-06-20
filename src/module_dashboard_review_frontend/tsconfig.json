@@ -33,6 +33,6 @@
       "@context/*": ["./src/context/*"]
     }
   },
-  "include": ["src", "dev-tools"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }

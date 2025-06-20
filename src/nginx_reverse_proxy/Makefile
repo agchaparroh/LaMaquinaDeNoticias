@@ -1,7 +1,7 @@
 # Makefile - nginx_reverse_proxy simple operations
 # Comandos útiles para desarrollo y deployment
 
-.PHONY: help build deploy stop clean test logs status integrate
+.PHONY: help build deploy stop clean test logs status integrate test-unit test-integration test-all test-coverage
 
 # Default target
 help:
@@ -20,17 +20,22 @@ help:
 	@echo ""
 	@echo "🧪 Testing & Monitoring:"
 	@echo "  make test       - Run health checks"
+	@echo "  make test-all   - Run all pytest tests"
+	@echo "  make test-unit  - Run unit tests only"
+	@echo "  make test-integration - Run integration tests only"
+	@echo "  make test-coverage - Run tests with coverage report"
 	@echo "  make logs       - Show container logs"
 	@echo "  make status     - Show container status"
 	@echo ""
 	@echo "💡 Usage Examples:"
 	@echo "  make deploy && make test    # Full deployment & test"
+	@echo "  make test-all               # Run all pytest tests"
 	@echo "  make logs                   # Monitor in real-time"
 
 # Build Docker image
 build:
 	@echo "📦 Building nginx_reverse_proxy..."
-	docker build -f docker/Dockerfile -t nginx_reverse_proxy .
+	docker build -t nginx_reverse_proxy .
 	@echo "✅ Build completed!"
 
 # Deploy standalone
@@ -117,3 +122,37 @@ quick-deploy: build deploy test
 quick-restart: stop deploy test
 
 quick-clean: clean build deploy test
+
+# Pytest test commands
+test-deps:
+	@echo "📦 Installing test dependencies..."
+	@pip install -q -r requirements-test.txt 2>/dev/null || pip install -r requirements-test.txt
+
+test-unit: test-deps
+	@echo "📝 Running unit tests..."
+	@pytest tests/unit/ -v --tb=short
+
+test-integration: test-deps network-create
+	@echo "🔗 Running integration tests..."
+	@echo "⚠️  Note: This will create temporary containers"
+	@pytest tests/integration/ -v --tb=short
+	@echo "🧹 Cleaning up test containers..."
+	@docker rm -f nginx_reverse_proxy_test mock_dashboard_backend mock_dashboard_frontend 2>/dev/null || true
+
+test-all: test-deps network-create
+	@echo "🧪 Running all tests..."
+	@pytest tests/ -v --tb=short
+	@echo "🧹 Cleaning up test containers..."
+	@docker rm -f nginx_reverse_proxy_test mock_dashboard_backend mock_dashboard_frontend 2>/dev/null || true
+
+test-coverage: test-deps network-create
+	@echo "📊 Running tests with coverage..."
+	@pytest tests/ --cov=. --cov-report=term-missing --cov-report=html
+	@echo "🧹 Cleaning up test containers..."
+	@docker rm -f nginx_reverse_proxy_test mock_dashboard_backend mock_dashboard_frontend 2>/dev/null || true
+	@echo "📈 Coverage report generated in htmlcov/index.html"
+
+test-clean:
+	@echo "🧹 Cleaning test artifacts..."
+	@docker rm -f nginx_reverse_proxy_test mock_dashboard_backend mock_dashboard_frontend 2>/dev/null || true
+	@rm -rf .pytest_cache htmlcov .coverage 2>/dev/null || true

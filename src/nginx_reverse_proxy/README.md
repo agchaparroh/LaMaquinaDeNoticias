@@ -1,130 +1,152 @@
 # nginx_reverse_proxy
 
-## ✅ IMPLEMENTACIÓN COMPLETADA Y REORGANIZADA
+## ✅ IMPLEMENTACIÓN COMPLETADA
 
-**Estado:** MVP completamente funcional con arquitectura mejorada.
+**Estado:** Módulo funcional con arquitectura organizada.
 
-**Nueva Estructura:** Organizada por mejores prácticas de desarrollo.
-
-## 🏗️ Arquitectura del Proyecto
+## 🏗️ Estructura del Proyecto
 
 ```
 nginx_reverse_proxy/
 ├── README.md                    # 📖 Documentación principal
-├── .gitignore                   # 🚫 Git ignore rules
-├── Makefile                     # 🛠️ Comandos desarrollo
+├── .env                         # ⚙️ Configuración de entorno activa
+├── .gitignore                   # 🚫 Reglas Git
+├── Dockerfile                   # 📦 Imagen Docker
+├── docker-compose.yml           # 🚀 Deploy standalone
+├── docker-compose.integration.yml # 🔗 Fragment integración
+├── Makefile                     # 🛠️ Comandos de desarrollo
 ├── config/                      # ⚙️ Configuraciones
-│   ├── nginx.conf              # 🔧 Configuración nginx optimizada
-│   └── .env.example            # 📝 Variables de entorno template
-├── docker/                      # 🐳 Archivos Docker
-│   ├── Dockerfile              # 📦 Build instructions
-│   ├── docker-compose.yml      # 🚀 Deploy standalone
-│   └── docker-compose.integration.yml # 🔗 Fragment integración
+│   ├── nginx.conf              # 🔧 Configuración nginx
+│   └── .env.example            # 📝 Template variables de entorno
 ├── scripts/                     # 📜 Scripts ejecutables
 │   ├── deploy.sh               # 🚀 Deployment automático
 │   ├── integration.sh          # 🔗 Integración con sistema principal
 │   ├── health-check.sh         # ❤️ Health monitoring
 │   └── setup.sh                # 🔧 Setup inicial
 └── docs/                        # 📚 Documentación
-    ├── QUICK_START.md          # ⚡ Guía 2 minutos
-    └── technical.md            # 📋 Documentación técnica detallada
+    ├── ARCHITECTURE_CHANGES.md # 📋 Cambios de arquitectura
+    ├── QUICK_START.md          # ⚡ Guía rápida
+    └── technical.md            # 📋 Documentación técnica
 ```
 
-## 🚀 Quick Start
+## 🚀 Inicio Rápido
 
 ```bash
-# Opción 1: Deployment rápido
+# Deployment standalone
 make deploy
 
-# Opción 2: Integración con sistema principal
+# Integración con sistema principal
 make integrate
 ```
 
 **Verificación:** `curl http://localhost/nginx-health`
 
-## 📋 Funcionalidades Implementadas
+## 📋 Funcionalidades Confirmadas
 
-### ✅ Routing Completo
-- `/api/*` → `module_dashboard_review_backend:8004`
+### ✅ Routing Implementado
+Basándome en `config/nginx.conf`:
+- `/api/*` → `module_dashboard_review_backend:8004` (reescribe URL quitando /api)
 - `/*` → `module_dashboard_review_frontend:80`
 - `/nginx-health` → Health check interno
+- `/api/health` → Health check del backend
 
-### ✅ Configuración Robusta
+### ✅ Configuración Nginx
+Según `config/nginx.conf`:
 - Docker networking con `lamacquina_network`
-- Health checks automáticos cada 30s
+- Health checks cada 30s (confirmado en Dockerfile)
 - CORS headers configurados
 - Compresión gzip habilitada
-- Logs estructurados
-- Headers de seguridad
+- Rate limiting: API (100r/m), general (300r/m)
+- Headers de seguridad: X-Frame-Options, X-Content-Type-Options, etc.
+- Logs estructurados en `/var/log/nginx/`
 
-### ✅ DevOps Tools
-- Scripts automatizados de deployment
-- Makefile con comandos útiles
-- Integración con docker-compose
-- Health monitoring incluido
+### ✅ Contenedor Docker
+Según `Dockerfile`:
+- Imagen base: `nginx:1.25-alpine`
+- Dependencias instaladas: `curl`, `bash`
+- Usuario no-root: `nginx`
+- Health check script: `/usr/local/bin/health-check.sh`
+- Puertos expuestos: 80, 443
 
-## 🔧 Comandos Principales
+## 🔧 Comandos Disponibles
 
+Según `Makefile`:
+
+### Build y Deploy
 ```bash
-# Ver todos los comandos disponibles
-make help
+make build      # Build Docker image
+make deploy     # Deploy standalone
+make integrate  # Integrar con docker-compose principal
+```
 
-# Build y deploy
-make build
-make deploy
+### Operaciones
+```bash
+make stop       # Parar container
+make clean      # Parar y remover container
+make restart    # Reiniciar container
+```
 
-# Operaciones
-make stop
-make restart
-make clean
+### Testing y Monitoring
+```bash
+make test       # Health checks automáticos
+make logs       # Ver logs del container
+make status     # Estado del container
+```
 
-# Testing y monitoring
-make test
-make logs
-make status
+### Desarrollo
+```bash
+make dev-logs   # Logs nginx (access + error)
+make dev-shell  # Shell en el container
+make dev-config # Ver configuración nginx actual
+```
 
-# Integración
-make integrate
+### Red
+```bash
+make network-create   # Crear lamacquina_network
+make network-inspect  # Inspeccionar red
+```
+
+### Comandos rápidos
+```bash
+make quick-deploy    # build + deploy + test
+make quick-restart   # stop + deploy + test
+make quick-clean     # clean + build + deploy + test
 ```
 
 ## 🧪 Testing y Verificación
 
-### Health Checks
+### Health Checks Implementados
 ```bash
-# Nginx health
+# Nginx health (confirmado en nginx.conf)
 curl http://localhost/nginx-health
 
-# API routing (requiere backend running)
+# API routing (confirmado en nginx.conf)
 curl http://localhost/api/health
 
-# Frontend routing (requiere frontend running)  
+# Frontend routing (confirmado en nginx.conf)
 curl http://localhost/
 ```
 
-### Logs y Debugging
+### Comandos de Debugging
 ```bash
-# Ver logs en tiempo real
-make logs
-
-# Ver configuración actual
-make dev-config
-
-# Acceso shell al container
-make dev-shell
+make logs        # Ver logs en tiempo real
+make dev-config  # Ver configuración nginx
+make dev-shell   # Acceso shell al container
+make status      # Estado del container
 ```
 
-## 🔗 Integración con Sistema Principal
+## 🔗 Integración
 
-### Para Proyecto Existente
+### Para Sistema Principal
+Según `scripts/integration.sh`:
 ```bash
 # Desde directorio raíz del proyecto principal
 cd nginx_reverse_proxy/
 make integrate
-cd ..
-docker-compose up nginx_reverse_proxy
 ```
 
-### Para Development Standalone
+### Deploy Standalone
+Según `scripts/deploy.sh`:
 ```bash
 # Desde directorio nginx_reverse_proxy
 make deploy
@@ -133,110 +155,102 @@ make deploy
 ## 📁 Componentes Clave
 
 ### **config/nginx.conf**
-- Configuración optimizada para Dashboard La Máquina de Noticias
-- Rate limiting configurado
-- CORS headers automáticos
-- Performance tuning incluido
+Funcionalidades confirmadas:
+- Upstreams configurados: `dashboard_backend`, `dashboard_frontend`
+- Rate limiting con zonas: `api` y `general`
+- CORS headers para `/api/*`
+- Compresión gzip para múltiples tipos MIME
+- Fallback para SPA routing (`@frontend_fallback`)
+- Error pages personalizadas
 
-### **docker/Dockerfile**
+### **Dockerfile**
+Configuración confirmada:
 - Imagen Alpine optimizada
-- Health checks integrados
-- Seguridad hardened (non-root user)
-- Dependencias mínimas
+- Health check script integrado
+- Usuario nginx no-root
+- Dependencias: curl, bash
+- Página de error personalizada
 
 ### **scripts/deploy.sh**
-- Deployment completo automatizado
-- Verificaciones de prerequisites
-- Health checks post-deployment
-- Error handling robusto
+Funcionalidades confirmadas:
+- Verificación Docker y Docker Compose
+- Creación automática de red `lamacquina_network`
+- Build de imagen
+- Deploy con health checks post-deployment
+- Cleanup de containers existentes
 
-### **Makefile**
-- Comandos simplificados para desarrollo
-- Operaciones comunes automatizadas
-- Help integrado
+### **.env**
+Variables configuradas:
+- `NGINX_HOST=localhost`
+- `NGINX_PORT=80`
+- Configuración backend/frontend hosts
+- Performance settings
 
 ## 🛡️ Seguridad y Performance
 
-### Headers de Seguridad
-- `X-Forwarded-For`, `X-Real-IP`
-- CORS configurado apropiadamente
-- Security headers estándar
+### Headers de Seguridad (confirmados en nginx.conf)
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- `X-XSS-Protection: 1; mode=block`
+- `Referrer-Policy: strict-origin-when-cross-origin`
 
-### Performance
+### Performance (confirmado en nginx.conf)
 - Gzip compression habilitado
-- Keepalive connections optimizadas
 - Worker processes automáticos
-- Buffering optimizado
+- Keepalive connections optimizadas
+- Buffering configurado
+- Cache headers para recursos estáticos
 
-### Health Monitoring
-- Health check cada 30s
-- Auto-restart en fallos
-- Graceful shutdown
-- Upstream monitoring
+### Rate Limiting (confirmado en nginx.conf)
+- API: 100 requests/minuto (burst 20)
+- General: 300 requests/minuto (burst 50)
 
 ## 🔧 Troubleshooting
 
-### Container Issues
+### Comandos de Diagnóstico
 ```bash
 make status          # Ver estado del container
 make logs            # Ver logs detallados
-make dev-shell       # Acceso shell para debugging
+make dev-shell       # Shell para debugging
+make dev-config      # Ver configuración actual
 ```
 
 ### Network Issues
 ```bash
 make network-create  # Crear red si no existe
-make network-inspect # Inspeccionar configuración red
+make network-inspect # Inspeccionar red
 ```
 
-### Configuration Issues
-```bash
-make dev-config      # Ver configuración nginx actual
-```
+## 📖 Documentación Disponible
 
-## 📖 Documentación Completa
+Archivos confirmados:
+- **`docs/QUICK_START.md`** - Guía rápida
+- **`docs/technical.md`** - Documentación técnica
+- **`docs/ARCHITECTURE_CHANGES.md`** - Cambios de arquitectura
+- **`make help`** - Lista completa de comandos
 
-- **`docs/QUICK_START.md`** - Setup en 2 minutos
-- **`docs/technical.md`** - Documentación técnica detallada
-- **`make help`** - Comandos disponibles
+## 🎯 Estado Actual
 
-## 🎯 Beneficios de la Nueva Arquitectura
+**nginx_reverse_proxy: FUNCIONAL Y COMPLETO**
 
-### ✅ **Organización Clara**
-- Separación lógica por funcionalidad
-- Estructura estándar de proyectos
-- Fácil navegación y mantenimiento
+Características confirmadas:
+- ✅ Configuración nginx completa y optimizada
+- ✅ Scripts de deployment automatizados
+- ✅ Health checks implementados
+- ✅ Docker compose standalone e integración
+- ✅ Makefile con 15+ comandos útiles
+- ✅ Documentación técnica disponible
+- ✅ Configuración de entorno lista (.env)
+- ✅ Rate limiting y seguridad configurados
 
-### ✅ **Mejor Desarrollo**
-- Scripts centralizados en `/scripts`
-- Configuraciones en `/config`
-- Docker files en `/docker`
-- Documentación en `/docs`
+**Servicios esperados:**
+- `module_dashboard_review_backend:8004`
+- `module_dashboard_review_frontend:80`
 
-### ✅ **Escalabilidad**
-- Estructura preparada para expansión
-- Modular y extensible
-- Siguiendo mejores prácticas
-
-### ✅ **Mantenimiento Simplificado**
-- Ubicación predecible de archivos
-- Makefile con comandos estándar
-- Documentation centralizada
-
-## 🎉 Estado Final
-
-**nginx_reverse_proxy: 100% COMPLETADO Y OPTIMIZADO**
-
-- ✅ MVP funcional y testado
-- ✅ Arquitectura mejorada y organizada
-- ✅ Scripts de deployment robustos
-- ✅ Documentación completa y actualizada
-- ✅ Integración con sistema principal simplificada
-- ✅ Preparado para producción inmediata
+**Red requerida:** `lamacquina_network`
 
 ---
 
-**Tiempo de deployment:** 5 minutos  
-**Complejidad:** Mínima con máxima robustez  
-**Arquitectura:** Profesional y escalable  
-**Listo para:** Producción inmediata
+**Deployment:** `make deploy`  
+**Testing:** `make test`  
+**Monitoring:** `make logs`

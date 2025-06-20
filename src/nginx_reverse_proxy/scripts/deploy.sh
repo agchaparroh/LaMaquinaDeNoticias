@@ -33,7 +33,7 @@ fi
 # Build de la imagen
 echo "📦 Building nginx reverse proxy image..."
 cd "$(dirname "$0")"/.. # Go to project root
-docker build -f docker/Dockerfile -t nginx_reverse_proxy .
+docker build -t nginx_reverse_proxy .
 
 # Stop y remove container existente si existe
 echo "🛑 Cleaning up existing containers..."

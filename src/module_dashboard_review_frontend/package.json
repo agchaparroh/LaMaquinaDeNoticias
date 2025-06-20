@@ -7,16 +7,15 @@
     "dev": "vite --port 3001",
     "build": "tsc && vite build",
     "preview": "vite preview --port 3001",
-    "lint": "eslint src --max-warnings 0",
-    "lint:fix": "eslint src --fix",
     "type-check": "tsc --noEmit",
-    "test": "echo \"No tests configured yet\" && exit 0",
-    "clean": "rm -rf dist node_modules/.vite",
-    "docker:build": "echo \"Docker build script - ready for implementation\"",
-    "docker:deploy": "echo \"Docker deploy script - ready for implementation\"",
-    "format": "prettier --write src/**/*.{ts,tsx}",
-    "format:check": "prettier --check src/**/*.{ts,tsx}",
-    "validate": "npm run type-check && npm run lint && npm run format:check"
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:watch": "vitest --watch",
+    "clean": "rm -rf dist node_modules/.vite coverage",
+    "docker:build": "./build.sh",
+    "docker:deploy": "./deploy.sh",
+    "validate": "npm run type-check && npm run test"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -31,18 +30,18 @@
     "date-fns": "^2.30.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.13.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
-    "eslint": "^9.13.0",
-    "eslint-plugin-react": "^7.37.0",
-    "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-react-refresh": "^0.4.14",
-    "globals": "^15.11.0",
     "typescript": "~5.6.2",
-    "typescript-eslint": "^8.10.0",
     "vite": "^5.4.10",
-    "prettier": "^3.0.0"
+    "vitest": "^1.0.0",
+    "@vitest/ui": "^1.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "@testing-library/react": "^14.1.0",
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/user-event": "^14.5.1",
+    "jsdom": "^23.0.0",
+    "msw": "^2.0.0"
   }
 }

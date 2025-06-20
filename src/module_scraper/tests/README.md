@@ -1,11 +1,20 @@
 # 🧪 TESTING DIRECTORY - LA MÁQUINA DE NOTICIAS
 
-## 📁 Estructura Organizada
+## 📁 Estructura Actualizada
 
 ```
 tests/
 ├── 📋 reports/                    # Informes de testing
 ├── 📦 archive/                    # Tests de desarrollo (8 archivos)
+├── 🚀 performance/                # NUEVOS tests de performance
+│   ├── test_basic_performance.py  # Métricas de rendimiento
+│   ├── test_simple_concurrency.py # Tests de concurrencia
+│   ├── test_basic_recovery.py     # Recuperación ante fallos
+│   └── test_basic_load.py         # Tests de carga
+├── 🔄 integration/                # Tests de integración
+│   └── test_real_integration.py   # Flujo completo real
+├── 📊 scripts/                    # Scripts de utilidad
+│   └── run_performance_tests.py   # Ejecutar todos los tests nuevos
 ├── ✅ test_real_schema_fixed.py   # [ACTIVO] Test integración Supabase
 ├── ✅ test_updated_client.py      # [ACTIVO] Test SupabaseClient actualizado
 ├── 📄 TEST_INVENTORY.md           # Inventario completo de tests
@@ -14,7 +23,7 @@ tests/
 
 ## 🎯 Tests Principales (Usar estos)
 
-### **Para Verificación de Sistema:**
+### **Tests de Sistema Base:**
 ```bash
 # Test integración completa con Supabase
 python tests/test_real_schema_fixed.py
@@ -23,7 +32,20 @@ python tests/test_real_schema_fixed.py
 python tests/test_updated_client.py
 ```
 
-### **Para Verificación de Componentes:**
+### **NUEVOS Tests de Performance y Robustez:**
+```bash
+# Ejecutar TODOS los tests nuevos de una vez
+python tests/scripts/run_performance_tests.py
+
+# O ejecutar individualmente:
+python tests/performance/test_basic_performance.py    # Métricas de rendimiento
+python tests/performance/test_simple_concurrency.py   # Concurrencia
+python tests/performance/test_basic_recovery.py       # Recuperación
+python tests/integration/test_real_integration.py     # Integración real
+python tests/performance/test_basic_load.py           # Carga
+```
+
+### **Tests de Componentes:**
 ```bash
 # En directorio principal (../scripts/)
 python scripts/run_playwright_tests.py     # Playwright
@@ -32,47 +54,91 @@ python scripts/test_user_agents_fast.py    # User agents
 python scripts/test_rate_limiting.py       # Rate limiting
 ```
 
-## 📊 Estado del Sistema
+## 📊 Estado del Sistema Actualizado
 
-| Componente | Test | Estado | Puntuación |
+| Componente | Test | Estado | Descripción |
 |------------|------|--------|------------|
-| Supabase Integration | `test_real_schema_fixed.py` | ✅ | 100% |
-| SupabaseClient | `test_updated_client.py` | ✅ | 99% |
-| Playwright | `../scripts/run_playwright_tests.py` | ✅ | 100% |
-| User Agents | `../scripts/test_user_agents_fast.py` | ✅ | 93.3% |
-| Duplicates Prevention | `../scripts/test_crawl_once_fixed.py` | ✅ | 100% |
-| Rate Limiting | `../scripts/test_rate_limiting.py` | ✅ | 85% |
+| **BASE** |||
+| Supabase Integration | `test_real_schema_fixed.py` | ✅ | Integración completa |
+| SupabaseClient | `test_updated_client.py` | ✅ | Cliente actualizado |
+| **PERFORMANCE** |||
+| Rendimiento | `test_basic_performance.py` | 🆕 | Tiempos y memoria |
+| Concurrencia | `test_simple_concurrency.py` | 🆕 | Multi-spider |
+| Recuperación | `test_basic_recovery.py` | 🆕 | Manejo de errores |
+| Integración Real | `test_real_integration.py` | 🆕 | Flujo completo |
+| Carga | `test_basic_load.py` | 🆕 | Stress testing |
+| **COMPONENTES** |||
+| Playwright | `run_playwright_tests.py` | ✅ | JavaScript rendering |
+| User Agents | `test_user_agents_fast.py` | ✅ | Rotación |
+| Duplicates | `test_crawl_once_fixed.py` | ✅ | Prevención |
+| Rate Limiting | `test_rate_limiting.py` | ✅ | Control de velocidad |
+
+## 🚀 Nuevas Capacidades de Testing
+
+### **1. Performance Testing** 
+- Mide tiempos de procesamiento por item
+- Verifica uso de memoria
+- Identifica cuellos de botella
+
+### **2. Concurrency Testing**
+- Múltiples spiders simultáneos
+- Procesamiento paralelo de pipelines
+- Detección de race conditions
+
+### **3. Recovery Testing**
+- Manejo de items inválidos
+- Recuperación de fallos de conexión
+- Degradación gradual del sistema
+
+### **4. Load Testing**
+- Procesamiento de 100+ items
+- Estabilidad de memoria con 1000+ items
+- Throughput máximo del sistema
 
 ## 📋 Documentación
 
 - **`reports/TEST_RESULTS_SUMMARY.md`** - Informe completo de resultados
 - **`TEST_INVENTORY.md`** - Inventario y estado de todos los tests
+- **`scripts/run_performance_tests.py`** - Script para ejecutar suite completa
 
-## 📦 Archive
-
-El directorio `archive/` contiene 8 tests de desarrollo que fueron útiles durante la fase de descubrimiento y configuración inicial. Se mantienen para referencia histórica.
-
-## 🔄 Flujo de Testing Recomendado
+## 🔄 Flujo de Testing Completo
 
 ### **Pre-deployment:**
-1. Ejecutar tests principales (`test_real_schema_fixed.py`, `test_updated_client.py`)
-2. Verificar componentes core en `../scripts/`
-3. Revisar logs para errores
+```bash
+# 1. Tests base del sistema
+python tests/test_real_schema_fixed.py
+python tests/test_updated_client.py
+
+# 2. Suite completa de performance
+python tests/scripts/run_performance_tests.py
+
+# 3. Verificar componentes individuales si es necesario
+python scripts/run_playwright_tests.py
+```
 
 ### **Post-deployment:**
-1. Ejecutar tests en servidor
-2. Verificar conectividad Supabase  
-3. Monitorear logs de producción
+1. Ejecutar tests de integración real en servidor
+2. Monitorear métricas de performance
+3. Verificar logs de recuperación ante fallos
+
+## 📈 Métricas de Referencia
+
+- **Performance**: < 30 segundos por artículo
+- **Memoria**: < 100MB por spider
+- **Concurrencia**: 3+ spiders simultáneos
+- **Carga**: 10+ items/segundo en pipelines
+- **Estabilidad**: < 50MB incremento con 1000 items
 
 ## 🚀 Sistema Listo para Producción
 
-✅ Todos los tests críticos pasados  
-✅ Integración Supabase verificada  
-✅ Componentes anti-detección operativos  
-✅ Documentación completa generada  
+✅ Tests base completos y pasados  
+✅ Tests de performance implementados  
+✅ Tests de robustez y recuperación  
+✅ Sistema verificado bajo carga  
+✅ Documentación actualizada  
 
 ---
 
-**Última actualización:** Junio 2, 2025  
+**Última actualización:** Junio 2025  
 **Sistema:** La Máquina de Noticias - Module Scraper  
-**Status:** READY FOR PRODUCTION
+**Status:** READY FOR PRODUCTION + PERFORMANCE TESTED

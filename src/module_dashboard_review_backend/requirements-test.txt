@@ -1,0 +1,5 @@
+# Add test dependencies
+pytest-benchmark>=4.0.0
+pytest-timeout>=2.2.0
+pytest-xdist>=3.5.0  # For parallel test execution
+locust>=2.17.0  # For load testing

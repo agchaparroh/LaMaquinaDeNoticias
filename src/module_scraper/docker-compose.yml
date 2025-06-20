@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lamaquina_scraper
+    environment:
+      # Cargar variables desde archivo .env
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - CONCURRENT_REQUESTS=8
+      - DOWNLOAD_DELAY=2
+      # Variables de Supabase (sobrescritas por .env)
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_HTML_BUCKET=${SUPABASE_HTML_BUCKET:-html_content}
+      # Configuración de Playwright
+      - PLAYWRIGHT_MAX_RETRIES=${PLAYWRIGHT_MAX_RETRIES:-2}
+      - PLAYWRIGHT_TIMEOUT=${PLAYWRIGHT_TIMEOUT:-30000}
+      - PLAYWRIGHT_ENABLE_FALLBACK=${PLAYWRIGHT_ENABLE_FALLBACK:-True}
+    volumes:
+      # Código fuente para desarrollo (hot reload)
+      - .:/app
+      # Logs persistentes
+      - ./logs:/app/logs
+      # Cache de Scrapy persistente
+      - ./.scrapy:/app/.scrapy
+      # Datos de salida
+      - ./output:/app/output
+    working_dir: /app
+    # Comando por defecto (puede ser sobrescrito)
+    command: ["scrapy", "list"]
+    # Configuración de red
+    networks:
+      - scraper_network
+    # Configuración de recursos
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    # Variables de entorno desde archivo
+    env_file:
+      - config/.env
+
+  # Servicio auxiliar para ejecutar tests
+  scraper-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lamaquina_scraper_test
+    environment:
+      - ENVIRONMENT=test
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - .:/app
+      - ./tests/output:/app/tests/output
+    working_dir: /app
+    command: ["pytest", "tests/", "-v"]
+    networks:
+      - scraper_network
+    env_file:
+      - config/.env.test
+    profiles:
+      - test
+
+  # Servicio para desarrollo con shell interactivo
+  scraper-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lamaquina_scraper_dev
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - HTTPCACHE_ENABLED=True
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+      - ./.scrapy:/app/.scrapy
+    working_dir: /app
+    command: ["tail", "-f", "/dev/null"]  # Mantener contenedor vivo
+    networks:
+      - scraper_network
+    env_file:
+      - config/.env
+    profiles:
+      - dev
+    stdin_open: true
+    tty: true
+
+networks:
+  scraper_network:
+    driver: bridge
+
+# Volúmenes nombrados para persistencia
+volumes:
+  scrapy_cache:
+    driver: local
+  scraper_logs:
+    driver: local

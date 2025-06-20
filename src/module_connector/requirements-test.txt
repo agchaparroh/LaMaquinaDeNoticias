@@ -1,0 +1,36 @@
+# Testing dependencies for module_connector
+
+# Core testing framework
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
+# Mocking and fixtures
+aioresponses==0.7.4
+pytest-env==1.1.1
+pytest-mock==3.12.0
+freezegun==1.2.2
+
+# Optional but useful
+pytest-html==4.1.1
+pytest-xdist==3.5.0
+pytest-timeout==2.2.0
+
+# Performance monitoring
+psutil==5.9.6
+memory-profiler==0.61.0
+
+# Code quality
+black==23.11.0
+flake8==6.1.0
+isort==5.12.0
+
+# All production dependencies (from requirements.txt)
+aiohttp==3.12.6
+tenacity==9.1.2
+loguru==0.7.3
+python-dotenv==1.1.0
+pydantic==2.11.5
+python-dateutil==2.8.2
+sentry-sdk==2.29.1
+watchdog==6.0.0

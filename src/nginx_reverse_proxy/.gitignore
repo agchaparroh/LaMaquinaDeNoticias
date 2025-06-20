@@ -1,0 +1,47 @@
+# Logs
+*.log
+/logs/
+/var/log/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# Build artifacts
+/build/
+/dist/
+
+# Backup files
+*.backup.*
+
+# Docker volumes data
+nginx_logs/
+
+# Scripts temporales
+/scripts/*.tmp
+
+# Configuración temporal
+config/*.tmp
+config/.env.tmp
+
+# Cache
+.cache/

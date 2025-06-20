@@ -20,176 +20,366 @@ Persistencia en Supabase
 ```
 
 **Stack tecnológico:**
-- **API**: FastAPI + Uvicorn
+- **API**: FastAPI + Uvicorn (puerto 8003)
 - **LLM**: Groq API 
 - **NLP**: spaCy + sentence-transformers
 - **BD**: Supabase/PostgreSQL con RPCs
 - **Validación**: Pydantic v2
+- **Contenedores**: Docker + Docker Compose
+- **Monitoreo**: Prometheus (métricas disponibles)
 
 ## 📁 Estructura del Proyecto
 
 ```
 module_pipeline/
-├── src/
+├── src/                    # Código fuente
 │   ├── main.py              # FastAPI application
 │   ├── controller.py        # Pipeline controller
 │   ├── config.py           # Configuration wrapper
 │   ├── models/             # Pydantic models
-│   │   ├── entrada.py      # Input models (FragmentoProcesableItem)
-│   │   ├── procesamiento.py # Processing models (HechoBase, EntidadBase, etc.)
-│   │   └── persistencia.py # Persistence models (JSONB payloads)
-│   ├── pipeline/           # Pipeline phases
-│   │   ├── fase_1_triaje.py
-│   │   ├── fase_2_extraccion.py
-│   │   ├── fase_3_citas_datos.py
-│   │   └── fase_4_normalizacion.py
+│   ├── pipeline/           # Pipeline phases (4 fases)
 │   ├── services/           # External integrations
-│   │   ├── groq_service.py      # Groq API client
-│   │   ├── supabase_service.py  # Supabase client
-│   │   ├── entity_normalizer.py # Entity normalization
-│   │   └── payload_builder.py   # JSONB payload builder
-│   └── utils/
-│       └── config.py       # Centralized configuration
+│   ├── utils/              # Utilities and helpers
+│   └── monitoring/         # Monitoring and metrics
 ├── tests/                  # Organized test suite
-│   ├── conftest.py        # Test configuration
-│   ├── test_api/          # API endpoint tests
-│   ├── test_phases/       # Pipeline phase tests
-│   ├── test_services/     # Service tests
-│   └── test_utils/        # Utility tests
-├── prompts/               # LLM prompts
-├── docs/                  # Technical documentation
-└── .taskmaster/           # Project management
+├── prompts/                # LLM prompts
+├── monitoring/             # Configuraciones de monitoreo
+│   └── prometheus.yml      # Configuración Prometheus
+├── .github/workflows/      # CI/CD pipelines
+├── Dockerfile             # Imagen Docker optimizada
+├── docker-compose.yml     # Orquestación completa
+├── Makefile              # Comandos de desarrollo
+└── README.md             # Este archivo
 ```
 
-## 🚀 Configuración de Desarrollo
+## 🚀 Inicio Rápido
 
-### 1. Entorno
+### Opción 1: Usando Makefile (Recomendado)
+```bash
+# Configuración inicial completa
+make setup
+
+# Editar .env con tus API keys
+# GROQ_API_KEY, SUPABASE_URL, SUPABASE_KEY
+
+# Ejecutar en desarrollo
+make dev
+
+# Ver ayuda completa
+make help
+```
+
+### Opción 2: Usando Docker
+```bash
+# Copiar variables de entorno
+cp .env.example .env
+# Editar .env con tus claves
+
+# Ejecutar con Docker Compose
+make deploy
+# O directamente: docker-compose up -d
+
+# Verificar salud
+make health
+```
+
+### Opción 3: Manual
 ```bash
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-### 2. Variables de entorno
-```bash
+python -m spacy download es_core_news_lg
+python -m spacy download en_core_web_sm
 cp .env.example .env
-# Editar .env con tus claves
-```
-
-**Variables requeridas:**
-```
-GROQ_API_KEY=gsk_your_key_here
-SUPABASE_URL=https://tu-proyecto.supabase.co
-SUPABASE_KEY=your_anon_key
-```
-
-### 3. Ejecutar
-```bash
+# Editar .env
 python src/main.py
 ```
 
 ## 🔧 Configuración
 
-La configuración está centralizada en `src/utils/config.py` con:
-- Validación automática de variables requeridas
-- Valores por defecto para desarrollo
-- Funciones de utilidad por componente
+### Variables de Entorno Requeridas
+```bash
+# API Keys (OBLIGATORIAS)
+GROQ_API_KEY=gsk_your_key_here
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_KEY=your_anon_key
 
-```python
-# Acceso a configuración
-from src.utils.config import GROQ_API_KEY, SUPABASE_URL
-from src.utils.config import get_groq_config, get_supabase_config
-
-# Compatible con FastAPI
-from src.config import settings
+# Configuración Opcional
+API_HOST=0.0.0.0
+API_PORT=8003
+LOG_LEVEL=INFO
+DEBUG_MODE=false
 ```
+
+### Configuración Avanzada
+Ver `.env.example` para lista completa de variables disponibles:
+- Configuración de Workers y Queue
+- Límites de contenido y timeouts
+- Configuración de spaCy y embeddings
+- Métricas y monitoreo
+- Integración con servicios externos
+
+## 🐳 Docker y Contenedores
+
+### Docker Compose (Recomendado)
+```bash
+# Desarrollo completo con monitoreo
+make deploy
+
+# Solo pipeline (sin monitoreo)
+make deploy-prod
+
+# Ver logs
+make logs
+
+# Detener servicios
+make down
+```
+
+### Servicios Incluidos
+- **module-pipeline**: API principal (puerto 8003)
+- **prometheus**: Métricas (puerto 9090) - opcional con `make deploy`
 
 ## 🧪 Testing
 
+### Comandos Disponibles
 ```bash
-# Ejecutar todos los tests
-pytest
+# Tests básicos
+make test
 
-# Tests específicos
-pytest tests/test_services/
-pytest tests/test_models/
+# Tests con cobertura
+make test-cov
 
-# Con cobertura
-pytest --cov=src tests/
+# Test específico
+make test-specific TEST=tests/test_api/
+
+# Linting y formato
+make lint
+make format
 ```
 
-**Configuración de tests:** `tests/conftest.py` incluye fixtures para mocks de Groq, Supabase y datos de prueba.
+### Configuración de Tests
+- **pytest.ini**: Configuración asyncio y paths
+- **conftest.py**: Fixtures y mocks
+- **Cobertura**: Mínimo 70% requerido en CI
+- **Mocks**: Groq API, Supabase, datos de prueba
 
 ## 📡 API Endpoints
 
-- `GET /health` - Health check
+### Endpoints Principales
+- `GET /health` - Health check básico
+- `GET /health/detailed` - Health check con dependencias
 - `POST /procesar_articulo` - Procesar artículo completo
 - `POST /procesar_fragmento` - Procesar fragmento de documento
-- `GET /status/{job_id}` - Estado de procesamiento
+- `GET /status/{job_id}` - Estado de procesamiento asíncrono
+
+### Endpoints de Observabilidad
+- `GET /metrics` - Métricas Prometheus
+- `GET /monitoring/dashboard` - Dashboard JSON
+- `GET /monitoring/pipeline-status` - Estado de las 4 fases
+
+### Documentación Interactiva
+- **Swagger UI**: http://localhost:8003/docs
+- **ReDoc**: http://localhost:8003/redoc
+
+## 📊 Monitoreo y Observabilidad
+
+### Métricas Disponibles (Formato Prometheus)
+```
+# Contadores (counters)
+pipeline_articles_processed_total
+pipeline_fragments_processed_total  
+pipeline_processing_time_seconds_total
+pipeline_errors_total
+
+# Medidores (gauges)
+pipeline_error_rate
+pipeline_average_processing_time_seconds
+jobs_total
+jobs_{status}_total  # pending, processing, completed, failed
+system_uptime_seconds
+```
+
+### Dashboards
+```bash
+# Prometheus
+http://localhost:9090
+
+# Métricas JSON
+curl http://localhost:8003/monitoring/dashboard | jq
+```
+
+### Health Checks
+- Health checks automáticos cada 30s
+- Métricas exportadas en formato Prometheus
+- Verificación de dependencias (Groq API, Supabase)
 
 ## 🔀 Pipeline de Procesamiento
 
-### Fase 1: Triaje
-- Limpieza de texto
-- Detección de idioma
-- Evaluación de relevancia
+### Fase 1: Triaje y Preprocesamiento
+- **Función**: Limpieza, detección de idioma, evaluación de relevancia
+- **Tecnología**: spaCy, validaciones custom
 
-### Fase 2: Extracción Básica  
-- Hechos principales
-- Entidades mencionadas
+### Fase 2: Extracción de Elementos Básicos
+- **Función**: Hechos principales y entidades
+- **Tecnología**: Groq LLM
 
-### Fase 3: Citas y Datos
-- Citas textuales
-- Datos cuantitativos
+### Fase 3: Extracción de Citas y Datos
+- **Función**: Citas textuales y datos cuantitativos
+- **Tecnología**: Groq LLM con prompts especializados
 
-### Fase 4: Normalización
-- Vinculación de entidades
-- Relaciones entre elementos
+### Fase 4: Normalización y Relaciones
+- **Función**: Vinculación de entidades, detección de relaciones
+- **Tecnología**: Supabase RPCs + Groq para análisis
+
+## 🛠️ Comandos de Desarrollo
+
+### Makefile Completo
+```bash
+# Configuración
+make setup          # Configuración inicial
+make install-deps   # Reinstalar dependencias
+
+# Desarrollo
+make dev            # Servidor desarrollo
+make dev-docker     # Desarrollo con Docker
+
+# Testing
+make test           # Tests básicos
+make test-cov       # Tests con cobertura
+make lint           # Verificar código
+make format         # Formatear código
+
+# Docker
+make build          # Construir imagen
+make deploy         # Desplegar completo
+make deploy-prod    # Solo pipeline
+
+# Operaciones
+make logs           # Ver logs
+make health         # Verificar salud
+make metrics        # Ver métricas
+make status         # Estado del pipeline
+```
+
+## 🔄 CI/CD Pipeline
+
+### GitHub Actions
+- **Triggers**: Push a main/develop, PRs a main
+- **Jobs**: Testing, Security, Docker, Deploy, Notify
+- **Matrix Testing**: Python 3.9, 3.10, 3.11
+- **Security**: Safety check, dependency review
+- **Deploy**: Automático en main branch
+
+### Workflow Incluye
+- ✅ Tests unitarios con cobertura >70%
+- ✅ Linting con Black, flake8, mypy
+- ✅ Security scanning con Safety
+- ✅ Docker build y test
+- ✅ Deploy automático a producción
+- ✅ Notificaciones de estado
 
 ## 🗄️ Modelos de Datos
 
 ### Entrada
-- `FragmentoProcesableItem`: Fragmentos de documentos
-- `ArticuloInItem`: Artículos completos (desde module_connector)
+- `FragmentoProcesableItem`: Fragmentos de documentos (min 50 chars)
+- `ArticuloInItem`: Artículos completos desde module_connector
 
 ### Procesamiento
-- `HechoBase/HechoProcesado`: Hechos extraídos
-- `EntidadBase/EntidadProcesada`: Entidades identificadas
-- `CitaTextual`: Citas directas
-- `DatosCuantitativos`: Datos numéricos
-- `ResultadoFaseX`: Resultados por fase
+- `HechoBase/HechoProcesado`: Hechos extraídos con metadatos
+- `EntidadBase/EntidadProcesada`: Entidades identificadas y normalizadas
+- `CitaTextual`: Citas directas con speaker y contexto
+- `DatosCuantitativos`: Datos numéricos estructurados
+- `ResultadoFaseX`: Resultados por cada fase del pipeline
 
 ### Persistencia
-- Payloads JSONB para RPCs de Supabase
-- `insertar_articulo_completo()`
-- `insertar_fragmento_completo()`
+- Payloads JSONB optimizados para Supabase RPCs
+- `insertar_articulo_completo()`: Persistencia de artículos
+- `insertar_fragmento_completo()`: Persistencia de fragmentos
 
 ## 🔗 Integraciones
 
-**Groq API:**
-- Cliente con retry logic
-- Manejo de timeouts y rate limits
-- Prompts externos en `/prompts/`
+### Groq API
+- **Cliente**: Resiliente con retry logic y circuit breaker
+- **Configuración**: Timeouts configurables, rate limiting
+- **Prompts**: Externalizados en `/prompts/` para fácil mantenimiento
 
-**Supabase:**
-- Cliente Singleton
-- RPCs especializadas
-- Normalización de entidades via `buscar_entidad_similar`
+### Supabase
+- **Cliente**: Singleton con pool de conexiones
+- **RPCs**: Llamadas especializadas para cada fase
+- **Normalización**: `buscar_entidad_similar` para deduplicación
+- **Persistencia**: Transacciones ACID para consistencia
 
-## 📝 Desarrollo
+### spaCy
+- **Modelos**: `es_core_news_lg`, `en_core_web_sm`
+- **Funciones**: NER, POS tagging, sentence segmentation
+- **Optimización**: Carga lazy de modelos para performance
 
-### Añadir nueva fase
-1. Crear módulo en `src/pipeline/`
-2. Implementar función `ejecutar_faseX()`
-3. Integrar en `controller.py`
-4. Añadir tests en `tests/test_phases/`
+## 🔍 Troubleshooting
 
-### Añadir nuevo servicio
-1. Crear módulo en `src/services/`
-2. Implementar cliente/wrapper
-3. Configurar en `src/utils/config.py`
-4. Añadir tests en `tests/test_services/`
+### Problemas Comunes
+
+**Error: spaCy model not found**
+```bash
+python -m spacy download es_core_news_lg
+python -m spacy download en_core_web_sm
+```
+
+**Error: Groq API key invalid**
+- Verificar `.env` tiene `GROQ_API_KEY` válida
+- Obtener nueva clave en https://console.groq.com/
+
+**Error: Supabase connection failed**
+- Verificar `SUPABASE_URL` y `SUPABASE_KEY` en `.env`
+- Comprobar que el proyecto Supabase esté activo
+
+**Container no inicia**
+```bash
+# Ver logs detallados
+docker-compose logs module-pipeline
+
+# Verificar variables de entorno
+docker-compose config
+```
+
+### Logs y Debug
+```bash
+# Logs en tiempo real
+make logs
+
+# Logs específicos
+docker-compose logs -f module-pipeline
+
+# Debug mode
+export DEBUG_MODE=true
+make dev
+```
+
+### Performance
+- **Threshold asíncrono**: 10,000 caracteres
+- **Timeouts**: Groq 60s, Supabase 30s
+- **Retry**: 2 intentos automáticos
+- **Pool connections**: 10 conexiones Supabase
+
+## 📚 Documentación Adicional
+
+- **Arquitectura técnica**: `src/docs/CONCURRENCY_ANALYSIS.md`
+- **Tests**: `tests/README.md`
+- **API Reference**: http://localhost:8003/docs
+- **Métricas**: http://localhost:8003/metrics
+
+---
+
+## 🚀 Próximos Pasos
+
+1. **Configurar** variables de entorno en `.env`
+2. **Ejecutar** `make setup` para configuración inicial
+3. **Probar** con `make dev` y verificar http://localhost:8003/health
+4. **Monitorear** métricas en http://localhost:8003/metrics
+5. **Integrar** con module_connector para procesamiento completo
 
 ---
 
 **La Máquina de Noticias** - Transformando información no estructurada en conocimiento conectado.
+
+*Versión: 1.0.0 | Puerto: 8003 | Docker: ✅ | CI/CD: ✅ | Monitoreo: ✅*

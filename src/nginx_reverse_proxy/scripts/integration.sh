@@ -21,8 +21,8 @@ if [ ! -d "nginx_reverse_proxy" ]; then
 fi
 
 # Verificar que tiene la nueva estructura
-if [ ! -f "nginx_reverse_proxy/docker/Dockerfile" ]; then
-    echo "❌ Error: nginx_reverse_proxy not properly structured (missing docker/Dockerfile)"
+if [ ! -f "nginx_reverse_proxy/Dockerfile" ]; then
+    echo "❌ Error: nginx_reverse_proxy not properly structured (missing Dockerfile)"
     exit 1
 fi
 
@@ -47,7 +47,7 @@ cat << EOF > /tmp/nginx_fragment.yml
   nginx_reverse_proxy:
     build:
       context: ./nginx_reverse_proxy
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
     container_name: nginx_reverse_proxy
     ports:
       - "80:80"

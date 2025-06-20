@@ -1,0 +1,25 @@
+# requirements-test.txt
+# Dependencias para ejecutar los tests del módulo nginx_reverse_proxy
+
+# Testing framework
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-timeout==2.2.0
+pytest-xdist==3.5.0  # Para ejecución paralela de tests
+
+# HTTP requests
+requests==2.31.0
+
+# Performance testing
+pytest-benchmark==4.0.0
+locust==2.17.0  # Para tests de carga
+aiohttp==3.9.1  # Para requests asíncronos
+
+# Docker integration
+docker==6.1.3
+
+# System monitoring
+psutil==5.9.6
+
+# Data analysis
+numpy==1.24.3  # Para análisis estadístico avanzado (opcional)

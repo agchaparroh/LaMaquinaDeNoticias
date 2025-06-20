@@ -24,5 +24,5 @@ RETRY_BACKOFF = float(os.getenv('RETRY_BACKOFF', '2.0'))
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 
 # Optional Sentry configuration
-SENTRY_ENABLED = os.getenv('SENTRY_ENABLED', 'false').lower() == 'true'
+ENABLE_SENTRY = os.getenv('ENABLE_SENTRY', 'false').lower() == 'true'
 SENTRY_DSN = os.getenv('SENTRY_DSN', '')

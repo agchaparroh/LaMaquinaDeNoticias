@@ -1,0 +1,125 @@
+# .gitignore for module_pipeline
+# Generado basado en la estructura del proyecto detectada
+
+# === ARCHIVOS DE ENTORNO Y CONFIGURACIÓN ===
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# === PYTHON ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# === VIRTUAL ENVIRONMENTS ===
+venv/
+ENV/
+env/
+.venv/
+.ENV/
+.env/
+
+# === TESTING ===
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# === LOGS Y MÉTRICAS ===
+logs/
+*.log
+metrics/
+*.json
+sys.stdout
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.spyderproject
+.spyproject
+.ropeproject
+
+# === SISTEMA OPERATIVO ===
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# === JUPYTER NOTEBOOKS ===
+.ipynb_checkpoints
+
+# === MYPY ===
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# === ALERTAS Y CACHÉ ===
+.alerts/
+.cursor/
+.roo/
+
+# === ARCHIVOS TEMPORALES ===
+*.tmp
+*.temp
+.tmp/
+temp/
+
+# === MODELOS DE ML (pueden ser grandes) ===
+models/
+*.pkl
+*.model
+*.h5
+
+# === ARCHIVOS ESPECÍFICOS DEL PROYECTO ===
+# Archivos de output del sistema
+sys.stdout
+
+# Scripts de desarrollo local
+scripts/dev_*
+scripts/test_*
+*.bat
+
+# Datos de prueba locales  
+test_data/
+sample_data/
+
+# === DOCKER (redundante con .dockerignore pero útil para Git) ===
+.dockerignore
+docker-compose.override.yml
+
+# === TASKMASTER (si se usa en el proyecto) ===
+.taskmaster/
