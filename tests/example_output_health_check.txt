@@ -1,0 +1,33 @@
+# Ejemplo de salida esperada del test test_all_services_health.py
+
+🔍 Ejecutando verificación manual de servicios...
+
+============================================================
+SERVICIOS HTTP:
+============================================================
+✅ module_pipeline: Health check OK (status 200)
+✅ module_dashboard_review_backend: Health check OK (status 200)
+✅ module_chat_interface_backend: Health check OK (status 200)
+✅ module_dev_interface_backend: Health check OK (status 200)
+✅ module_dashboard_review_frontend: Service responding (status 200)
+✅ module_chat_interface_frontend: Service responding (status 200)
+✅ module_dev_interface_frontend: Service responding (status 200)
+✅ nginx_reverse_proxy: Service responding (status 200)
+
+============================================================
+SERVICIOS WORKER:
+============================================================
+✅ lamacquina_scraper: Container running (Up 2 hours)
+✅ lamacquina_connector: Container running (Up 2 hours)
+✅ lamacquina_orchestration_agent: Container running (Up 2 hours)
+
+✅ Verificación completa
+
+============================= test session starts ==============================
+collected 3 items
+
+tests/test_all_services_health.py::test_all_http_services_health PASSED
+tests/test_all_services_health.py::test_all_worker_services_running PASSED
+tests/test_all_services_health.py::test_supabase_connection PASSED
+
+============================== 3 passed in 12.34s ==============================

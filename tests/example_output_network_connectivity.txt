@@ -1,0 +1,63 @@
+# Ejemplo de salida esperada del test test_docker_network_connectivity.py
+
+🔍 Ejecutando verificación manual de conectividad Docker...
+
+============================================================
+VERIFICACIÓN DE RED:
+============================================================
+✅ lamacquina_scraper: En red lamacquina_network (IP: 172.20.0.2)
+✅ lamacquina_connector: En red lamacquina_network (IP: 172.20.0.3)
+✅ lamacquina_pipeline: En red lamacquina_network (IP: 172.20.0.4)
+
+============================================================
+RESOLUCIÓN DNS:
+============================================================
+✅ lamacquina_connector → module_pipeline: Resuelto a 172.20.0.4
+
+============================================================
+CONECTIVIDAD DE PUERTO:
+============================================================
+✅ lamacquina_connector → module_pipeline:8003: Puerto abierto
+
+✅ Verificación de ejemplo completa
+
+============================= test session starts ==============================
+collected 4 items
+
+tests/test_docker_network_connectivity.py::test_all_containers_in_network PASSED
+tests/test_docker_network_connectivity.py::test_dns_resolution_between_services PASSED
+tests/test_docker_network_connectivity.py::test_service_port_connectivity PASSED
+tests/test_docker_network_connectivity.py::test_reverse_proxy_can_reach_all_backends PASSED
+
+============================== 4 passed in 8.45s ==============================
+
+📋 Estado de Red de Contenedores:
+✅ lamacquina_scraper: En red pruebawinda_lamacquina_network (IP: 172.20.0.2)
+✅ lamacquina_connector: En red pruebawinda_lamacquina_network (IP: 172.20.0.3)
+✅ lamacquina_pipeline: En red pruebawinda_lamacquina_network (IP: 172.20.0.4)
+✅ lamacquina_dashboard_review_backend: En red pruebawinda_lamacquina_network (IP: 172.20.0.5)
+✅ lamacquina_chat_interface_backend: En red pruebawinda_lamacquina_network (IP: 172.20.0.6)
+✅ lamacquina_dev_interface_backend: En red pruebawinda_lamacquina_network (IP: 172.20.0.7)
+✅ lamacquina_dashboard_review_frontend: En red pruebawinda_lamacquina_network (IP: 172.20.0.8)
+✅ lamacquina_chat_interface_frontend: En red pruebawinda_lamacquina_network (IP: 172.20.0.9)
+✅ lamacquina_dev_interface_frontend: En red pruebawinda_lamacquina_network (IP: 172.20.0.10)
+✅ lamacquina_orchestration_agent: En red pruebawinda_lamacquina_network (IP: 172.20.0.11)
+✅ lamacquina_reverse_proxy: En red pruebawinda_lamacquina_network (IP: 172.20.0.12)
+
+📋 Resultados de Resolución DNS:
+✅ lamacquina_connector → module_pipeline: Resuelto a 172.20.0.4
+✅ lamacquina_dashboard_review_frontend → module_dashboard_review_backend: Resuelto a 172.20.0.5
+✅ lamacquina_pipeline → lamacquina_connector: Resuelto a 172.20.0.3
+✅ lamacquina_reverse_proxy → module_pipeline: Resuelto a 172.20.0.4
+
+📋 Resultados de Conectividad de Puertos:
+✅ lamacquina_connector → module_pipeline:8003: Puerto abierto
+✅ lamacquina_dashboard_review_frontend → module_dashboard_review_backend:8004: Conexión HTTP establecida
+✅ lamacquina_chat_interface_frontend → module_chat_interface_backend:8005: Conexión HTTP establecida
+✅ lamacquina_dev_interface_frontend → module_dev_interface_backend:8006: Conexión HTTP establecida
+
+📋 Conectividad del Reverse Proxy:
+✅ lamacquina_reverse_proxy → module_pipeline:8003: Puerto abierto
+✅ lamacquina_reverse_proxy → module_dashboard_review_backend:8004: Puerto abierto
+✅ lamacquina_reverse_proxy → module_chat_interface_backend:8005: Puerto abierto
+✅ lamacquina_reverse_proxy → module_dev_interface_backend:8006: Puerto abierto

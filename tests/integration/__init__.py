@@ -1,0 +1,1 @@
+# Tests de integración para La Máquina de Noticias
