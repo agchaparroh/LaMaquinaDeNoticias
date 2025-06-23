@@ -49,11 +49,13 @@ ENV SCRAPY_SETTINGS_MODULE=scraper_core.settings \
     LOG_LEVEL=INFO \
     SCRAPY_PROJECT=scraper_core \
     CONCURRENT_REQUESTS=16 \
-    DOWNLOAD_DELAY=1
+    DOWNLOAD_DELAY=1 \
+    PYTHONPATH=/app
 
-# Health check adapted for Scrapy processes
+# Health check - verify scrapy is available
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD pgrep -f "scrapy" > /dev/null || exit 1
+    CMD scrapy version || exit 1
 
-# Default command to run news spider
-CMD ["scrapy", "crawl", "news_spider"]
+# Default command - keep container running
+# To run a spider, use: docker exec lamacquina_scraper scrapy crawl spider_name
+CMD ["tail", "-f", "/dev/null"]

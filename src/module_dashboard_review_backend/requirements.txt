@@ -7,7 +7,7 @@ fastapi>=0.115.12
 uvicorn[standard]>=0.30.0
 
 # Database
-supabase-py>=2.4.0
+supabase>=2.4.0
 
 # Data Validation & Settings
 pydantic>=2.10.0
