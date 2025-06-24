@@ -141,7 +141,7 @@ class TestIntegrationReal:
         """Artículo real para tests de integración."""
         return {
             "medio": "Integration Test News",
-            "pais_publicacion": "España",
+            "area_geografica": "España",
             "tipo_medio": "Digital",
             "titular": f"Test de Integración Real - {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}",
             "fecha_publicacion": datetime.utcnow().isoformat() + "Z",
@@ -683,7 +683,7 @@ class TestIntegrationReal:
         unique_id = str(uuid.uuid4())
         tracking_article = {
             "medio": f"Tracking Test {unique_id[:8]}",
-            "pais_publicacion": "Test Country",
+            "area_geografica": "Test Country",
             "tipo_medio": "Digital",
             "titular": f"Artículo de Seguimiento - ID: {unique_id}",
             "fecha_publicacion": datetime.utcnow().isoformat() + "Z",

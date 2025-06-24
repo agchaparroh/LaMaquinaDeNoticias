@@ -253,9 +253,9 @@ export const HechoDetailModal: React.FC<HechoDetailModalProps> = ({
                 variant="outlined"
                 size="small"
               />
-              {hecho.articuloMetadata.paisPublicacion && (
+              {hecho.articuloMetadata.areaGeografica && (
                 <Chip 
-                  label={`📍 ${hecho.articuloMetadata.paisPublicacion}`}
+                  label={`📍 ${hecho.articuloMetadata.areaGeografica}`}
                   variant="outlined"
                   size="small"
                 />

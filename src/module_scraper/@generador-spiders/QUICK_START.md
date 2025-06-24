@@ -9,7 +9,7 @@ Un sistema para generar **spiders especializados** que convierten secciones de m
 ```yaml
 url_seccion: "https://elpais.com/internacional"
 nombre_medio: "El País"
-pais_publicacion: "España"
+area_geografica: "España"
 tipo_medio: "diario"  # diario/agencia/revista
 rss_disponible: "No"   # Sí/No
 ```
@@ -19,7 +19,7 @@ rss_disponible: "No"   # Sí/No
 python generate_spider.py \
     --url "https://elpais.com/internacional" \
     --medio "El País" \
-    --pais "España" \
+    --area "España" \
     --tipo "diario" \
     --rss "No"
 ```
@@ -57,7 +57,7 @@ python generate_spider.py \
 python generate_spider.py \
     --url "https://www.bbc.com/mundo/topics/america_latina" \
     --medio "BBC Mundo" \
-    --pais "Reino Unido" \
+    --area "Reino Unido" \
     --tipo "agencia" \
     --rss "Sí" \
     --rss-url "https://feeds.bbci.co.uk/mundo/america_latina/rss.xml"
@@ -68,7 +68,7 @@ python generate_spider.py \
 python generate_spider.py \
     --url "https://www.clarin.com/economia" \
     --medio "Clarín" \
-    --pais "Argentina" \
+    --area "Argentina" \
     --tipo "diario" \
     --rss "No"
 ```
@@ -78,7 +78,7 @@ python generate_spider.py \
 python generate_spider.py \
     --url "https://www.infobae.com/tecno" \
     --medio "Infobae" \
-    --pais "Argentina" \
+    --area "Argentina" \
     --tipo "diario" \
     --rss "No" \
     --strategy "playwright"

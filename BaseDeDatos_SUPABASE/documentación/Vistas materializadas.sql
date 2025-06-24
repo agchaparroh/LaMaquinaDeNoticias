@@ -143,7 +143,7 @@ SELECT
     e.relevancia AS relevancia_base,
     (0.5 * e.relevancia + 0.3 * COUNT(DISTINCT he.hecho_id) + 0.2 * COUNT(DISTINCT ct.id))::NUMERIC(5,2) AS score_relevancia,
     array_agg(DISTINCT h.tipo_hecho) FILTER (WHERE h.tipo_hecho IS NOT NULL) AS tipos_hecho_relacionados,
-    array_agg(DISTINCT a.pais_publicacion) FILTER (WHERE a.pais_publicacion IS NOT NULL) AS paises_mencion,
+    array_agg(DISTINCT a.area_geografica) FILTER (WHERE a.area_geografica IS NOT NULL) AS areas_mencion,
     array_agg(DISTINCT unnest(h.etiquetas)) FILTER (WHERE h.etiquetas IS NOT NULL) AS etiquetas_asociadas
 FROM
     entidades e

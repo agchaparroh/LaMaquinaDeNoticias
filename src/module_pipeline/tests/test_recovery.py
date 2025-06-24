@@ -114,7 +114,7 @@ class TestRecovery:
         """Artículo de muestra para tests."""
         return {
             "medio": "Recovery Test News",
-            "pais_publicacion": "España",
+            "area_geografica": "España",
             "tipo_medio": "Digital",
             "titular": "Test de Recuperación del Sistema",
             "fecha_publicacion": "2024-01-15T10:00:00Z",

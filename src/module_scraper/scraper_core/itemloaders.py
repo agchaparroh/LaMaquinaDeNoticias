@@ -468,8 +468,8 @@ class ArticuloInItemLoader(ItemLoader):
     # Medio: limpiar texto
     medio_in = MapCompose(clean_text)
     
-    # País: limpiar y capitalizar
-    pais_publicacion_in = MapCompose(clean_text, str.title)
+    # Área geográfica: limpiar y capitalizar
+    area_geografica_in = MapCompose(clean_text, str.title)
     
     # Tipo de medio: validar valores permitidos
     tipo_medio_in = MapCompose(validate_medio_type)

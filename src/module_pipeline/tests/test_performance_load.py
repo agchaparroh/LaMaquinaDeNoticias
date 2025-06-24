@@ -126,7 +126,7 @@ class TestPerformanceLoad:
             content = self._generate_article_content(char_count)
             articles[size_name] = {
                 "medio": f"Test News {size_name.upper()}",
-                "pais_publicacion": "España",
+                "area_geografica": "España",
                 "tipo_medio": "Digital",
                 "titular": f"Test de Performance - Artículo {size_name} de {char_count} caracteres",
                 "fecha_publicacion": datetime.utcnow().isoformat() + "Z",

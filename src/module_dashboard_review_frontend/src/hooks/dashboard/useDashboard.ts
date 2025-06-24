@@ -42,7 +42,7 @@ export function useDashboard(options: UseDashboardOptions = {}) {
   const {
     filters = {
       medio: '',
-      paisPublicacion: '',
+      areaGeografica: '',
       tipoHecho: '',
       evaluacionEditorial: '',
       fechaInicio: null,

@@ -38,7 +38,7 @@ class MultiArticleFlow:
                 "url": f"https://example.com/multi-test-{i+1}",
                 "titular": f"Noticia {i+1}: Evento importante en {self._get_category(i)}",
                 "medio": f"Medio {(i % 3) + 1}",  # Distribuir entre 3 medios
-                "pais_publicacion": ["AR", "UY", "CL", "MX", "ES"][i % 5],
+                "area_geografica": ["AR", "UY", "CL", "MX", "ES"][i % 5],
                 "tipo_medio": "digital",
                 "fecha_publicacion": (datetime.utcnow() - timedelta(hours=i)).isoformat(),
                 "contenido_texto": f"Este es el contenido de la noticia {i+1}. " * 10,  # ~500 chars

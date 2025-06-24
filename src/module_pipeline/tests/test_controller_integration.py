@@ -63,7 +63,7 @@ def sample_article_complete():
     """Artículo completo de prueba con todos los campos requeridos."""
     return {
         "medio": "El Test Diario",
-        "pais_publicacion": "España",
+        "area_geografica": "España",
         "tipo_medio": "Digital",
         "titular": "Importante avance científico en investigación del cambio climático",
         "fecha_publicacion": datetime.utcnow(),

@@ -134,7 +134,7 @@ class TestAPIPerformance:
                 "fecha_inicio": "2024-01-01T00:00:00",
                 "fecha_fin": "2024-12-31T23:59:59",
                 "medio": "La Nacion",
-                "pais_publicacion": "Argentina",
+                "area_geografica": "Argentina",
                 "importancia_min": 5,
                 "importancia_max": 10,
                 "limit": 50
@@ -490,7 +490,7 @@ class TestDatabaseQueryPerformance:
             ("Multiple filters", {
                 "fecha_inicio": datetime(2024, 1, 1),
                 "medio": "Test",
-                "pais_publicacion": "Argentina",
+                "area_geografica": "Argentina",
                 "importancia_min": 5,
                 "limit": 20
             }),

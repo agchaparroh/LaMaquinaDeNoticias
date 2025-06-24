@@ -10,7 +10,7 @@ class ArticuloInItem(BaseModel):
     Representa un artículo completo para procesamiento en el pipeline.
     """
     medio: str = Field(..., description="Nombre del medio de comunicación")
-    pais_publicacion: str = Field(..., description="País donde se publicó el artículo")
+    area_geografica: str = Field(..., description="Área geográfica donde se publicó el artículo")
     tipo_medio: str = Field(..., description="Tipo de medio (digital, impreso, televisión, etc.)")
     titular: str = Field(..., description="Titular del artículo")
     fecha_publicacion: datetime = Field(..., description="Fecha de publicación del artículo")
@@ -27,7 +27,7 @@ class ArticuloInItem(BaseModel):
     
     def validate_required_fields(self) -> bool:
         """Valida que los campos requeridos estén presentes."""
-        required_fields = ['titular', 'medio', 'pais_publicacion', 'tipo_medio', 'fecha_publicacion', 'contenido_texto']
+        required_fields = ['titular', 'medio', 'area_geografica', 'tipo_medio', 'fecha_publicacion', 'contenido_texto']
         for field in required_fields:
             value = getattr(self, field, None)
             if not value or (isinstance(value, str) and not value.strip()):

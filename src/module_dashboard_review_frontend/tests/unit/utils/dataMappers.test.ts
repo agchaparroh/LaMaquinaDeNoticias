@@ -38,7 +38,7 @@ describe('dataMappers', () => {
           titular: 'Test Title',
           url: 'https://example.com',
           fecha_publicacion: '2024-01-15T10:00:00Z',
-          pais_publicacion: 'España',
+          area_geografica: 'España',
           tipo_medio: 'Periódico Digital',
           autor: 'John Doe',
           seccion: 'Nacional',
@@ -81,7 +81,7 @@ describe('dataMappers', () => {
           titular: 'Test Title',
           url: 'https://example.com',
           fechaPublicacion: '2024-01-15T10:00:00Z',
-          paisPublicacion: 'España',
+          areaGeografica: 'España',
           tipoMedio: 'Periódico Digital',
           autor: 'John Doe',
           seccion: 'Nacional',
@@ -162,7 +162,7 @@ describe('dataMappers', () => {
     it('should map frontend filters to backend format', () => {
       const frontendFilters = {
         medio: 'El País',
-        paisPublicacion: 'España',
+        areaGeografica: 'España',
         tipoHecho: 'ANUNCIO',
         evaluacionEditorial: 'pendiente_revision_editorial',
         importanciaMin: 5,
@@ -175,7 +175,7 @@ describe('dataMappers', () => {
       
       expect(result).toEqual({
         medio: 'El País',
-        pais_publicacion: 'España',
+        area_geografica: 'España',
         tipo_hecho: 'ANUNCIO',
         evaluacion_editorial: 'pendiente_revision_editorial',
         importancia_min: 5,

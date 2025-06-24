@@ -115,7 +115,7 @@ def test_get_hechos_revision_with_all_filters(mock_hechos_service):
         "fecha_inicio": "2024-01-01T00:00:00",
         "fecha_fin": "2024-12-31T23:59:59",
         "medio": "La Nacion",
-        "pais_publicacion": "Argentina",
+        "area_geografica": "Argentina",
         "importancia_min": 5,
         "importancia_max": 10,
         "limit": 50,
@@ -137,7 +137,7 @@ def test_get_hechos_revision_with_all_filters(mock_hechos_service):
     assert call_args["fecha_inicio"] == datetime(2024, 1, 1, 0, 0, 0)
     assert call_args["fecha_fin"] == datetime(2024, 12, 31, 23, 59, 59)
     assert call_args["medio"] == "La Nacion"
-    assert call_args["pais_publicacion"] == "Argentina"
+    assert call_args["area_geografica"] == "Argentina"
     assert call_args["importancia_min"] == 5
     assert call_args["importancia_max"] == 10
     assert call_args["limit"] == 50
@@ -319,7 +319,7 @@ def test_get_hechos_revision_special_characters_in_filters(mock_hechos_service):
     # Test with special characters
     params = {
         "medio": "El País (España)",
-        "pais_publicacion": "São Paulo"
+        "area_geografica": "São Paulo"
     }
     
     response = client.get("/dashboard/hechos_revision", params=params)
@@ -329,7 +329,7 @@ def test_get_hechos_revision_special_characters_in_filters(mock_hechos_service):
     # Verify special characters were preserved
     call_args = mock_hechos_service.get_hechos_for_revision.call_args[0][0]
     assert call_args["medio"] == "El País (España)"
-    assert call_args["pais_publicacion"] == "São Paulo"
+    assert call_args["area_geografica"] == "São Paulo"
 
 
 # Tests for /dashboard/filtros/opciones endpoint

@@ -20,7 +20,7 @@ class ArticuloInItem(BaseModel):
     fuente: Optional[str] = None                 # Nombre/identificador del spider que lo extrajo
     medio: str                                   # Nombre del medio (ej: "El País")
     medio_url_principal: Optional[str] = None    # URL principal del medio (ej: https://elpais.com)
-    pais_publicacion: str                        # País de publicación (ej: "España")
+    area_geografica: str                         # Área geográfica (ej: "España", "Internacional", "América")
     tipo_medio: str                              # Tipo: diario, agencia, televisión, etc.
     titular: str                                 # Título del artículo
     fecha_publicacion: datetime                  # Fecha de publicación
@@ -74,7 +74,7 @@ class ArticuloInItem(BaseModel):
 
     def validate_required_fields(self) -> bool:
         """Validate that the required fields are present"""
-        required_fields = ['titular', 'medio', 'pais_publicacion', 'tipo_medio', 
+        required_fields = ['titular', 'medio', 'area_geografica', 'tipo_medio', 
                           'fecha_publicacion', 'contenido_texto']
         for field in required_fields:
             if not getattr(self, field):
@@ -93,7 +93,7 @@ class ArticuloInItem(BaseModel):
                 "fuente": "spider_ejemplo_news",
                 "medio": "Diario Ejemplo",
                 "medio_url_principal": "https://www.ejemplo.com",
-                "pais_publicacion": "País Ficticio",
+                "area_geografica": "País Ficticio",
                 "tipo_medio": "Diario Digital",
                 "titular": "Titular de Ejemplo para la Noticia",
                 "fecha_publicacion": "2023-10-26T10:00:00Z",

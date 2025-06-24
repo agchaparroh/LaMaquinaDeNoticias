@@ -22,7 +22,7 @@ def mock_crawler_fixture(tmp_path):
     settings = get_project_settings()
     settings.setmodule('tests.config.test_settings', priority='project')
 
-    settings['VALIDATION_REQUIRED_FIELDS'] = ['url', 'titular', 'medio', 'fecha_publicacion', 'contenido_texto', 'fuente', 'pais_publicacion', 'tipo_medio']
+    settings['VALIDATION_REQUIRED_FIELDS'] = ['url', 'titular', 'medio', 'fecha_publicacion', 'contenido_texto', 'fuente', 'area_geografica', 'tipo_medio']
     settings['VALIDATION_NON_EMPTY_FIELDS'] = ['url', 'titular', 'medio']
     settings['VALIDATION_URL_FIELDS'] = ['url', 'medio_url_principal']
     settings['VALIDATION_MAX_LENGTHS'] = {'url': 2048, 'titular': 512}
@@ -53,7 +53,7 @@ def valid_item_data_fixture():
         'fuente': 'mockspider',
         'medio': 'Test Medio',
         'medio_url_principal': 'http://example.com',
-        'pais_publicacion': 'Testland',
+        'area_geografica': 'Testland',
         'tipo_medio': 'Diario Digital',
         'titular': 'Valid Test Article Title For Pipeline', # Ensure it's a good title
         'fecha_publicacion': now_dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
@@ -138,7 +138,7 @@ def dirty_item_data_fixture():
         'fuente': 'mockspider_dirty_test', # Unique fuente
         'medio': '  Test Dirty Medio Test  ',
         'medio_url_principal': 'http://example.com/dirty_test',
-        'pais_publicacion': 'Testlandia',
+        'area_geografica': 'Testlandia',
         'tipo_medio': 'Blog Post Test', # Unique type
         'titular': '  <h1>A Dirty Title Test</h1>  ',
         'fecha_publicacion': now_dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
@@ -160,7 +160,7 @@ def dirty_item_data_fixture():
         'metadata': {'original_format': ' very_messy '}
     }
     # Ensure all required fields for validation are present
-    for req_field in ['url', 'titular', 'medio', 'fecha_publicacion', 'contenido_texto', 'fuente', 'pais_publicacion', 'tipo_medio']:
+    for req_field in ['url', 'titular', 'medio', 'fecha_publicacion', 'contenido_texto', 'fuente', 'area_geografica', 'tipo_medio']:
         if req_field not in data or not data[req_field]: # Check if field is missing or empty
              data[req_field] = f"Default value for {req_field}" # Add default if missing
     if not data['titular'].strip(): data['titular'] = "Default Dirty Title Test"
@@ -252,7 +252,7 @@ def item_invalid_url_and_missing_titular_fixture():
         # 'titular': 'This field is deliberately missing', # Missing 'titular'
         'fecha_publicacion': now_dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
         'contenido_texto': 'Some valid content for this invalid item test.',
-        'pais_publicacion': 'Testlandia',
+        'area_geografica': 'Testlandia',
         'tipo_medio': 'Test Type',
         'fecha_recopilacion': now_dt,
         'contenido_html': '<p>Some HTML for invalid item</p>',
@@ -284,7 +284,7 @@ def item_missing_titular_fixture(): # Simplified invalid item
         # 'titular': 'This field is deliberately missing', # Missing 'titular'
         'fecha_publicacion': now_dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
         'contenido_texto': 'Some valid content for this test.',
-        'pais_publicacion': 'Testlandia',
+        'area_geografica': 'Testlandia',
         'tipo_medio': 'Test Type',
         'fecha_recopilacion': now_dt,
         'contenido_html': '<p>Some HTML</p>',

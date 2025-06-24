@@ -221,7 +221,7 @@ def valid_article_item():
     item['titular'] = 'Título del Artículo de Prueba'
     item['medio'] = 'Medio Test'
     item['medio_url_principal'] = 'https://example.com'
-    item['pais_publicacion'] = 'Argentina'
+    item['area_geografica'] = 'Argentina'
     item['tipo_medio'] = 'diario'
     item['fecha_publicacion'] = datetime(2024, 1, 15, 10, 30)
     item['contenido_texto'] = 'Este es el contenido del artículo. ' * 20  # Suficiente contenido

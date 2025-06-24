@@ -40,9 +40,9 @@
       "description": "URL principal del medio",
       "pattern": "^https?://.*"
     },
-    "pais_publicacion": {
+    "area_geografica": {
       "type": ["string", "null"],
-      "description": "País de publicación",
+      "description": "Área geográfica (país, región o categoría geográfica)",
       "minLength": 2,
       "maxLength": 100
     },

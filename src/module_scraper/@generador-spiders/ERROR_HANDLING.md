@@ -19,7 +19,7 @@ def validar_input_usuario(input_data):
     required_fields = [
         'url_seccion',
         'nombre_medio',
-        'pais_publicacion',
+        'area_geografica',
         'tipo_medio',
         'rss_disponible'
     ]
@@ -170,7 +170,7 @@ def create_complete_item(self, response):
     item['url'] = response.url
     item['titular'] = self.extract_article_title(response) or 'Sin título'
     item['medio'] = self.medio_nombre
-    item['pais_publicacion'] = self.pais
+    item['area_geografica'] = self.area_geografica
     item['tipo_medio'] = self.tipo_medio
     item['fecha_publicacion'] = self.extract_publication_date(response) or datetime.utcnow()
     item['contenido_texto'] = self.extract_article_content(response) or ''

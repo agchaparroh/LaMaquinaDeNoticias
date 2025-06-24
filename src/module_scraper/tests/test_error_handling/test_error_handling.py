@@ -167,7 +167,7 @@ class TestPipelineErrorHandling:
         item['titular'] = 'Test'
         item['contenido_texto'] = 'Contenido de prueba'
         item['medio'] = 'Test'
-        item['pais_publicacion'] = 'Test'
+        item['area_geografica'] = 'Test'
         item['tipo_medio'] = 'test'
         item['fecha_publicacion'] = datetime.utcnow()
         

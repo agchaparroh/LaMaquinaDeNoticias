@@ -95,7 +95,7 @@ REQUIRED_FIELDS = [
     'url',                    # URL del artículo
     'titular',                # Título (NO 'titulo')
     'medio',                  # Nombre del medio
-    'pais_publicacion',       # País
+    'area_geografica',        # Área geográfica
     'tipo_medio',             # diario/agencia/revista
     'fecha_publicacion',      # Fecha de publicación
     'contenido_texto',        # Texto extraído
@@ -234,7 +234,7 @@ ITEM_PIPELINES = {
 
 # Configuración de validación
 VALIDATION_REQUIRED_FIELDS = [
-    'url', 'titular', 'medio', 'pais_publicacion',
+    'url', 'titular', 'medio', 'area_geografica',
     'tipo_medio', 'fecha_publicacion', 'contenido_texto'
 ]
 VALIDATION_MIN_CONTENT_LENGTH = 100
@@ -273,7 +273,7 @@ ARTICULOS_TABLE_FIELDS = {
     'fuente': 'TEXT NOT NULL',
     'medio': 'TEXT NOT NULL',
     'medio_url_principal': 'TEXT',
-    'pais_publicacion': 'TEXT NOT NULL',
+    'area_geografica': 'TEXT NOT NULL',
     'tipo_medio': 'TEXT NOT NULL',
     'titular': 'TEXT NOT NULL',
     'fecha_publicacion': 'TIMESTAMPTZ',

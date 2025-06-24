@@ -23,7 +23,7 @@ def create_sample_items():
             'url': 'https://example.com/article1?utm_source=twitter',
             'titular': '<h1>Breaking News: <strong>Important Event</strong></h1>',
             'medio': 'Example News',
-            'pais_publicacion': 'España',
+            'area_geografica': 'España',
             'tipo_medio': 'diario',
             'fecha_publicacion': '2024-01-15 10:30:00',
             'contenido_texto': '''<p>This is the article content with <b>HTML tags</b> 
@@ -47,7 +47,7 @@ def create_sample_items():
         ArticuloInItem({
             'url': 'https://example.com/article2',
             'medio': 'Example News',
-            # Missing: titular, pais_publicacion, tipo_medio, fecha_publicacion, contenido_texto
+            # Missing: titular, area_geografica, tipo_medio, fecha_publicacion, contenido_texto
         }),
         
         # Item with invalid data types and formats
@@ -55,7 +55,7 @@ def create_sample_items():
             'url': 'not-a-valid-url',
             'titular': 'Too',  # Too short
             'medio': 'Example News',
-            'pais_publicacion': 'España',
+            'area_geografica': 'España',
             'tipo_medio': 'invalid_type',
             'fecha_publicacion': 'invalid-date',
             'contenido_texto': 'Short',  # Too short
@@ -67,7 +67,7 @@ def create_sample_items():
             'url': 'https://example.com/article3',
             'titular': 'La programaciÃ³n en EspaÃ±a',
             'medio': 'Test\u200bMedia',  # Zero-width space
-            'pais_publicacion': 'España',
+            'area_geografica': 'España',
             'tipo_medio': 'blog',
             'fecha_publicacion': '2024-01-16T15:45:00Z',
             'contenido_texto': 'ArtÃ­culo sobre cÃ³digo con problemas de codificaciÃ³n.',

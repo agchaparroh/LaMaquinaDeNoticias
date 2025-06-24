@@ -47,7 +47,7 @@ async def get_hechos_for_revision(
         None, 
         description="Filter by media source"
     ),
-    pais_publicacion: Optional[str] = Query(
+    area_geografica: Optional[str] = Query(
         None, 
         description="Filter by country of publication"
     ),
@@ -83,7 +83,7 @@ async def get_hechos_for_revision(
         fecha_inicio: Filter facts occurring on or after this date
         fecha_fin: Filter facts occurring on or before this date
         medio: Filter by specific media outlet
-        pais_publicacion: Filter by country where the fact occurred
+        area_geografica: Filter by country where the fact occurred
         importancia_min: Minimum importance level (inclusive)
         importancia_max: Maximum importance level (inclusive)
         limit: Number of records to return per page
@@ -110,7 +110,7 @@ async def get_hechos_for_revision(
             "fecha_inicio": fecha_inicio,
             "fecha_fin": fecha_fin,
             "medio": medio,
-            "pais_publicacion": pais_publicacion,
+            "area_geografica": area_geografica,
             "importancia_min": importancia_min,
             "importancia_max": importancia_max,
             "limit": limit,

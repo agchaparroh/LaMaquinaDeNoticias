@@ -60,7 +60,7 @@ class TestE2EFlow:
                 # Campos del medio
                 item['medio'] = self.medio_nombre
                 item['medio_url_principal'] = f"https://{self.allowed_domains[0]}"
-                item['pais_publicacion'] = self.pais
+                item['area_geografica'] = self.area_geografica
                 item['tipo_medio'] = self.tipo_medio
                 item['seccion'] = self.target_section
                 
@@ -245,7 +245,7 @@ class TestE2EFlow:
             item['contenido_texto'] = f'Contenido del artículo {i}. ' * 10
             item['contenido_html'] = f'<p>Contenido del artículo {i}</p>'
             item['medio'] = 'Test Medio'
-            item['pais_publicacion'] = 'Argentina'
+            item['area_geografica'] = 'Argentina'
             item['tipo_medio'] = 'diario'
             item['fecha_publicacion'] = datetime.utcnow()
             item['autor'] = f'Autor {i}'

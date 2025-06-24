@@ -82,7 +82,7 @@ def generate_long_article(length: int = 15_000) -> Dict[str, Any]:
     
     return {
         "medio": "Tech Innovation Daily",
-        "pais_publicacion": "España",
+        "area_geografica": "España",
         "tipo_medio": "Digital",
         "titular": "Revolucionario avance en inteligencia artificial: nuevo sistema procesa datos con precisión sin precedentes",
         "fecha_publicacion": datetime.utcnow().isoformat() + "Z",

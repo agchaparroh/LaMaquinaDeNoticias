@@ -40,7 +40,7 @@ class HechosService:
                 - fecha_inicio: Start date filter
                 - fecha_fin: End date filter  
                 - medio: Media outlet filter
-                - pais_publicacion: Country filter
+                - area_geografica: Country filter
                 - importancia_min: Minimum importance filter
                 - importancia_max: Maximum importance filter
                 - limit: Number of records to return
@@ -78,7 +78,7 @@ class HechosService:
                 "metadata, "
                 # Expanded articulos fields
                 "articulos(medio, titular, fecha_publicacion, url, "
-                "pais_publicacion, tipo_medio, autor, seccion, "
+                "area_geografica, tipo_medio, autor, seccion, "
                 "es_opinion, es_oficial, resumen, categorias_asignadas, "
                 "puntuacion_relevancia, estado_procesamiento)",
                 count='exact'
@@ -108,10 +108,10 @@ class HechosService:
                 query = query.eq('articulos.medio', filter_params['medio'])
                 logger.debug(f"Applied medio filter: {filter_params['medio']}")
             
-            if filter_params.get('pais_publicacion') is not None:
+            if filter_params.get('area_geografica') is not None:
                 # Filter by country
-                query = query.eq('pais', filter_params['pais_publicacion'])
-                logger.debug(f"Applied pais filter: {filter_params['pais_publicacion']}")
+                query = query.eq('pais', filter_params['area_geografica'])
+                logger.debug(f"Applied pais filter: {filter_params['area_geografica']}")
             
             # Importance range filters
             if filter_params.get('importancia_min') is not None:
@@ -147,8 +147,8 @@ class HechosService:
                 # So we'll apply this filter later
                 pass
             
-            if filter_params.get('pais_publicacion') is not None:
-                count_query = count_query.eq('pais', filter_params['pais_publicacion'])
+            if filter_params.get('area_geografica') is not None:
+                count_query = count_query.eq('pais', filter_params['area_geografica'])
             
             # Importance range filters
             if filter_params.get('importancia_min') is not None:

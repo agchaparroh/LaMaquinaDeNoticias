@@ -15,7 +15,7 @@ class MockArticle:
     def __init__(self, **kwargs):
         self.titular = kwargs.get('titular', 'Título de prueba')
         self.medio = kwargs.get('medio', 'Medio Test')
-        self.pais_publicacion = kwargs.get('pais_publicacion', 'AR')
+        self.area_geografica = kwargs.get('area_geografica', 'AR')
         self.tipo_medio = kwargs.get('tipo_medio', 'digital')
         self.fecha_publicacion = kwargs.get('fecha_publicacion', datetime.utcnow())
         self.contenido_texto = kwargs.get('contenido_texto', 'Contenido de prueba con más de 50 caracteres necesarios')
@@ -28,7 +28,7 @@ class MockArticle:
         return {
             'titular': self.titular,
             'medio': self.medio,
-            'pais_publicacion': self.pais_publicacion,
+            'area_geografica': self.area_geografica,
             'tipo_medio': self.tipo_medio,
             'fecha_publicacion': self.fecha_publicacion.isoformat() if hasattr(self.fecha_publicacion, 'isoformat') else str(self.fecha_publicacion),
             'contenido_texto': self.contenido_texto,

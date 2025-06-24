@@ -187,7 +187,7 @@ async def test_get_hechos_with_all_filters(hechos_service, mock_supabase_client)
         "fecha_inicio": fecha_inicio,
         "fecha_fin": fecha_fin,
         "medio": "La Nacion",
-        "pais_publicacion": "Argentina",
+        "area_geografica": "Argentina",
         "importancia_min": 5,
         "importancia_max": 10,
         "limit": 20,

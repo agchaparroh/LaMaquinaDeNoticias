@@ -6,7 +6,7 @@ export const mockArticuloMetadata: ArticuloMetadata = {
   titular: 'Test Article Title',
   url: 'https://example.com/article',
   fechaPublicacion: '2024-01-15T10:00:00Z',
-  paisPublicacion: 'España',
+  areaGeografica: 'España',
   tipoMedio: 'Periódico Digital',
   autor: 'John Doe',
   seccion: 'Nacional',

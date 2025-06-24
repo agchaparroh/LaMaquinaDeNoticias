@@ -46,7 +46,7 @@ function convertMockToBackendFormat(mockHecho: Hecho): any {
       titular: mockHecho.articuloMetadata.titular,
       url: mockHecho.articuloMetadata.url,
       fecha_publicacion: mockHecho.articuloMetadata.fechaPublicacion,
-      pais_publicacion: mockHecho.articuloMetadata.paisPublicacion,
+      area_geografica: mockHecho.articuloMetadata.areaGeografica,
       tipo_medio: mockHecho.articuloMetadata.tipoMedio,
       autor: mockHecho.articuloMetadata.autor,
       seccion: mockHecho.articuloMetadata.seccion,
@@ -72,10 +72,10 @@ function applyFiltersToMockData(hechos: Hecho[], filters?: FilterState): Hecho[]
       return false;
     }
     
-    // Filtro por país
-    if (filters.paisPublicacion) {
+    // Filtro por área geográfica
+    if (filters.areaGeografica) {
       const paisArray = Array.isArray(hecho.pais) ? hecho.pais : [hecho.pais];
-      if (!paisArray.some(p => p?.includes(filters.paisPublicacion!))) {
+      if (!paisArray.some(p => p?.includes(filters.areaGeografica!))) {
         return false;
       }
     }

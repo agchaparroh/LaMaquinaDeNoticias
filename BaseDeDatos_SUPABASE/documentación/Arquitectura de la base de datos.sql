@@ -134,7 +134,7 @@ CREATE TABLE articulos (
     url TEXT UNIQUE, -- URL debe ser única si está presente
     storage_path TEXT NOT NULL UNIQUE, -- Ruta al archivo en Supabase Storage, debe ser única
     medio VARCHAR(100) NOT NULL,
-    pais_publicacion VARCHAR(50) NOT NULL,
+    area_geografica VARCHAR(50) NOT NULL,
     tipo_medio VARCHAR(50) NOT NULL CHECK (tipo_medio IN ('diario', 'agencia', 'televisión', 'radio', 'digital', 'oficial', 'blog', 'otro')),
     titular TEXT NOT NULL,
     fecha_publicacion TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -607,7 +607,7 @@ CREATE INDEX idx_entidades_fusionada_en_id ON entidades(fusionada_en_id); -- Par
 -- 9.3. Índices para Tabla Artículos
 CREATE INDEX idx_articulos_fecha_pub ON articulos(fecha_publicacion DESC);
 CREATE INDEX idx_articulos_medio ON articulos(medio);
-CREATE INDEX idx_articulos_pais_pub ON articulos(pais_publicacion);
+CREATE INDEX idx_articulos_area_geo ON articulos(area_geografica);
 CREATE INDEX idx_articulos_storage_path ON articulos(storage_path);
 
 -- 9.4. Índices para Tabla Hilos Narrativos
@@ -1110,7 +1110,7 @@ CREATE INDEX idx_entidades_fusionada_en_id ON entidades(fusionada_en_id); -- Par
 -- 9.3. Índices para Tabla Artículos
 CREATE INDEX idx_articulos_fecha_pub ON articulos(fecha_publicacion DESC);
 CREATE INDEX idx_articulos_medio ON articulos(medio);
-CREATE INDEX idx_articulos_pais_pub ON articulos(pais_publicacion);
+CREATE INDEX idx_articulos_area_geo ON articulos(area_geografica);
 CREATE INDEX idx_articulos_storage_path ON articulos(storage_path);
 
 -- 9.4. Índices para Tabla Hilos Narrativos

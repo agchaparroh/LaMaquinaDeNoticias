@@ -549,8 +549,8 @@ async def procesar_articulo(
             campos_faltantes.append("titular")
         if not articulo.medio:
             campos_faltantes.append("medio")
-        if not articulo.pais_publicacion:
-            campos_faltantes.append("pais_publicacion")
+        if not articulo.area_geografica:
+            campos_faltantes.append("area_geografica")
         if not articulo.tipo_medio:
             campos_faltantes.append("tipo_medio")
         if not articulo.fecha_publicacion:
@@ -615,7 +615,7 @@ async def procesar_articulo(
     endpoint_logger.info(
         "Datos del artículo validados y preparados",
         medio=articulo_dict['medio'],
-        pais_publicacion=articulo_dict['pais_publicacion'],
+        area_geografica=articulo_dict['area_geografica'],
         tipo_medio=articulo_dict['tipo_medio'],
         idioma=articulo_dict['idioma'],
         fecha_publicacion=str(articulo_dict['fecha_publicacion']),

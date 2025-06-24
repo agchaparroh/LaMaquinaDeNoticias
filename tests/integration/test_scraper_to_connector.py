@@ -42,7 +42,7 @@ def test_successful_integration():
             "url": "https://example.com/noticia-123",
             "titular": "Título de la noticia de prueba",
             "medio": "El Diario Test",
-            "pais_publicacion": "AR",
+            "area_geografica": "AR",
             "tipo_medio": "digital",
             "fecha_publicacion": "2024-01-15T10:30:00Z",
             "contenido_texto": "Este es el contenido de la noticia que debe tener al menos 50 caracteres para pasar validación.",

@@ -6,7 +6,7 @@
 ```yaml
 url_seccion: "https://elpais.com/internacional"
 nombre_medio: "El País"
-pais_publicacion: "España"
+area_geografica: "España"
 tipo_medio: "diario"
 rss_disponible: "No"  # o "Sí" con url_rss
 ```
@@ -114,7 +114,7 @@ meta = {
 item['url'] = response.url
 item['titular'] = '...'  # MIN 10 chars
 item['medio'] = 'Nombre Medio'
-item['pais_publicacion'] = 'País'
+item['area_geografica'] = 'Área'
 item['tipo_medio'] = 'diario'  # diario/agencia/revista
 item['fecha_publicacion'] = datetime_or_string
 item['contenido_texto'] = '...'  # MIN 100 chars

@@ -18,7 +18,7 @@ class ArticuloInItem(scrapy.Item):
     fuente = scrapy.Field()                 # Nombre/identificador del spider que lo extrajo
     medio = scrapy.Field()                  # Nombre del medio (ej: "El País")
     medio_url_principal = scrapy.Field()    # URL principal del medio (ej: https://elpais.com)
-    pais_publicacion = scrapy.Field()       # País de publicación (ej: "España")
+    area_geografica = scrapy.Field()        # Área geográfica (ej: "España", "Internacional", "América")
     tipo_medio = scrapy.Field()             # Tipo: diario, agencia, televisión, etc.
     titular = scrapy.Field()                # Título del artículo
     fecha_publicacion = scrapy.Field()      # Fecha de publicación
@@ -50,7 +50,7 @@ class ArticuloInItem(scrapy.Item):
     # Validación de campos requeridos
     def validate(self) -> bool:
         """Valida que los campos requeridos estén presentes"""
-        required_fields = ['titular', 'medio', 'pais_publicacion', 'tipo_medio', 
+        required_fields = ['titular', 'medio', 'area_geografica', 'tipo_medio', 
                           'fecha_publicacion', 'contenido_texto']
         for field in required_fields:
             if not self.get(field):

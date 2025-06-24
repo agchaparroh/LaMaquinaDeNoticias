@@ -9,7 +9,7 @@ export interface ArticuloMetadata {
   fechaPublicacion: string;
   
   // Extended article information
-  paisPublicacion?: string;
+  areaGeografica?: string;
   tipoMedio?: string;
   autor?: string;
   seccion?: string;
@@ -87,7 +87,7 @@ export interface FilterState {
   
   // Content filters
   medio?: string;
-  paisPublicacion?: string;  // Note: This filters pais array in backend
+  areaGeografica?: string;  // Note: This filters pais array in backend
   tipoHecho?: string;
   
   // Importance range

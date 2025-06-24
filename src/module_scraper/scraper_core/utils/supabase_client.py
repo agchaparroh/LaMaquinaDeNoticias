@@ -172,7 +172,7 @@ class SupabaseClient:
             "url": articulo_item_data.get('url'),
             "storage_path": articulo_item_data.get('storage_path'),
             "medio": articulo_item_data.get('medio'),
-            "pais_publicacion": articulo_item_data.get('pais_publicacion', 'España'),
+            "area_geografica": articulo_item_data.get('area_geografica', 'España'),
             "tipo_medio": articulo_item_data.get('tipo_medio', 'digital'),
             "titular": articulo_item_data.get('titular'),
             "fecha_publicacion": fecha_pub,

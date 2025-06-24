@@ -258,7 +258,7 @@ class ArticuloInItem(scrapy.Item):
     # Metadatos del medio
     medio = scrapy.Field()
     medio_url_principal = scrapy.Field()
-    pais_publicacion = scrapy.Field()
+    area_geografica = scrapy.Field()
     tipo_medio = scrapy.Field()
     
     # Contenido

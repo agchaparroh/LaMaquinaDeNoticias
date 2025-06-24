@@ -40,7 +40,7 @@ class DataValidationPipeline:
         'url',
         'titular',
         'medio',
-        'pais_publicacion',
+        'area_geografica',
         'tipo_medio',
         'fecha_publicacion',
         'contenido_texto'
@@ -60,7 +60,7 @@ class DataValidationPipeline:
         'url': str,
         'titular': str,
         'medio': str,
-        'pais_publicacion': str,
+        'area_geografica': str,
         'tipo_medio': str,
         'fecha_publicacion': (str, datetime),  # Can be string or datetime
         'contenido_texto': str,

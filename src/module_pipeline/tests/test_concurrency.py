@@ -103,7 +103,7 @@ class TestConcurrency:
             content = f"Artículo de prueba #{article_id}. " * (size // 30)
             return {
                 "medio": f"Test News {article_id}",
-                "pais_publicacion": "España",
+                "area_geografica": "España",
                 "tipo_medio": "Digital",
                 "titular": f"Test Concurrencia - Artículo {article_id}",
                 "fecha_publicacion": "2024-01-15T10:00:00Z",
@@ -782,7 +782,7 @@ def run_concurrency_stress_test():
                 for i in range(requests_per_worker):
                     article = {
                         "medio": f"Stress Test {worker_id}",
-                        "pais_publicacion": "Test",
+                        "area_geografica": "Test",
                         "tipo_medio": "Digital",
                         "titular": f"Stress test article {worker_id}-{i}",
                         "fecha_publicacion": "2024-01-15T10:00:00Z",

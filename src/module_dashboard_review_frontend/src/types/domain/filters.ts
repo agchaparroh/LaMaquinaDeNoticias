@@ -18,7 +18,7 @@ export interface DashboardFilters {
   
   // Source filters
   medio?: string;
-  paisPublicacion?: string;
+  areaGeografica?: string;
   
   // Importance filters
   importanciaMin?: ImportanciaLevel;

@@ -111,7 +111,7 @@ scrapy crawl elpais_internacional -s CLOSESPIDER_ITEMCOUNT=3 -L DEBUG
 item['url'] = response.url
 item['titular'] = 'Título del artículo'
 item['medio'] = 'El País'
-item['pais_publicacion'] = 'España'
+item['area_geografica'] = 'España'
 item['tipo_medio'] = 'diario'  # diario/agencia/revista
 item['fecha_publicacion'] = datetime_object_or_string
 item['contenido_texto'] = 'Contenido extraído'
@@ -143,7 +143,7 @@ CREATE TABLE articulos (
     fuente TEXT NOT NULL,
     medio TEXT NOT NULL,
     medio_url_principal TEXT,
-    pais_publicacion TEXT NOT NULL,
+    area_geografica TEXT NOT NULL,
     tipo_medio TEXT NOT NULL,
     titular TEXT NOT NULL,
     fecha_publicacion TIMESTAMPTZ,

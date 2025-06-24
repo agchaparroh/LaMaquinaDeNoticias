@@ -8,7 +8,7 @@ Generar código Python completo y funcional de spiders que se integren perfectam
 ### **Verificar información disponible:**
 - [ ] URL de la sección objetivo
 - [ ] Nombre del medio
-- [ ] País de publicación
+- [ ] Área geográfica
 - [ ] Tipo de medio (diario/agencia/revista)
 - [ ] RSS disponible (Sí/No)
 - [ ] Análisis de la sección completado (si no hay RSS)
@@ -98,7 +98,7 @@ class {MediaCapitalized}{SeccionCapitalized}Spider(BaseArticleSpider):
     
     # Información del medio (obligatorio)
     medio_nombre = '{nombre_medio}'
-    pais = '{pais}'
+    area_geografica = '{area_geografica}'
     tipo_medio = '{tipo_medio}'  # diario/agencia/revista
     target_section = '{seccion}'
     
@@ -211,7 +211,7 @@ def _create_article_item(self, response: Response, title: str,
     # Información del medio
     item['medio'] = self.medio_nombre
     item['medio_url_principal'] = f"https://{self.allowed_domains[0]}"
-    item['pais_publicacion'] = self.pais
+    item['area_geografica'] = self.area_geografica
     item['tipo_medio'] = self.tipo_medio
     
     # Extraer metadata
@@ -282,7 +282,7 @@ def test_spider_configuration():
     
     # Verificar configuración obligatoria
     assert spider.medio_nombre
-    assert spider.pais
+    assert spider.area_geografica
     assert spider.tipo_medio in VALID_TIPOS_MEDIO
     
     # Verificar pipelines

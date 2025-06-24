@@ -47,7 +47,7 @@ class TestDataValidationPipeline:
             'url': 'https://example.com/article',
             'titular': 'Test Article Title',
             'medio': 'Test Media',
-            'pais_publicacion': 'España',
+            'area_geografica': 'España',
             'tipo_medio': 'diario',
             'fecha_publicacion': '2024-01-15T10:30:00',
             'contenido_texto': 'This is a test article content that is long enough to pass validation.'

@@ -41,7 +41,7 @@ export interface FilterParams {
   fechaInicio?: string;
   fechaFin?: string;
   medio?: string;
-  paisPublicacion?: string;
+  areaGeografica?: string;
   importanciaMin?: number;
   importanciaMax?: number;
   tipoHecho?: string;

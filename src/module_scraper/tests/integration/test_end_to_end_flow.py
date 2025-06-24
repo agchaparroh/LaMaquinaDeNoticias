@@ -53,7 +53,7 @@ class DataIntegritySpider(Spider):
 
         item['fuente'] = self.name
         item['medio'] = 'httpbin.org_e2e_test' # Spider sets this
-        item['pais_publicacion'] = 'Testland E2E Flow'
+        item['area_geografica'] = 'Testland E2E Flow'
         item['tipo_medio'] = 'Test E2E Flow Site'
         item['fecha_publicacion'] = now_dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         item['fecha_recopilacion'] = now_dt
@@ -375,7 +375,7 @@ class PlaywrightMetadataSpider(Spider):
         # Standard fields
         item['fuente'] = self.name
         item['medio'] = 'quotes.toscrape.com'
-        item['pais_publicacion'] = 'PlaywrightLand'
+        item['area_geografica'] = 'PlaywrightLand'
         item['tipo_medio'] = 'JS Site'
         item['fecha_publicacion'] = now_dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         item['fecha_recopilacion'] = now_dt
@@ -541,7 +541,7 @@ class ErrorRecoverySpider(Spider):
 
         # Common fields
         item['fuente'] = self.name
-        item['pais_publicacion'] = 'Testland E2E Recovery'
+        item['area_geografica'] = 'Testland E2E Recovery'
         item['tipo_medio'] = 'Test E2E Recovery Site'
         item['fecha_publicacion'] = now_dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         item['fecha_recopilacion'] = now_dt

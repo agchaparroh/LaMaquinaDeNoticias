@@ -82,7 +82,7 @@ export function mapArticuloMetadataFromBackend(backendArticulo: any): ArticuloMe
     fechaPublicacion: backendArticulo.fecha_publicacion || '',
 
     // Extended article information
-    paisPublicacion: backendArticulo.pais_publicacion,
+    areaGeografica: backendArticulo.area_geografica,
     tipoMedio: backendArticulo.tipo_medio,
     autor: backendArticulo.autor,
     seccion: backendArticulo.seccion,
@@ -140,8 +140,8 @@ export function mapFiltersToBackend(frontendFilters: any) {
   if (frontendFilters.medio) {
     backendParams.medio = frontendFilters.medio;
   }
-  if (frontendFilters.paisPublicacion) {
-    backendParams.pais_publicacion = frontendFilters.paisPublicacion;
+  if (frontendFilters.areaGeografica) {
+    backendParams.area_geografica = frontendFilters.areaGeografica;
   }
   if (frontendFilters.tipoHecho) {
     backendParams.tipo_hecho = frontendFilters.tipoHecho;

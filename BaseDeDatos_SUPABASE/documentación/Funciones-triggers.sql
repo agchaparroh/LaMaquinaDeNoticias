@@ -202,7 +202,7 @@ BEGIN
 
     -- 1. Insertar Artículo
     INSERT INTO articulos (
-        url, storage_path, medio, pais_publicacion, tipo_medio,
+        url, storage_path, medio, area_geografica, tipo_medio,
         titular, fecha_publicacion, autor, idioma, seccion,
         etiquetas_fuente, es_opinion, es_oficial,
         resumen, categorias_asignadas, puntuacion_relevancia, -- Estos campos pueden venir del pipeline
@@ -213,7 +213,7 @@ BEGIN
         j->'articulo_metadata'->>'url',
         j->'articulo_metadata'->>'storage_path', -- Asumiendo que viene en el JSON
         j->'articulo_metadata'->>'medio',
-        j->'articulo_metadata'->>'pais_publicacion',
+        j->'articulo_metadata'->>'area_geografica',
         j->'articulo_metadata'->>'tipo_medio',
         j->'articulo_metadata'->>'titular',
         (j->'articulo_metadata'->>'fecha_publicacion')::TIMESTAMPTZ,

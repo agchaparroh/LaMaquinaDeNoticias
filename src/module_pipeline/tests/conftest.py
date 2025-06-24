@@ -53,7 +53,7 @@ def sample_article_data():
     """Datos de ejemplo para tests de artículos."""
     return {
         "medio": "Test News",
-        "pais_publicacion": "España",
+        "area_geografica": "España",
         "tipo_medio": "Digital",
         "titular": "Titular de prueba",
         "fecha_publicacion": "2024-01-15T10:00:00Z",

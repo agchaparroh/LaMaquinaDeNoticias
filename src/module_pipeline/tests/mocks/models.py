@@ -14,7 +14,7 @@ class ArticuloInItem(BaseModel):
     """
     # Campos requeridos
     medio: str = Field(..., description="Nombre del medio de comunicación")
-    pais_publicacion: str = Field(..., description="País de publicación")
+    area_geografica: str = Field(..., description="Área geográfica de publicación")
     tipo_medio: str = Field(..., description="Tipo de medio (Digital, Impreso, etc.)")
     titular: str = Field(..., description="Titular del artículo")
     fecha_publicacion: datetime = Field(..., description="Fecha de publicación")
@@ -35,7 +35,7 @@ class ArticuloInItem(BaseModel):
         """
         Valida que todos los campos requeridos estén presentes.
         """
-        required_fields = ["titular", "medio", "pais_publicacion", "tipo_medio", "fecha_publicacion", "contenido_texto"]
+        required_fields = ["titular", "medio", "area_geografica", "tipo_medio", "fecha_publicacion", "contenido_texto"]
         
         for field in required_fields:
             value = getattr(self, field)

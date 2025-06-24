@@ -113,7 +113,7 @@ class PipelineController:
             articulo_data: Datos del artículo según ArticuloInItem model.
                 Campos requeridos:
                 - medio: str
-                - pais_publicacion: str
+                - area_geografica: str
                 - tipo_medio: str
                 - titular: str
                 - fecha_publicacion: datetime
@@ -141,7 +141,7 @@ class PipelineController:
         article_logger.info("Iniciando procesamiento de artículo")
         
         # Validar campos requeridos según ArticuloInItem
-        campos_requeridos = ['medio', 'pais_publicacion', 'tipo_medio', 'titular', 'fecha_publicacion', 'contenido_texto']
+        campos_requeridos = ['medio', 'area_geografica', 'tipo_medio', 'titular', 'fecha_publicacion', 'contenido_texto']
         campos_faltantes = [campo for campo in campos_requeridos if campo not in articulo_data]
         if campos_faltantes:
             # Usar ValidationError personalizada en lugar de ValueError genérico
@@ -179,7 +179,7 @@ class PipelineController:
                 "es_articulo_completo": True,
                 "fragmentado": False,
                 "medio": articulo_data['medio'],
-                "pais_publicacion": articulo_data['pais_publicacion'],
+                "area_geografica": articulo_data['area_geografica'],
                 "tipo_medio": articulo_data['tipo_medio'],
                 "titular": articulo_data['titular'],
                 "fecha_publicacion": str(articulo_data['fecha_publicacion']),

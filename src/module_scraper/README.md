@@ -286,7 +286,7 @@ item['contenido_texto']        # Texto limpio
 item['contenido_html']         # HTML original
 item['autor']                  # Autor(es)
 item['seccion']               # Sección del medio
-item['pais_publicacion']      # País de origen
+item['area_geografica']       # Área geográfica
 ```
 
 ## 🚀 Deployment

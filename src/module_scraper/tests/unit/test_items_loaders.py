@@ -28,7 +28,7 @@ class TestArticuloInItem(unittest.TestCase):
         item = ArticuloInItem()
         item['titular'] = 'Test Article'
         item['medio'] = 'Test Media'
-        item['pais_publicacion'] = 'España'
+        item['area_geografica'] = 'España'
         item['tipo_medio'] = 'diario'
         item['fecha_publicacion'] = datetime.now()
         item['contenido_texto'] = 'Test content'
@@ -40,7 +40,7 @@ class TestArticuloInItem(unittest.TestCase):
         """Test validación con campos requeridos faltantes"""
         item = ArticuloInItem()
         item['titular'] = 'Test Article'
-        # Falta medio, pais_publicacion, etc.
+        # Falta medio, area_geografica, etc.
         
         self.assertFalse(item.validate())
     
@@ -48,7 +48,7 @@ class TestArticuloInItem(unittest.TestCase):
         """Test que todos los campos definidos existen"""
         item = ArticuloInItem()
         expected_fields = [
-            'url', 'storage_path', 'medio', 'pais_publicacion', 'tipo_medio',
+            'url', 'storage_path', 'medio', 'area_geografica', 'tipo_medio',
             'titular', 'fecha_publicacion', 'autor', 'idioma', 'seccion',
             'etiquetas_fuente', 'es_opinion', 'es_oficial', 'resumen',
             'categorias_asignadas', 'puntuacion_relevancia', 'fecha_recopilacion',
@@ -294,7 +294,7 @@ class TestArticuloInItemLoader(unittest.TestCase):
         """Test carga básica de item"""
         self.loader.add_value('titular', '<h1>Test Title</h1>')
         self.loader.add_value('medio', '  El País  ')
-        self.loader.add_value('pais_publicacion', 'españa')
+        self.loader.add_value('area_geografica', 'españa')
         self.loader.add_value('tipo_medio', 'newspaper')
         self.loader.add_value('contenido_texto', '<p>Test content</p>')
         self.loader.add_value('fecha_publicacion', '2024-01-15')
@@ -303,7 +303,7 @@ class TestArticuloInItemLoader(unittest.TestCase):
         
         self.assertEqual(item['titular'], 'Test Title')
         self.assertEqual(item['medio'], 'El País')
-        self.assertEqual(item['pais_publicacion'], 'España')
+        self.assertEqual(item['area_geografica'], 'España')
         self.assertEqual(item['tipo_medio'], 'diario')
         self.assertEqual(item['contenido_texto'], 'Test content')
         self.assertIsInstance(item['fecha_publicacion'], datetime)
@@ -343,7 +343,7 @@ class TestArticuloInItemLoader(unittest.TestCase):
         """Test valores por defecto"""
         self.loader.add_value('titular', 'Test')
         self.loader.add_value('medio', 'Test Media')
-        self.loader.add_value('pais_publicacion', 'España')
+        self.loader.add_value('area_geografica', 'España')
         self.loader.add_value('tipo_medio', 'diario')
         self.loader.add_value('contenido_texto', 'Content')
         self.loader.add_value('fecha_publicacion', '2024-01-15')
@@ -381,7 +381,7 @@ class TestArticuloInItemLoader(unittest.TestCase):
         """Test generación automática de storage_path"""
         self.loader.add_value('titular', 'Test Article')
         self.loader.add_value('medio', 'ABC News')
-        self.loader.add_value('pais_publicacion', 'España')
+        self.loader.add_value('area_geografica', 'España')
         self.loader.add_value('tipo_medio', 'digital')
         self.loader.add_value('contenido_texto', 'Content')
         self.loader.add_value('fecha_publicacion', '2024-01-15')

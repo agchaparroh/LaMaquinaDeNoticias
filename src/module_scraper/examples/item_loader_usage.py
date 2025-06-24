@@ -40,7 +40,7 @@ class ExampleSpider(Spider):
             
             # Agregar valores estáticos
             loader.add_value('medio', 'Example News')
-            loader.add_value('pais_publicacion', 'España')
+            loader.add_value('area_geografica', 'España')
             loader.add_value('tipo_medio', 'digital')
             loader.add_value('idioma', 'es')
             
@@ -107,7 +107,7 @@ def example_direct_usage():
     loader.add_value('autor', 'Por María García')
     loader.add_value('fecha_publicacion', '15/01/2024 10:30')
     loader.add_value('medio', 'El Periódico Digital')
-    loader.add_value('pais_publicacion', 'españa')  # Se capitalizará automáticamente
+    loader.add_value('area_geografica', 'españa')  # Se capitalizará automáticamente
     loader.add_value('tipo_medio', 'newspaper')  # Se mapeará a 'diario'
     loader.add_value('url', 'https://example.com/noticia?utm_source=twitter&id=123')
     loader.add_value('etiquetas_fuente', 'economía, política, impuestos')
@@ -145,7 +145,7 @@ def example_xpath_usage(response):
     
     # Combinar con valores estáticos
     loader.add_value('medio', 'Example News XPath')
-    loader.add_value('pais_publicacion', 'México')
+    loader.add_value('area_geografica', 'México')
     loader.add_value('tipo_medio', 'digital')
     
     return loader.load_item()

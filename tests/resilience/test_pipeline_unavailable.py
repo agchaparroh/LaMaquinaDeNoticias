@@ -45,7 +45,7 @@ class PipelineUnavailableScenario:
                 "medio": "Test News",
                 "contenido_texto": "Contenido de prueba " * 20,  # > 50 chars
                 "fecha_publicacion": datetime.utcnow().isoformat(),
-                "pais_publicacion": "AR",
+                "area_geografica": "AR",
                 "tipo_medio": "digital"
             }
             articles.append(article)

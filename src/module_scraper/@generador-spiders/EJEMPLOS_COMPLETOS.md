@@ -9,7 +9,7 @@ Proporcionar ejemplos reales y completos de spiders generados que se integran pe
 ```yaml
 url_seccion: "https://elpais.com/internacional"
 nombre_medio: "El País"
-pais_publicacion: "España"
+area_geografica: "España"
 tipo_medio: "diario"
 rss_disponible: "No"
 ```
@@ -60,7 +60,7 @@ class ElpaisInternacionalSpider(BaseArticleSpider):
     
     # Información del medio
     medio_nombre = 'El País'
-    pais = 'España'
+    area_geografica = 'España'
     tipo_medio = 'diario'
     target_section = 'internacional'
     
@@ -166,7 +166,7 @@ class ElpaisInternacionalSpider(BaseArticleSpider):
         # Información del medio
         item['medio'] = self.medio_nombre
         item['medio_url_principal'] = f"https://{self.allowed_domains[0]}"
-        item['pais_publicacion'] = self.pais
+        item['area_geografica'] = self.area_geografica
         item['tipo_medio'] = self.tipo_medio
         
         # Metadata
@@ -257,7 +257,7 @@ class ElpaisInternacionalSpider(BaseArticleSpider):
 ```yaml
 url_seccion: "https://www.infobae.com/america/america-latina/"
 nombre_medio: "Infobae"
-pais_publicacion: "Argentina"
+area_geografica: "Argentina"
 tipo_medio: "diario"
 rss_disponible: "Sí"
 url_rss: "https://www.infobae.com/feeds/rss/america-latina/"
@@ -302,7 +302,7 @@ class InfobaeAmericaLatinaRssSpider(BaseArticleSpider):
     # Configuración del medio
     feed_url = 'https://www.infobae.com/feeds/rss/america-latina/'
     medio_nombre = 'Infobae'
-    pais = 'Argentina'
+    area_geografica = 'Argentina'
     tipo_medio = 'diario'
     target_section = 'america-latina'
     
@@ -409,7 +409,7 @@ class InfobaeAmericaLatinaRssSpider(BaseArticleSpider):
         # Información del medio
         item['medio'] = self.medio_nombre
         item['medio_url_principal'] = f"https://{self.allowed_domains[0]}"
-        item['pais_publicacion'] = self.pais
+        item['area_geografica'] = self.area_geografica
         item['tipo_medio'] = self.tipo_medio
         
         # Contenido
@@ -500,7 +500,7 @@ class InfobaeAmericaLatinaRssSpider(BaseArticleSpider):
 ```yaml
 url_seccion: "https://www.lanacion.com.ar/tecnologia"
 nombre_medio: "La Nación"
-pais_publicacion: "Argentina"
+area_geografica: "Argentina"
 tipo_medio: "diario"
 rss_disponible: "No"
 ```
@@ -548,7 +548,7 @@ class LanacionTecnologiaPlaywrightSpider(BaseArticleSpider):
     
     # Configuración del medio
     medio_nombre = 'La Nación'
-    pais = 'Argentina'
+    area_geografica = 'Argentina'
     tipo_medio = 'diario'
     target_section = 'tecnologia'
     
@@ -714,7 +714,7 @@ class LanacionTecnologiaPlaywrightSpider(BaseArticleSpider):
         # Información del medio
         item['medio'] = self.medio_nombre
         item['medio_url_principal'] = f"https://{self.allowed_domains[0]}"
-        item['pais_publicacion'] = self.pais
+        item['area_geografica'] = self.area_geografica
         item['tipo_medio'] = self.tipo_medio
         
         # Extraer metadata

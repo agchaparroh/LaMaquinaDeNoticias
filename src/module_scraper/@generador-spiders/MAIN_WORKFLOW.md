@@ -36,7 +36,7 @@ module_scraper/
 ```yaml
 url_seccion: "https://elpais.com/internacional"
 nombre_medio: "El País"
-pais_publicacion: "España"
+area_geografica: "España"
 tipo_medio: "diario"  # diario/agencia/revista
 rss_disponible: "No"  # Sí/No
 url_rss: ""  # Solo si rss_disponible = Sí
@@ -171,7 +171,7 @@ item['titular'] = self.extract_article_title(response)
 item['contenido_texto'] = self.extract_article_content(response)
 item['contenido_html'] = response.text
 item['medio'] = self.medio_nombre
-item['pais_publicacion'] = self.pais
+item['area_geografica'] = self.area_geografica
 item['tipo_medio'] = self.tipo_medio
 item['fecha_publicacion'] = self.extract_publication_date(response)
 item['autor'] = self.extract_author(response)

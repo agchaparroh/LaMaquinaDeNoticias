@@ -43,7 +43,7 @@ class TestDataCleaningPipeline:
             'url': 'https://example.com/article?utm_source=test&utm_campaign=test',
             'titular': '<h1>Test Article <strong>Title</strong></h1>',
             'medio': 'Test Media',
-            'pais_publicacion': 'España',
+            'area_geografica': 'España',
             'tipo_medio': 'diario',
             'fecha_publicacion': '2024-01-15T10:30:00',
             'contenido_texto': '<p>This is <b>test</b> content with <script>alert("xss")</script> HTML.</p>',
@@ -85,7 +85,7 @@ class TestDataCleaningPipeline:
                 Line 2
                 
             ''',  # Multiple empty lines
-            'pais_publicacion': 'España',
+            'area_geografica': 'España',
             'tipo_medio': 'diario',
             'fecha_publicacion': '2024-01-15'
         })
@@ -108,7 +108,7 @@ class TestDataCleaningPipeline:
             'titular': '"Smart quotes" and 'apostrophes'',
             'contenido_texto': 'He said "Hello" and I replied 'Hi'',
             'medio': 'Test Media',
-            'pais_publicacion': 'España',
+            'area_geografica': 'España',
             'tipo_medio': 'diario',
             'fecha_publicacion': '2024-01-15'
         })
@@ -141,7 +141,7 @@ class TestDataCleaningPipeline:
                 'url': input_url,
                 'titular': 'Test',
                 'medio': 'Test',
-                'pais_publicacion': 'Test',
+                'area_geografica': 'Test',
                 'tipo_medio': 'diario',
                 'fecha_publicacion': '2024-01-15',
                 'contenido_texto': 'Test content'
@@ -158,7 +158,7 @@ class TestDataCleaningPipeline:
             'url': 'https://example.com',
             'titular': 'Test',
             'medio': 'Test',
-            'pais_publicacion': 'Test',
+            'area_geografica': 'Test',
             'tipo_medio': 'diario',
             'fecha_publicacion': '2024-01-15 10:30:00',
             'fecha_recopilacion': datetime(2024, 1, 20, 15, 45, 30),
@@ -188,7 +188,7 @@ class TestDataCleaningPipeline:
                 'url': 'https://example.com',
                 'titular': 'Test',
                 'medio': 'Test',
-                'pais_publicacion': 'Test',
+                'area_geografica': 'Test',
                 'tipo_medio': 'diario',
                 'fecha_publicacion': '2024-01-15',
                 'contenido_texto': 'Test content',
@@ -206,7 +206,7 @@ class TestDataCleaningPipeline:
             'url': 'https://example.com',
             'titular': 'Test',
             'medio': 'Test',
-            'pais_publicacion': 'Test',
+            'area_geografica': 'Test',
             'tipo_medio': 'diario',
             'fecha_publicacion': '2024-01-15',
             'contenido_texto': 'Test content',
@@ -254,7 +254,7 @@ class TestDataCleaningPipeline:
             'titular': 'La programaciÃ³n es Ãºtil',
             'contenido_texto': 'ArtÃ­culo sobre cÃ³digo en EspaÃ±a',
             'medio': 'Test',
-            'pais_publicacion': 'España',
+            'area_geografica': 'España',
             'tipo_medio': 'diario',
             'fecha_publicacion': '2024-01-15'
         })
@@ -290,7 +290,7 @@ class TestDataCleaningPipeline:
             'url': 'https://example.com',
             'titular': 'Test',
             'medio': 'Test',
-            'pais_publicacion': 'Test',
+            'area_geografica': 'Test',
             'tipo_medio': 'diario',
             'fecha_publicacion': 'invalid-date-that-might-cause-error',
             'contenido_texto': 'Test content'

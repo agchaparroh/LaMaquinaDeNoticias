@@ -56,7 +56,7 @@ def test_schema_fix():
         item['titular'] = 'Test Esquema Fix'
         item['contenido_texto'] = 'Este es contenido de texto de prueba'
         item['medio'] = 'Test Medio Schema'
-        item['pais_publicacion'] = 'Test'
+        item['area_geografica'] = 'Test'
         item['tipo_medio'] = 'test'
         item['fecha_publicacion'] = datetime.now()
         
@@ -68,7 +68,7 @@ def test_schema_fix():
             'titular': item['titular'],
             'contenido_texto': item['contenido_texto'],
             'medio': item['medio'],
-            'pais_publicacion': item['pais_publicacion'],
+            'area_geografica': item['area_geografica'],
             'tipo_medio': item['tipo_medio'],
             'fecha_publicacion': item['fecha_publicacion'].isoformat(),
             'fecha_recopilacion': datetime.now().isoformat(),

@@ -113,7 +113,7 @@ REQUIRED_FIELDS = [
     'url',
     'titular',  # NO 'titulo'
     'medio',
-    'pais_publicacion',
+    'area_geografica',
     'tipo_medio',
     'fecha_publicacion',
     'contenido_texto',

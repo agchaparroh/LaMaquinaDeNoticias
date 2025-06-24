@@ -150,7 +150,7 @@ class TestUniversalSpider:
     # Campos requeridos según ArticuloInItem y el generador
     REQUIRED_FIELDS = [
         'url', 'fuente', 'titular', 'contenido_texto', 'contenido_html',
-        'medio', 'medio_url_principal', 'pais_publicacion', 'tipo_medio',
+        'medio', 'medio_url_principal', 'area_geografica', 'tipo_medio',
         'fecha_publicacion', 'autor', 'idioma', 'seccion',
         'es_opinion', 'es_oficial', 'fecha_recopilacion'
     ]

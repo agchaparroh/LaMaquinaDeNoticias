@@ -62,7 +62,7 @@ El código define un modelo `ArticuloInItem` con estos campos principales:
 
 **Campos requeridos:**
 - `medio: str` - Nombre del medio
-- `pais_publicacion: str` - País de publicación
+- `area_geografica: str` - Área geográfica (país, región o categoría geográfica)
 - `tipo_medio: str` - Tipo de medio
 - `titular: str` - Título del artículo
 - `fecha_publicacion: datetime` - Fecha de publicación

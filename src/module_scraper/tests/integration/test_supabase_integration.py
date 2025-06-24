@@ -110,7 +110,7 @@ class TestSupabaseIntegration(unittest.TestCase):
         item['url'] = self.test_article_url
         item['titular'] = 'Test Article Titular for Integration Test'
         item['medio'] = 'Test Medio Integration' # Specific medio for easier cleanup
-        item['pais_publicacion'] = 'Test Country'
+        item['area_geografica'] = 'Test Country'
         item['tipo_medio'] = 'Test Type'
         item['fecha_publicacion'] = datetime.now()
         item['contenido_html'] = '<html><body><h1>Test HTML Content for Integration</h1></body></html>'

@@ -47,7 +47,7 @@ def test_procesar_articulo_valido():
     # Datos de artículo válido
     articulo_data = {
         "medio": "Test News",
-        "pais_publicacion": "España",
+        "area_geografica": "España",
         "tipo_medio": "Digital",
         "titular": "Prueba de procesamiento exitoso de artículo completo",
         "fecha_publicacion": "2024-01-15T10:00:00Z",
@@ -87,7 +87,7 @@ def test_procesar_articulo_sin_campos_requeridos():
     # Artículo incompleto - falta titular y contenido_texto
     articulo_data = {
         "medio": "Test News",
-        "pais_publicacion": "España",
+        "area_geografica": "España",
         "tipo_medio": "Digital",
         "fecha_publicacion": "2024-01-15T10:00:00Z"
     }
@@ -118,7 +118,7 @@ def test_procesar_articulo_con_contenido_vacio():
     # Artículo con contenido_texto vacío
     articulo_data = {
         "medio": "Test News",
-        "pais_publicacion": "España",
+        "area_geografica": "España",
         "tipo_medio": "Digital",
         "titular": "Artículo con contenido vacío",
         "fecha_publicacion": "2024-01-15T10:00:00Z",
@@ -147,7 +147,7 @@ def test_procesar_articulo_contenido_muy_corto():
     # Artículo con contenido_texto menor a 50 caracteres
     articulo_data = {
         "medio": "Test News",
-        "pais_publicacion": "España",
+        "area_geografica": "España",
         "tipo_medio": "Digital",
         "titular": "Artículo con contenido muy corto",
         "fecha_publicacion": "2024-01-15T10:00:00Z",
@@ -172,7 +172,7 @@ def test_procesar_articulo_minimo_valido():
     # Artículo con solo campos requeridos
     articulo_data = {
         "medio": "Test News",
-        "pais_publicacion": "España",
+        "area_geografica": "España",
         "tipo_medio": "Digital",
         "titular": "Artículo mínimo válido",
         "fecha_publicacion": "2024-01-15T10:00:00Z",
@@ -196,7 +196,7 @@ def test_procesar_articulo_campos_opcionales():
     # Artículo con campos opcionales
     articulo_data = {
         "medio": "Test News International",
-        "pais_publicacion": "México",
+        "area_geografica": "México",
         "tipo_medio": "Impreso",
         "titular": "Artículo con todos los campos opcionales",
         "fecha_publicacion": "2024-01-15T10:00:00Z",

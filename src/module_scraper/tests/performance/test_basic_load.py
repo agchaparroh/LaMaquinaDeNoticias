@@ -29,7 +29,7 @@ class TestBasicLoad:
             item['contenido_texto'] = 'Content ' * 100
             item['medio'] = 'Test Media'
             item['fecha_publicacion'] = '2024-01-01T00:00:00Z'
-            item['pais_publicacion'] = 'Test'
+            item['area_geografica'] = 'Test'
             item['tipo_medio'] = 'test'
             
             try:

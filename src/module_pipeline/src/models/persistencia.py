@@ -139,7 +139,7 @@ class ArticuloPersistenciaPayload(PersistenciaBaseModel):
     fuente_original: Optional[str] = Field(default=None, description="Identificador del scraper o fuente original (ej: nombre del spider).")
     medio: str = Field(description="Nombre del medio de comunicación (ej: \"El País\").")
     medio_url_principal: Optional[str] = Field(default=None, description="URL principal del medio.")
-    pais_publicacion: Optional[str] = Field(default=None, description="País donde se publicó el artículo.")
+    area_geografica: Optional[str] = Field(default=None, description="Área geográfica donde se publicó el artículo.")
     tipo_medio: Optional[str] = Field(default=None, description="Tipo de medio (ej: 'Diario Digital', 'Agencia de Noticias').")
     titular: str = Field(description="Titular original del artículo.")
     fecha_publicacion: str = Field(description="Fecha de publicación original (formato ISO 8601).")

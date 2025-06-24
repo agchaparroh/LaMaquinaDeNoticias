@@ -164,7 +164,7 @@ class TestRealSupabaseIntegration:
         response = test_client.get(
             "/dashboard/hechos_revision",
             params={
-                'pais_publicacion': 'Argentina',
+                'area_geografica': 'Argentina',
                 'importancia_min': 7
             }
         )
@@ -494,7 +494,7 @@ class TestRealSupabaseIntegration:
             response = test_client.get(
                 "/dashboard/hechos_revision",
                 params={
-                    'pais_publicacion': 'Test Country',
+                    'area_geografica': 'Test Country',
                     'importancia_min': 5,
                     'importancia_max': 8
                 }

@@ -143,14 +143,14 @@ export const FilterHeader: React.FC<FilterHeaderProps> = ({
           </FormControl>
         </Grid>
 
-        {/* País */}
+        {/* Área Geográfica */}
         <Grid item xs={12} md={3}>
           <FormControl fullWidth size="small">
-            <InputLabel>País</InputLabel>
+            <InputLabel>Área Geográfica</InputLabel>
             <Select
-              value={filters.paisPublicacion || ''}
-              label="País"
-              onChange={handleSelectChange('paisPublicacion')}
+              value={filters.areaGeografica || ''}
+              label="Área Geográfica"
+              onChange={handleSelectChange('areaGeografica')}
               disabled={isLoading}
             >
               <MenuItem value="">Todos los países</MenuItem>

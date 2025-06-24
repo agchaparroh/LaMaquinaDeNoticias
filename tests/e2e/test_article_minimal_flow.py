@@ -29,7 +29,7 @@ class E2EArticleFlow:
             "url": "https://example.com/e2e-test-minimal",
             "titular": "Noticia de prueba E2E mínima",
             "medio": "Test E2E News",
-            "pais_publicacion": "AR",
+            "area_geografica": "AR",
             "tipo_medio": "digital",
             "fecha_publicacion": datetime.utcnow().isoformat(),
             "contenido_texto": "Este es un contenido de prueba para el test E2E que debe tener más de 50 caracteres para cumplir validaciones.",

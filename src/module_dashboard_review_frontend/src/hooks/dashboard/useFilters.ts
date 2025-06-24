@@ -37,7 +37,7 @@ export function useFilters(options: UseFiltersOptions = {}) {
   function getDefaultFilters(): FilterState {
     return {
       medio: '',
-      paisPublicacion: '',
+      areaGeografica: '',
       tipoHecho: '',
       evaluacionEditorial: '',
       fechaInicio: null,

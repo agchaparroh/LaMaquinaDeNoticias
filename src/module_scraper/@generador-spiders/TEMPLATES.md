@@ -79,7 +79,7 @@ class [MEDIO][SECCION]RssSpider(BaseArticleSpider):
     # Configuración específica del spider
     feed_url = '[URL_RSS]'
     medio_nombre = '[NOMBRE_MEDIO]'
-    pais = '[PAIS]'
+    area_geografica = '[AREA_GEOGRAFICA]'
     tipo_medio = '[TIPO_MEDIO]'  # diario/agencia/revista
     target_section = '[SECCION]'
     
@@ -167,7 +167,7 @@ class [MEDIO][SECCION]RssSpider(BaseArticleSpider):
         # Información del medio
         item['medio'] = self.medio_nombre
         item['medio_url_principal'] = f"https://{self.allowed_domains[0]}"
-        item['pais_publicacion'] = self.pais
+        item['area_geografica'] = self.area_geografica
         item['tipo_medio'] = self.tipo_medio
         
         # Título (priorizar RSS, fallback a extracción)
@@ -269,7 +269,7 @@ class [MEDIO][SECCION]Spider(BaseArticleSpider):
     
     # Configuración del medio
     medio_nombre = '[NOMBRE_MEDIO]'
-    pais = '[PAIS]'
+    area_geografica = '[AREA_GEOGRAFICA]'
     tipo_medio = '[TIPO_MEDIO]'
     target_section = '[SECCION]'
     
@@ -397,7 +397,7 @@ class [MEDIO][SECCION]Spider(BaseArticleSpider):
         # Información del medio
         item['medio'] = self.medio_nombre
         item['medio_url_principal'] = f"https://{self.allowed_domains[0]}"
-        item['pais_publicacion'] = self.pais
+        item['area_geografica'] = self.area_geografica
         item['tipo_medio'] = self.tipo_medio
         
         # Metadata
@@ -499,7 +499,7 @@ class [MEDIO][SECCION]PlaywrightSpider(BaseArticleSpider):
     
     # Configuración del medio
     medio_nombre = '[NOMBRE_MEDIO]'
-    pais = '[PAIS]'
+    area_geografica = '[AREA_GEOGRAFICA]'
     tipo_medio = '[TIPO_MEDIO]'
     target_section = '[SECCION]'
     
@@ -648,7 +648,7 @@ class [MEDIO][SECCION]PlaywrightSpider(BaseArticleSpider):
         # Información del medio
         item['medio'] = self.medio_nombre
         item['medio_url_principal'] = f"https://{self.allowed_domains[0]}"
-        item['pais_publicacion'] = self.pais
+        item['area_geografica'] = self.area_geografica
         item['tipo_medio'] = self.tipo_medio
         
         # Extraer metadata

@@ -26,7 +26,7 @@ export const handlers = [
           titular: hecho.articuloMetadata.titular,
           url: hecho.articuloMetadata.url,
           fecha_publicacion: hecho.articuloMetadata.fechaPublicacion,
-          pais_publicacion: hecho.articuloMetadata.paisPublicacion,
+          area_geografica: hecho.articuloMetadata.areaGeografica,
         }
       })),
       pagination: {

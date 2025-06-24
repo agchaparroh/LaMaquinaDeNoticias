@@ -54,7 +54,7 @@ def create_test_article():
         "titular": "Artículo de prueba para Job Tracking",
         "contenido_texto": "Este es un contenido de prueba con más de 50 caracteres para validación. " * 3,
         "medio": "Test News",
-        "pais_publicacion": "ES",
+        "area_geografica": "ES",
         "tipo_medio": "digital",
         "fecha_publicacion": "2024-01-15T10:00:00Z",
         "autor": "Test Author",

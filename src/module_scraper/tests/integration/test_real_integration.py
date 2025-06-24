@@ -30,7 +30,7 @@ class TestRealIntegration:
                 item['contenido_texto'] = ' '.join(response.css('p::text').getall())
                 item['medio'] = 'httpbin'
                 item['fecha_publicacion'] = '2024-01-01T00:00:00Z'
-                item['pais_publicacion'] = 'Test'
+                item['area_geografica'] = 'Test'
                 item['tipo_medio'] = 'test'
                 
                 extracted_items.append(item)
@@ -75,7 +75,7 @@ class TestRealIntegration:
         item['contenido_texto'] = '<p>HTML content</p>\n\n\nwith multiple\n\nlines'
         item['medio'] = 'Test Media'
         item['fecha_publicacion'] = '2024-01-01T00:00:00Z'
-        item['pais_publicacion'] = 'Argentina'
+        item['area_geografica'] = 'Argentina'
         item['tipo_medio'] = 'diario'
         
         # Pipeline de limpieza
