@@ -80,6 +80,76 @@ services:
       - lamacquina_network
     restart: unless-stopped
 
+  # --- Scrapyd Server ---
+  scrapyd:
+    build:
+      context: ./src/module_scraper
+      dockerfile: Dockerfile
+    container_name: lamacquina_scrapyd
+    volumes:
+      - ./src/module_scraper:/app
+      - ./src/module_scraper/scrapyd.conf:/etc/scrapyd/scrapyd.conf:ro
+      - scrapyd_eggs:/var/lib/scrapyd/eggs
+      - scrapyd_logs:/var/lib/scrapyd/logs
+    command: ["scrapyd", "--pidfile="]
+    ports:
+      - "6800:6800"
+    env_file:
+      - .env
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6800/daemonstatus.json"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # --- ScrapydWeb Dashboard ---
+  scrapydweb:
+    build:
+      context: ./src/module_scraper/scrapydweb
+      dockerfile: Dockerfile
+    container_name: lamacquina_scrapydweb
+    volumes:
+      # Configuración
+      - ./src/module_scraper/scrapydweb/scrapydweb_settings_v10.py:/app/config/scrapydweb_settings_v10.py:ro
+      # Datos persistentes en directorio estándar
+      - scrapydweb_data:/var/lib/scrapydweb
+      # Proyectos Scrapy (para deploy)
+      - ./src/module_scraper:/app/projects:ro
+      # Compartir logs de Scrapyd (solo lectura)
+      - scrapyd_logs:/var/lib/scrapydweb/scrapyd_logs:ro
+    ports:
+      - "5000:5000"
+    environment:
+      # Configuración de aplicación
+      - SCRAPYDWEB_SETTINGS_PY=/app/config/scrapydweb_settings_v10.py
+      - SCRAPYDWEB_USERNAME=${SCRAPYDWEB_USERNAME}
+      - SCRAPYDWEB_PASSWORD=${SCRAPYDWEB_PASSWORD}
+      # Rutas de datos
+      - SCRAPYDWEB_DATA_PATH=/var/lib/scrapydweb
+      - SCRAPYDWEB_LOGS_DIR=/var/lib/scrapydweb/logs
+      - SCRAPYDWEB_DATABASE_URL=sqlite:////var/lib/scrapydweb/database/scrapydweb.db
+      - SCRAPYDWEB_LOCAL_SCRAPYD_LOGS_DIR=/var/lib/scrapydweb/scrapyd_logs
+      # Integración con otros servicios
+      - PIPELINE_API_URL=http://module_pipeline:8003
+      - DASHBOARD_API_URL=http://module_dashboard_review_backend:8004
+    env_file:
+      - .env
+    networks:
+      - lamacquina_network
+    depends_on:
+      - scrapyd
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   # --- Reverse Proxy (Nginx) ---
   nginx_reverse_proxy:
     build:
@@ -102,3 +172,12 @@ services:
     networks:
       - lamacquina_network
     restart: unless-stopped
+
+# Volúmenes para persistencia
+volumes:
+  scrapyd_eggs:
+    driver: local
+  scrapyd_logs:
+    driver: local
+  scrapydweb_data:
+    driver: local

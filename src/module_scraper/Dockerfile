@@ -24,6 +24,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install Scrapyd and scrapyd-client for deployment capabilities
+RUN pip install --no-cache-dir scrapyd scrapyd-client
+
 # Install Playwright browsers (required for scrapy-playwright)
 RUN playwright install chromium --with-deps
 
@@ -38,8 +41,12 @@ COPY . .
 RUN mkdir -p /app/logs \
              /app/data \
              /app/output \
-             /app/.scrapy && \
-    chown -R scraper:scraper /app
+             /app/.scrapy \
+             /var/lib/scrapyd/eggs \
+             /var/lib/scrapyd/logs \
+             /var/lib/scrapyd/dbs \
+             /var/lib/scrapyd/items && \
+    chown -R scraper:scraper /app /var/lib/scrapyd
 
 # Switch to non-root user
 USER scraper
@@ -51,6 +58,9 @@ ENV SCRAPY_SETTINGS_MODULE=scraper_core.settings \
     CONCURRENT_REQUESTS=16 \
     DOWNLOAD_DELAY=1 \
     PYTHONPATH=/app
+
+# Expose Scrapyd port
+EXPOSE 6800
 
 # Health check - verify scrapy is available
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \

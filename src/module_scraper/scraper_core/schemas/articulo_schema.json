@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ArticuloInItem",
+  "description": "Schema de validación para artículos periodísticos extraídos por La Máquina de Noticias",
+  "type": "object",
+  "required": [
+    "url",
+    "medio",
+    "titular",
+    "contenido_texto",
+    "fecha_recopilacion"
+  ],
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "minLength": 10,
+      "description": "URL original del artículo",
+      "pattern": "^https?://.*"
+    },
+    "storage_path": {
+      "type": ["string", "null"],
+      "description": "Ruta en Supabase Storage",
+      "minLength": 1
+    },
+    "fuente": {
+      "type": ["string", "null"],
+      "description": "Nombre/identificador del spider que lo extrajo",
+      "minLength": 1
+    },
+    "medio": {
+      "type": "string",
+      "description": "Nombre del medio (ej: El País)",
+      "minLength": 2,
+      "maxLength": 256
+    },
+    "medio_url_principal": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "URL principal del medio",
+      "pattern": "^https?://.*"
+    },
+    "pais_publicacion": {
+      "type": ["string", "null"],
+      "description": "País de publicación",
+      "minLength": 2,
+      "maxLength": 100
+    },
+    "tipo_medio": {
+      "type": ["string", "null"],
+      "description": "Tipo: diario, agencia, televisión, etc.",
+      "enum": ["diario", "agencia", "televisión", "radio", "revista", "portal", "blog", null]
+    },
+    "titular": {
+      "type": "string",
+      "description": "Título del artículo",
+      "minLength": 5,
+      "maxLength": 500
+    },
+    "fecha_publicacion": {
+      "type": ["string", "null"],
+      "description": "Fecha de publicación",
+      "anyOf": [
+        {"format": "date-time"},
+        {"format": "date"},
+        {"type": "null"}
+      ]
+    },
+    "autor": {
+      "type": ["string", "null"],
+      "description": "Autor(es) del artículo",
+      "maxLength": 500
+    },
+    "idioma": {
+      "type": ["string", "null"],
+      "description": "Idioma del artículo",
+      "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+    },
+    "seccion": {
+      "type": ["string", "null"],
+      "description": "Sección del medio",
+      "maxLength": 100
+    },
+    "etiquetas_fuente": {
+      "type": ["array", "null"],
+      "description": "Etiquetas del medio original",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "es_opinion": {
+      "type": ["boolean", "null"],
+      "description": "¿Es artículo de opinión?"
+    },
+    "es_oficial": {
+      "type": ["boolean", "null"],
+      "description": "¿Es fuente oficial?"
+    },
+    "resumen": {
+      "type": ["string", "null"],
+      "description": "Resumen generado en Fase 2"
+    },
+    "categorias_asignadas": {
+      "type": ["array", "null"],
+      "description": "Categorías asignadas en Fase 2",
+      "items": {
+        "type": "string"
+      }
+    },
+    "puntuacion_relevancia": {
+      "type": ["number", "null"],
+      "description": "Puntuación 0-10 asignada en Fase 2",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "fecha_recopilacion": {
+      "type": "string",
+      "description": "Timestamp de scraping",
+      "format": "date-time"
+    },
+    "fecha_procesamiento": {
+      "type": ["string", "null"],
+      "description": "Timestamp de fin de Fase 5",
+      "format": "date-time"
+    },
+    "estado_procesamiento": {
+      "type": ["string", "null"],
+      "description": "Estado: pendiente, procesando, etc.",
+      "enum": ["pendiente", "procesando", "completado", "error", null]
+    },
+    "error_detalle": {
+      "type": ["string", "null"],
+      "description": "Detalle del error si lo hay"
+    },
+    "contenido_texto": {
+      "type": "string",
+      "description": "Texto completo del artículo",
+      "minLength": 100
+    },
+    "contenido_html": {
+      "type": ["string", "null"],
+      "description": "HTML original del artículo",
+      "minLength": 10
+    },
+    "metadata": {
+      "type": ["object", "null"],
+      "description": "JSONB para datos adicionales",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

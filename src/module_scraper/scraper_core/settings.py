@@ -406,3 +406,64 @@ SECTION_URL_PATTERNS = {
 RSS_ARTIFICIAL_DEFAULT_DELAY = float(os.getenv('RSS_ARTIFICIAL_DEFAULT_DELAY', 3.0))  # Conservative delay
 RSS_ARTIFICIAL_CONCURRENT_REQUESTS = int(os.getenv('RSS_ARTIFICIAL_CONCURRENT_REQUESTS', 1))  # Very conservative
 RSS_ARTIFICIAL_RESPECT_ROBOTS = True  # Always respect robots.txt for RSS artificial
+
+# =============================================================================
+# SPIDERMON CONFIGURATION
+# =============================================================================
+
+# Enable Spidermon monitoring
+SPIDERMON_ENABLED = True
+
+# Add Spidermon extension
+EXTENSIONS.update({
+    'spidermon.contrib.scrapy.extensions.Spidermon': 600,
+})
+
+# Spider close monitors
+SPIDERMON_SPIDER_CLOSE_MONITORS = [
+    'scraper_core.monitors.spider_monitors.SpiderCloseMonitorSuite',
+]
+
+# Item validation pipeline (already in ITEM_PIPELINES above)
+# Uncomment if you want to use Spidermon's validation pipeline instead
+# ITEM_PIPELINES.update({
+#     'spidermon.contrib.scrapy.pipelines.ItemValidationPipeline': 250,
+# })
+
+# Validation settings
+SPIDERMON_VALIDATION_ADD_ERRORS_TO_ITEMS = True
+SPIDERMON_VALIDATION_ERRORS_FIELD = '_validation'
+SPIDERMON_VALIDATION_DROP_ITEMS_WITH_ERRORS = False
+
+# JSON Schema for validation
+SPIDERMON_VALIDATION_SCHEMAS = {
+    'ArticuloInItem': os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'schemas',
+        'articulo_schema.json'
+    )
+}
+
+# Monitor thresholds
+SPIDERMON_MIN_ITEMS_SCRAPED = int(os.getenv('SPIDERMON_MIN_ITEMS_SCRAPED', 1))
+SPIDERMON_MAX_CRITICAL_ERRORS = int(os.getenv('SPIDERMON_MAX_CRITICAL_ERRORS', 0))
+SPIDERMON_MAX_ERROR_MESSAGES = int(os.getenv('SPIDERMON_MAX_ERROR_MESSAGES', 5))
+SPIDERMON_MAX_RESPONSE_TIME = float(os.getenv('SPIDERMON_MAX_RESPONSE_TIME', 5000))  # milliseconds
+
+# Field coverage monitoring
+SPIDERMON_ADD_FIELD_COVERAGE = True
+SPIDERMON_FIELD_COVERAGE_RULES = {
+    'url': 1.0,  # 100% coverage required
+    'titulo': 0.95,  # 95% coverage required
+    'contenido_texto': 0.95,
+    'medio': 1.0,
+    'fecha_publicacion': 0.8,  # 80% coverage acceptable
+}
+
+# Periodic monitors (optional, for running monitors during spider execution)
+# SPIDERMON_PERIODIC_MONITORS = {
+#     'scraper_core.monitors.spider_monitors.PeriodicMonitorSuite': 1800,  # Run every 30 minutes
+# }
+
+# Custom stats to track
+SPIDERMON_CUSTOM_STATS = True

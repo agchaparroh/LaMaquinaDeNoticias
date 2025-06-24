@@ -44,8 +44,8 @@ docker-compose exec scraper-dev bash
 
 ```bash
 # Dentro del contenedor
-scrapy list                    # Ver spiders disponibles
-scrapy crawl infobae          # Ejecutar spider de prueba
+scrapy list                              # Ver spiders disponibles
+scrapy crawl example_news_spider         # Ejecutar spider de ejemplo
 ```
 
 ## 📊 Uso Básico
@@ -53,24 +53,27 @@ scrapy crawl infobae          # Ejecutar spider de prueba
 ### Spiders Disponibles
 
 ```bash
-# Medios latinoamericanos
-scrapy crawl infobae_spider              # Infobae (Argentina/Latinoamérica)
-scrapy crawl elpais_latinoamerica        # El País - sección Latinoamérica  
-scrapy crawl elnacional_latinoamerica    # El Nacional - Latinoamérica
-scrapy crawl europapress_sudamerica      # Europa Press - Sudamérica
+# Spider de ejemplo
+scrapy crawl example_news_spider         # Spider de ejemplo/plantilla
+
+# Spiders de prueba (desarrollo)
+scrapy crawl crawl_once_test            # Test de deduplicación
+scrapy crawl useragent_test             # Test de user agents
 ```
+
+**Nota**: Los spiders de producción para medios específicos deben ser generados usando el sistema de generación en `@generador-spiders/` o creados manualmente siguiendo el spider de ejemplo.
 
 ### Ejecución con Configuración Personalizada
 
 ```bash
 # Debug mode con cache habilitado
-scrapy crawl infobae -L DEBUG -s HTTPCACHE_ENABLED=True
+scrapy crawl example_news_spider -L DEBUG -s HTTPCACHE_ENABLED=True
 
 # Configuración de concurrencia
-scrapy crawl infobae -s CONCURRENT_REQUESTS=4 -s DOWNLOAD_DELAY=3
+scrapy crawl example_news_spider -s CONCURRENT_REQUESTS=4 -s DOWNLOAD_DELAY=3
 
 # Usando Playwright para sitios JavaScript
-scrapy crawl infobae -s USE_PLAYWRIGHT_FOR_EMPTY_CONTENT=True
+scrapy crawl example_news_spider -s USE_PLAYWRIGHT_FOR_EMPTY_CONTENT=True
 ```
 
 ### Desarrollo y Testing
@@ -80,7 +83,7 @@ scrapy crawl infobae -s USE_PLAYWRIGHT_FOR_EMPTY_CONTENT=True
 docker-compose --profile test up scraper-test
 
 # Shell interactivo para debugging
-scrapy shell "https://www.infobae.com/america/"
+scrapy shell "https://example-news-site.com/article"
 
 # Verificar configuración
 scrapy check
@@ -311,8 +314,132 @@ docker-compose --profile test up scraper-test
 
 - [STRUCTURE.md](STRUCTURE.md) - Estructura detallada del proyecto
 - [CONFIGURACION.md](CONFIGURACION.md) - Guía de configuración completa
-- [tests/docs/](tests/docs/) - Documentación de testing
+- [docs/](docs/) - Documentación técnica completa
 - [examples/](examples/) - Ejemplos de código
+
+## 🔧 Configuración Avanzada
+
+### Archivos de Configuración (config/)
+
+El directorio `config/` contiene configuraciones por entorno:
+
+- **`.env.test.example`**: Plantilla para variables de testing
+- **`.env.test`**: Variables reales de testing (NO COMMITEAR)
+- **`rate_limits/domain_config.py`**: Límites específicos por dominio
+
+### Seguridad en Configuración
+
+1. **Nunca commitear credenciales reales**
+2. **Usar proyectos separados para testing**
+3. **Rotar credenciales regularmente**
+4. **Usar permisos mínimos necesarios**
+
+## 🕷️ Clases Base de Spiders (scraper_core/spiders/base/)
+
+### BaseArticleSpider
+Spider base para extracción directa de artículos con URLs específicas.
+
+**Características:**
+- Rotación automática de user agents
+- Métodos de extracción comunes
+- Validación de datos extraídos
+- Respeto por robots.txt
+
+### BaseSitemapSpider
+Spider para descubrir artículos vía sitemaps XML.
+
+**Características:**
+- Parseo automático de sitemaps
+- Filtrado por fecha (últimos N días)
+- Reglas de sitemap personalizables
+
+### BaseCrawlSpider
+Spider para crawlear sitios completos siguiendo enlaces.
+
+**Características:**
+- Seguimiento inteligente de enlaces
+- Control de profundidad
+- Detección automática de artículos
+- Estadísticas de crawl
+
+## 🧪 Testing Completo
+
+### Estructura de Tests
+```
+tests/
+├── unit/                # Tests unitarios
+├── integration/         # Tests de integración
+├── performance/         # Tests de rendimiento
+├── e2e/                # Tests end-to-end
+└── scripts/            # Scripts de utilidad
+```
+
+### Tests de Performance
+- **Rendimiento**: Métricas de tiempo y memoria
+- **Concurrencia**: Múltiples spiders simultáneos
+- **Recuperación**: Manejo de errores
+- **Carga**: Procesamiento de alto volumen
+
+### Métricas de Referencia
+- Performance: < 30 segundos por artículo
+- Memoria: < 100MB por spider
+- Concurrencia: 3+ spiders simultáneos
+- Throughput: 10+ items/segundo
+
+## 🏗️ Generador de Spiders (@generador-spiders/)
+
+Sistema para generar spiders especializados que convierten secciones de medios en feeds tipo RSS.
+
+### Características de Spiders Generados
+- Monitoreo periódico de secciones específicas
+- Extracción solo de artículos nuevos
+- Deduplicación automática
+- Configuración conservadora
+
+### Tipos Soportados
+| Tipo | Uso | Frecuencia | Items/run |
+|------|-----|------------|-----------|
+| RSS | Feed disponible | 30 min | 50 |
+| HTML | Sin RSS, estático | 60 min | 30 |
+| Playwright | Requiere JS | 120 min | 20 |
+
+## 🚨 Sistema de Monitoreo
+
+### Scrapyd (Puerto 6800)
+Servidor de deployment y ejecución de spiders.
+
+### ScrapydWeb (Puerto 5000)
+Dashboard visual para gestión de spiders.
+- Usuario: `admin`
+- Contraseña: Configurada en `.env`
+
+### Spidermon
+Sistema de monitoreo integrado con alertas automáticas.
+
+**Monitores activos:**
+- Validación de items (JSON Schema)
+- Estadísticas básicas (mínimo items, errores)
+- Cambios de estructura HTML
+- Campos críticos vacíos
+- Tiempos de respuesta
+- Tasa de errores HTTP
+
+## 📊 Pipelines de Procesamiento
+
+### DataValidationPipeline
+- Valida campos requeridos
+- Normaliza URLs y fechas
+- Rechaza contenido insuficiente
+
+### DataCleaningPipeline
+- Limpia HTML y normaliza texto
+- Estandariza caracteres especiales
+- Deduplica etiquetas
+
+### SupabaseStoragePipeline
+- Almacena metadatos en PostgreSQL
+- Comprime y guarda HTML en Storage
+- Reintentos con Tenacity
 
 ## 🤝 Contribuir
 

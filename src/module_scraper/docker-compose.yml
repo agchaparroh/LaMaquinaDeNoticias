@@ -95,6 +95,85 @@ services:
     stdin_open: true
     tty: true
 
+  # Servicio Scrapyd para deployment de spiders
+  scrapyd:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lamaquina_scrapyd
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+    volumes:
+      # Código fuente
+      - .:/app
+      # Configuración de Scrapyd
+      - ./scrapyd.conf:/etc/scrapyd/scrapyd.conf:ro
+      # Volúmenes persistentes para Scrapyd
+      - scrapyd_eggs:/var/lib/scrapyd/eggs
+      - scrapyd_logs:/var/lib/scrapyd/logs
+      - scrapyd_dbs:/var/lib/scrapyd/dbs
+      - scrapyd_items:/var/lib/scrapyd/items
+    working_dir: /app
+    command: ["scrapyd", "--pidfile="]
+    ports:
+      - "6800:6800"
+    networks:
+      - scraper_network
+    env_file:
+      - config/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6800/daemonstatus.json"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Servicio ScrapydWeb para dashboard visual
+  scrapydweb:
+    build:
+      context: ./scrapydweb
+      dockerfile: Dockerfile
+    container_name: lamaquina_scrapydweb
+    environment:
+      # Configuración de aplicación
+      - SCRAPYDWEB_SETTINGS_PY=/app/config/scrapydweb_settings_v10.py
+      - SCRAPYDWEB_USERNAME=${SCRAPYDWEB_USERNAME:-admin}
+      - SCRAPYDWEB_PASSWORD=${SCRAPYDWEB_PASSWORD:-lamaquina2025}
+      # Rutas de datos
+      - SCRAPYDWEB_DATA_PATH=/var/lib/scrapydweb
+      - SCRAPYDWEB_LOGS_DIR=/var/lib/scrapydweb/logs
+      - SCRAPYDWEB_DATABASE_URL=sqlite:////var/lib/scrapydweb/database/scrapydweb.db
+      - SCRAPYDWEB_LOCAL_SCRAPYD_LOGS_DIR=/var/lib/scrapydweb/scrapyd_logs
+      # Integración con otros servicios
+      - PIPELINE_API_URL=http://module_pipeline:8003
+      - DASHBOARD_API_URL=http://module_dashboard_review_backend:8004
+    volumes:
+      # Configuración
+      - ./scrapydweb/scrapydweb_settings_v10.py:/app/config/scrapydweb_settings_v10.py:ro
+      # Datos persistentes en directorio estándar
+      - scrapydweb_data:/var/lib/scrapydweb
+      # Proyectos Scrapy (para deploy fácil)
+      - .:/app/projects:ro
+      # Compartir logs de Scrapyd (solo lectura)
+      - scrapyd_logs:/var/lib/scrapydweb/scrapyd_logs:ro
+    ports:
+      - "5000:5000"
+    networks:
+      - scraper_network
+    depends_on:
+      - scrapyd
+    env_file:
+      - config/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
 networks:
   scraper_network:
     driver: bridge
@@ -104,4 +183,18 @@ volumes:
   scrapy_cache:
     driver: local
   scraper_logs:
+    driver: local
+  # Volúmenes para Scrapyd
+  scrapyd_eggs:
+    driver: local
+  scrapyd_logs:
+    driver: local
+  scrapyd_dbs:
+    driver: local
+  scrapyd_items:
+    driver: local
+  # Volúmenes para ScrapydWeb
+  scrapydweb_data:
+    driver: local
+  scrapydweb_logs:
     driver: local
