@@ -1,5 +1,16 @@
 # La Máquina de Noticias - Claude Code Project Context
 
+## 📍 Ubicación del Proyecto / Project Location
+
+**Ruta Windows**: `C:\Users\DELL\Desktop\PruebaWindsurfAI\LaMaquinaDeNoticias\`
+**Ruta WSL**: `/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/`
+
+## 📂 Sistema de Gestión de Proyectos CPMS
+
+- **CPMS Workspace**: `CPMS-Workspace/` (dentro del proyecto)
+- **Documentación CPMS**: Ver `CPMS-Workspace/docs/CPMS-Sistema-Gestion-Proyectos-Claude.md`
+- **Para cargar proyectos CPMS**: "Carga proyecto [nombre] desde CPMS-Workspace/projects"
+
 ## 🌐 Idioma de Trabajo / Working Language
 
 **IMPORTANTE**: Este proyecto se desarrolla principalmente en **ESPAÑOL**. Claude Code debe:
@@ -62,6 +73,12 @@ LaMaquinaDeNoticias/
 ├── .env.example                          # Global environment variables template
 ├── docker-compose.yml                    # Docker orchestration
 ├── requirements.txt                      # Consolidated Python dependencies
+│
+├── CPMS-Workspace/                       # Sistema de gestión de proyectos
+│   ├── CLAUDE.md                         # Instrucciones globales
+│   ├── docs/                             # Documentación CPMS
+│   ├── templates/                        # Plantillas para proyectos
+│   └── projects/                         # Proyectos CPMS gestionados
 │
 ├── src/                                  # Source code for all modules
 │   ├── module_scraper/                   # Web scraping module
@@ -342,6 +359,7 @@ python scripts/test_connections.py
 - **Migration Guide**: `BaseDeDatos_SUPABASE/migrations/MIGRATION_GUIDE.md`
 - **API Documentation**: Access `/docs` endpoint on running services
 - **Scraping System Renovation**: `Investigación/Conclusiones` folder contains all key decisions
+- **CPMS Documentation**: `CPMS-Workspace/docs/CPMS-Sistema-Gestion-Proyectos-Claude.md`
 
 ## 🔐 Security Notes
 

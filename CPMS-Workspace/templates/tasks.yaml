@@ -1,0 +1,7 @@
+tasks:
+  - id: "TASK-001"
+    title: "Setup inicial del proyecto"
+    status: "pending"  # pending, active, done
+    priority: 1
+    dependencies: []
+    notes: ""
