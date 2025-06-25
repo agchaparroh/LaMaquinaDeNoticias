@@ -1,0 +1,564 @@
+"""
+Spider generado automáticamente por Spider Factory 2.0
+Estrategia: Playwright (JavaScript rendering)
+Sitio: {{ site_name }}
+Fecha: {{ generation_date }}
+"""
+import scrapy
+from scrapy import signals
+from scrapy_playwright.page import PageMethod
+from datetime import datetime
+import asyncio
+import logging
+from typing import Dict, Any, Optional, List
+import json
+import re
+
+
+class {{ spider_class_name }}(scrapy.Spider):
+    """
+    Spider para {{ site_name }}
+    
+    Utiliza Playwright para renderizar JavaScript y extraer contenido dinámico.
+    {% if metadata.description %}
+    {{ metadata.description }}
+    {% endif %}
+    """
+    name = "{{ spider_name }}"
+    allowed_domains = ["{{ domain }}"]
+    start_urls = ["{{ base_url }}"]
+    
+    # Configuración
+    custom_settings = {
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'ROBOTSTXT_OBEY': True,
+        'CONCURRENT_REQUESTS': 1,  # Playwright es más pesado, reducir concurrencia
+        'DOWNLOAD_DELAY': 2,
+        'COOKIES_ENABLED': True,
+        
+        # Configuración de Playwright
+        'DOWNLOAD_HANDLERS': {
+            "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+            "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+        },
+        'TWISTED_REACTOR': "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
+        'PLAYWRIGHT_BROWSER_TYPE': 'chromium',
+        'PLAYWRIGHT_LAUNCH_OPTIONS': {
+            'headless': True,
+            'args': ['--no-sandbox', '--disable-dev-shm-usage']
+        },
+        
+        # Output
+        'FEEDS': {
+            f'output/{{ spider_name }}_%(time)s.json': {
+                'format': 'json',
+                'encoding': 'utf8',
+                'indent': 2
+            }
+        }
+    }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.articles_scraped = 0
+        self.max_articles = int(kwargs.get('max_articles', 50))  # Menos artículos por defecto
+        self.wait_time = int(kwargs.get('wait_time', 3000))  # ms para esperar carga
+        {% if metadata %}
+        # Metadata adicional
+        {% for key, value in metadata.items() %}
+        self.{{ key }} = "{{ value }}"
+        {% endfor %}
+        {% endif %}
+    
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super().from_crawler(crawler, *args, **kwargs)
+        crawler.signals.connect(spider.spider_closed, signal=signals.spider_closed)
+        return spider
+    
+    def start_requests(self):
+        """Genera requests iniciales con Playwright"""
+        for url in self.start_urls:
+            yield scrapy.Request(
+                url,
+                meta={
+                    'playwright': True,
+                    'playwright_include_page': True,
+                    'playwright_page_methods': [
+                        # Esperar a que la página cargue completamente
+                        PageMethod('wait_for_load_state', 'networkidle'),
+                        PageMethod('wait_for_timeout', self.wait_time),
+                        {% if wait_selectors %}
+                        # Esperar selectores específicos
+                        {% for selector in wait_selectors %}
+                        PageMethod('wait_for_selector', '{{ selector }}', timeout=10000),
+                        {% endfor %}
+                        {% endif %}
+                    ],
+                },
+                callback=self.parse,
+                errback=self.handle_error
+            )
+    
+    async def parse(self, response):
+        """Parsea la página principal cargada con JavaScript"""
+        page = response.meta.get('playwright_page')
+        
+        if not page:
+            self.logger.error("No se pudo obtener la página de Playwright")
+            return
+        
+        try:
+            self.logger.info(f"Parseando página principal: {response.url}")
+            
+            # Extraer enlaces a artículos
+            article_links = await self.extract_article_links_js(page)
+            
+            self.logger.info(f"Encontrados {len(article_links)} enlaces a artículos")
+            
+            # Cerrar la página para liberar recursos
+            await page.close()
+            
+            # Generar requests para cada artículo
+            for link in article_links[:self.max_articles]:
+                yield scrapy.Request(
+                    response.urljoin(link),
+                    meta={
+                        'playwright': True,
+                        'playwright_include_page': True,
+                        'playwright_page_methods': [
+                            PageMethod('wait_for_load_state', 'networkidle'),
+                            PageMethod('wait_for_timeout', 2000),
+                        ],
+                    },
+                    callback=self.parse_article,
+                    errback=self.handle_error
+                )
+            
+            # Buscar paginación
+            {% if pagination_enabled %}
+            yield from self.follow_pagination(response)
+            {% endif %}
+            
+        except Exception as e:
+            self.logger.error(f"Error en parse: {e}")
+            if page:
+                await page.close()
+    
+    async def extract_article_links_js(self, page) -> List[str]:
+        """Extrae enlaces usando JavaScript en el navegador"""
+        # Ejecutar JavaScript para encontrar enlaces
+        links = await page.evaluate('''() => {
+            const links = [];
+            
+            // Selectores comunes para artículos
+            const selectors = [
+                'article a',
+                '.article-link',
+                '.post-title a',
+                '.headline a',
+                'h2 a',
+                'h3 a',
+                '[data-testid="article-link"]'
+            ];
+            
+            // Buscar enlaces con cada selector
+            for (const selector of selectors) {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    if (el.href && !links.includes(el.href)) {
+                        links.push(el.href);
+                    }
+                });
+            }
+            
+            // Filtrar enlaces que parecen ser artículos
+            return links.filter(link => {
+                // Patrones que indican artículos
+                const articlePatterns = [
+                    /\/\d{4}\/\d{2}\/\d{2}\//,
+                    /\/article\//,
+                    /\/news\//,
+                    /\/story\//,
+                    /-\d{5,}/
+                ];
+                
+                // Patrones que NO son artículos
+                const nonArticlePatterns = [
+                    /\/tag\//,
+                    /\/category\//,
+                    /\/author\//,
+                    /\/search/,
+                    /\/login/,
+                    /\/register/
+                ];
+                
+                // Verificar patrones
+                const isArticle = articlePatterns.some(pattern => pattern.test(link));
+                const isNotArticle = nonArticlePatterns.some(pattern => pattern.test(link));
+                
+                return isArticle && !isNotArticle;
+            });
+        }''')
+        
+        return links
+    
+    async def parse_article(self, response):
+        """Parsea un artículo individual"""
+        page = response.meta.get('playwright_page')
+        
+        if not page:
+            self.logger.error(f"No se pudo obtener la página para: {response.url}")
+            return
+        
+        try:
+            article_data = {
+                'source': '{{ site_name }}',
+                'source_url': '{{ base_url }}',
+                'article_url': response.url,
+                'scraped_at': datetime.now().isoformat(),
+                'rendered_with': 'playwright'
+            }
+            
+            # Verificar si es realmente un artículo
+            is_article = await page.evaluate('''() => {
+                // Verificar schema.org
+                const jsonLd = document.querySelector('script[type="application/ld+json"]');
+                if (jsonLd && jsonLd.textContent.includes('"NewsArticle"')) return true;
+                
+                // Verificar meta tags
+                const ogType = document.querySelector('meta[property="og:type"]');
+                if (ogType && ogType.content === 'article') return true;
+                
+                // Verificar estructura
+                return !!(document.querySelector('article') || 
+                         document.querySelector('[itemtype*="Article"]'));
+            }''')
+            
+            if not is_article:
+                self.logger.debug(f"No es un artículo: {response.url}")
+                await page.close()
+                return
+            
+            # Extraer datos usando JavaScript
+            {% if selectors %}
+            # Usar selectores específicos
+            extracted_data = await page.evaluate('''() => {
+                const data = {};
+                
+                {% if selectors.title %}
+                // Título
+                const titleEl = document.querySelector('{{ selectors.title }}');
+                if (titleEl) data.title = titleEl.textContent.trim();
+                {% endif %}
+                
+                {% if selectors.content %}
+                // Contenido
+                const contentEls = document.querySelectorAll('{{ selectors.content }}');
+                if (contentEls.length > 0) {
+                    data.content = Array.from(contentEls)
+                        .map(el => el.textContent.trim())
+                        .filter(text => text.length > 0)
+                        .join('\\n\\n');
+                }
+                {% endif %}
+                
+                {% if selectors.author %}
+                // Autor
+                const authorEl = document.querySelector('{{ selectors.author }}');
+                if (authorEl) data.author = authorEl.textContent.trim();
+                {% endif %}
+                
+                {% if selectors.date %}
+                // Fecha
+                const dateEl = document.querySelector('{{ selectors.date }}');
+                if (dateEl) {
+                    data.published_date = dateEl.getAttribute('datetime') || 
+                                         dateEl.textContent.trim();
+                }
+                {% endif %}
+                
+                {% if selectors.image %}
+                // Imagen principal
+                const imageEl = document.querySelector('{{ selectors.image }}');
+                if (imageEl) data.main_image = imageEl.src || imageEl.getAttribute('data-src');
+                {% endif %}
+                
+                return data;
+            }''')
+            {% else %}
+            # Extracción genérica
+            extracted_data = await self.extract_article_generic_js(page)
+            {% endif %}
+            
+            article_data.update(extracted_data)
+            
+            # Extraer metadata adicional
+            metadata = await self.extract_metadata_js(page)
+            article_data.update(metadata)
+            
+            # Tomar screenshot si está habilitado
+            {% if capture_screenshot %}
+            screenshot = await page.screenshot(full_page=False)
+            article_data['screenshot_base64'] = screenshot.hex()
+            {% endif %}
+            
+            # Cerrar página para liberar recursos
+            await page.close()
+            
+            # Validar datos mínimos
+            if not article_data.get('title') or not article_data.get('content'):
+                self.logger.warning(f"Artículo sin título o contenido: {response.url}")
+                return
+            
+            # Limpiar datos
+            article_data = self.clean_article_data(article_data)
+            
+            self.articles_scraped += 1
+            self.logger.info(f"Artículo {self.articles_scraped} extraído: {article_data.get('title', 'Sin título')}")
+            
+            yield article_data
+            
+            # Verificar límite
+            if self.articles_scraped >= self.max_articles:
+                self.logger.info(f"Alcanzado límite de {self.max_articles} artículos")
+                self.crawler.engine.close_spider(self, 'max_articles_reached')
+            
+        except Exception as e:
+            self.logger.error(f"Error parseando artículo {response.url}: {e}")
+            if page:
+                await page.close()
+    
+    async def extract_article_generic_js(self, page) -> Dict[str, Any]:
+        """Extracción genérica usando JavaScript"""
+        return await page.evaluate('''() => {
+            const data = {};
+            
+            // Título - buscar en orden de preferencia
+            const titleSelectors = [
+                'h1',
+                '[itemprop="headline"]',
+                'meta[property="og:title"]',
+                '.article-title',
+                '.post-title',
+                'title'
+            ];
+            
+            for (const selector of titleSelectors) {
+                const el = document.querySelector(selector);
+                if (el) {
+                    data.title = el.content || el.textContent.trim();
+                    break;
+                }
+            }
+            
+            // Contenido - buscar y combinar párrafos
+            const contentSelectors = [
+                'article p',
+                '[itemprop="articleBody"] p',
+                '.article-content p',
+                '.post-content p',
+                '.entry-content p',
+                'main p'
+            ];
+            
+            for (const selector of contentSelectors) {
+                const paragraphs = document.querySelectorAll(selector);
+                if (paragraphs.length > 0) {
+                    data.content = Array.from(paragraphs)
+                        .map(p => p.textContent.trim())
+                        .filter(text => text.length > 20)  // Filtrar párrafos muy cortos
+                        .join('\\n\\n');
+                    break;
+                }
+            }
+            
+            // Autor
+            const authorSelectors = [
+                '[rel="author"]',
+                '[itemprop="author"]',
+                '.author-name',
+                '.by-author',
+                'meta[name="author"]'
+            ];
+            
+            for (const selector of authorSelectors) {
+                const el = document.querySelector(selector);
+                if (el) {
+                    data.author = el.content || el.textContent.trim();
+                    break;
+                }
+            }
+            
+            // Fecha
+            const dateSelectors = [
+                'time[datetime]',
+                '[itemprop="datePublished"]',
+                'meta[property="article:published_time"]',
+                '.publish-date',
+                '.article-date'
+            ];
+            
+            for (const selector of dateSelectors) {
+                const el = document.querySelector(selector);
+                if (el) {
+                    data.published_date = el.getAttribute('datetime') || 
+                                         el.content || 
+                                         el.textContent.trim();
+                    break;
+                }
+            }
+            
+            // Imagen principal
+            const imageSelectors = [
+                'meta[property="og:image"]',
+                '[itemprop="image"]',
+                'article img',
+                '.featured-image img',
+                '.article-image img'
+            ];
+            
+            for (const selector of imageSelectors) {
+                const el = document.querySelector(selector);
+                if (el) {
+                    data.main_image = el.content || el.src || el.getAttribute('data-src');
+                    break;
+                }
+            }
+            
+            // Categorías y tags
+            const categoryEls = document.querySelectorAll('[rel="category tag"], .category, .tag');
+            if (categoryEls.length > 0) {
+                data.categories = Array.from(categoryEls)
+                    .map(el => el.textContent.trim())
+                    .filter(text => text.length > 0);
+            }
+            
+            return data;
+        }''')
+    
+    async def extract_metadata_js(self, page) -> Dict[str, Any]:
+        """Extrae metadata usando JavaScript"""
+        return await page.evaluate('''() => {
+            const metadata = {};
+            
+            // Open Graph
+            const ogTags = document.querySelectorAll('meta[property^="og:"]');
+            ogTags.forEach(tag => {
+                const property = tag.getAttribute('property').replace('og:', 'og_');
+                metadata[property] = tag.content;
+            });
+            
+            // Twitter Card
+            const twitterTags = document.querySelectorAll('meta[name^="twitter:"]');
+            twitterTags.forEach(tag => {
+                const name = tag.getAttribute('name').replace('twitter:', 'twitter_');
+                metadata[name] = tag.content;
+            });
+            
+            // Meta description y keywords
+            const description = document.querySelector('meta[name="description"]');
+            if (description) metadata.meta_description = description.content;
+            
+            const keywords = document.querySelector('meta[name="keywords"]');
+            if (keywords) metadata.meta_keywords = keywords.content;
+            
+            // JSON-LD
+            const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+            if (jsonLdScripts.length > 0) {
+                metadata.structured_data = Array.from(jsonLdScripts)
+                    .map(script => script.textContent);
+            }
+            
+            // Información adicional del DOM
+            metadata.page_title = document.title;
+            metadata.canonical_url = document.querySelector('link[rel="canonical"]')?.href;
+            metadata.lang = document.documentElement.lang;
+            
+            return metadata;
+        }''')
+    
+    {% if pagination_enabled %}
+    def follow_pagination(self, response):
+        """Sigue enlaces de paginación"""
+        # Selectores comunes de paginación
+        pagination_selectors = [
+            '.pagination a.next::attr(href)',
+            '.pager .next a::attr(href)',
+            'a[rel="next"]::attr(href)',
+            '.load-more::attr(data-url)'
+        ]
+        
+        for selector in pagination_selectors:
+            next_page = response.css(selector).get()
+            if next_page:
+                yield scrapy.Request(
+                    response.urljoin(next_page),
+                    meta={
+                        'playwright': True,
+                        'playwright_include_page': True,
+                        'playwright_page_methods': [
+                            PageMethod('wait_for_load_state', 'networkidle'),
+                            PageMethod('wait_for_timeout', self.wait_time),
+                        ],
+                    },
+                    callback=self.parse
+                )
+                break
+    {% endif %}
+    
+    def clean_article_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Limpia y normaliza los datos del artículo"""
+        # Limpiar espacios en blanco
+        for key in ['title', 'content', 'author']:
+            if key in data and data[key]:
+                data[key] = re.sub(r'\s+', ' ', str(data[key])).strip()
+        
+        # Validar longitud de contenido
+        if 'content' in data and len(data['content']) < 100:
+            self.logger.warning(f"Contenido muy corto: {len(data['content'])} caracteres")
+        
+        # Normalizar fecha si es posible
+        if 'published_date' in data:
+            data['published_date'] = self.parse_date(data['published_date'])
+        
+        # Eliminar campos vacíos o None
+        return {k: v for k, v in data.items() if v}
+    
+    def parse_date(self, date_string: str) -> str:
+        """Intenta normalizar la fecha"""
+        if not date_string:
+            return date_string
+        
+        # Si ya es ISO, devolverla
+        if re.match(r'\d{4}-\d{2}-\d{2}', date_string):
+            return date_string
+        
+        try:
+            from dateutil import parser
+            return parser.parse(date_string).isoformat()
+        except:
+            return date_string
+    
+    def handle_error(self, failure):
+        """Maneja errores de Playwright"""
+        self.logger.error(f"Error en Playwright: {failure}")
+        
+        # Intentar cerrar la página si existe
+        page = failure.request.meta.get('playwright_page')
+        if page:
+            asyncio.create_task(page.close())
+    
+    def spider_closed(self, spider):
+        """Resumen al cerrar el spider"""
+        stats = spider.crawler.stats.get_stats()
+        
+        self.logger.info(f"""
+        ========== RESUMEN DE SCRAPING (PLAYWRIGHT) ==========
+        Spider: {spider.name}
+        Artículos extraídos: {self.articles_scraped}
+        Páginas renderizadas: {stats.get('playwright/page_count', 0)}
+        Duración: {stats.get('elapsed_time_seconds', 0):.2f} segundos
+        Errores: {stats.get('spider_exceptions/Exception', 0)}
+        ====================================================
+        """)

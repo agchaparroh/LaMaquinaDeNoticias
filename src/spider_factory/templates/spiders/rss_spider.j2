@@ -1,0 +1,304 @@
+"""
+Spider generado automáticamente por Spider Factory 2.0
+Estrategia: RSS
+Sitio: {{ site_name }}
+Fecha: {{ generation_date }}
+"""
+import scrapy
+from scrapy import signals
+from scrapy.exceptions import CloseSpider
+import feedparser
+from datetime import datetime
+import logging
+from typing import Dict, Any, Optional, Iterator
+
+
+class {{ spider_class_name }}(scrapy.Spider):
+    """
+    Spider para {{ site_name }}
+    
+    Utiliza feeds RSS para obtener artículos de noticias.
+    {% if metadata.description %}
+    {{ metadata.description }}
+    {% endif %}
+    """
+    name = "{{ spider_name }}"
+    allowed_domains = ["{{ domain }}"]
+    
+    # Configuración
+    custom_settings = {
+        'USER_AGENT': 'Mozilla/5.0 (compatible; NewsBot/1.0; +http://example.com/bot)',
+        'ROBOTSTXT_OBEY': True,
+        'CONCURRENT_REQUESTS': 2,
+        'DOWNLOAD_DELAY': 1,
+        'COOKIES_ENABLED': False,
+        'FEEDS': {
+            f'output/{{ spider_name }}_%(time)s.json': {
+                'format': 'json',
+                'encoding': 'utf8',
+                'indent': 2
+            }
+        }
+    }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rss_url = "{{ rss_url }}"
+        self.articles_scraped = 0
+        self.max_articles = int(kwargs.get('max_articles', 100))
+        {% if metadata %}
+        # Metadata adicional
+        {% for key, value in metadata.items() %}
+        self.{{ key }} = "{{ value }}"
+        {% endfor %}
+        {% endif %}
+    
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super().from_crawler(crawler, *args, **kwargs)
+        crawler.signals.connect(spider.spider_closed, signal=signals.spider_closed)
+        return spider
+    
+    def start_requests(self):
+        """Inicia el scraping desde el feed RSS"""
+        self.logger.info(f"Iniciando scraping de RSS: {self.rss_url}")
+        
+        # Usar scrapy para descargar el RSS (respeta robots.txt y delays)
+        yield scrapy.Request(
+            url=self.rss_url,
+            callback=self.parse_rss,
+            errback=self.handle_error,
+            meta={'handle_httpstatus_all': True}
+        )
+    
+    def parse_rss(self, response):
+        """Parsea el feed RSS y genera requests para cada artículo"""
+        if response.status != 200:
+            self.logger.error(f"Error descargando RSS: {response.status}")
+            return
+        
+        try:
+            # Parsear RSS con feedparser
+            feed = feedparser.parse(response.text)
+            
+            if feed.bozo:
+                self.logger.warning(f"RSS mal formado: {feed.bozo_exception}")
+            
+            self.logger.info(f"Encontrados {len(feed.entries)} artículos en RSS")
+            
+            # Procesar cada entrada del feed
+            for entry in feed.entries[:self.max_articles]:
+                article_data = self.extract_rss_data(entry)
+                
+                if article_data.get('link'):
+                    yield scrapy.Request(
+                        url=article_data['link'],
+                        callback=self.parse_article,
+                        errback=self.handle_error,
+                        meta={'article_data': article_data}
+                    )
+                else:
+                    # Si no hay link, yield directo los datos del RSS
+                    yield article_data
+                
+        except Exception as e:
+            self.logger.error(f"Error parseando RSS: {e}")
+    
+    def extract_rss_data(self, entry) -> Dict[str, Any]:
+        """Extrae datos estructurados de una entrada RSS"""
+        article_data = {
+            'source': '{{ site_name }}',
+            'source_url': '{{ base_url }}',
+            'scraped_at': datetime.now().isoformat(),
+            'from_rss': True
+        }
+        
+        # Campos estándar RSS
+        fields_mapping = {
+            'title': 'title',
+            'link': 'link',
+            'description': 'summary',
+            'author': 'author',
+            'guid': 'id'
+        }
+        
+        for our_field, rss_field in fields_mapping.items():
+            if hasattr(entry, rss_field):
+                article_data[our_field] = getattr(entry, rss_field)
+        
+        # Fecha de publicación
+        if hasattr(entry, 'published_parsed'):
+            article_data['published_date'] = datetime(*entry.published_parsed[:6]).isoformat()
+        elif hasattr(entry, 'updated_parsed'):
+            article_data['published_date'] = datetime(*entry.updated_parsed[:6]).isoformat()
+        
+        # Categorías/Tags
+        if hasattr(entry, 'tags'):
+            article_data['categories'] = [tag.term for tag in entry.tags]
+        
+        # Media/Imágenes
+        if hasattr(entry, 'media_content'):
+            article_data['media'] = [
+                {'url': media.get('url'), 'type': media.get('type')}
+                for media in entry.media_content
+            ]
+        
+        return article_data
+    
+    def parse_article(self, response):
+        """Parsea la página del artículo para extraer contenido completo"""
+        if response.status != 200:
+            self.logger.warning(f"Error accediendo artículo: {response.status} - {response.url}")
+            # Devolver solo datos del RSS
+            yield response.meta['article_data']
+            return
+        
+        article_data = response.meta['article_data']
+        article_data['article_url'] = response.url
+        article_data['http_status'] = response.status
+        
+        try:
+            # Extraer contenido usando selectores
+            {% if selectors %}
+            # Selectores específicos del sitio
+            {% if selectors.title %}
+            title = response.css('{{ selectors.title }}::text').get()
+            if title:
+                article_data['title'] = title.strip()
+            {% endif %}
+            
+            {% if selectors.content %}
+            content_elements = response.css('{{ selectors.content }}')
+            if content_elements:
+                article_data['content'] = '\n'.join([
+                    elem.css('::text').getall() 
+                    for elem in content_elements
+                ]).strip()
+            {% endif %}
+            
+            {% if selectors.author %}
+            author = response.css('{{ selectors.author }}::text').get()
+            if author:
+                article_data['author'] = author.strip()
+            {% endif %}
+            
+            {% if selectors.date %}
+            date = response.css('{{ selectors.date }}::text').get()
+            if date:
+                article_data['published_date_from_article'] = date.strip()
+            {% endif %}
+            
+            {% if selectors.image %}
+            image = response.css('{{ selectors.image }}::attr(src)').get()
+            if image:
+                article_data['main_image'] = response.urljoin(image)
+            {% endif %}
+            {% else %}
+            # Selectores genéricos si no hay específicos
+            article_data['content'] = self.extract_generic_content(response)
+            {% endif %}
+            
+            # Extraer metadata adicional
+            article_data.update(self.extract_metadata(response))
+            
+        except Exception as e:
+            self.logger.error(f"Error extrayendo contenido de {response.url}: {e}")
+        
+        self.articles_scraped += 1
+        self.logger.info(f"Artículo {self.articles_scraped} extraído: {article_data.get('title', 'Sin título')}")
+        
+        yield article_data
+    
+    def extract_generic_content(self, response) -> str:
+        """Extracción genérica de contenido cuando no hay selectores específicos"""
+        # Intentar encontrar el contenido principal
+        content_selectors = [
+            'article::text',
+            'main::text',
+            '[role="main"]::text',
+            '.post-content::text',
+            '.entry-content::text',
+            '.article-body::text',
+            '.story-body::text',
+            '#content::text'
+        ]
+        
+        for selector in content_selectors:
+            content = response.css(selector).getall()
+            if content:
+                return ' '.join(content).strip()
+        
+        # Fallback: extraer todos los párrafos
+        paragraphs = response.css('p::text').getall()
+        return ' '.join(paragraphs).strip()
+    
+    def extract_metadata(self, response) -> Dict[str, Any]:
+        """Extrae metadata adicional de la página"""
+        metadata = {}
+        
+        # Open Graph
+        og_mappings = {
+            'og_title': 'meta[property="og:title"]::attr(content)',
+            'og_description': 'meta[property="og:description"]::attr(content)',
+            'og_image': 'meta[property="og:image"]::attr(content)',
+            'og_type': 'meta[property="og:type"]::attr(content)',
+        }
+        
+        for key, selector in og_mappings.items():
+            value = response.css(selector).get()
+            if value:
+                metadata[key] = value
+        
+        # Twitter Card
+        twitter_mappings = {
+            'twitter_title': 'meta[name="twitter:title"]::attr(content)',
+            'twitter_description': 'meta[name="twitter:description"]::attr(content)',
+            'twitter_image': 'meta[name="twitter:image"]::attr(content)',
+        }
+        
+        for key, selector in twitter_mappings.items():
+            value = response.css(selector).get()
+            if value:
+                metadata[key] = value
+        
+        # Schema.org/JSON-LD
+        json_ld = response.css('script[type="application/ld+json"]::text').getall()
+        if json_ld:
+            metadata['structured_data'] = json_ld
+        
+        return metadata
+    
+    def handle_error(self, failure):
+        """Maneja errores durante el scraping"""
+        self.logger.error(f"Error en request: {failure.value}")
+        
+        # Log del tipo de error
+        if failure.check(HttpError):
+            response = failure.value.response
+            self.logger.error(f"HTTP Error {response.status} en {response.url}")
+        elif failure.check(DNSLookupError):
+            self.logger.error(f"DNS Error: {failure.request.url}")
+        elif failure.check(TimeoutError):
+            self.logger.error(f"Timeout: {failure.request.url}")
+    
+    def spider_closed(self, spider):
+        """Llamado cuando el spider termina"""
+        stats = spider.crawler.stats.get_stats()
+        
+        self.logger.info(f"""
+        ========== RESUMEN DE SCRAPING ==========
+        Spider: {spider.name}
+        Artículos extraídos: {self.articles_scraped}
+        Duración: {stats.get('elapsed_time_seconds', 0):.2f} segundos
+        Requests exitosos: {stats.get('downloader/response_status_count/200', 0)}
+        Errores: {stats.get('downloader/exception_count', 0)}
+        ========================================
+        """)
+    
+    {% if metadata.area_geografica %}
+    def should_follow_link(self, url: str) -> bool:
+        """Determina si se debe seguir un enlace basado en filtros"""
+        # Filtros específicos para {{ metadata.area_geografica }}
+        # Personalizar según necesidad
+        return True
+    {% endif %}

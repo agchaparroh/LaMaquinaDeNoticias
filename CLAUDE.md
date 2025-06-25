@@ -56,6 +56,8 @@ The project follows a **microservices architecture** with Docker containers comm
 | **module_dashboard_review_backend** | Python 3.9 + FastAPI | 8004 | Backend API for editorial dashboard |
 | **module_dashboard_review_frontend** | React 18 + TypeScript + Vite | 3001→80 | Frontend UI for journalists |
 | **nginx_reverse_proxy** | Nginx 1.25 Alpine | 80, 443 | Reverse proxy and load balancer |
+| **spider_factory** | Python 3.9 + FastAPI + Redis | 8005 | Intelligent spider generation |
+| **module_spider_factory_frontend** | React 18 + TypeScript + Vite | 3002→80 | UI for spider generation |
 
 ### Upcoming Services (Sistema Renovado de Scraping)
 
@@ -63,7 +65,6 @@ The project follows a **microservices architecture** with Docker containers comm
 |---------|------------|------|---------|--------|
 | **Scrapyd** | Python + Twisted | 6800 | Spider deployment server | 📅 Planned |
 | **ScrapydWeb** | Python + Flask | 5000 | Management dashboard | 📅 Planned |
-| **Spider Factory** | Python + FastAPI | 8005 | Intelligent spider generation | 📅 Planned |
 | **Redis** | Redis 7 Alpine | 6379 | Multi-level cache system | 📅 Planned |
 
 ## 📁 Project Structure
@@ -86,7 +87,9 @@ LaMaquinaDeNoticias/
 │   ├── module_pipeline/                  # AI/ML processing
 │   ├── module_dashboard_review_backend/  # Dashboard API
 │   ├── module_dashboard_review_frontend/ # Dashboard UI
-│   └── nginx_reverse_proxy/              # Reverse proxy
+│   ├── nginx_reverse_proxy/              # Reverse proxy
+│   ├── spider_factory/                   # Intelligent spider generation
+│   └── module_spider_factory_frontend/   # Spider Factory UI
 │
 ├── BaseDeDatos_SUPABASE/                 # Database configuration
 │   ├── migrations/                       # SQL migration system
@@ -154,6 +157,10 @@ GROQ_API_KEY="gsk_your-api-key"
 SCRAPER_TARGET_URLS="url1,url2,url3"  # Target URLs for scraping
 LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR
 ENVIRONMENT="development"  # development, staging, production
+
+# Spider Factory (required for spider generation)
+FIRECRAWL_API_KEY="fc_your-api-key"  # For web analysis
+SPIDER_FACTORY_REDIS_HOST="redis"  # Shared Redis instance
 ```
 
 ### Optional Variables
@@ -164,9 +171,8 @@ ANTHROPIC_API_KEY=""     # For advanced features
 OPENAI_API_KEY=""        # OpenAI models
 PERPLEXITY_API_KEY=""    # Research capabilities
 
-# Spider Factory & Scraping
-FIRECRAWL_API_KEY=""     # Required for Spider Factory web analysis
-REDIS_URL="redis://redis:6379"  # Cache for Spider Factory
+# Scraping System
+REDIS_URL="redis://redis:6379"  # Shared cache system
 
 # Monitoring
 SENTRY_DSN=""            # Error tracking
@@ -270,6 +276,8 @@ python run_e2e_tests.py
 | Pipeline API | module_pipeline:8003 | http://localhost:8003 | /docs |
 | Dashboard API | module_dashboard_review_backend:8004 | http://localhost:8004 | /docs |
 | Frontend UI | module_dashboard_review_frontend:80 | http://localhost:3001 | N/A |
+| Spider Factory API | spider_factory:8000 | http://localhost:8005 | /docs |
+| Spider Factory UI | module_spider_factory_frontend:80 | http://localhost:3002 | N/A |
 
 ### Health Checks
 

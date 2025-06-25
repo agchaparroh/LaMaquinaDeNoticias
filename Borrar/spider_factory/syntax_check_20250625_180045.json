@@ -1,0 +1,176 @@
+{
+  "timestamp": "2025-06-25T18:00:45.485017",
+  "files": {
+    "config.py": {
+      "valid": true,
+      "lines": 248,
+      "classes": 4,
+      "functions": 8,
+      "imports": 6,
+      "class_names": [
+        "RedisConfig",
+        "SpiderFactoryConfig",
+        "RedisManager",
+        "RedisKeys"
+      ],
+      "function_names": [
+        "get_redis_client",
+        "check_system_health",
+        "__new__",
+        "__init__",
+        "get_client",
+        "health_check",
+        "get_info",
+        "format_key"
+      ]
+    },
+    "analyzer.py": {
+      "valid": true,
+      "lines": 627,
+      "classes": 7,
+      "functions": 6,
+      "imports": 14,
+      "class_names": [
+        "AnalysisStrategy",
+        "AnalysisConfidence",
+        "SiteSelectors",
+        "AnalysisResult",
+        "SiteAnalysisRequest",
+        "SmartAnalyzer",
+        "Config"
+      ],
+      "function_names": [
+        "validate_confidence",
+        "__init__",
+        "http_client",
+        "_detect_javascript_requirement",
+        "_extract_selectors_from_content",
+        "_calculate_confidence"
+      ]
+    },
+    "patterns.py": {
+      "valid": true,
+      "lines": 544,
+      "classes": 4,
+      "functions": 18,
+      "imports": 10,
+      "class_names": [
+        "PatternStatus",
+        "PatternMetadata",
+        "Pattern",
+        "PatternStorage"
+      ],
+      "function_names": [
+        "test_pattern_storage",
+        "calculate_success_rate",
+        "validate_confidence",
+        "to_redis_hash",
+        "from_redis_hash",
+        "__init__",
+        "save_pattern",
+        "get_pattern",
+        "get_patterns_by_domain",
+        "search_patterns",
+        "update_pattern_stats",
+        "deprecate_pattern",
+        "get_top_patterns",
+        "get_pattern_history",
+        "cleanup_failed_patterns",
+        "export_patterns",
+        "import_patterns",
+        "_update_indices"
+      ]
+    },
+    "generator.py": {
+      "valid": true,
+      "lines": 419,
+      "classes": 1,
+      "functions": 14,
+      "imports": 12,
+      "class_names": [
+        "SpiderGenerator"
+      ],
+      "function_names": [
+        "test_generator",
+        "__init__",
+        "generate_spider",
+        "save_spider",
+        "generate_from_pattern",
+        "_get_template_name",
+        "_build_template_context",
+        "_get_item_fields",
+        "_to_snake_case",
+        "_to_camel_case",
+        "_escape_quotes",
+        "validate_spider",
+        "get_available_templates",
+        "preview_spider"
+      ]
+    },
+    "api.py": {
+      "valid": true,
+      "lines": 769,
+      "classes": 0,
+      "functions": 0,
+      "imports": 21,
+      "class_names": [],
+      "function_names": []
+    },
+    "websocket_manager.py": {
+      "valid": true,
+      "lines": 230,
+      "classes": 1,
+      "functions": 2,
+      "imports": 6,
+      "class_names": [
+        "ConnectionManager"
+      ],
+      "function_names": [
+        "__init__",
+        "disconnect"
+      ]
+    },
+    "batch_processor.py": {
+      "valid": true,
+      "lines": 374,
+      "classes": 5,
+      "functions": 3,
+      "imports": 13,
+      "class_names": [
+        "BatchSite",
+        "BatchRequest",
+        "BatchResponse",
+        "BatchStatus",
+        "BatchProcessor"
+      ],
+      "function_names": [
+        "__init__",
+        "get_batch_status",
+        "export_results"
+      ]
+    },
+    "test_real_sites.py": {
+      "valid": true,
+      "lines": 299,
+      "classes": 1,
+      "functions": 3,
+      "imports": 9,
+      "class_names": [
+        "RealSitesTester"
+      ],
+      "function_names": [
+        "__init__",
+        "_generate_summary",
+        "_save_results"
+      ]
+    }
+  },
+  "summary": {
+    "total_files": 8,
+    "valid_files": 8,
+    "invalid_files": 0,
+    "total_lines": 3510,
+    "total_classes": 23,
+    "total_functions": 54
+  }
+}

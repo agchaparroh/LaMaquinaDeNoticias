@@ -1,0 +1,121 @@
+# -*- coding: utf-8 -*-
+"""
+Spider: {{ spider_class }}
+Medio: {{ media_name }}
+Dominio: {{ domain }}
+Estrategia: {{ strategy }}
+Generado: {{ generated_at }}
+Confianza: {{ confidence }}
+"""
+import scrapy
+from scrapy import signals
+from scrapy.exceptions import CloseSpider
+from datetime import datetime
+import logging
+{%- if needs_javascript %}
+from scrapy_playwright.page import PageMethod
+{%- endif %}
+{%- if strategy == "rss" %}
+import feedparser
+from urllib.parse import urljoin
+{%- endif %}
+
+from news_scraper.items import NewsItem
+
+
+class {{ spider_class }}(scrapy.Spider):
+    """
+    Spider para {{ media_name }}
+    {% if from_pattern %}Generado desde patrón existente{% else %}Generado desde análisis nuevo{% endif %}
+    """
+    name = '{{ spider_name }}'
+    allowed_domains = ['{{ domain }}']
+    start_urls = ['{{ start_url }}']
+    
+    # Configuración personalizada
+    custom_settings = {
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'ROBOTSTXT_OBEY': True,
+        'CONCURRENT_REQUESTS': 16,
+        'DOWNLOAD_DELAY': 0.5,
+        'COOKIES_ENABLED': False,
+        
+        # Cache para evitar duplicados
+        'DUPEFILTER_CLASS': 'scrapy_crawl_once.CrawlOnceDupeFilter',
+        'SPIDER_MIDDLEWARES': {
+            'scrapy_crawl_once.CrawlOnceMiddleware': 100,
+        },
+        
+        {%- if needs_javascript %}
+        # Configuración para Playwright
+        'DOWNLOAD_HANDLERS': {
+            "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+            "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+        },
+        'PLAYWRIGHT_BROWSER_TYPE': 'chromium',
+        'PLAYWRIGHT_LAUNCH_OPTIONS': {
+            'headless': True,
+            'timeout': 30000,
+        },
+        {%- endif %}
+        
+        {%- for key, value in custom_settings.items() %}
+        '{{ key }}': {{ value }},
+        {%- endfor %}
+    }
+    
+    # URLs a excluir
+    excluded_patterns = [
+        {%- for pattern in excluded_urls %}
+        r'{{ pattern }}',
+        {%- endfor %}
+    ]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.articles_scraped = 0
+        self.max_articles = int(kwargs.get('max_articles', {{ max_pages }}))
+        
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super().from_crawler(crawler, *args, **kwargs)
+        crawler.signals.connect(spider.spider_opened, signal=signals.spider_opened)
+        return spider
+        
+    def spider_opened(self, spider):
+        spider.logger.info(f'Spider abierto: {spider.name} para {self.start_urls[0]}')
+        
+    def should_follow_url(self, url):
+        """Determina si se debe seguir una URL"""
+        # Excluir patrones definidos
+        for pattern in self.excluded_patterns:
+            if scrapy.utils.url.url_is_from_any_domain(url, pattern):
+                return False
+        
+        # Solo seguir URLs del mismo dominio
+        return scrapy.utils.url.url_is_from_any_domain(url, self.allowed_domains)
+    
+    def create_item(self, **kwargs):
+        """Crea un item con campos por defecto"""
+        item = NewsItem()
+        
+        # Campos obligatorios con defaults
+        item['fecha_extraccion'] = datetime.now().isoformat()
+        item['medio_url_principal'] = f"https://{self.allowed_domains[0]}"
+        
+        # Actualizar con kwargs
+        for key, value in kwargs.items():
+            if key in item.fields:
+                item[key] = value
+                
+        return item
+    
+    {% block parse_method %}
+    def parse(self, response):
+        """Método principal de parseo"""
+        raise NotImplementedError("Implementar en template específico")
+    {% endblock %}
+    
+    {% block additional_methods %}
+    # Métodos adicionales específicos del tipo de spider
+    {% endblock %}

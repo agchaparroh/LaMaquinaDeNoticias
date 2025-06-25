@@ -1,0 +1,736 @@
+{% extends "base_spider.j2" %}
+
+{% block parse_method %}
+    def start_requests(self):
+        """
+        Inicializa requests con Playwright
+        """
+        for url in self.start_urls:
+            yield scrapy.Request(
+                url=url,
+                callback=self.parse,
+                meta={
+                    'playwright': True,
+                    'playwright_page_methods': [
+                        # Esperar a que la página cargue completamente
+                        PageMethod('wait_for_load_state', 'networkidle'),
+                        # Esperar elementos dinámicos
+                        {% if selectors and has_selector('content') %}
+                        PageMethod('wait_for_selector', '{{ selectors.content }}', timeout=10000),
+                        {% else %}
+                        PageMethod('wait_for_selector', 'article, main, [class*="content"]', timeout=10000),
+                        {% endif %}
+                        # Scroll para cargar contenido lazy
+                        PageMethod('evaluate', 'window.scrollTo(0, document.body.scrollHeight)'),
+                        PageMethod('wait_for_timeout', 2000),  # Esperar carga después del scroll
+                        # Captura de screenshot para debug (opcional)
+                        {% if debug_mode is defined and debug_mode %}
+                        PageMethod('screenshot', path='debug_screenshot.png', full_page=True),
+                        {% endif %}
+                    ],
+                    'playwright_context_kwargs': {
+                        'viewport': {'width': 1920, 'height': 1080},
+                        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                        'locale': 'es-ES',
+                        'timezone_id': 'Europe/Madrid'
+                    }
+                }
+            )
+    
+    def parse(self, response):
+        """
+        Parsea página renderizada con JavaScript
+        """
+        # Log para verificar que Playwright funcionó
+        self.logger.info(f"Procesando con Playwright: {response.url}")
+        
+        # Verificar si es página de artículo o listado
+        if self._is_article_page(response):
+            yield from self.parse_article(response)
+            return
+        
+        # Es página de listado - extraer enlaces
+        self.logger.info("Detectada página de listado, extrayendo enlaces...")
+        
+        # Extraer enlaces a artículos
+        article_links = self._extract_article_links_js(response)
+        
+        self.logger.info(f"Encontrados {len(article_links)} enlaces a artículos")
+        
+        for link in article_links:
+            if self.articles_scraped >= self.max_articles:
+                self.logger.info(f"Alcanzado límite de {self.max_articles} artículos")
+                raise CloseSpider('article_limit_reached')
+            
+            if not self.should_follow_url(link):
+                continue
+            
+            yield scrapy.Request(
+                url=response.urljoin(link),
+                callback=self.parse_article,
+                meta={
+                    'playwright': True,
+                    'playwright_page_methods': [
+                        PageMethod('wait_for_load_state', 'domcontentloaded'),
+                        {% if selectors and has_selector('content') %}
+                        PageMethod('wait_for_selector', '{{ selectors.content }}', timeout=10000),
+                        {% else %}
+                        PageMethod('wait_for_selector', 'article, [class*="content"]', timeout=10000),
+                        {% endif %}
+                    ],
+                    'section': self._extract_section_from_url(link)
+                }
+            )
+        
+        {% if follow_pagination %}
+        # Seguir paginación
+        yield from self._follow_pagination_js(response)
+        {% endif %}
+    
+    def parse_article(self, response):
+        """
+        Parsea artículo cargado con JavaScript
+        """
+        # Crear item base
+        item = self.create_item(
+            medio_url_principal=response.url,
+            seccion=response.meta.get('section', 'general')
+        )
+        
+        # Verificar si el contenido se cargó correctamente
+        content_loaded = self._verify_content_loaded(response)
+        if not content_loaded:
+            self.logger.warning(f"Contenido no cargado completamente en: {response.url}")
+            # Intentar recargar con más tiempo de espera
+            yield from self._retry_with_longer_wait(response)
+            return
+        
+        {% if selectors %}
+        # Usar selectores específicos
+        try:
+            {% if has_selector('title') %}
+            # Título
+            title = response.css('{{ selectors.title }}::text').get()
+            if title:
+                item['titular'] = title.strip()
+            {% endif %}
+            
+            {% if has_selector('content') %}
+            # Contenido - manejar posible contenido dinámico
+            content_parts = []
+            content_elements = response.css('{{ selectors.content }}')
+            
+            for elem in content_elements:
+                # Extraer todo el texto, incluyendo elementos ocultos que JS podría mostrar
+                all_text = elem.xpath('.//text()').getall()
+                content_parts.extend(all_text)
+            
+            if content_parts:
+                content = ' '.join(content_parts).strip()
+                content = ' '.join(content.split())  # Limpiar espacios
+                
+                # Verificar contenido mínimo
+                if len(content) > 100:
+                    item['contenido'] = content
+                else:
+                    self.logger.warning("Contenido muy corto, posible problema de carga")
+            {% endif %}
+            
+            {% if has_selector('date') %}
+            # Fecha - puede estar en atributos data-* generados por JS
+            date_elem = response.css('{{ selectors.date }}')
+            date_text = date_elem.css('::text').get()
+            
+            if not date_text:
+                # Buscar en atributos que JS podría establecer
+                for attr in ['datetime', 'data-date', 'data-published', 'content']:
+                    date_text = date_elem.css(f'::attr({attr})').get()
+                    if date_text:
+                        break
+            
+            if date_text:
+                item['fecha_publicacion'] = self._parse_date(date_text.strip())
+            {% endif %}
+            
+            {% if has_selector('author') %}
+            # Autor
+            author = response.css('{{ selectors.author }}::text').get()
+            if author:
+                item['autor'] = self._clean_author(author)
+            {% endif %}
+            
+            {% if has_selector('image') %}
+            # Imagen - manejar lazy loading
+            image_elem = response.css('{{ selectors.image }}')
+            image_url = None
+            
+            # Intentar múltiples atributos donde JS podría cargar la imagen
+            for attr in ['src', 'data-src', 'data-lazy-src', 'data-original']:
+                image_url = image_elem.css(f'::attr({attr})').get()
+                if image_url and not image_url.startswith('data:'):
+                    break
+            
+            if image_url:
+                item['url_imagen_principal'] = response.urljoin(image_url)
+            {% endif %}
+            
+            {% if has_selector('tags') %}
+            # Tags - pueden estar cargados dinámicamente
+            tags = response.css('{{ selectors.tags }}::text').getall()
+            if tags:
+                item['etiquetas'] = [tag.strip() for tag in tags if tag.strip()]
+            {% endif %}
+            
+        except Exception as e:
+            self.logger.error(f"Error con selectores específicos: {e}")
+        {% endif %}
+        
+        # Extracción genérica para campos faltantes
+        self._extract_js_content(response, item)
+        
+        # Extraer datos desde JavaScript/JSON-LD
+        self._extract_structured_data(response, item)
+        
+        # Validación
+        if not item.get('titular'):
+            self.logger.warning(f"Artículo sin título: {response.url}")
+            return
+        
+        # Metadata adicional
+        self._extract_js_metadata(response, item)
+        
+        # Valores por defecto
+        item['tipo_contenido'] = 'articulo'
+        item['idioma'] = item.get('idioma', 'es')
+        {% if area_geografica is defined %}
+        item['ubicacion_geografica'] = '{{ area_geografica }}'
+        {% endif %}
+        
+        self.articles_scraped += 1
+        yield item
+    
+    def _is_article_page(self, response):
+        """
+        Detecta si es página de artículo (considerando contenido dinámico)
+        """
+        # Verificar indicadores básicos
+        has_article = bool(response.css('article, [itemtype*="Article"]').get())
+        has_main_content = bool(response.css('main, [role="main"]').get())
+        
+        # Verificar contenido sustancial
+        paragraph_count = len(response.css('p').getall())
+        word_count = len(' '.join(response.css('p::text').getall()).split())
+        
+        # Verificar meta tags de artículo
+        has_article_meta = bool(response.css('meta[property*="article"], meta[property="og:type"][content="article"]').get())
+        
+        # JSON-LD de tipo Article
+        scripts = response.css('script[type="application/ld+json"]::text').getall()
+        has_article_jsonld = any('"@type":"Article"' in script or '"@type":"NewsArticle"' in script for script in scripts)
+        
+        # Decisión basada en múltiples factores
+        indicators = sum([
+            has_article,
+            has_main_content,
+            paragraph_count > 3,
+            word_count > 100,
+            has_article_meta,
+            has_article_jsonld
+        ])
+        
+        return indicators >= 3
+    
+    def _extract_article_links_js(self, response):
+        """
+        Extrae enlaces considerando contenido cargado por JavaScript
+        """
+        links = set()
+        
+        {% if has_selector('links') %}
+        # Selector específico
+        specific_links = response.css('{{ selectors.links }}::attr(href)').getall()
+        links.update(specific_links)
+        {% endif %}
+        
+        # Selectores que funcionan con contenido dinámico
+        dynamic_selectors = [
+            'a[href*="/article/"]::attr(href)',
+            'a[href*="/news/"]::attr(href)',
+            'a[href*="/noticia/"]::attr(href)',
+            '[data-href]::attr(data-href)',  # Enlaces en atributos data
+            'a.article-link::attr(href)',
+            'h2 a::attr(href)',
+            'h3 a::attr(href)',
+            '[class*="card"] a::attr(href)',
+            '[class*="post"] a::attr(href)',
+            '[class*="item"] a::attr(href)'
+        ]
+        
+        for selector in dynamic_selectors:
+            found_links = response.css(selector).getall()
+            links.update(found_links)
+        
+        # Buscar enlaces en atributos onclick/data-url
+        elements_with_js_links = response.css('[onclick*="location"], [data-url], [data-link]').getall()
+        
+        import re
+        for elem in elements_with_js_links:
+            # Extraer URLs de onclick
+            onclick_match = re.search(r'location\.href\s*=\s*["\']([^"\']+)["\']', elem)
+            if onclick_match:
+                links.add(onclick_match.group(1))
+            
+            # Extraer de data-url/data-link
+            data_match = re.search(r'data-(?:url|link)\s*=\s*["\']([^"\']+)["\']', elem)
+            if data_match:
+                links.add(data_match.group(1))
+        
+        # Filtrar y validar enlaces
+        valid_links = []
+        for link in links:
+            if not link or link.startswith('#') or link.startswith('javascript:'):
+                continue
+            
+            full_url = response.urljoin(link)
+            if self._is_section_article(full_url):
+                valid_links.append(link)
+        
+        return list(set(valid_links))
+    
+    {% if follow_pagination %}
+    def _follow_pagination_js(self, response):
+        """
+        Sigue paginación en aplicaciones JavaScript
+        """
+        # Buscar botón/enlace de siguiente página
+        next_selectors = [
+            'button:contains("Siguiente")',
+            'button:contains("Next")',
+            'a[rel="next"]::attr(href)',
+            'button[aria-label*="siguiente"]',
+            'button[aria-label*="next"]',
+            '[class*="pagination"] a.active + a::attr(href)',
+            'button.load-more',
+            '[data-page-next]'
+        ]
+        
+        for selector in next_selectors:
+            next_elem = response.css(selector).get()
+            if next_elem:
+                # Si es un botón, necesitamos hacer click
+                if 'button' in selector.lower():
+                    # Extraer URL del atributo data o generar siguiente página
+                    page_num = response.meta.get('page_number', 1) + 1
+                    
+                    # Intentar construir URL de siguiente página
+                    current_url = response.url
+                    if 'page=' in current_url:
+                        import re
+                        next_url = re.sub(r'page=\d+', f'page={page_num}', current_url)
+                    else:
+                        separator = '&' if '?' in current_url else '?'
+                        next_url = f"{current_url}{separator}page={page_num}"
+                    
+                    if page_num <= {{ max_pages }}:
+                        yield scrapy.Request(
+                            url=next_url,
+                            callback=self.parse,
+                            meta={
+                                'playwright': True,
+                                'playwright_page_methods': [
+                                    PageMethod('wait_for_load_state', 'networkidle'),
+                                    PageMethod('wait_for_timeout', 3000)
+                                ],
+                                'page_number': page_num
+                            }
+                        )
+                else:
+                    # Es un enlace normal
+                    href = response.css(selector).get()
+                    if href:
+                        yield scrapy.Request(
+                            url=response.urljoin(href),
+                            callback=self.parse,
+                            meta={
+                                'playwright': True,
+                                'playwright_page_methods': [
+                                    PageMethod('wait_for_load_state', 'networkidle')
+                                ],
+                                'page_number': response.meta.get('page_number', 1) + 1
+                            }
+                        )
+                break
+    {% endif %}
+    
+    def _verify_content_loaded(self, response):
+        """
+        Verifica que el contenido JavaScript se haya cargado
+        """
+        # Verificar indicadores de carga
+        indicators = [
+            # Debe haber contenido sustancial
+            len(response.css('p').getall()) > 2,
+            # Debe haber texto significativo
+            len(response.text) > 1000,
+            # No debe haber spinners de carga visibles
+            not response.css('.loading, .spinner, [class*="load"]').get(),
+            # Debe haber contenido principal
+            bool(response.css('article, main, [class*="content"]').get())
+        ]
+        
+        return sum(indicators) >= 3
+    
+    def _retry_with_longer_wait(self, response):
+        """
+        Reintenta cargar la página con más tiempo de espera
+        """
+        retry_count = response.meta.get('retry_count', 0)
+        
+        if retry_count < 2:
+            self.logger.info(f"Reintentando con más tiempo de espera: {response.url}")
+            
+            yield scrapy.Request(
+                url=response.url,
+                callback=self.parse_article,
+                dont_filter=True,
+                meta={
+                    'playwright': True,
+                    'playwright_page_methods': [
+                        PageMethod('wait_for_load_state', 'networkidle'),
+                        PageMethod('wait_for_timeout', 5000),  # Espera más larga
+                        PageMethod('evaluate', '''
+                            // Scroll para activar lazy loading
+                            window.scrollTo(0, document.body.scrollHeight);
+                            // Esperar un poco y volver arriba
+                            setTimeout(() => window.scrollTo(0, 0), 1000);
+                        '''),
+                        PageMethod('wait_for_timeout', 2000)
+                    ],
+                    'retry_count': retry_count + 1,
+                    'section': response.meta.get('section')
+                }
+            )
+    
+    def _extract_js_content(self, response, item):
+        """
+        Extrae contenido considerando patrones comunes de aplicaciones JS
+        """
+        # Título desde diferentes fuentes
+        if not item.get('titular'):
+            title_sources = [
+                'h1::text',
+                '[class*="title"]:not([class*="sub"])::text',
+                'meta[property="og:title"]::attr(content)',
+                '[data-testid*="headline"]::text',
+                '[class*="headline"]::text'
+            ]
+            
+            for selector in title_sources:
+                title = response.css(selector).get()
+                if title and len(title.strip()) > 10:
+                    item['titular'] = title.strip()
+                    break
+        
+        # Contenido - considerar diferentes estructuras
+        if not item.get('contenido'):
+            content_strategies = [
+                # Estrategia 1: Buscar contenedor principal
+                ('article [class*="body"], article [class*="content"]', 'p'),
+                # Estrategia 2: Buscar por data attributes
+                ('[data-component*="article"], [data-content-body]', 'p'),
+                # Estrategia 3: Buscar por role
+                ('[role="article"]', 'p'),
+                # Estrategia 4: Contenedor genérico
+                ('main', 'p[class*="paragraph"], p:not([class*="caption"])')
+            ]
+            
+            for container_sel, paragraph_sel in content_strategies:
+                container = response.css(container_sel)
+                if container:
+                    paragraphs = container.css(paragraph_sel + '::text').getall()
+                    if len(paragraphs) > 2:
+                        content = ' '.join(p.strip() for p in paragraphs if p.strip())
+                        if len(content) > 200:
+                            item['contenido'] = content
+                            break
+        
+        # Fecha - buscar en diferentes lugares
+        if not item.get('fecha_publicacion'):
+            date_patterns = [
+                ('time[datetime]', 'datetime'),
+                ('[data-date]', 'data-date'),
+                ('[class*="publish"][class*="date"]', 'text'),
+                ('[itemprop="datePublished"]', 'content'),
+                ('meta[property="article:published_time"]', 'content')
+            ]
+            
+            for selector, attr in date_patterns:
+                elem = response.css(selector)
+                if elem:
+                    if attr == 'text':
+                        date_text = elem.css('::text').get()
+                    else:
+                        date_text = elem.css(f'::attr({attr})').get()
+                    
+                    if date_text:
+                        parsed_date = self._parse_date(date_text)
+                        if parsed_date:
+                            item['fecha_publicacion'] = parsed_date
+                            break
+    
+    def _extract_structured_data(self, response, item):
+        """
+        Extrae datos desde JSON-LD y otros datos estructurados
+        """
+        import json
+        
+        # Buscar JSON-LD
+        json_ld_scripts = response.css('script[type="application/ld+json"]::text').getall()
+        
+        for script in json_ld_scripts:
+            try:
+                data = json.loads(script)
+                
+                # Puede ser un array o un objeto
+                if isinstance(data, list):
+                    data = data[0] if data else {}
+                
+                # Verificar si es un artículo
+                if data.get('@type') in ['Article', 'NewsArticle', 'BlogPosting']:
+                    # Extraer campos relevantes
+                    if not item.get('titular') and data.get('headline'):
+                        item['titular'] = data['headline']
+                    
+                    if not item.get('resumen') and data.get('description'):
+                        item['resumen'] = data['description']
+                    
+                    if not item.get('fecha_publicacion') and data.get('datePublished'):
+                        item['fecha_publicacion'] = self._parse_date(data['datePublished'])
+                    
+                    if not item.get('autor'):
+                        author = data.get('author')
+                        if isinstance(author, dict):
+                            item['autor'] = author.get('name', '')
+                        elif isinstance(author, str):
+                            item['autor'] = author
+                    
+                    if not item.get('url_imagen_principal') and data.get('image'):
+                        image = data['image']
+                        if isinstance(image, dict):
+                            item['url_imagen_principal'] = image.get('url', '')
+                        elif isinstance(image, str):
+                            item['url_imagen_principal'] = image
+                    
+                    if not item.get('palabras_clave') and data.get('keywords'):
+                        keywords = data['keywords']
+                        if isinstance(keywords, str):
+                            item['palabras_clave'] = [k.strip() for k in keywords.split(',')]
+                        elif isinstance(keywords, list):
+                            item['palabras_clave'] = keywords
+                    
+                    break
+                    
+            except json.JSONDecodeError:
+                self.logger.debug("Error parseando JSON-LD")
+                continue
+    
+    def _extract_js_metadata(self, response, item):
+        """
+        Extrae metadata adicional de aplicaciones JavaScript
+        """
+        metadata = {}
+        
+        # Detectar framework/CMS
+        js_frameworks = {
+            'react': response.css('[data-reactroot], #__next').get(),
+            'angular': response.css('[ng-app], [data-ng-app]').get(),
+            'vue': response.css('[data-server-rendered="true"]').get(),
+            'wordpress': 'wp-content' in response.text,
+            'nextjs': response.css('#__next').get()
+        }
+        
+        detected_frameworks = [fw for fw, detected in js_frameworks.items() if detected]
+        if detected_frameworks:
+            metadata['frameworks'] = detected_frameworks
+        
+        # Videos embebidos
+        videos = []
+        
+        # YouTube
+        youtube_iframes = response.css('iframe[src*="youtube.com"], iframe[src*="youtu.be"]::attr(src)').getall()
+        for video_url in youtube_iframes:
+            videos.append({
+                'tipo': 'video',
+                'plataforma': 'youtube',
+                'url': video_url
+            })
+        
+        # Vimeo
+        vimeo_iframes = response.css('iframe[src*="vimeo.com"]::attr(src)').getall()
+        for video_url in vimeo_iframes:
+            videos.append({
+                'tipo': 'video',
+                'plataforma': 'vimeo',
+                'url': video_url
+            })
+        
+        # Videos HTML5
+        video_sources = response.css('video source::attr(src)').getall()
+        for video_url in video_sources:
+            videos.append({
+                'tipo': 'video',
+                'plataforma': 'html5',
+                'url': response.urljoin(video_url)
+            })
+        
+        if videos:
+            if not item.get('multimedia'):
+                item['multimedia'] = []
+            item['multimedia'].extend(videos)
+        
+        # Comentarios count (si está disponible)
+        comment_indicators = [
+            '[class*="comment"] [class*="count"]::text',
+            '[data-comments-count]::attr(data-comments-count)',
+            '.disqus-comment-count::text'
+        ]
+        
+        for selector in comment_indicators:
+            comment_count = response.css(selector).get()
+            if comment_count:
+                try:
+                    import re
+                    count = int(re.findall(r'\d+', comment_count)[0])
+                    metadata['comment_count'] = count
+                    break
+                except:
+                    pass
+        
+        # Social shares (si están disponibles)
+        share_counts = {}
+        share_selectors = {
+            'facebook': '[class*="facebook"][class*="count"]::text',
+            'twitter': '[class*="twitter"][class*="count"]::text',
+            'linkedin': '[class*="linkedin"][class*="count"]::text'
+        }
+        
+        for platform, selector in share_selectors.items():
+            count_text = response.css(selector).get()
+            if count_text:
+                try:
+                    import re
+                    count = int(re.findall(r'\d+', count_text)[0])
+                    share_counts[platform] = count
+                except:
+                    pass
+        
+        if share_counts:
+            metadata['social_shares'] = share_counts
+        
+        # Guardar metadata si hay datos
+        if metadata:
+            if not item.get('metadata_adicional'):
+                item['metadata_adicional'] = {}
+            item['metadata_adicional'].update(metadata)
+    
+    def _clean_author(self, author_text):
+        """
+        Limpia el texto del autor
+        """
+        author = author_text.strip()
+        
+        # Eliminar prefijos comunes
+        prefixes = ['Por ', 'By ', 'Escrito por ', 'Written by ', 'Autor: ', 'Author: ']
+        for prefix in prefixes:
+            if author.lower().startswith(prefix.lower()):
+                author = author[len(prefix):]
+                break
+        
+        # Eliminar sufijos comunes
+        suffixes = [' - ', ' | ', ' /', ' \\']
+        for suffix in suffixes:
+            if suffix in author:
+                author = author.split(suffix)[0]
+        
+        return author.strip()
+    
+    def _is_section_article(self, url):
+        """
+        Verifica si la URL pertenece a la sección objetivo
+        """
+        # Implementación igual que en scraping_spider
+        section = self._extract_section_from_url(url)
+        
+        {% if section_name is defined %}
+        target_section = '{{ section_name }}'.lower()
+        if target_section and section.lower() != target_section:
+            return False
+        {% endif %}
+        
+        excluded = ['tags', 'author', 'category', 'search', 'login', 'register']
+        return not any(exc in url.lower() for exc in excluded)
+    
+    def _extract_section_from_url(self, url):
+        """
+        Extrae sección desde URL (igual que scraping_spider)
+        """
+        from urllib.parse import urlparse
+        
+        path = urlparse(url).path.lower()
+        segments = [s for s in path.split('/') if s]
+        
+        section_keywords = {
+            'politica': ['politica', 'politics', 'gobierno'],
+            'economia': ['economia', 'economy', 'finanzas'],
+            'deportes': ['deportes', 'sports', 'futbol'],
+            'cultura': ['cultura', 'culture', 'arte'],
+            'tecnologia': ['tecnologia', 'tech', 'ciencia'],
+            'internacional': ['internacional', 'mundo', 'world'],
+            'sociedad': ['sociedad', 'society', 'social']
+        }
+        
+        for segment in segments:
+            for section, keywords in section_keywords.items():
+                if any(kw in segment for kw in keywords):
+                    return section
+        
+        return segments[0] if segments else 'general'
+    
+    def _parse_date(self, date_string):
+        """
+        Parsea fechas (igual que otros spiders)
+        """
+        if not date_string:
+            return None
+        
+        from datetime import datetime
+        
+        date_string = date_string.strip()
+        
+        formats = [
+            '%Y-%m-%dT%H:%M:%S%z',
+            '%Y-%m-%dT%H:%M:%SZ', 
+            '%Y-%m-%d %H:%M:%S',
+            '%Y-%m-%d',
+            '%d/%m/%Y',
+            '%d de %B de %Y'
+        ]
+        
+        for fmt in formats:
+            try:
+                return datetime.strptime(date_string, fmt).isoformat()
+            except ValueError:
+                continue
+        
+        try:
+            from dateutil import parser
+            return parser.parse(date_string).isoformat()
+        except:
+            pass
+        
+        return date_string
+{% endblock %}
+
+{% block additional_methods %}
+    # Métodos adicionales ya incluidos en parse_method
+{% endblock %}

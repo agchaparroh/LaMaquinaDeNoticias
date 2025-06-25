@@ -1,0 +1,379 @@
+tasks:
+  # FASE 1: INFRAESTRUCTURA BASE (5 días)
+  - id: "TASK-001"
+    title: "Setup Redis y configuración inicial"
+    status: "completed"
+    priority: 1
+    dependencies: []
+    estimated_hours: 4
+    notes: |
+      ⚠️ CONSULTAR Context7: Redis - Índice de Contenidos
+      - Instalar y configurar Redis
+      - Crear archivo config.py con configuración
+      - Definir estructura de claves para cache
+      - Configurar connection pooling
+    files_to_create:
+      - "src/spider_factory/config.py"
+      - "src/spider_factory/__init__.py"
+      
+  - id: "TASK-002"
+    title: "Crear estructura base de SmartAnalyzer"
+    status: "completed"
+    priority: 2
+    dependencies: ["TASK-001"]
+    estimated_hours: 6
+    notes: |
+      ⚠️ CONSULTAR Context7: FastAPI - Componentes Fundamentales
+      - Crear clase SmartAnalyzer
+      - Implementar estructura de decisión (RSS/Cache/Patrón/Análisis)
+      - Integrar con Redis para cache
+    files_to_create:
+      - "src/spider_factory/analyzer.py"
+      
+  - id: "TASK-003"
+    title: "Implementar análisis con Firecrawl"
+    status: "completed"
+    priority: 3
+    dependencies: ["TASK-002"]
+    estimated_hours: 8
+    notes: |
+      ⚠️ CONSULTAR documentación de Firecrawl API
+      - Integrar Firecrawl para análisis de sitios
+      - Implementar detección de JavaScript
+      - Extraer selectores comunes
+      - Método extract_sample_articles()
+    
+  - id: "TASK-004"
+    title: "Sistema de PatternStorage con Redis"
+    status: "completed"
+    priority: 4
+    dependencies: ["TASK-001"]
+    estimated_hours: 6
+    notes: |
+      ⚠️ CONSULTAR Context7: Redis - Estructuras de Datos Core
+      - Implementar clase PatternStorage
+      - CRUD de patrones en Redis
+      - Sistema de confianza y contadores
+      - Búsqueda por dominio y sección
+    files_to_create:
+      - "src/spider_factory/patterns.py"
+      
+  - id: "TASK-005"
+    title: "Tests unitarios de SmartAnalyzer"
+    status: "pending"
+    priority: 5
+    dependencies: ["TASK-003", "TASK-004"]
+    estimated_hours: 4
+    notes: |
+      - Tests de flujo de decisión
+      - Tests de cache hit/miss
+      - Tests de guardado de patrones
+      - Mock de Firecrawl
+    files_to_create:
+      - "tests/test_analyzer.py"
+      - "tests/test_patterns.py"
+
+  # FASE 2: GENERACIÓN Y TEMPLATES (5 días)
+  - id: "TASK-006"
+    title: "Configurar Jinja2 y SpiderGenerator"
+    status: "pending"
+    priority: 6
+    dependencies: ["TASK-005"]
+    estimated_hours: 4
+    notes: |
+      ⚠️ CONSULTAR Context7: Jinja2 - Índice de Contenidos
+      - Implementar clase SpiderGenerator
+      - Configurar Jinja2 Environment
+      - Integración con Black para formateo
+      - Método save_spider()
+    files_to_create:
+      - "src/spider_factory/generator.py"
+      - "src/spider_factory/templates/"
+      
+  - id: "TASK-007"
+    title: "Template para spiders RSS"
+    status: "pending"
+    priority: 7
+    dependencies: ["TASK-006"]
+    estimated_hours: 6
+    notes: |
+      ⚠️ CONSULTAR Context7: Scrapy - Componentes Principales
+      - Crear template base_spider.j2
+      - Crear template rss_spider.j2
+      - Incluir todos los campos obligatorios (titular, medio_url_principal, etc.)
+      - Integración con scrapy-crawl-once
+    files_to_create:
+      - "src/spider_factory/templates/base_spider.j2"
+      - "src/spider_factory/templates/rss_spider.j2"
+      
+  - id: "TASK-008"
+    title: "Template para spiders Scraping HTML"
+    status: "pending"
+    priority: 8
+    dependencies: ["TASK-006"]
+    estimated_hours: 6
+    notes: |
+      - Crear template scraping_spider.j2
+      - Implementar _is_section_article()
+      - Manejo de selectores detectados
+      - Filtrado de URLs excluidas
+    files_to_create:
+      - "src/spider_factory/templates/scraping_spider.j2"
+      
+  - id: "TASK-009"
+    title: "Template para spiders Playwright"
+    status: "pending"
+    priority: 9
+    dependencies: ["TASK-006"]
+    estimated_hours: 6
+    notes: |
+      - Crear template playwright_spider.j2
+      - Configuración específica de Playwright
+      - Manejo de contenido JavaScript
+      - Meta configuración para renderizado
+    files_to_create:
+      - "src/spider_factory/templates/playwright_spider.j2"
+      
+  - id: "TASK-010"
+    title: "API FastAPI core"
+    status: "pending"
+    priority: 10
+    dependencies: ["TASK-009"]
+    estimated_hours: 8
+    notes: |
+      ⚠️ CONSULTAR Context7: FastAPI - Estructura de Proyectos
+      - Crear aplicación FastAPI
+      - Modelos Pydantic para validación
+      - Endpoints: check-duplicate, analyze, generate
+      - Integración de componentes
+    files_to_create:
+      - "src/spider_factory/api.py"
+      - "src/spider_factory/models.py"
+
+  # FASE 3: INTERFAZ DE USUARIO (7 días)
+  - id: "TASK-011"
+    title: "Setup proyecto React con Vite"
+    status: "pending"
+    priority: 11
+    dependencies: ["TASK-010"]
+    estimated_hours: 4
+    notes: |
+      ⚠️ CONSULTAR Context7: React + Vite - Índices de Contenidos
+      - Crear proyecto con Vite
+      - Configurar TypeScript
+      - Instalar Material-UI y dependencias
+      - Estructura Atomic Design
+    files_to_create:
+      - "src/module_spider_factory_frontend/package.json"
+      - "src/module_spider_factory_frontend/vite.config.ts"
+      - "src/module_spider_factory_frontend/tsconfig.json"
+      
+  - id: "TASK-012"
+    title: "Componentes base y tema Material-UI"
+    status: "pending"
+    priority: 12
+    dependencies: ["TASK-011"]
+    estimated_hours: 6
+    notes: |
+      ⚠️ CONSULTAR Context7: Material-UI - Sistema de Diseño
+      - Configurar tema consistente con dashboard
+      - Crear componentes atoms básicos
+      - Layout principal con routing
+    files_to_create:
+      - "src/module_spider_factory_frontend/src/theme/index.ts"
+      - "src/module_spider_factory_frontend/src/components/atoms/"
+      
+  - id: "TASK-013"
+    title: "Wizard de generación individual"
+    status: "pending"
+    priority: 13
+    dependencies: ["TASK-012"]
+    estimated_hours: 10
+    notes: |
+      - Implementar Stepper de Material-UI
+      - Formularios con validación
+      - Preview de análisis
+      - Integración con API
+    files_to_create:
+      - "src/module_spider_factory_frontend/src/components/pages/WizardPage/"
+      - "src/module_spider_factory_frontend/src/hooks/useSpiderGeneration.ts"
+      
+  - id: "TASK-014"
+    title: "Sistema de importación CSV"
+    status: "pending"
+    priority: 14
+    dependencies: ["TASK-012"]
+    estimated_hours: 8
+    notes: |
+      - Implementar react-dropzone
+      - DataGrid de MUI para visualización
+      - Validación de formato CSV
+      - Estado de procesamiento
+    files_to_create:
+      - "src/module_spider_factory_frontend/src/components/pages/BulkUploadPage/"
+      - "src/module_spider_factory_frontend/src/components/organisms/BatchUploader/"
+      
+  - id: "TASK-015"
+    title: "WebSocket para actualizaciones en tiempo real"
+    status: "pending"
+    priority: 15
+    dependencies: ["TASK-010", "TASK-014"]
+    estimated_hours: 6
+    notes: |
+      ⚠️ CONSULTAR Context7: FastAPI - WebSockets
+      - Implementar WebSocket manager en backend
+      - Hook useWebSocket en frontend
+      - Actualizaciones de progreso batch
+    files_to_create:
+      - "src/spider_factory/websocket_manager.py"
+      - "src/module_spider_factory_frontend/src/hooks/useWebSocket.ts"
+      
+  - id: "TASK-016"
+    title: "Integración completa frontend-backend"
+    status: "pending"
+    priority: 16
+    dependencies: ["TASK-013", "TASK-014", "TASK-015"]
+    estimated_hours: 8
+    notes: |
+      ⚠️ CONSULTAR Context7: Axios - Configuración
+      - Configurar Axios con interceptores
+      - Servicios para API calls
+      - Manejo de errores global
+      - Estados de carga
+    files_to_create:
+      - "src/module_spider_factory_frontend/src/services/api.ts"
+      - "src/module_spider_factory_frontend/src/services/spiderFactory.service.ts"
+      
+  - id: "TASK-017"
+    title: "Testing y polish de UI"
+    status: "pending"
+    priority: 17
+    dependencies: ["TASK-016"]
+    estimated_hours: 6
+    notes: |
+      - Tests con Vitest
+      - Responsive design
+      - Accesibilidad
+      - Optimización de performance
+    files_to_create:
+      - "src/module_spider_factory_frontend/src/components/**/*.test.tsx"
+
+  # FASE 4: TESTING Y DEPLOYMENT (3 días)
+  - id: "TASK-018"
+    title: "Testing con medios reales"
+    status: "completed"
+    priority: 18
+    dependencies: ["TASK-017"]
+    estimated_hours: 8
+    notes: |
+      - Probar con al menos 10 medios diferentes
+      - Verificar spiders generados con Scrapy
+      - Validar compatibilidad con module_scraper
+      - Documentar casos edge
+      
+  - id: "TASK-019"
+    title: "Corrección de bugs y optimización"
+    status: "completed"
+    priority: 19
+    dependencies: ["TASK-018"]
+    estimated_hours: 8
+    notes: |
+      - Corregir bugs encontrados
+      - Optimizar performance
+      - Ajustar templates según feedback
+      - Mejorar manejo de errores
+      
+  - id: "TASK-020"
+    title: "Documentación y deployment"
+    status: "completed"
+    priority: 20
+    dependencies: ["TASK-019"]
+    estimated_hours: 8
+    notes: |
+      - Documentación de usuario final
+      - README con instrucciones de instalación
+      - Configuración de Docker si aplica
+      - Deployment en ambiente de staging
+    files_to_create:
+      - "src/spider_factory/README.md"
+      - "src/module_spider_factory_frontend/README.md"
+      - "docs/SPIDER_FACTORY_USER_GUIDE.md"
+
+  # FASE 5: REVISIÓN Y OPTIMIZACIÓN DEL SISTEMA (3 días)
+  - id: "TASK-021"
+    title: "Análisis de spider_factory"
+    status: "pending"
+    priority: 21
+    dependencies: ["TASK-020"]
+    estimated_hours: 8
+    subtasks:
+      - "Revisión exhaustiva de todos los archivos del módulo"
+      - "Identificación de archivos obsoletos"
+      - "Optimización de la organización de archivos y carpetas"
+      - "Revisión del documento README y relacionados"
+    notes: |
+      - Auditoría completa del módulo backend
+      - Verificar estructura de directorios
+      - Identificar código duplicado o no utilizado
+      - Revisar nomenclatura de archivos
+      - Actualizar documentación según hallazgos
+      - IMPORTANTE: Los archivos obsoletos deben moverse a C:\Users\DELL\Desktop\PruebaWindsurfAI\LaMaquinaDeNoticias\Borrar
+    files_to_analyze:
+      - "src/spider_factory/**/*.py"
+      - "src/spider_factory/templates/**/*.j2"
+      - "src/spider_factory/*.md"
+      - "src/spider_factory/requirements.txt"
+      
+  - id: "TASK-022"
+    title: "Análisis de module_spider_factory_frontend"
+    status: "pending"
+    priority: 22
+    dependencies: ["TASK-020"]
+    estimated_hours: 8
+    subtasks:
+      - "Revisión exhaustiva de todos los archivos del módulo"
+      - "Identificación de archivos obsoletos"
+      - "Optimización de la organización de archivos y carpetas"
+      - "Revisión del documento README y relacionados"
+    notes: |
+      - Auditoría completa del módulo frontend
+      - Verificar estructura de componentes (Atomic Design)
+      - Identificar componentes no utilizados
+      - Revisar dependencias en package.json
+      - Optimizar imports y exports
+      - Actualizar documentación
+      - IMPORTANTE: Los archivos obsoletos deben moverse a C:\Users\DELL\Desktop\PruebaWindsurfAI\LaMaquinaDeNoticias\Borrar
+    files_to_analyze:
+      - "src/module_spider_factory_frontend/src/**/*.tsx"
+      - "src/module_spider_factory_frontend/src/**/*.ts"
+      - "src/module_spider_factory_frontend/*.json"
+      - "src/module_spider_factory_frontend/*.md"
+      
+  - id: "TASK-023"
+    title: "Análisis de compatibilidad y consistencia"
+    status: "pending"
+    priority: 23
+    dependencies: ["TASK-021", "TASK-022"]
+    estimated_hours: 8
+    notes: |
+      - Verificar compatibilidad con el resto del sistema
+      - Revisar configuración de puertos
+      - Analizar APIs y endpoints
+      - Verificar Dockerfiles y docker-compose
+      - Revisar .gitignore de cada módulo
+      - Consolidar requirements.txt y package.json
+      - Verificar variables de entorno
+      - Asegurar consistencia en nomenclatura
+      - Verificar integración con module_scraper
+      - Revisar compatibilidad con La Máquina de Noticias
+      - Actualizar documentos de la raíz del proyecto (README.md y CLAUDE.md)
+      - IMPORTANTE: Los archivos obsoletos o duplicados deben moverse a C:\Users\DELL\Desktop\PruebaWindsurfAI\LaMaquinaDeNoticias\Borrar
+    files_to_analyze:
+      - "**/Dockerfile"
+      - "**/docker-compose*.yml"
+      - "**/.gitignore"
+      - "**/requirements.txt"
+      - "**/package.json"
+      - "**/.env*"
+      - "/README.md"
+      - "/CLAUDE.md"

@@ -150,6 +150,64 @@ services:
       retries: 3
       start_period: 40s
 
+  # --- Spider Factory Backend ---
+  spider_factory_backend:
+    build:
+      context: ./src/spider_factory
+      dockerfile: Dockerfile
+    container_name: lamacquina_spider_factory_backend
+    ports:
+      - "8005:8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+      - API_PORT=8000  # Puerto interno del contenedor
+    volumes:
+      - ./src/spider_factory/generated_spiders:/app/generated_spiders
+      - ./src/module_scraper/scraper_core/spiders:/app/output_spiders
+    env_file:
+      - .env
+    networks:
+      - lamacquina_network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # --- Spider Factory Frontend ---
+  spider_factory_frontend:
+    build:
+      context: ./src/module_spider_factory_frontend
+      dockerfile: Dockerfile
+    container_name: lamacquina_spider_factory_frontend
+    ports:
+      - "3002:80"
+    environment:
+      - VITE_API_URL=http://spider_factory_backend:8000
+      - VITE_WS_URL=ws://spider_factory_backend:8000
+    networks:
+      - lamacquina_network
+    depends_on:
+      - spider_factory_backend
+    restart: unless-stopped
+
+  # --- Redis Cache ---
+  redis:
+    image: redis:7-alpine
+    container_name: lamacquina_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - lamacquina_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
   # --- Reverse Proxy (Nginx) ---
   nginx_reverse_proxy:
     build:
@@ -180,4 +238,6 @@ volumes:
   scrapyd_logs:
     driver: local
   scrapydweb_data:
+    driver: local
+  redis_data:
     driver: local

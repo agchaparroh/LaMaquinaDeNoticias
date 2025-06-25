@@ -47,14 +47,17 @@ graph TD
 | **module_dashboard_review_backend** | Python 3.9 + FastAPI | 8004 | ✅ **Implementado** | API backend dashboard editorial |
 | **module_dashboard_review_frontend** | React 18 + TypeScript + Vite | 3001→80 | ✅ **Implementado** | UI dashboard para periodistas |
 | **nginx_reverse_proxy** | Nginx 1.25 Alpine | 80, 443 | ✅ **Implementado** | Proxy reverso y balanceador |
+| **spider_factory** | Python 3.9 + FastAPI + Redis | 8005 | ✅ **Implementado** | Generación inteligente de spiders |
+| **module_spider_factory_frontend** | React 18 + TypeScript + Vite | 3002→80 | ✅ **Implementado** | UI para generación de spiders |
 
 ### **Flujo de Datos MVP**
 
-1. **🕷️ Extracción**: `module_scraper` recopila noticias de fuentes web usando Scrapy + Playwright
-2. **🔗 Conectividad**: `module_connector` transfiere datos entre scraper y pipeline  
-3. **⚙️ Procesamiento**: `module_pipeline` aplica IA/ML para análisis con LLMs (Groq/Anthropic)
-4. **🗄️ Almacenamiento**: Datos estructurados almacenados en Supabase (PostgreSQL + Storage)
-5. **📱 Presentación**: Dashboard web para periodistas accesible vía `nginx_reverse_proxy`
+1. **🤖 Generación**: `spider_factory` genera spiders inteligentes basados en análisis de sitios web
+2. **🕷️ Extracción**: `module_scraper` recopila noticias de fuentes web usando Scrapy + Playwright
+3. **🔗 Conectividad**: `module_connector` transfiere datos entre scraper y pipeline  
+4. **⚙️ Procesamiento**: `module_pipeline` aplica IA/ML para análisis con LLMs (Groq/Anthropic)
+5. **🗄️ Almacenamiento**: Datos estructurados almacenados en Supabase (PostgreSQL + Storage)
+6. **📱 Presentación**: Dashboard web para periodistas accesible vía `nginx_reverse_proxy`
 
 ---
 
@@ -98,10 +101,23 @@ LaMaquinaDeNoticias/
 │   │   ├── 📦 package.json              # Dependencias Node
 │   │   └── ⚙️ vite.config.ts            # Configuración build
 │   │
-│   └── 🌐 nginx_reverse_proxy/          # Proxy + Load Balancer
-│       ├── 🐳 docker/Dockerfile         # Container Nginx optimizado
-│       ├── ⚙️ config/nginx.conf         # Configuración proxy
-│       └── 📜 scripts/                  # Scripts deployment
+│   ├── 🌐 nginx_reverse_proxy/          # Proxy + Load Balancer
+│   │   ├── 🐳 docker/Dockerfile         # Container Nginx optimizado
+│   │   ├── ⚙️ config/nginx.conf         # Configuración proxy
+│   │   └── 📜 scripts/                  # Scripts deployment
+│   │
+│   ├── 🤖 spider_factory/               # Spider Generator (Python 3.9)
+│   │   ├── 🐳 Dockerfile                # Container FastAPI + Redis
+│   │   ├── 🌐 api.py                    # API REST generación spiders
+│   │   ├── 🧠 analyzer.py               # Análisis inteligente sitios
+│   │   ├── 📋 requirements.txt          # FastAPI + Redis + Jinja2
+│   │   └── 📚 README.md                 # Documentación spider factory
+│   │
+│   └── 📱 module_spider_factory_frontend/ # UI Spider Factory (React 18)
+│       ├── 🐳 Dockerfile                # Multi-stage: Node + Nginx
+│       ├── ⚛️ src/                      # Componentes React + TS
+│       ├── 📦 package.json              # Dependencias Node
+│       └── ⚙️ vite.config.ts            # Configuración build
 │
 ├── 🗄️ BaseDeDatos_SUPABASE/             # Configuración BD
 │   ├── 📜 migrations/                   # Migraciones SQL
@@ -121,6 +137,8 @@ LaMaquinaDeNoticias/
 | Pipeline API | `module_pipeline:8003` | `localhost:8003` | `/docs` |
 | Dashboard API | `module_dashboard_review_backend:8004` | `localhost:8004` | `/docs` |
 | Frontend UI | `module_dashboard_review_frontend:80` | `localhost` (via nginx) | N/A |
+| Spider Factory API | `spider_factory:8000` | `localhost:8005` | `/docs` |
+| Spider Factory UI | `module_spider_factory_frontend:80` | `localhost:3002` | N/A |
 
 ---
 
@@ -167,6 +185,10 @@ GROQ_API_KEY="gsk_tu-api-key"  # Requerida para module_pipeline
 # === CONFIGURACIÓN BÁSICA ===
 SCRAPER_TARGET_URLS="url1,url2,url3"  # URLs objetivo scraping
 LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR
+
+# === SPIDER FACTORY ===
+FIRECRAWL_API_KEY="fc-tu-api-key"  # Para análisis de sitios web
+SPIDER_FACTORY_REDIS_HOST="redis"  # Redis compartido
 ```
 
 **🔧 OPCIONALES (funcionalidades avanzadas):**
@@ -202,6 +224,8 @@ DEBUG_MODE="false"       # Solo para desarrollo
   - **module_dashboard_backend**: CORS, puerto API
   - **module_dashboard_frontend**: Variables VITE_*
   - **nginx_reverse_proxy**: Configuración de proxy
+  - **spider_factory**: Redis, límites de análisis, timeouts
+  - **module_spider_factory_frontend**: URLs de API y WebSocket
 
 **📁 Jerarquía de Configuración:**
 ```
