@@ -13,25 +13,18 @@ export type {
   EvaluacionEditorial
 } from './dashboard';
 
-// Feedback types - existing
+// Feedback types - all
 export type {
-  ImportanciaFeedbackRequest,
-  ImportanciaFeedbackResponse,
-  EvaluacionEditorialRequest,
-  EvaluacionEditorialResponse,
-  EvaluacionModalState,
-  ImportanciaFeedbackState,
-  FeedbackNotification,
-  FeedbackType
-} from './feedback';
-
-// Feedback types - new (Task 34)
-export type {
+  FeedbackType,
   Feedback,
   FeedbackResponse,
   FeedbackSubmission,
   ConfirmationDialogState,
-  NotificationProps
+  NotificationProps,
+  ImportanciaFeedbackRequest,
+  ImportanciaFeedbackResponse,
+  EvaluacionEditorialRequest,
+  EvaluacionEditorialResponse
 } from './feedback';
 
 // Filter and search types (existing)
@@ -61,3 +54,11 @@ export {
   DEFAULT_PAGE_SIZE,
   EVALUACION_OPTIONS
 } from './dashboard';
+
+// API Error types (importados directamente desde utils)
+export type {
+  ApiError
+} from '@/utils/api/errorHandling';
+export {
+  ApiErrorType
+} from '@/utils/api/errorHandling';

@@ -78,6 +78,11 @@ export interface Hecho {
   // UI-specific fields
   isLoading?: boolean;
   error?: string;
+  
+  // Additional fields for feedback compatibility
+  comentarios?: string;
+  evaluadoPor?: string;
+  fechaEvaluacion?: string;
 }
 
 export interface FilterState {

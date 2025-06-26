@@ -47,7 +47,7 @@ export function useDashboard(options: UseDashboardOptions = {}) {
       evaluacionEditorial: '',
       fechaInicio: null,
       fechaFin: null,
-      importanciaMin: null
+      importanciaMin: undefined
     },
     autoRefresh = false
   } = options;
@@ -100,7 +100,7 @@ export function useDashboard(options: UseDashboardOptions = {}) {
       const response = await dashboardApi.getHechos(currentFilters, {
         page: currentPage,
         limit: state.pagination.pageSize
-      }, { signal: abortController.signal });
+      });
       
       // ✅ Verificar si el request fue cancelado
       if (abortController.signal.aborted) {

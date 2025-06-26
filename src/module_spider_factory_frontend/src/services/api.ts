@@ -3,6 +3,14 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const API_TIMEOUT = 30000 // 30 segundos
 
+// Tipo para errores personalizados
+export interface CustomError {
+  message: string
+  status?: number
+  data?: any
+  originalError: AxiosError
+}
+
 // Crear instancia de Axios
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -57,25 +65,29 @@ api.interceptors.response.use(
     }
     return response
   },
-  async (error: AxiosError) => {
-    const originalRequest = error.config
-
+  async (error: AxiosError<{ message?: string; detail?: string }>) => {
     // Manejo de errores específicos
     if (error.response) {
+      const errorMessage = error.response.data?.message || 
+                          error.response.data?.detail || 
+                          'Error en la solicitud'
+      
       switch (error.response.status) {
         case 401:
           // Token expirado o inválido
           setAuthToken(null)
-          // Redirigir a login si es necesario
-          window.location.href = '/login'
+          // Solo redirigir a login si no estamos ya en esa página
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login'
+          }
           break
         
         case 403:
-          console.error('Acceso denegado')
+          console.error('Acceso denegado:', errorMessage)
           break
         
         case 404:
-          console.error('Recurso no encontrado')
+          console.error('Recurso no encontrado:', errorMessage)
           break
         
         case 429:
@@ -87,8 +99,11 @@ api.interceptors.response.use(
         case 502:
         case 503:
         case 504:
-          console.error('Error del servidor. Por favor intenta más tarde.')
+          console.error('Error del servidor:', errorMessage)
           break
+        
+        default:
+          console.error(`Error ${error.response.status}:`, errorMessage)
       }
     } else if (error.request) {
       // La request se hizo pero no se recibió respuesta
@@ -99,8 +114,11 @@ api.interceptors.response.use(
     }
 
     // Transformar error para un manejo más fácil
-    const customError = {
-      message: error.response?.data?.message || error.message || 'Error desconocido',
+    const customError: CustomError = {
+      message: error.response?.data?.message || 
+               error.response?.data?.detail || 
+               error.message || 
+               'Error desconocido',
       status: error.response?.status,
       data: error.response?.data,
       originalError: error,

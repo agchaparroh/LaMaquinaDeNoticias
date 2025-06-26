@@ -9,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from loguru import logger
 
 # Import custom exceptions from utils
-from utils.exceptions import BaseAPIException
+from ..utils.exceptions import BaseAPIException
 
 
 async def base_exception_handler(request: Request, exc: BaseAPIException) -> JSONResponse:

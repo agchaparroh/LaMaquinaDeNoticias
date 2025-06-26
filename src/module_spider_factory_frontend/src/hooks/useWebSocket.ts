@@ -1,28 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import type { WebSocketMessage, BatchProgressMessage } from '@/types'
 
 const WS_BASE_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000'
-
-export interface WebSocketMessage {
-  type: string
-  session_id?: string
-  timestamp: string
-  [key: string]: any
-}
-
-export interface BatchProgressMessage extends WebSocketMessage {
-  type: 'batch_progress'
-  batch_id: string
-  progress: {
-    current: number
-    total: number
-    percentage: number
-  }
-  item: {
-    url: string
-    status: string
-    [key: string]: any
-  }
-}
 
 export interface AnalysisProgressMessage extends WebSocketMessage {
   type: 'analysis_progress'
@@ -222,8 +201,8 @@ export function useBatchProgress(
   const [progress, setProgress] = useState<BatchProgressMessage | null>(null)
   
   const handleMessage = useCallback((message: WebSocketMessage) => {
-    if (message.type === 'batch_progress' && (message as BatchProgressMessage).batch_id === batch_id) {
-      const batchMessage = message as BatchProgressMessage
+    if (message.type === 'batch_progress' && 'batch_id' in message && (message as any).batch_id === batch_id) {
+      const batchMessage = message as unknown as BatchProgressMessage
       setProgress(batchMessage)
       onProgress?.(batchMessage)
     }
@@ -247,9 +226,10 @@ export function useAnalysisProgress(
   const handleMessage = useCallback((message: WebSocketMessage) => {
     if (
       message.type === 'analysis_progress' && 
-      (message as AnalysisProgressMessage).site_url === site_url
+      'site_url' in message &&
+      (message as any).site_url === site_url
     ) {
-      const analysisMessage = message as AnalysisProgressMessage
+      const analysisMessage = message as unknown as AnalysisProgressMessage
       setProgress(analysisMessage)
       onProgress?.(analysisMessage)
     }

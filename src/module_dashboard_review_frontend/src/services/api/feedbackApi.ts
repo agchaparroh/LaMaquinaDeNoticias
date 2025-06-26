@@ -28,14 +28,11 @@ export const feedbackApi = {
       }
       
       const mockResponse: ImportanciaFeedbackResponse = {
-        id: Math.floor(Math.random() * 10000),
+        success: true,
+        message: 'Importancia actualizada exitosamente',
         hechoId: hechoId,
-        nuevaImportancia: request.nuevaImportancia,
-        importanciaAnterior: request.importanciaAnterior || 5,
-        comentario: request.comentario,
-        evaluadoPor: 'Usuario Mock',
-        fechaEvaluacion: new Date().toISOString(),
-        estado: 'aplicado'
+        importancia: request.importancia,
+        updatedAt: new Date().toISOString()
       };
       
       return { data: mockResponse };
@@ -60,16 +57,12 @@ export const feedbackApi = {
       }
       
       const mockResponse: EvaluacionEditorialResponse = {
-        id: Math.floor(Math.random() * 10000),
+        success: true,
+        message: 'Evaluación editorial registrada correctamente',
         hechoId: hechoId,
         evaluacion: request.evaluacion,
-        comentario: request.comentario,
-        justificacion: request.justificacion,
-        fuentesConsultadas: request.fuentesConsultadas || [],
-        evaluadoPor: 'Usuario Mock',
-        fechaEvaluacion: new Date().toISOString(),
-        estado: 'registrado',
-        requiereRevision: request.evaluacion === 'falso'
+        evaluadoPor: request.evaluadoPor || 'Usuario Mock',
+        fechaEvaluacion: new Date().toISOString()
       };
       
       return { data: mockResponse };

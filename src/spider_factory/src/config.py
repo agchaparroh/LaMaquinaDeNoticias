@@ -195,7 +195,7 @@ class RedisKeys:
 
 
 # Instancia global de configuración
-config = SpiderFactoryConfig()
+settings = SpiderFactoryConfig()
 redis_manager = RedisManager()
 
 

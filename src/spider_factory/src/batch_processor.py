@@ -13,9 +13,9 @@ from pathlib import Path
 import pandas as pd
 from io import StringIO
 
-from analyzer import SmartAnalyzer, SiteAnalysisRequest, AnalysisResult
-from generator import SpiderGenerator
-from websocket_manager import ConnectionManager
+from .analyzer import SmartAnalyzer, SiteAnalysisRequest, AnalysisResult
+from .generator import SpiderGenerator
+from .websocket_manager import ConnectionManager
 from pydantic import BaseModel, HttpUrl
 
 # Configurar logging

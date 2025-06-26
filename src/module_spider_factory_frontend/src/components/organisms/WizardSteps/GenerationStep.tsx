@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Box,
   Typography,
@@ -11,12 +11,10 @@ import {
 import {
   Download as DownloadIcon,
   ContentCopy as CopyIcon,
-  Check as CheckIcon,
-  OpenInNew as OpenIcon
+  Check as CheckIcon
 } from '@mui/icons-material'
 import { LoadingSpinner, CodeBlock } from '@components/atoms'
-import { SpiderCode } from '@hooks/useSpiderGeneration'
-import { useState } from 'react'
+import type { SpiderCode } from '@/types'
 
 interface GenerationStepProps {
   isGenerating: boolean

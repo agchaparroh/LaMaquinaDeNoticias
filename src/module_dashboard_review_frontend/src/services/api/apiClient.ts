@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { env } from '@/utils/env';
 
 /**
@@ -19,7 +19,7 @@ const apiClient: AxiosInstance = axios.create({
  * Interceptor de Request - Agregar headers de autenticación automáticamente
  */
 apiClient.interceptors.request.use(
-  (config: AxiosRequestConfig): AxiosRequestConfig => {
+  (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
     // Agregar token de autorización si está disponible
     const token = localStorage.getItem('auth_token');
     if (token && config.headers) {

@@ -17,12 +17,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 import httpx
 
-from analyzer import SmartAnalyzer, SiteAnalysisRequest, AnalysisResult, ScrapingStrategy
-from generator import SpiderGenerator
-from patterns import PatternStorage, PatternStatus, SitePattern
-from config import SpiderFactoryConfig, get_redis_client
-from websocket_manager import ConnectionManager
-from batch_processor import BatchProcessor, BatchRequest, BatchResponse, BatchSite
+from .analyzer import SmartAnalyzer, SiteAnalysisRequest, AnalysisResult, AnalysisStrategy
+from .generator import SpiderGenerator
+from .patterns import PatternStorage, PatternStatus, Pattern
+from .config import settings, get_redis_client
+from .websocket_manager import ConnectionManager
+from .batch_processor import BatchProcessor, BatchRequest, BatchResponse, BatchSite
 
 # Pydantic models para API
 from pydantic import BaseModel, HttpUrl, Field
@@ -30,9 +30,6 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from enum import Enum
 
-
-# Configuración
-config = SpiderFactoryConfig()
 
 # Configuración de logging
 logging.basicConfig(level=logging.INFO)
@@ -185,7 +182,7 @@ async def health_check():
         services["redis"] = f"error: {str(e)}"
     
     # Verificar Firecrawl
-    services["firecrawl"] = "configured" if config.firecrawl_api_key else "not_configured"
+    services["firecrawl"] = "configured" if settings.firecrawl_api_key else "not_configured"
     
     # Verificar generador
     services["generator"] = "healthy" if generator.templates_dir.exists() else "templates_missing"

@@ -1,6 +1,10 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useState, useCallback } from 'react'
 import { spiderFactoryService } from '@services/spiderFactory.service'
+import type { AnalysisResult, SpiderCode } from '@/types'
+
+// Re-exportar tipos para mantener compatibilidad
+export type { AnalysisResult, SpiderCode } from '@/types'
 
 export interface SiteAnalysisRequest {
   url: string
@@ -8,38 +12,11 @@ export interface SiteAnalysisRequest {
   force_analysis?: boolean
 }
 
-export interface AnalysisResult {
-  domain: string
-  has_rss: boolean
-  rss_url?: string
-  pattern_confidence: number
-  suggested_strategy: 'rss' | 'scraping' | 'playwright'
-  selectors?: {
-    article_link: string
-    title: string
-    content: string
-    date?: string
-    author?: string
-    category?: string
-  }
-  sample_articles?: Array<{
-    title: string
-    url: string
-    date?: string
-  }>
-}
-
 export interface SpiderGenerationRequest {
   analysis_result: AnalysisResult
   spider_name: string
   start_urls: string[]
   custom_settings?: Record<string, any>
-}
-
-export interface SpiderCode {
-  filename: string
-  code: string
-  formatted_code: string
 }
 
 interface UseSpiderGenerationReturn {

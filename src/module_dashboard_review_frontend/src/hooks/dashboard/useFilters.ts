@@ -42,7 +42,7 @@ export function useFilters(options: UseFiltersOptions = {}) {
       evaluacionEditorial: '',
       fechaInicio: null,
       fechaFin: null,
-      importanciaMin: null
+      importanciaMin: undefined
     };
   }
 
@@ -157,9 +157,15 @@ export function useFilters(options: UseFiltersOptions = {}) {
     
     try {
       const response = await dashboardApi.getFilterOptions();
+      const filterOptions: FilterOptions = {
+        medios: response.data?.medios || [],
+        paises: response.data?.paises || [],
+        tiposHecho: response.data?.tiposHecho || [],
+        evaluacionesEditoriales: ['pendiente_revision_editorial', 'verificado_ok_editorial', 'declarado_falso_editorial', 'sin_evaluar']
+      };
       setState(prev => ({
         ...prev,
-        options: response.data,
+        options: filterOptions,
         optionsLoading: false,
         optionsError: null
       }));
@@ -188,7 +194,7 @@ export function useFilters(options: UseFiltersOptions = {}) {
     }
 
     // Validar importancia mínima
-    if (filters.importanciaMin !== null) {
+    if (filters.importanciaMin !== undefined && filters.importanciaMin !== null) {
       if (filters.importanciaMin < 1 || filters.importanciaMin > 10) {
         errors.importancia = 'La importancia debe estar entre 1 y 10';
       }
@@ -320,11 +326,11 @@ export function useFilters(options: UseFiltersOptions = {}) {
     
     toggleEvaluacion: (evaluacion: string) => {
       const currentEval = state.filters.evaluacionEditorial;
-      updateFilter('evaluacionEditorial', currentEval === evaluacion ? '' : evaluacion);
+      updateFilter('evaluacionEditorial', currentEval === evaluacion ? '' : evaluacion as FilterState['evaluacionEditorial']);
     },
     
     setImportanceRange: (min: number | null) => {
-      updateFilter('importanciaMin', min);
+      updateFilter('importanciaMin', min === null ? undefined : min);
     }
   };
 }

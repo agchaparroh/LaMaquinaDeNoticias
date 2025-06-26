@@ -6,15 +6,14 @@ Sistema inteligente de generación de spiders para scraping de noticias
 from .analyzer import SmartAnalyzer
 from .generator import SpiderGenerator
 from .patterns import PatternStorage
-from .config import ConnectionManager, settings
+from .config import settings
+from .websocket_manager import ConnectionManager
 from .models import (
     AnalysisRequest,
     AnalysisResponse,
-    GenerateRequest,
-    GenerateResponse,
-    PatternSearchRequest,
-    SiteInfo,
-    AnalysisResult
+    GenerateSpiderRequest,
+    GenerateSpiderResponse,
+    PatternSearchRequest
 )
 
 __all__ = [
@@ -25,11 +24,9 @@ __all__ = [
     'settings',
     'AnalysisRequest',
     'AnalysisResponse',
-    'GenerateRequest',
-    'GenerateResponse',
-    'PatternSearchRequest',
-    'SiteInfo',
-    'AnalysisResult'
+    'GenerateSpiderRequest',
+    'GenerateSpiderResponse',
+    'PatternSearchRequest'
 ]
 
 __version__ = '2.0.0'

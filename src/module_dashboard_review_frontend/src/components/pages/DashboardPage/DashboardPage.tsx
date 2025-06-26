@@ -50,7 +50,10 @@ export const DashboardPage: React.FC = () => {
   const handleImportanceChange = useCallback(
     async (hechoId: number, newImportance: number) => {
       try {
-        await feedback.submitImportanciaFeedback(hechoId, newImportance);
+        await feedback.submitImportanciaFeedback(hechoId, { 
+          hechoId, 
+          importancia: newImportance 
+        });
         snackbarRef.current?.showSuccess(`Importancia actualizada a ${newImportance}/10`);
         
         // Refresh data to reflect changes
@@ -67,8 +70,9 @@ export const DashboardPage: React.FC = () => {
     async (hechoId: number) => {
       try {
         await feedback.submitEvaluacionEditorial(hechoId, {
+          hechoId: hechoId,
           evaluacion: 'falso',
-          justificacion: 'Marcado como falso desde el dashboard',
+          comentarios: 'Marcado como falso desde el dashboard',
         });
         snackbarRef.current?.showSuccess('Hecho marcado como falso correctamente');
         
@@ -89,7 +93,7 @@ export const DashboardPage: React.FC = () => {
 
   const isImportanceLoading = useCallback(
     (hechoId: number) => {
-      return feedback.isSubmitting(hechoId, 'importancia');
+      return feedback.isSubmitting(hechoId);
     },
     [feedback]
   );

@@ -8,8 +8,7 @@ import {
   ListItem,
   ListItemText,
   Button,
-  Alert,
-  Skeleton
+  Alert
 } from '@mui/material'
 import {
   CheckCircle as CheckIcon,
@@ -18,7 +17,7 @@ import {
   Javascript as JsIcon
 } from '@mui/icons-material'
 import { LoadingSpinner, StatusChip } from '@components/atoms'
-import { AnalysisResult } from '@hooks/useSpiderGeneration'
+import type { AnalysisResult } from '@/types'
 
 interface AnalysisStepProps {
   isAnalyzing: boolean

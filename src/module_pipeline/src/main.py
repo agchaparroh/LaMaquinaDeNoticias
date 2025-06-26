@@ -57,6 +57,11 @@ if settings.CORS_ORIGINS:
     )
     main_logger.info(f"CORS middleware configurado para orígenes: {settings.CORS_ORIGINS}")
 
+# Configurar middleware de métricas (debe estar antes del startup)
+from .monitoring.metrics_collector import create_middleware_integration
+create_middleware_integration(app)
+main_logger.info("Middleware de métricas configurado")
+
 # --- Manejadores de Excepciones Específicos ---
 
 # Importar utilidades de manejo de errores
@@ -440,11 +445,6 @@ async def startup_event():
     global pipeline_controller
     pipeline_controller = PipelineController()
     main_logger.info("PipelineController inicializado")
-    
-    # Configurar middleware de métricas AQUÍ
-    from .monitoring.metrics_collector import create_middleware_integration
-    create_middleware_integration(app)
-    main_logger.info("Middleware de métricas configurado")
     
     # Configurar el servicio de tracking con los valores de configuración
     from .utils.config import JOB_RETENTION_MINUTES, JOB_MAX_STORED

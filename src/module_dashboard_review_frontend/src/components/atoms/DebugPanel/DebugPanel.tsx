@@ -30,14 +30,13 @@ import {
   ExpandMoreRounded,
   ExpandLessRounded,
   RefreshRounded,
-  MemoryRounded,
   NetworkCheckRounded,
   ApiRounded,
   SpeedRounded,
   VisibilityRounded
 } from '@mui/icons-material';
 import { env } from '@/utils/env';
-import { useDebugNetwork, useDebugMemory } from '@/utils/debug';
+import { useDebugNetwork } from '@/utils/debug';
 
 export interface DebugPanelProps {
   position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
@@ -58,7 +57,6 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({
   const [debugData, setDebugData] = useState<any>({});
 
   const networkInfo = useDebugNetwork();
-  const memoryInfo = useDebugMemory('DebugPanel', 5000);
 
   // Don't render in production
   if (!env.isDevelopment()) {
@@ -169,14 +167,6 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({
                 size="small"
                 color={networkInfo?.online ? 'success' : 'error'}
               />
-              {memoryInfo && (
-                <Chip
-                  icon={<MemoryRounded />}
-                  label={`${memoryInfo.used}MB`}
-                  size="small"
-                  color="info"
-                />
-              )}
             </Stack>
           </Box>
 
@@ -229,12 +219,16 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({
                         </Typography>
                         {networkInfo.connection && (
                           <>
-                            <Typography variant="caption">
-                              Type: {networkInfo.connection.effectiveType}
-                            </Typography>
-                            <Typography variant="caption">
-                              Speed: {networkInfo.connection.downlink} Mbps
-                            </Typography>
+                            {networkInfo.connection.effectiveType && (
+                              <Typography variant="caption">
+                                Type: {networkInfo.connection.effectiveType}
+                              </Typography>
+                            )}
+                            {networkInfo.connection.downlink && (
+                              <Typography variant="caption">
+                                Speed: {networkInfo.connection.downlink} Mbps
+                              </Typography>
+                            )}
                           </>
                         )}
                       </Stack>
@@ -242,27 +236,6 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({
                   </Card>
                 )}
 
-                {/* Memory Info */}
-                {memoryInfo && (
-                  <Card variant="outlined">
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Memory Usage
-                      </Typography>
-                      <Stack spacing={1}>
-                        <Typography variant="caption">
-                          Used: {memoryInfo.used} MB
-                        </Typography>
-                        <Typography variant="caption">
-                          Total: {memoryInfo.total} MB
-                        </Typography>
-                        <Typography variant="caption">
-                          Limit: {memoryInfo.limit} MB
-                        </Typography>
-                      </Stack>
-                    </CardContent>
-                  </Card>
-                )}
               </Stack>
             )}
 
@@ -377,27 +350,6 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({
                   </CardContent>
                 </Card>
 
-                {memoryInfo && (
-                  <Card variant="outlined">
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Typography variant="caption" fontWeight="bold" gutterBottom>
-                        Memory Trend
-                      </Typography>
-                      <Box sx={{ 
-                        height: 40, 
-                        bgcolor: 'grey.100', 
-                        borderRadius: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <Typography variant="caption">
-                          {((memoryInfo.used / memoryInfo.limit) * 100).toFixed(1)}% used
-                        </Typography>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                )}
               </Stack>
             )}
           </Box>

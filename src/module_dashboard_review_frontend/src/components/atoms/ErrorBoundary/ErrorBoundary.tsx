@@ -28,7 +28,7 @@ interface State {
  * Proporciona UI amigable cuando ocurren errores inesperados
  */
 export class ErrorBoundary extends Component<Props, State> {
-  private retryTimeoutId: NodeJS.Timeout | null = null;
+  private retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(props: Props) {
     super(props);

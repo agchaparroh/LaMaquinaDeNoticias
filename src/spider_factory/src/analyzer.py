@@ -23,7 +23,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from .config import (
     get_redis_client, 
     RedisKeys, 
-    config,
+    settings,
     SpiderFactoryConfig
 )
 
@@ -93,7 +93,7 @@ class SmartAnalyzer:
     
     def __init__(self):
         self.redis = get_redis_client()
-        self.config = config
+        self.config = settings
         self._http_client = None
         
     @property

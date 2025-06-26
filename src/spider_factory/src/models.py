@@ -115,7 +115,7 @@ class GenerateSpiderRequest(BaseModel):
     spider_name: str = Field(
         ..., 
         description="Nombre del spider (snake_case)",
-        regex="^[a-z][a-z0-9_]*$"
+        pattern="^[a-z][a-z0-9_]*$"
     )
     media_name: str = Field(
         ..., 

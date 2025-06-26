@@ -4,7 +4,7 @@
 // API Common types
 export type {
   ApiResponse,
-  ApiError,
+  ApiError as ApiErrorResponse, // Renombrar para evitar conflicto
   ApiClientConfig,
   RequestInterceptor,
   ResponseInterceptor

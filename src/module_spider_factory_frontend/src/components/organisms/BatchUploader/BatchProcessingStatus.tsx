@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { Global, css } from '@emotion/react'
 import {
   Box,
   Paper,
@@ -20,21 +22,8 @@ import {
   ExpandMore as ExpandIcon,
   ExpandLess as CollapseIcon
 } from '@mui/icons-material'
-import { useState } from 'react'
 import { StatusChip } from '@components/atoms'
-
-export interface BatchItem {
-  id: string
-  url: string
-  name: string
-  status: 'pending' | 'processing' | 'completed' | 'error'
-  progress?: number
-  result?: {
-    spider_count: number
-    strategy?: string
-    error?: string
-  }
-}
+import type { BatchItem } from '@/types'
 
 interface BatchProcessingStatusProps {
   items: BatchItem[]
@@ -215,15 +204,17 @@ function BatchProcessingStatus({
         ))}
       </List>
 
-      <style jsx global>{`
-        @keyframes rotate {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .rotating {
-          animation: rotate 1s linear infinite;
-        }
-      `}</style>
+      <Global 
+        styles={css`
+          @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          .rotating {
+            animation: rotate 1s linear infinite;
+          }
+        `} 
+      />
     </Box>
   )
 }

@@ -74,7 +74,7 @@ export function useFeedback(options: UseFeedbackOptions = {}) {
   });
 
   // Referencias para debounce
-  const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const abortControllers = useRef<Record<string, AbortController>>({});
 
   /**

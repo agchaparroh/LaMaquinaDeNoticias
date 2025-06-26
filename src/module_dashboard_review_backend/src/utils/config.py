@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     @property
     def LOGGING_CONFIG(self) -> Dict[str, Any]:
         """Get logging configuration for loguru"""
-        from utils.logging_config import setup_logging
+        from .logging_config import setup_logging
         return setup_logging(self.log_level, self.environment)
 
 

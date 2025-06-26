@@ -6,6 +6,21 @@ import {
   SpiderCode,
 } from '@hooks/useSpiderGeneration'
 
+// Interfaces extendidas para propiedades adicionales del servicio
+interface ExtendedSiteAnalysisRequest extends SiteAnalysisRequest {
+  section_name?: string
+  check_rss?: boolean
+}
+
+interface ExtendedSpiderGenerationRequest extends SpiderGenerationRequest {
+  pattern_id?: string
+  media_name?: string
+  excluded_urls?: string[]
+  follow_pagination?: boolean
+  max_pages?: number
+  area_geografica?: string
+}
+
 export interface DuplicateCheckRequest {
   domain: string
   name?: string
@@ -108,11 +123,12 @@ class SpiderFactoryService {
 
   // Analysis
   async analyzeSite(request: SiteAnalysisRequest): Promise<AnalysisResult> {
+    const extendedRequest = request as ExtendedSiteAnalysisRequest
     const payload = {
       url: request.url,
-      section_name: request.section_name || null,
+      section_name: extendedRequest.section_name || null,
       force_analysis: request.force_analysis || false,
-      check_rss: request.check_rss !== false,
+      check_rss: extendedRequest.check_rss !== false,
     }
     
     return apiClient.post<AnalysisResult>('/analyze', payload)
@@ -120,15 +136,16 @@ class SpiderFactoryService {
 
   // Generation
   async generateSpider(request: SpiderGenerationRequest): Promise<SpiderCode> {
+    const extendedRequest = request as ExtendedSpiderGenerationRequest
     const payload = {
-      analysis_url: request.analysis_result ? undefined : request.analysis_result,
-      pattern_id: request.pattern_id,
+      analysis_result: request.analysis_result,
+      pattern_id: extendedRequest.pattern_id,
       spider_name: request.spider_name,
-      media_name: request.media_name || request.spider_name,
-      excluded_urls: request.excluded_urls || [],
-      follow_pagination: request.follow_pagination !== false,
-      max_pages: request.max_pages || 100,
-      area_geografica: request.area_geografica,
+      media_name: extendedRequest.media_name || request.spider_name,
+      excluded_urls: extendedRequest.excluded_urls || [],
+      follow_pagination: extendedRequest.follow_pagination !== false,
+      max_pages: extendedRequest.max_pages || 100,
+      area_geografica: extendedRequest.area_geografica,
       custom_settings: request.custom_settings || {},
     }
     

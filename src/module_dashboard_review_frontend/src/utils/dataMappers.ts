@@ -115,6 +115,7 @@ export function mapFilterOptionsFromBackend(backendOptions: any) {
   return {
     medios: backendOptions.medios_disponibles || [],
     paises: backendOptions.paises_disponibles || [],
+    tiposHecho: backendOptions.tipos_hecho || [],
     importanciaRange: {
       min: backendOptions.importancia_range?.min || 1,
       max: backendOptions.importancia_range?.max || 10

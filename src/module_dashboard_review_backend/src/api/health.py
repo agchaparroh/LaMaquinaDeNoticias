@@ -9,7 +9,9 @@ from loguru import logger
 
 from ..models.responses import HealthResponse, DetailedHealthResponse
 from ..services.supabase_client import SupabaseClient
-from ..main import START_TIME
+
+# Store start time when module is imported
+START_TIME = time.time()
 
 # Create router instance
 router = APIRouter()

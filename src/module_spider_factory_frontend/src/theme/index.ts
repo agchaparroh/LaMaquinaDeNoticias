@@ -1,64 +1,37 @@
-import { createTheme } from '@mui/material/styles'
+import createTheme from '@mui/material/styles/createTheme'
 
 const theme = createTheme({
-  cssVariables: {
-    colorSchemeSelector: 'data'
-  },
-  colorSchemes: {
-    light: {
-      palette: {
-        primary: {
-          main: '#1976d2',
-          light: '#42a5f5',
-          dark: '#1565c0',
-          contrastText: '#ffffff',
-        },
-        secondary: {
-          main: '#dc004e',
-          light: '#e33371',
-          dark: '#9a0036',
-          contrastText: '#ffffff',
-        },
-        success: {
-          main: '#2e7d32',
-          light: '#4caf50',
-          dark: '#1b5e20',
-        },
-        warning: {
-          main: '#ed6c02',
-          light: '#ff9800',
-          dark: '#e65100',
-        },
-        error: {
-          main: '#d32f2f',
-          light: '#ef5350',
-          dark: '#c62828',
-        },
-        background: {
-          default: '#fafafa',
-          paper: '#ffffff',
-        },
-      },
+  palette: {
+    primary: {
+      main: '#1976d2',
+      light: '#42a5f5',
+      dark: '#1565c0',
+      contrastText: '#ffffff',
     },
-    dark: {
-      palette: {
-        primary: {
-          main: '#90caf9',
-          light: '#e3f2fd',
-          dark: '#42a5f5',
-          contrastText: '#000000',
-        },
-        secondary: {
-          main: '#f48fb1',
-          light: '#ffc0cb',
-          dark: '#ec407a',
-          contrastText: '#000000',
-        },
-        background: {
-          default: '#121212',
-          paper: '#1e1e1e',
-        },
-      },
+    secondary: {
+      main: '#dc004e',
+      light: '#e33371',
+      dark: '#9a0036',
+      contrastText: '#ffffff',
+    },
+    success: {
+      main: '#2e7d32',
+      light: '#4caf50',
+      dark: '#1b5e20',
+    },
+    warning: {
+      main: '#ed6c02',
+      light: '#ff9800',
+      dark: '#e65100',
+    },
+    error: {
+      main: '#d32f2f',
+      light: '#ef5350',
+      dark: '#c62828',
+    },
+    background: {
+      default: '#fafafa',
+      paper: '#ffffff',
     },
   },
   typography: {

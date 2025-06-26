@@ -5,6 +5,7 @@ import apiClient from '@/services/api/apiClient';
 import { API_ENDPOINTS, buildUrl } from '@/services/api/endpoints';
 import type { ApiResponse } from '@/services/api';
 import type { Hecho, FilterState } from '@/types/domain';
+import type { GetFilterOptionsResponse } from '@/types/api';
 import { mockHechos, mockFilterOptions, generateMockHechos } from '@/utils/mocks';
 import { 
   mapHechosFromBackend, 
@@ -271,6 +272,7 @@ interface BackendHechosResponse {
 interface BackendFilterOptionsResponse {
   medios_disponibles: string[];
   paises_disponibles: string[];
+  tipos_hecho: string[];
   importancia_range: {
     min: number;
     max: number;
@@ -312,7 +314,7 @@ export const dashboardApi = {
    */
   getHechos: async (
     filters?: FilterState,
-    pagination?: { page?: number; limit?: number } = {}
+    pagination: { page?: number; limit?: number } = {}
   ): Promise<ApiResponse<HechosListResponse>> => {
     try {
       // Check if we should force mock mode
@@ -413,7 +415,7 @@ export const dashboardApi = {
   /**
    * Obtiene opciones disponibles para filtros
    */
-  getFilterOptions: async (): Promise<ApiResponse<FilterOptionsResponse>> => {
+  getFilterOptions: async (): Promise<ApiResponse<GetFilterOptionsResponse>> => {
     try {
       const url = API_ENDPOINTS.DASHBOARD.FILTROS_OPCIONES;
       
@@ -424,6 +426,7 @@ export const dashboardApi = {
       const mockBackendResponse: BackendFilterOptionsResponse = {
         medios_disponibles: mockFilterOptions.medios,
         paises_disponibles: mockFilterOptions.paises,
+        tipos_hecho: ['SUCESO', 'ANUNCIO', 'DECLARACION', 'BIOGRAFIA', 'CONCEPTO', 'NORMATIVA', 'EVENTO'],
         importancia_range: {
           min: 1,
           max: 10

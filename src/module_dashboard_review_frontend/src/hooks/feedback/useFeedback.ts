@@ -205,7 +205,7 @@ export const useFeedback = () => {
   }, []);
 
   // Verificar si un hecho específico está siendo procesado
-  const isSubmitting = useCallback((hechoId: number, type?: 'importancia' | 'evaluacion'): boolean => {
+  const isHechoSubmitting = useCallback((hechoId: number, type?: 'importancia' | 'evaluacion'): boolean => {
     const state = submittingStates[hechoId];
     if (!state) return false;
     if (type) return state.type === type && state.isSubmitting;
@@ -238,7 +238,7 @@ export const useFeedback = () => {
     clearError,
     
     // Funciones de estado por hecho
-    isSubmitting,
+    isSubmitting: isHechoSubmitting,
     getErrorMessage,
     
     // Estados computados

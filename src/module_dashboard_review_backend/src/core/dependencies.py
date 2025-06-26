@@ -7,9 +7,9 @@ from typing import Generator, Optional
 from loguru import logger
 
 # Import real implementations
-from services.supabase_client import SupabaseClient
-from services.hechos_service import HechosService
-from services.feedback_service import FeedbackService
+from ..services.supabase_client import SupabaseClient
+from ..services.hechos_service import HechosService
+from ..services.feedback_service import FeedbackService
 
 
 # Singleton instances (will be replaced with proper initialization in future tasks)

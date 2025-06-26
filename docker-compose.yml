@@ -1,5 +1,3 @@
-version: '3.9'
-
 networks:
   lamacquina_network:
     driver: bridge
@@ -39,8 +37,7 @@ services:
       context: ./src/module_pipeline
       dockerfile: Dockerfile
     container_name: lamacquina_pipeline
-    working_dir: /app/src
-    command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+    command: /bin/sh -c "cd /app && python -m uvicorn src.main:app --host 0.0.0.0 --port 8003 --reload"
     volumes:
       - ./src/module_pipeline:/app
     ports:
@@ -56,8 +53,7 @@ services:
       context: ./src/module_dashboard_review_backend
       dockerfile: Dockerfile
     container_name: lamacquina_dashboard_review_backend
-    working_dir: /app/src
-    command: uvicorn main:app --host 0.0.0.0 --port 8004 --reload
+    command: python -m uvicorn src.main:app --host 0.0.0.0 --port 8004 --reload
     volumes:
       - ./src/module_dashboard_review_backend:/app
     ports:
@@ -119,8 +115,8 @@ services:
       - scrapydweb_data:/var/lib/scrapydweb
       # Proyectos Scrapy (para deploy)
       - ./src/module_scraper:/app/projects:ro
-      # Compartir logs de Scrapyd (solo lectura)
-      - scrapyd_logs:/var/lib/scrapydweb/scrapyd_logs:ro
+      # Compartir logs de Scrapyd
+      - scrapyd_logs:/var/lib/scrapydweb/scrapyd_logs
     ports:
       - "5000:5000"
     environment:
@@ -156,8 +152,6 @@ services:
       context: ./src/spider_factory
       dockerfile: Dockerfile
     container_name: lamacquina_spider_factory_backend
-    ports:
-      - "8005:8000"
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -180,11 +174,10 @@ services:
       context: ./src/module_spider_factory_frontend
       dockerfile: Dockerfile
     container_name: lamacquina_spider_factory_frontend
-    ports:
-      - "3002:80"
     environment:
-      - VITE_API_URL=http://spider_factory_backend:8000
-      - VITE_WS_URL=ws://spider_factory_backend:8000
+      - VITE_API_URL=/spider-factory/api
+      - VITE_WS_URL=/spider-factory/ws
+      - VITE_BASE_PATH=/spider-factory
     networks:
       - lamacquina_network
     depends_on:
@@ -199,6 +192,8 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
     networks:
       - lamacquina_network
     restart: unless-stopped
@@ -227,6 +222,8 @@ services:
       - module_pipeline
       - module_dashboard_review_backend
       - module_dashboard_review_frontend
+      - spider_factory_backend
+      - spider_factory_frontend
     networks:
       - lamacquina_network
     restart: unless-stopped

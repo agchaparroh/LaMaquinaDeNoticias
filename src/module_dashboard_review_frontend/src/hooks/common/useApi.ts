@@ -2,7 +2,8 @@
 // Hook reutilizable para manejo de API calls con estado
 
 import { useState, useCallback } from 'react';
-import type { ApiResponse, ApiError } from '@/services/api';
+import type { ApiResponse } from '@/services/api';
+import { ApiErrorType, type ApiError } from '@/utils/api/errorHandling';
 
 /**
  * Hook states for API operations
@@ -49,9 +50,11 @@ export const useApi = <T>(
       });
     } catch (error: any) {
       const apiError: ApiError = {
+        type: ApiErrorType.UNKNOWN,
         message: error.message || 'Error desconocido',
         status: error.status || 500,
         details: error,
+        timestamp: new Date().toISOString()
       };
 
       setState({

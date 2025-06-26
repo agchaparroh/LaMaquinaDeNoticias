@@ -73,11 +73,11 @@ export const HechoDetailModal: React.FC<HechoDetailModalProps> = ({
     if (confirmationState.action) {
       confirmationState.action();
     }
-    setConfirmationState(prev => ({ ...prev, isOpen: false }));
+    setConfirmationState((prev: ConfirmationDialogState) => ({ ...prev, isOpen: false }));
   };
 
   const handleConfirmationCancel = () => {
-    setConfirmationState(prev => ({ ...prev, isOpen: false }));
+    setConfirmationState((prev: ConfirmationDialogState) => ({ ...prev, isOpen: false }));
   };
 
   const handleImportanceChange = (_: Event, newValue: number | number[]) => {
@@ -512,10 +512,10 @@ export const HechoDetailModal: React.FC<HechoDetailModalProps> = ({
             color="secondary"
             startIcon={<WarningIcon />}
             onClick={handleMarkAsFalse}
-            disabled={hecho.evaluacionEditorial === 'falso'}
+            disabled={hecho.evaluacionEditorial === 'declarado_falso_editorial'}
             sx={{ fontWeight: 600 }}
           >
-            {hecho.evaluacionEditorial === 'falso' ? '✓ Marcado como Falso' : '⚠️ Marcar como Falso'}
+            {hecho.evaluacionEditorial === 'declarado_falso_editorial' ? '✓ Marcado como Falso' : '⚠️ Marcar como Falso'}
           </Button>
           
           <Button

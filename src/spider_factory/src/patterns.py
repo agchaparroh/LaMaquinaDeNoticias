@@ -14,7 +14,7 @@ import uuid
 from pydantic import BaseModel, Field, validator
 import redis
 
-from .config import get_redis_client, RedisKeys, config
+from .config import get_redis_client, RedisKeys, settings
 from .analyzer import AnalysisStrategy, SiteSelectors
 
 
@@ -155,7 +155,7 @@ class PatternStorage:
     
     def __init__(self):
         self.redis = get_redis_client()
-        self.config = config
+        self.config = settings
     
     def save_pattern(self, pattern: Pattern) -> bool:
         """

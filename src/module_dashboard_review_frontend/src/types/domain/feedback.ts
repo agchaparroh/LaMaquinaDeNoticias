@@ -1,1 +1,85 @@
-// Tipos para el sistema de feedback editorial\nexport type FeedbackType = 'IMPORTANCE' | 'FACTUAL_ERROR' | 'GENERAL';\n\nexport interface Feedback {\n  hechoId: number;\n  type: FeedbackType;\n  isFalse?: boolean;\n  importance?: number;\n  comment?: string;\n}\n\nexport interface FeedbackResponse {\n  success: boolean;\n  message: string;\n  data?: any;\n}\n\nexport interface FeedbackSubmission {\n  hechoId: number;\n  evaluacionEditorial: 'verdadero' | 'falso' | 'necesita_verificacion' | null;\n  importancia: number;\n  comentarios?: string;\n  evaluadoPor?: string;\n  fechaEvaluacion?: string;\n}\n\n// Estados de confirmación\nexport interface ConfirmationDialogState {\n  isOpen: boolean;\n  title: string;\n  message: string;\n  confirmText: string;\n  cancelText: string;\n  severity?: 'info' | 'warning' | 'error' | 'success';\n  action?: () => void;\n}\n\n// Props para notificaciones\nexport interface NotificationProps {\n  message: string;\n  severity: 'success' | 'error' | 'warning' | 'info';\n  duration?: number;\n}\n
+// Tipos para el sistema de feedback editorial
+export type FeedbackType = 'IMPORTANCE' | 'FACTUAL_ERROR' | 'GENERAL';
+
+export interface Feedback {
+  hechoId: number;
+  type: FeedbackType;
+  isFalse?: boolean;
+  importance?: number;
+  comment?: string;
+}
+
+export interface FeedbackResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+}
+
+export interface FeedbackSubmission {
+  hechoId: number;
+  evaluacionEditorial: 'verdadero' | 'falso' | 'necesita_verificacion' | null;
+  importancia: number;
+  comentarios?: string;
+  evaluadoPor?: string;
+  fechaEvaluacion?: string;
+}
+
+// Estados de confirmación
+export interface ConfirmationDialogState {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  severity?: 'info' | 'warning' | 'error' | 'success';
+  action?: () => void;
+}
+
+// Props para notificaciones
+export interface NotificationProps {
+  message: string;
+  severity: 'success' | 'error' | 'warning' | 'info';
+  duration?: number;
+}
+
+// Request types for API
+export interface ImportanciaFeedbackRequest {
+  hechoId: number;
+  importancia: number;
+}
+
+export interface ImportanciaFeedbackResponse {
+  success: boolean;
+  message: string;
+  hechoId: number;
+  importancia: number;
+  updatedAt: string;
+}
+
+export interface FalseFeedbackRequest {
+  hechoId: number;
+  isFalse: boolean;
+  justification?: string;
+}
+
+export interface GeneralFeedbackRequest {
+  hechoId: number;
+  comment: string;
+  type?: FeedbackType;
+}
+
+export interface EvaluacionEditorialRequest {
+  hechoId: number;
+  evaluacion: 'verdadero' | 'falso' | 'necesita_verificacion';
+  comentarios?: string;
+  evaluadoPor?: string;
+}
+
+export interface EvaluacionEditorialResponse {
+  success: boolean;
+  message: string;
+  hechoId: number;
+  evaluacion: string;
+  evaluadoPor?: string;
+  fechaEvaluacion: string;
+}

@@ -1,4 +1,5 @@
 import os
+from typing import Union
 from groq import Groq, APIConnectionError, RateLimitError, APIStatusError
 from loguru import logger
 
@@ -79,7 +80,7 @@ class GroqService:
             raise
 
     def send_prompt(self, prompt: str, system_prompt: str = None, model_id: str = None, 
-                    max_tokens: int = None, temperature: float = None, timeout: float = None) -> str | None:
+                    max_tokens: int = None, temperature: float = None, timeout: float = None) -> Union[str, None]:
         """
         Envía un prompt a la API de Groq y retorna la respuesta del modelo.
 

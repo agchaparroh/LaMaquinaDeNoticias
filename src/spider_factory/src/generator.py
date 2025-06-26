@@ -16,7 +16,7 @@ import black
 
 from .analyzer import AnalysisResult, AnalysisStrategy
 from .patterns import Pattern
-from .config import config
+from .config import settings
 
 
 logger = logging.getLogger(__name__)
