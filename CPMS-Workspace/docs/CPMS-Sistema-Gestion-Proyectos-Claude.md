@@ -206,6 +206,20 @@ tasks:
     priority: 1
     type: "feature"
     
+    # CAMPO OBLIGATORIO: Criterios de aceptación verificables
+    acceptance_criteria: |
+      - [ ] Sistema genera JWT access tokens (15 min expiración)
+      - [ ] Sistema genera refresh tokens (7 días expiración)
+      - [ ] Endpoint /login retorna ambos tokens
+      - [ ] Endpoint /refresh genera nuevo access token
+      - [ ] Endpoint /logout invalida tokens en blacklist
+      - [ ] Middleware valida tokens en rutas protegidas
+      - [ ] Tests unitarios con 100% cobertura
+      - [ ] Documentación de API actualizada
+      
+    # OPCIONAL: Comando de verificación automática
+    verification_command: "pytest tests/test_auth.py -v && python -m src.api.auth --validate"
+    
       
     # Fechas importantes
     dates:
@@ -305,6 +319,18 @@ tasks:
     status: "pending"
     priority: 3
     type: "optimization"
+    
+    # CAMPO OBLIGATORIO: Criterios de aceptación verificables
+    acceptance_criteria: |
+      - [ ] Identificadas todas las queries N+1 en el sistema
+      - [ ] Índices creados para las 5 consultas más lentas
+      - [ ] Tiempo de respuesta < 100ms para listados principales
+      - [ ] Query explain muestra uso de índices
+      - [ ] Tests de performance documentados
+      
+    # OPCIONAL: Para tareas críticas
+    verification_command: "python scripts/check_query_performance.py"
+    
     dependencies:
       requires: ["TASK-001"]
 ```
@@ -322,6 +348,34 @@ tasks:
 ## Contexto Inicial
 - **Branch Git**: feature/jwt-auth
 - **Último Commit**: a3f4b2c "Add user model"
+
+## Verificación de Criterios
+### Criterios de Aceptación Revisados:
+```
+✅ Sistema genera JWT access tokens (15 min expiración)
+✅ Sistema genera refresh tokens (7 días expiración)
+✅ Endpoint /login retorna ambos tokens
+⏳ Endpoint /refresh genera nuevo access token (en progreso)
+⏳ Endpoint /logout invalida tokens en blacklist (pendiente)
+⏳ Middleware valida tokens en rutas protegidas (pendiente)
+✅ Tests unitarios con 100% cobertura (para código actual)
+⏳ Documentación de API actualizada (pendiente)
+```
+
+### Verificación Automática:
+```bash
+$ python .claude/check.py TASK-001
+📋 Verificando: Implementar sistema completo de autenticación JWT
+
+✅ Criterios de aceptación:
+[Lista de criterios mostrada arriba]
+
+🔧 Ejecutando: pytest tests/test_auth.py -v && python -m src.api.auth --validate
+❌ Verificación automática: FALLÓ
+Error: Endpoint /refresh no implementado
+
+❌ Tarea NO verificada - Revisar criterios
+```
 
 ## Log Detallado de Acciones
 
@@ -459,14 +513,21 @@ git commit -m "feat(auth): implement JWT refresh tokens with Redis blacklist
 - ⏳ Middleware de autenticación (TASK-001.4)
 - ⏳ Rate limiting para endpoints de auth
 
+### Estado de Verificación
+- **Criterios cumplidos**: 4/8 (50%)
+- **Verificación automática**: FALLA - Faltan endpoints críticos
+- **Estado de tarea**: NO puede marcarse como completada
+
 ### Métricas
 - **Tests Agregados**: 8
+- **Coverage actual**: 87%
 
 ## Notas para Próxima Sesión
-1. Implementar /logout debe invalidar ambos tokens
-2. Considerar agregar rate limiting con slowapi
-3. Revisar si necesitamos refresh token rotation
-4. El middleware debe cachear validaciones para performance
+1. Completar criterios de aceptación faltantes antes de marcar como completada
+2. Implementar /logout debe invalidar ambos tokens
+3. Considerar agregar rate limiting con slowapi
+4. Revisar si necesitamos refresh token rotation
+5. El middleware debe cachear validaciones para performance
 
 ## Problemas No Resueltos
 - WARNING: Redis connection timeout en tests (intermitente)
@@ -903,6 +964,9 @@ mkdir -p nombre-proyecto/sessions
 # Crear archivos base
 cd nombre-proyecto
 touch project.yaml tasks.yaml knowledge.md
+
+# Copiar script de verificación
+cp ../../templates/check.py .claude/
 ```
 
 ### Paso 2: Configurar project.yaml
@@ -914,6 +978,7 @@ project:
   version: "0.1.0"
   created: "2024-01-25"
   current_phase: "planning"
+  code_location: "C:/ruta/al/codigo/real"  # OBLIGATORIO
 
 technical_context:
   language: "Python"  # o el que uses
@@ -933,6 +998,18 @@ tasks:
     title: "Setup inicial del proyecto"
     status: "pending"
     priority: 1
+    
+    # OBLIGATORIO: Definir criterios claros
+    acceptance_criteria: |
+      - [ ] Estructura de carpetas creada según estándar
+      - [ ] README.md con instrucciones de instalación
+      - [ ] Archivo requirements.txt o package.json
+      - [ ] .gitignore configurado correctamente
+      - [ ] Tests básicos funcionando (pytest o jest)
+      
+    # OPCIONAL: Para verificación automática
+    verification_command: "pytest --version && ls -la"
+    
     subtasks:
       - id: "TASK-001.1"
         title: "Crear estructura de carpetas"
@@ -952,9 +1029,17 @@ tasks:
    
 2. Usa TodoWrite para cargar tareas activas
 
-3. Documenta TODO en logs de sesión
+3. ANTES de marcar cualquier tarea como completada:
+   ```bash
+   python .claude/check.py TASK-XXX
+   ```
+   - NO marques completada sin verificación exitosa
+   - Documenta el resultado en el log de sesión
 
 4. Al finalizar, actualiza archivos
+
+## Regla de Oro
+"Si los criterios de aceptación no son claros, PREGUNTA antes de implementar"
 
 ## Autonomía Autorizada
 Tienes permiso para ejecutar SIN PEDIR CONFIRMACIÓN:
@@ -962,6 +1047,7 @@ Tienes permiso para ejecutar SIN PEDIR CONFIRMACIÓN:
 - Formateo y linting (black, eslint, flake8)
 - Git (status, diff, add, commit) - NO push
 - Lectura de archivos y navegación
+- Script de verificación (.claude/check.py)
 
 Ver Apéndice completo en el documento CPMS para lista detallada.
 ```
@@ -1062,6 +1148,15 @@ Usuario: "Cambia al proyecto tienda-online"
 Claude: [Guarda estado actual, carga nuevo proyecto]
 ```
 
+### ¿Qué son los criterios de aceptación?
+Son una lista verificable de requisitos que debe cumplir una tarea para considerarse completada. Deben ser específicos y medibles, no vagos o interpretables.
+
+### ¿Cómo ejecuto la verificación?
+```bash
+python .claude/check.py TASK-XXX
+```
+Este comando revisa los criterios y ejecuta cualquier verificación automática configurada.
+
 ### ¿Qué pasa si olvido actualizar los archivos?
 Claude puede trabajar sin ellos, pero perderá contexto. Es mejor actualizar al menos `tasks.yaml` al final de cada sesión.
 
@@ -1069,8 +1164,8 @@ Claude puede trabajar sin ellos, pero perderá contexto. Es mejor actualizar al 
 ¡Sí! De hecho, es recomendable. Otros desarrolladores (o Claude trabajando con ellos) pueden entender rápidamente el estado del proyecto.
 
 ### ¿Cuánto detalle necesitan los logs?
-- **Mínimo**: Qué se hizo y qué queda pendiente
-- **Ideal**: Decisiones tomadas y problemas encontrados
+- **Mínimo**: Qué se hizo, qué queda pendiente y resultado de verificación
+- **Ideal**: Decisiones tomadas, problemas encontrados y evidencias
 - **Excesivo**: Cada línea de código modificada
 
 ### ¿Es compatible con Git?
@@ -1085,10 +1180,11 @@ El workspace CPMS ya está creado dentro del proyecto La Máquina de Noticias en
 
 El CPMS está diseñado para maximizar la efectividad de Claude Code en proyectos complejos. La clave del éxito está en:
 
-1. **Consistencia**: Actualizar siempre los archivos
-2. **Detalle**: Documentar decisiones y problemas
-3. **Estructura**: Mantener la organización clara
-4. **Evolución**: Adaptar el sistema según necesidades
+1. **Claridad**: Definir criterios de aceptación específicos y verificables
+2. **Verificación**: Validar el cumplimiento antes de marcar tareas completadas
+3. **Consistencia**: Actualizar siempre los archivos de estado
+4. **Documentación**: Mantener logs con evidencias y decisiones
+5. **Estructura**: Mantener la organización clara del proyecto
 
 Con este sistema, Claude puede mantener contexto completo entre sesiones, aprender de errores pasados, y gestionar proyectos de cualquier tamaño de manera efectiva.
 

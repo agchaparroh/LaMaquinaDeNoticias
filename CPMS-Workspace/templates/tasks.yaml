@@ -1,7 +1,17 @@
 tasks:
   - id: "TASK-001"
     title: "Setup inicial del proyecto"
-    status: "pending"  # pending, active, done
+    status: "pending"  # pending, in_progress, blocked, completed, cancelled
     priority: 1
+    
+    # CAMPO OBLIGATORIO: Criterios específicos y verificables
+    acceptance_criteria: |
+      - [ ] Descripción clara del primer criterio
+      - [ ] Segundo criterio medible
+      - [ ] Tercer criterio con resultado esperado
+      
+    # CAMPO OPCIONAL: Para verificación automática
+    verification_command: ""
+    
     dependencies: []
     notes: ""
