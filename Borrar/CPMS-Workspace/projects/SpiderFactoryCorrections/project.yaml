@@ -1,0 +1,239 @@
+# Configuración del Proyecto Spider Factory Corrections
+# Sistema CPMS - Claude Project Management System
+
+project:
+  id: "SF-CORRECTIONS-2024"
+  name: "Spider Factory 2.0 - Correcciones Backend"
+  version: "1.0.0"
+  description: "Corrección completa del backend de Spider Factory para alinearlo con el plan original SPIDER_FACTORY_2.0_PLAN_DETALLADO.md"
+  start_date: "2024-12-27"
+  estimated_duration: "2-3 semanas"
+  priority: "ALTA"
+  
+code_location: "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/src/spider_factory"
+
+# Instrucciones de flujo de trabajo para ejecución autónoma
+workflow_instructions:
+  start_command: "Carga proyecto SpiderFactoryCorrections desde CPMS-Workspace/projects"
+  
+  initial_setup:
+    - "# NOTA: Claude Code no puede hacer cd fuera del directorio de trabajo"
+    - "# Todos los comandos usan rutas absolutas al código: {code_location}"
+    - "Verificar acceso a archivos del proyecto"
+    - "ls {code_location}/src/ | head -5  # Verificar acceso"
+    - "Leer workflow.md para entender el proceso completo"
+    - "Leer DONT_FORGET.md para recordatorios críticos"
+    - "Ejecutar TodoRead para ver el estado de las tareas"
+  
+  before_each_task:
+    - "Cambiar task status de 'pending' a 'in_progress' en tasks.yaml"
+    - "# NOTA: No hacer cd - usar rutas absolutas en todos los comandos"
+    - "# Ejemplo: python3 {code_location}/src/api.py"
+    - "Leer completamente implementation_details de la tarea"
+    - "Si la tarea indica, usar Context7 para revisar documentación:"
+    - "  1. mcp__context7__resolve-library-id --libraryName [biblioteca]"
+    - "  2. mcp__context7__get-library-docs --context7CompatibleLibraryID [id]"
+    - "Revisar architecture_critical_notes al final de tasks.yaml"
+    
+  during_implementation:
+    - "Seguir las instrucciones exactas en implementation_details"
+    - "NO modificar arquitectura Docker/NGINX"
+    - "Mantener retrocompatibilidad con campos existentes"
+    - "Testear SIEMPRE a través de NGINX, nunca directo al backend"
+    - "Hacer commits frecuentes con conventional commits (feat:, fix:, docs:)"
+    
+  after_each_task:
+    - "Ejecutar el verification_command completo de la tarea"
+    - "Verificar que TODOS los acceptance_criteria se cumplan"
+    - "Marcar cada criterio completado con [x] en tasks.yaml"
+    - "Cambiar task status a 'completed'"
+    - "Documentar problemas encontrados en problems_found si los hay"
+    - "Crear archivo de sesión en sessions/ documentando el trabajo"
+    
+  verification_checklist:
+    - "[ ] Sintaxis Python correcta (python3 -m py_compile)"
+    - "[ ] Tests pasando"
+    - "[ ] Frontend sigue funcionando"
+    - "[ ] No se rompieron endpoints existentes"
+    - "[ ] Logs sin errores críticos"
+    - "[ ] Docker containers saludables"
+
+context:
+  language: "Python"
+  framework: "FastAPI"
+  version_python: "3.9"
+  key_dependencies:
+    - fastapi==0.115.2
+    - redis==5.2.0
+    - pydantic==2.10.3
+    - jinja2==3.1.4
+    - firecrawl-py==1.8.1
+    - scrapy==2.12.0
+    - loguru==0.7.3
+    - black==24.10.0
+  
+  related_modules:
+    - module_scraper: "Donde se generan los spiders"
+    - nginx_reverse_proxy: "Punto de entrada único"
+    - redis: "Cache compartido"
+    - module_spider_factory_frontend: "UI que consume la API"
+
+architecture_constraints:
+  - "NO exponer puertos del backend directamente (solo a través de NGINX)"
+  - "NO cambiar rutas base de la API (/analyze, /generate, etc.)"
+  - "NO modificar nombres de servicios en docker-compose"
+  - "Mantener retrocompatibilidad con campos existentes"
+  - "Backend en puerto interno 8000"
+  - "Todas las comunicaciones por lamacquina_network"
+
+critical_requirements:
+  - "Nomenclatura de spiders DEBE ser {medio}_{seccion}"
+  - "Directorio de salida DEBE ser /src/module_scraper/scraper_core/spiders/"
+  - "Campos obligatorios: medio, seccion, area_geografica, tipo_medio"
+  - "Cache Redis con TTL de 7 días (604800 segundos)"
+  - "KPIs de tiempo: <5s RSS, ~20s primera vez, <2s cache"
+  - "Áreas geográficas de lista predefinida (28 opciones)"
+
+testing_requirements:
+  - "Tests unitarios para cada componente modificado"
+  - "Tests de integración end-to-end"
+  - "Verificación de compatibilidad con spiders existentes"
+  - "Validación a través de NGINX (nunca directo al backend)"
+
+documentation_requirements:
+  - "Actualizar OpenAPI/Swagger en cada endpoint"
+  - "Documentar cambios en CHANGELOG.md"
+  - "Mantener ejemplos actualizados en cada modelo"
+  - "README actualizado con nuevos campos"
+
+environments:
+  development:
+    code_location: "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/src/spider_factory"
+    docker_service: "spider_factory_backend"
+    test_through: "http://localhost/spider-factory/api/"
+    logs: "docker-compose logs -f spider_factory_backend"
+  
+  staging:
+    status: "not_configured"
+  
+  production:
+    status: "not_deployed"
+
+sessions:
+  - session_001:
+      date: "2024-12-27"
+      status: "completed"
+      tasks_planned: ["project_setup"]
+      notes: "Creación inicial del proyecto CPMS"
+  
+  - session_002:
+      date: "2024-12-27"
+      status: "completed"
+      tasks_planned: ["tasks_detail_update"]
+      notes: "Actualización de todas las tareas con contenido exacto del plan"
+
+checkpoints:
+  - checkpoint_001:
+      date: "TBD"
+      description: "Modelos y estructuras actualizados"
+      criteria:
+        - "Todos los modelos con campos obligatorios"
+        - "Validaciones implementadas"
+        - "Tests pasando"
+  
+  - checkpoint_002:
+      date: "TBD"
+      description: "Templates y generación funcionando"
+      criteria:
+        - "Nomenclatura {medio}_{seccion}"
+        - "Campos obligatorios en templates"
+        - "Directorio correcto de salida"
+  
+  - checkpoint_003:
+      date: "TBD"
+      description: "API completa y retrocompatible"
+      criteria:
+        - "Nuevos endpoints funcionando"
+        - "Compatibilidad con frontend actual"
+        - "WebSocket operativo"
+  
+  - checkpoint_004:
+      date: "TBD"
+      description: "Sistema completo integrado"
+      criteria:
+        - "KPIs de tiempo cumplidos"
+        - "Cache con TTL correcto"
+        - "Tests E2E pasando"
+        - "Documentación completa"
+
+risk_mitigation:
+  - risk: "Incompatibilidad con spiders existentes"
+    mitigation: "Migración gradual con campos opcionales primero"
+  
+  - risk: "Cambios rompen el frontend"
+    mitigation: "Mantener retrocompatibilidad en API, testing exhaustivo"
+  
+  - risk: "Performance con batches grandes"
+    mitigation: "Límites estrictos (100 items), procesamiento asíncrono"
+  
+  - risk: "Errores en templates generados"
+    mitigation: "Validación de sintaxis, formateo con Black, tests de generación"
+
+conventions:
+  code_style: "PEP 8 con Black formatter"
+  naming:
+    - "snake_case para funciones y variables"
+    - "PascalCase para clases"
+    - "UPPER_CASE para constantes"
+    - "Prefijo underscore para métodos privados"
+  
+  git_commits: "Conventional Commits (feat:, fix:, docs:, test:, refactor:)"
+  
+  docstrings: |
+    """
+    Descripción breve de la función.
+    
+    Args:
+        param1: Descripción del parámetro
+        param2: Descripción del parámetro
+    
+    Returns:
+        Descripción del retorno
+    
+    Raises:
+        ExceptionType: Cuándo se lanza
+    """
+  
+  error_handling: "Try/except específicos con logging detallado"
+  
+  imports: |
+    # Orden de imports
+    1. Standard library
+    2. Third party
+    3. Local imports
+    
+    # Separados por línea en blanco
+
+getting_started: |
+  Para comenzar a trabajar en este proyecto:
+  
+  1. Ejecuta: "Carga proyecto SpiderFactoryCorrections desde CPMS-Workspace/projects"
+  2. Lee workflow.md para entender el proceso de trabajo
+  3. Lee DONT_FORGET.md para recordatorios críticos
+  4. Comienza con TASK-001 siguiendo workflow_instructions
+  
+  IMPORTANTE: Toda la información técnica está en implementation_details de cada tarea.
+  No necesitas acceso a documentos externos.
+  
+  AUTONOMÍA: Este proyecto está diseñado para ejecutarse sin intervención del usuario.
+  - NO pidas confirmación para realizar cambios
+  - NO preguntes si debes continuar
+  - SI encuentras errores, documenta en problems_found y continúa
+  - SI algo no está claro, usa tu mejor criterio basado en implementation_details
+  - EJECUTA cada tarea de principio a fin antes de pasar a la siguiente
+
+notes:
+  - "Plan detallado en: CPMS-Workspace/projects/Proyectos pendientes/PLAN_CORRECCION_BACKEND.md"
+  - "Arquitectura original en: Investigación/Conclusiones/SPIDER_FACTORY_2.0_PLAN_DETALLADO.md"
+  - "CRITICAL: Respetar arquitectura Docker/NGINX existente"
+  - "Revisar documentación de FastAPI, Pydantic, Redis en Context7 antes de cada tarea"
