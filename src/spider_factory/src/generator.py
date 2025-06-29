@@ -12,8 +12,13 @@ from datetime import datetime
 import re
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape, Template
-import black
 
+try:
+    import black
+    HAS_BLACK = True
+except ImportError:
+    HAS_BLACK = False
+    
 from .analyzer import AnalysisResult, AnalysisStrategy
 from .patterns import Pattern
 from .config import settings
@@ -26,6 +31,45 @@ class SpiderGenerator:
     """
     Genera spiders de Scrapy basados en análisis y templates
     """
+    
+    def get_evasion_config(self, protection_level: str) -> Dict[str, Any]:
+        """
+        Retorna configuración de evasión según nivel de protección detectado.
+        Basado en best practices de Scrapy para custom_settings.
+        
+        Args:
+            protection_level: 'basic', 'medium', 'high'
+            
+        Returns:
+            Dict con configuración específica para el nivel
+        """
+        from .config import STEALTH_HEADERS
+        
+        if protection_level == 'high':
+            return {
+                'custom_headers': STEALTH_HEADERS,
+                'download_delay': 3,
+                'concurrent_requests': 1,
+                'randomize_download_delay': True,
+                'download_timeout': 60,
+                'referer_enabled': True,
+                'use_stealth_mode': True
+            }
+        elif protection_level == 'medium':
+            return {
+                'custom_headers': STEALTH_HEADERS,
+                'download_delay': 2,
+                'concurrent_requests': 2,
+                'randomize_download_delay': True,
+                'referer_enabled': True,
+                'use_stealth_mode': True
+            }
+        else:  # basic
+            return {
+                'download_delay': 1,
+                'concurrent_requests': 3,
+                'use_stealth_mode': False
+            }
     
     def __init__(self, templates_dir: Optional[str] = None):
         """
@@ -54,20 +98,26 @@ class SpiderGenerator:
         self.env.filters['escape_quotes'] = self._escape_quotes
         
         # Configuración de Black para formateo
-        self.black_mode = black.Mode(
-            target_versions={black.TargetVersion.PY38},
-            line_length=88,
-            string_normalization=True,
-            is_pyi=False,
-        )
+        if HAS_BLACK:
+            self.black_mode = black.Mode(
+                target_versions={black.TargetVersion.PY38},
+                line_length=88,
+                string_normalization=True,
+                is_pyi=False,
+            )
+        else:
+            self.black_mode = None
         
         logger.info(f"SpiderGenerator inicializado con templates en: {self.templates_dir}")
     
     def generate_spider(
         self,
         analysis: AnalysisResult,
-        spider_name: str,
-        media_name: str,
+        medio: str,
+        seccion: str,
+        area_geografica: str,
+        tipo_medio: str,
+        frecuencia_minutos: int = 60,
         additional_config: Optional[Dict[str, Any]] = None
     ) -> str:
         """
@@ -75,13 +125,18 @@ class SpiderGenerator:
         
         Args:
             analysis: Resultado del análisis del sitio
-            spider_name: Nombre del spider (snake_case)
-            media_name: Nombre del medio para display
+            medio: Nombre del medio
+            seccion: Sección del medio
+            area_geografica: Área geográfica del medio
+            tipo_medio: Tipo de medio (diario, revista, agencia)
+            frecuencia_minutos: Frecuencia de actualización en minutos
             additional_config: Configuración adicional opcional
             
         Returns:
             Código Python del spider generado
         """
+        # Generar spider_name automáticamente
+        spider_name = f"{medio}_{seccion}".lower().replace(' ', '_')
         try:
             # Seleccionar template según estrategia
             template_name = self._get_template_name(analysis.strategy)
@@ -91,18 +146,25 @@ class SpiderGenerator:
             context = self._build_template_context(
                 analysis,
                 spider_name,
-                media_name,
+                medio,
+                seccion,
+                area_geografica,
+                tipo_medio,
+                frecuencia_minutos,
                 additional_config or {}
             )
             
             # Renderizar template
             spider_code = template.render(**context)
             
-            # Formatear con Black
-            try:
-                spider_code = black.format_str(spider_code, mode=self.black_mode)
-            except Exception as e:
-                logger.warning(f"No se pudo formatear con Black: {e}")
+            # Formatear con Black si está disponible
+            if HAS_BLACK and self.black_mode:
+                try:
+                    spider_code = black.format_str(spider_code, mode=self.black_mode)
+                except Exception as e:
+                    logger.warning(f"No se pudo formatear con Black: {e}")
+            else:
+                logger.debug("Black no disponible, código sin formatear")
             
             logger.info(
                 f"Spider generado: {spider_name} "
@@ -119,7 +181,7 @@ class SpiderGenerator:
         self,
         spider_code: str,
         spider_name: str,
-        output_dir: str,
+        output_dir: str = "/src/module_scraper/scraper_core/spiders/",
         overwrite: bool = False
     ) -> Path:
         """
@@ -153,8 +215,11 @@ class SpiderGenerator:
     def generate_from_pattern(
         self,
         pattern: Pattern,
-        spider_name: str,
-        media_name: str,
+        medio: str,
+        seccion: str,
+        area_geografica: str,
+        tipo_medio: str,
+        frecuencia_minutos: int = 60,
         additional_config: Optional[Dict[str, Any]] = None
     ) -> str:
         """
@@ -162,8 +227,11 @@ class SpiderGenerator:
         
         Args:
             pattern: Patrón almacenado
-            spider_name: Nombre del spider
-            media_name: Nombre del medio
+            medio: Nombre del medio
+            seccion: Sección del medio
+            area_geografica: Área geográfica del medio
+            tipo_medio: Tipo de medio (diario, revista, agencia)
+            frecuencia_minutos: Frecuencia de actualización en minutos
             additional_config: Config adicional
             
         Returns:
@@ -183,8 +251,11 @@ class SpiderGenerator:
         
         return self.generate_spider(
             analysis,
-            spider_name,
-            media_name,
+            medio,
+            seccion,
+            area_geografica,
+            tipo_medio,
+            frecuencia_minutos,
             additional_config
         )
     
@@ -203,7 +274,11 @@ class SpiderGenerator:
         self,
         analysis: AnalysisResult,
         spider_name: str,
-        media_name: str,
+        medio: str,
+        seccion: str,
+        area_geografica: str,
+        tipo_medio: str,
+        frecuencia_minutos: int,
         additional_config: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
@@ -214,10 +289,14 @@ class SpiderGenerator:
             # Metadata
             "spider_name": spider_name,
             "spider_class": self._to_camel_case(spider_name),
-            "media_name": media_name,
+            "medio": medio,
+            "seccion": seccion,
+            "area_geografica": area_geografica,
+            "tipo_medio": tipo_medio,
+            "frecuencia_minutos": frecuencia_minutos,
             "domain": analysis.domain,
-            "start_url": str(analysis.url),
-            "generated_at": datetime.now().isoformat(),
+            "base_url": str(analysis.url),
+            "generation_date": datetime.now().isoformat(),
             
             # Análisis
             "strategy": analysis.strategy.value,
@@ -244,6 +323,13 @@ class SpiderGenerator:
             "has_selector": lambda x: x in analysis.selectors.__dict__ and getattr(analysis.selectors, x),
             "get_selector": lambda x: getattr(analysis.selectors, x, None)
         }
+        
+        # Aplicar configuración de evasión basada en nivel de protección
+        protection_level = analysis.protection_level if hasattr(analysis, 'protection_level') else 'basic'
+        if protection_level != 'basic':
+            evasion_config = self.get_evasion_config(protection_level)
+            context.update(evasion_config)
+            logger.info(f"Applied evasion config for {protection_level} protection level")
         
         # Agregar config específica
         context.update(additional_config)
@@ -334,8 +420,11 @@ class SpiderGenerator:
     def preview_spider(
         self,
         analysis: AnalysisResult,
-        spider_name: str,
-        media_name: str,
+        medio: str,
+        seccion: str,
+        area_geografica: str,
+        tipo_medio: str,
+        frecuencia_minutos: int = 60,
         max_lines: int = 50
     ) -> str:
         """
@@ -343,14 +432,20 @@ class SpiderGenerator:
         
         Args:
             analysis: Resultado del análisis
-            spider_name: Nombre del spider
-            media_name: Nombre del medio
+            medio: Nombre del medio
+            seccion: Sección del medio
+            area_geografica: Área geográfica del medio
+            tipo_medio: Tipo de medio (diario, revista, agencia)
+            frecuencia_minutos: Frecuencia de actualización en minutos
             max_lines: Número máximo de líneas
             
         Returns:
             Preview del código
         """
-        full_code = self.generate_spider(analysis, spider_name, media_name)
+        full_code = self.generate_spider(
+            analysis, medio, seccion, area_geografica, 
+            tipo_medio, frecuencia_minutos
+        )
         lines = full_code.split('\n')
         
         if len(lines) <= max_lines:
@@ -389,11 +484,13 @@ def test_generator():
     print("Generando spider de prueba...")
     spider_code = generator.generate_spider(
         test_analysis,
-        spider_name="example_news",
-        media_name="Example News",
+        medio="Example News",
+        seccion="Politics",
+        area_geografica="ESPAÑA",
+        tipo_medio="diario",
+        frecuencia_minutos=60,
         additional_config={
-            "excluded_urls": ["*/tags/*", "*/author/*"],
-            "area_geografica": "ESPAÑA"
+            "excluded_urls": ["*/tags/*", "*/author/*"]
         }
     )
     
@@ -402,8 +499,11 @@ def test_generator():
     print("=" * 80)
     print(generator.preview_spider(
         test_analysis,
-        "example_news",
-        "Example News",
+        medio="Example News",
+        seccion="Politics",
+        area_geografica="ESPAÑA",
+        tipo_medio="diario",
+        frecuencia_minutos=60,
         max_lines=30
     ))
     

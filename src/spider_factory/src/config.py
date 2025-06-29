@@ -55,23 +55,79 @@ class SpiderFactoryConfig:
     cache_ttl_patterns: int = int(os.getenv("CACHE_TTL_PATTERNS", "604800"))  # 7 días
     cache_ttl_spiders: int = int(os.getenv("CACHE_TTL_SPIDERS", "2592000"))  # 30 días
     
+    # Cache TTL en días (para compatibilidad)
+    CACHE_TTL_DAYS: int = 7
+    CACHE_TTL_SECONDS: int = 7 * 86400  # 604800 segundos
+    
     # Spider Generation
     spider_output_dir: str = os.getenv(
         "SPIDER_OUTPUT_DIR", 
         "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/src/module_scraper/scraper_core/spiders"
     )
+    SPIDER_OUTPUT_PATH: str = spider_output_dir  # Alias para compatibilidad
+    
     spider_template_dir: str = os.getenv(
         "SPIDER_TEMPLATE_DIR", 
         "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/src/spider_factory/templates"
     )
     
-    # Limits
+    # Batch Processing
     max_urls_per_analysis: int = int(os.getenv("MAX_URLS_PER_ANALYSIS", "10"))
     max_batch_size: int = int(os.getenv("MAX_BATCH_SIZE", "100"))
+    MAX_BATCH_SIZE: int = max_batch_size  # Alias para compatibilidad
+    CONCURRENT_REQUESTS: int = int(os.getenv("CONCURRENT_REQUESTS", "10"))
+    BATCH_TIMEOUT: int = int(os.getenv("BATCH_TIMEOUT", "300"))  # 5 minutos
+    
+    # Rate Limiting
+    RATE_LIMIT_REQUESTS: int = int(os.getenv("RATE_LIMIT_REQUESTS", "10"))
+    RATE_LIMIT_WINDOW: int = int(os.getenv("RATE_LIMIT_WINDOW", "60"))  # segundos
+    
+    # Redis Connection Pool
+    REDIS_MAX_CONNECTIONS: int = int(os.getenv("REDIS_MAX_CONNECTIONS", "50"))
+    
+    # Redis connection settings (para redis_pool.py)
+    REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
+    REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
+    REDIS_DB: int = int(os.getenv("REDIS_DB", "0"))
+    REDIS_PASSWORD: Optional[str] = os.getenv("REDIS_PASSWORD")
     
     # Logging
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
     log_format: str = "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
+    
+    def validate_config(self):
+        """Valida configuración al iniciar"""
+        from pathlib import Path
+        
+        # Verificar API key de Firecrawl
+        if not self.firecrawl_api_key:
+            logger.warning("Firecrawl API key no configurada")
+        
+        # Verificar directorio de salida
+        output_path = Path(self.SPIDER_OUTPUT_PATH)
+        if not output_path.exists():
+            logger.error(f"Directorio de spiders no existe: {self.SPIDER_OUTPUT_PATH}")
+            # Intentar crear el directorio
+            try:
+                output_path.mkdir(parents=True, exist_ok=True)
+                logger.info(f"Directorio creado: {self.SPIDER_OUTPUT_PATH}")
+            except Exception as e:
+                logger.error(f"No se pudo crear el directorio: {e}")
+        
+        # Verificar Redis
+        try:
+            redis_client = get_redis_client()
+            redis_client.ping()
+            logger.info("Conexión a Redis verificada")
+        except Exception as e:
+            logger.error(f"No se puede conectar a Redis: {e}")
+        
+        # Verificar directorio de templates
+        template_path = Path(self.spider_template_dir)
+        if not template_path.exists():
+            logger.error(f"Directorio de templates no existe: {self.spider_template_dir}")
+        
+        logger.info("Validación de configuración completada")
 
 
 class RedisManager:
@@ -194,6 +250,40 @@ class RedisKeys:
         return template.format(**kwargs)
 
 
+# Lista de áreas geográficas válidas según el plan
+AREAS_GEOGRAFICAS_VALIDAS = [
+    'HISPANIDAD', 'HISPANOAMERICA', 'CENTROAMERICA', 'CARIBE_HISPANO',
+    'SUDAMERICA', 'TERRITORIOS_OCUPADOS', 'DIASPORA_HISPANA_USA',
+    'GLOBAL', 'PAISES_NO_HISPANOS',
+    'ARGENTINA', 'BOLIVIA', 'CHILE', 'COLOMBIA', 'COSTA_RICA',
+    'CUBA', 'ECUADOR', 'EL_SALVADOR', 'ESPAÑA', 'FILIPINAS',
+    'GUATEMALA', 'GUINEA_ECUATORIAL', 'HONDURAS', 'MÉXICO',
+    'NICARAGUA', 'PANAMÁ', 'PARAGUAY', 'PERÚ', 'PUERTO_RICO',
+    'REPÚBLICA_DOMINICANA', 'SAHARA_OCCIDENTAL', 'URUGUAY', 'VENEZUELA'
+]
+
+# Headers HTTP realistas para evasión
+STEALTH_HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Language": "es-ES,es;q=0.9,en;q=0.8,en-US;q=0.7",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Pragma": "no-cache",
+}
+
+# Configuración base para todos los spiders generados
+BASE_SPIDER_SETTINGS = {
+    'DEFAULT_REQUEST_HEADERS': STEALTH_HEADERS,
+    'REFERER_ENABLED': True,
+    'SMART_REFERER_ENABLED': True,
+}
+
 # Instancia global de configuración
 settings = SpiderFactoryConfig()
 redis_manager = RedisManager()
@@ -210,11 +300,11 @@ def check_system_health() -> Dict[str, Any]:
         "redis_healthy": redis_manager.health_check(),
         "redis_info": redis_manager.get_info(),
         "config": {
-            "api_host": config.api_host,
-            "api_port": config.api_port,
-            "firecrawl_configured": bool(config.firecrawl_api_key),
-            "spider_output_dir": config.spider_output_dir,
-            "log_level": config.log_level
+            "api_host": settings.api_host,
+            "api_port": settings.api_port,
+            "firecrawl_configured": bool(settings.firecrawl_api_key),
+            "spider_output_dir": settings.spider_output_dir,
+            "log_level": settings.log_level
         }
     }
 
@@ -223,7 +313,7 @@ if __name__ == "__main__":
     # Test de configuración
     print("=== Spider Factory 2.0 - Configuración ===")
     print(f"Redis Config: {RedisConfig()}")
-    print(f"Spider Factory Config: {config}")
+    print(f"Spider Factory Config: {settings}")
     print(f"\nHealth Check: {check_system_health()}")
     
     # Test de claves

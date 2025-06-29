@@ -16,18 +16,34 @@ from io import StringIO
 from .analyzer import SmartAnalyzer, SiteAnalysisRequest, AnalysisResult
 from .generator import SpiderGenerator
 from .websocket_manager import ConnectionManager
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, field_validator
+from typing import Literal
 
 # Configurar logging
 logger = logging.getLogger(__name__)
 
 
 class BatchSite(BaseModel):
-    """Sitio individual en un batch"""
+    """Sitio individual en un batch según plan original"""
+    medio: str
+    seccion: str  
     url: HttpUrl
-    name: str
-    category: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    area_geografica: str
+    tipo_medio: Literal["diario", "revista", "agencia"]
+    frecuencia_minutos: Optional[int] = 60
+    rss_url: Optional[HttpUrl] = None
+    comentarios: Optional[str] = None
+    
+    @field_validator('area_geografica')
+    @classmethod
+    def validate_area_geografica(cls, v: str) -> str:
+        """Valida que el área geográfica sea válida"""
+        from .config import AREAS_GEOGRAFICAS_VALIDAS
+        if v not in AREAS_GEOGRAFICAS_VALIDAS:
+            raise ValueError(
+                f"Área geográfica inválida: {v}. Debe ser una de: {', '.join(AREAS_GEOGRAFICAS_VALIDAS)}"
+            )
+        return v
 
 
 class BatchRequest(BaseModel):
@@ -88,20 +104,42 @@ class BatchProcessor:
             # Parsear CSV
             df = pd.read_csv(StringIO(file_content))
             
-            # Validar columnas requeridas
-            required_columns = ['url', 'name']
+            # Validar columnas requeridas según el plan
+            required_columns = ['medio', 'seccion', 'url', 'area_geografica', 'tipo_medio']
             if not all(col in df.columns for col in required_columns):
                 raise ValueError(f"El CSV debe contener las columnas: {required_columns}")
+            
+            # Validar tipo_medio válidos
+            valid_tipos = ['diario', 'revista', 'agencia']
+            invalid_tipos = df[~df['tipo_medio'].isin(valid_tipos)]['tipo_medio'].unique()
+            if len(invalid_tipos) > 0:
+                raise ValueError(f"Tipos de medio inválidos: {invalid_tipos}. Deben ser: {valid_tipos}")
             
             # Convertir a lista de BatchSite
             sites = []
             for _, row in df.iterrows():
+                # Procesar frecuencia_minutos como entero opcional
+                frecuencia = None
+                if 'frecuencia_minutos' in row and pd.notna(row['frecuencia_minutos']):
+                    try:
+                        frecuencia = int(row['frecuencia_minutos'])
+                    except (ValueError, TypeError):
+                        frecuencia = 60
+                
+                # Procesar rss_url como URL válida o None
+                rss_url = None
+                if 'rss_url' in row and pd.notna(row['rss_url']) and row['rss_url'].strip():
+                    rss_url = row['rss_url'].strip()
+                
                 site = BatchSite(
+                    medio=row['medio'],
+                    seccion=row['seccion'],
                     url=row['url'],
-                    name=row['name'],
-                    category=row.get('category'),
-                    metadata={k: v for k, v in row.items() 
-                             if k not in ['url', 'name', 'category'] and pd.notna(v)}
+                    area_geografica=row['area_geografica'],
+                    tipo_medio=row['tipo_medio'],
+                    frecuencia_minutos=frecuencia or 60,
+                    rss_url=rss_url,
+                    comentarios=row.get('comentarios') if pd.notna(row.get('comentarios')) else None
                 )
                 sites.append(site)
             
@@ -218,7 +256,7 @@ class BatchProcessor:
                     "type": "site_processing",
                     "batch_id": batch_id,
                     "site_index": i + 1,
-                    "site_name": site.name,
+                    "site_name": f"{site.medio} - {site.seccion}",
                     "site_url": str(site.url),
                     "progress": (i / len(sites)) * 100
                 })
@@ -231,15 +269,19 @@ class BatchProcessor:
                 
                 analysis_result = await self.analyzer.analyze(analysis_request)
                 
-                # Generar spider
-                spider_name = site.name.lower().replace(" ", "_").replace("-", "_")
+                # Generar spider con nomenclatura {medio}_{seccion}
+                spider_name = f"{site.medio}_{site.seccion}"
                 spider_code = self.generator.generate_spider(
                     analysis_result,
                     spider_name,
-                    site.name,
+                    site.medio,
                     {
-                        "category": site.category,
-                        **site.metadata
+                        "seccion": site.seccion,
+                        "area_geografica": site.area_geografica,
+                        "tipo_medio": site.tipo_medio,
+                        "frecuencia_minutos": site.frecuencia_minutos,
+                        "rss_url": str(site.rss_url) if site.rss_url else None,
+                        "comentarios": site.comentarios
                     }
                 )
                 
@@ -248,8 +290,11 @@ class BatchProcessor:
                 
                 # Crear resultado
                 result = {
-                    "site": site.name,
+                    "medio": site.medio,
+                    "seccion": site.seccion,
                     "url": str(site.url),
+                    "area_geografica": site.area_geografica,
+                    "tipo_medio": site.tipo_medio,
                     "success": True,
                     "analysis": {
                         "strategy": analysis_result.strategy.value,
@@ -278,7 +323,7 @@ class BatchProcessor:
                 await self._send_update(session_id, {
                     "type": "site_completed",
                     "batch_id": batch_id,
-                    "site_name": site.name,
+                    "site_name": f"{site.medio} - {site.seccion}",
                     "success": True,
                     "confidence": analysis_result.confidence
                 })
@@ -292,13 +337,16 @@ class BatchProcessor:
                 await self._send_update(session_id, {
                     "type": "site_error",
                     "batch_id": batch_id,
-                    "site_name": site.name,
+                    "site_name": f"{site.medio} - {site.seccion}",
                     "error": str(e)
                 })
                 
                 yield {
-                    "site": site.name,
+                    "medio": site.medio,
+                    "seccion": site.seccion,
                     "url": str(site.url),
+                    "area_geografica": site.area_geografica,
+                    "tipo_medio": site.tipo_medio,
                     "success": False,
                     "error": str(e)
                 }
@@ -349,8 +397,11 @@ class BatchProcessor:
             rows = []
             for result in response.results:
                 row = {
-                    "site": result["site"],
+                    "medio": result["medio"],
+                    "seccion": result["seccion"],
                     "url": result["url"],
+                    "area_geografica": result["area_geografica"],
+                    "tipo_medio": result["tipo_medio"],
                     "success": result["success"],
                     "error": result.get("error", "")
                 }

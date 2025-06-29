@@ -65,8 +65,17 @@ CONCURRENT_REQUESTS_PER_DOMAIN = 2
 
 # Override the default request headers:
 DEFAULT_REQUEST_HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "es,en;q=0.9",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Language": "es-ES,es;q=0.9,en;q=0.8,en-US;q=0.7",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Pragma": "no-cache",
 }
 
 # Enable or disable spider middlewares
@@ -78,11 +87,18 @@ SPIDER_MIDDLEWARES = {
     # "scraper_core.middlewares.ScraperCoreSpiderMiddleware": 543,
 }
 
+# RefererMiddleware configuration (Spider Middleware)
+REFERER_ENABLED = True
+REFERRER_POLICY = 'scrapy.spidermiddlewares.referer.OriginWhenCrossOriginPolicy'
+
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     # Enable scrapy-crawl-once for duplicate prevention
     'scrapy_crawl_once.CrawlOnceMiddleware': 50,
+    
+    # Smart Referer Middleware para navegación natural
+    'scraper_core.middlewares.smart_referer_middleware.SmartRefererMiddleware': 585,
     # Disable default user agent middleware
     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
     # Enable random user agent middleware

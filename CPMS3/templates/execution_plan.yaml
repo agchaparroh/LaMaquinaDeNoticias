@@ -1,0 +1,167 @@
+# CPMS3 Execution Plan Template
+# Un archivo. Un plan. Cero ambigüedad.
+
+meta:
+  id: "{PROJECT-ID}"
+  name: "{Project Name}"
+  goal: "{Resultado EXACTO esperado al finalizar}"
+  version: "3.0"
+  created: "{YYYY-MM-DD}"
+
+config:
+  # Ruta base donde está el código
+  base_path: "{/absolute/path/to/code}"
+  
+  # Directorio para staging (cambios peligrosos)
+  staging_dir: ".cpms3_staging"
+  
+  # Reintentos máximos por paso
+  max_retries: 3
+  
+  # Timeout por comando (segundos)
+  command_timeout: 300
+  
+  # Modo de ejecución
+  mode: "strict"  # strict = falla si algo no es exacto
+
+# Definir constantes/variables para reutilizar
+constants:
+  python_cmd: "python3"
+  test_cmd: "pytest -xvs"
+
+# Pasos de ejecución - Se ejecutan en orden
+steps:
+  # ========================================
+  # EJEMPLO: Crear archivo
+  # ========================================
+  - id: "STEP-001"
+    description: "Crear archivo principal"
+    action: "create_file"
+    path: "src/main.py"
+    content: |
+      #!/usr/bin/env python3
+      """
+      Módulo principal
+      """
+      def main():
+          print("CPMS3 Project Started")
+      
+      if __name__ == "__main__":
+          main()
+    verify:
+      - type: "file_exists"
+        path: "src/main.py"
+      - type: "file_contains"
+        path: "src/main.py"
+        text: "def main():"
+      - type: "syntax_valid"
+        language: "python"
+        path: "src/main.py"
+    on_fail: "abort"  # abort | retry | skip | continue
+
+  # ========================================
+  # EJEMPLO: Modificar archivo existente
+  # ========================================
+  - id: "STEP-002"
+    description: "Actualizar configuración"
+    action: "modify_file"
+    path: "config/settings.py"
+    # Backup automático antes de modificar
+    backup: true
+    changes:
+      - find: |
+          DEBUG = True
+        replace: |
+          DEBUG = False
+      - find: |
+          API_VERSION = "1.0"
+        replace: |
+          API_VERSION = "2.0"
+    verify:
+      - type: "file_contains"
+        path: "config/settings.py"
+        text: "DEBUG = False"
+      - type: "file_contains"
+        path: "config/settings.py"
+        text: 'API_VERSION = "2.0"'
+
+  # ========================================
+  # EJEMPLO: Ejecutar comando
+  # ========================================
+  - id: "STEP-003"
+    description: "Instalar dependencias"
+    action: "run_command"
+    command: "pip install -r requirements.txt"
+    working_dir: "{base_path}"
+    verify:
+      - type: "command_succeeds"
+        command: "python -c 'import flask'"
+      - type: "command_succeeds"
+        command: "python -c 'import pytest'"
+
+  # ========================================
+  # EJEMPLO: Ejecutar tests
+  # ========================================
+  - id: "STEP-004"
+    description: "Verificar tests"
+    action: "run_test"
+    command: "{test_cmd} tests/test_main.py"
+    expected_tests: 5
+    verify:
+      - type: "test_output_contains"
+        text: "5 passed"
+      - type: "no_test_failures"
+
+  # ========================================
+  # EJEMPLO: Acción con staging (segura)
+  # ========================================
+  - id: "STEP-005"
+    description: "Eliminar archivo obsoleto"
+    action: "delete_file"
+    path: "old_module.py"
+    staging: true  # No borra, mueve a .cpms3_staging/deleted/
+    verify:
+      - type: "file_not_exists"
+        path: "old_module.py"
+      - type: "file_exists"
+        path: ".cpms3_staging/deleted/old_module.py"
+
+  # ========================================
+  # EJEMPLO: Validación compleja
+  # ========================================
+  - id: "STEP-006"
+    description: "Verificar integración completa"
+    action: "validate"
+    checks:
+      - type: "api_endpoint_responds"
+        url: "http://localhost:8000/health"
+        expected_status: 200
+      - type: "database_connected"
+        connection: "postgresql://localhost/testdb"
+      - type: "file_permissions"
+        path: "scripts/deploy.sh"
+        permissions: "755"
+
+# Rollback automático si algo falla
+rollback:
+  enabled: true
+  steps:
+    - action: "restore_from_backup"
+      pattern: "*.py"
+    - action: "restore_staging"
+      from: ".cpms3_staging"
+
+# Acciones post-ejecución (solo si todo OK)
+post_execution:
+  - action: "create_summary"
+    path: "EXECUTION_SUMMARY.md"
+  - action: "clean_staging"
+    path: ".cpms3_staging"
+
+# Validación final del objetivo
+final_validation:
+  - type: "goal_achieved"
+    checks:
+      - "Todos los archivos creados"
+      - "Tests pasando al 100%"
+      - "Sin errores en logs"

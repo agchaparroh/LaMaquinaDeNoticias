@@ -1,0 +1,196 @@
+# CPMS3 - Ejemplo de Testing de Validación
+# Este plan demuestra las capacidades de validación del Enhanced Runner
+
+meta:
+  id: "TEST-VALIDATION-001"
+  name: "Demo de Validación y Errores"
+  goal: "Demostrar cómo el Enhanced Runner detecta y reporta problemas"
+  version: "1.0"
+  created: "2025-06-29"
+
+config:
+  base_path: "."
+  staging_dir: ".cpms3_staging"
+  strict_mode: false  # Se puede activar con --strict
+  normalize_search: true  # Búsqueda inteligente activada
+
+constants:
+  project_name: "test-validation"
+  python_version: "3.9"
+  # Esta variable no está definida para demostrar detección: {undefined_var}
+
+steps:
+  # ========================================
+  # EJEMPLO 1: Variables no resueltas
+  # ========================================
+  
+  - id: "STEP-001"
+    description: "Ejemplo de variable no resuelta"
+    action: "run_command"
+    command: "echo 'Proyecto: {project_name}, Ubicación: {undefined_location}'"
+    on_fail: "skip"  # Continuar aunque falle
+    verify:
+      - type: "command_succeeds"
+        command: "echo 'Test'"
+
+  # ========================================
+  # EJEMPLO 2: Archivo que no existe
+  # ========================================
+  
+  - id: "STEP-002"
+    description: "Intentar modificar archivo inexistente"
+    action: "modify_file"
+    path: "archivo_que_no_existe.py"
+    changes:
+      - find: "import os"
+        replace: "import os, sys"
+    on_fail: "skip"
+
+  # ========================================
+  # EJEMPLO 3: Patrón no encontrado
+  # ========================================
+  
+  - id: "STEP-003"
+    description: "Crear archivo de prueba"
+    action: "create_file"
+    path: "test_file.py"
+    content: |
+      """Archivo de prueba para demostración"""
+      
+      def hello_world():
+          print("Hello, World!")
+          return True
+      
+      if __name__ == "__main__":
+          hello_world()
+
+  - id: "STEP-004"
+    description: "Buscar patrón que no existe exactamente"
+    action: "modify_file"
+    path: "test_file.py"
+    changes:
+      - find: |
+          def hello_world():
+              print("Hello, World!")  # Nota: indentación diferente
+        replace: |
+          def hello_world():
+              print("¡Hola, Mundo!")
+    on_fail: "skip"
+
+  # ========================================
+  # EJEMPLO 4: Búsqueda normalizada exitosa
+  # ========================================
+  
+  - id: "STEP-005"
+    description: "Búsqueda que funciona con normalización"
+    action: "modify_file"
+    path: "test_file.py"
+    changes:
+      - find: |
+          def hello_world():
+              print("Hello, World!")
+        replace: |
+          def hello_world():
+              print("¡Hola, Mundo!")
+              print("Versión en español")
+    verify:
+      - type: "file_contains"
+        path: "test_file.py"
+        text: "¡Hola, Mundo!"
+
+  # ========================================
+  # EJEMPLO 5: Comando que no existe
+  # ========================================
+  
+  - id: "STEP-006"
+    description: "Ejecutar comando inexistente"
+    action: "run_command"
+    command: "comando_imaginario --version"
+    on_fail: "skip"
+
+  # ========================================
+  # EJEMPLO 6: Sintaxis Python inválida
+  # ========================================
+  
+  - id: "STEP-007"
+    description: "Crear archivo con sintaxis inválida"
+    action: "create_file"
+    path: "syntax_error.py"
+    content: |
+      # Este archivo tiene errores de sintaxis intencionales
+      
+      def broken_function(
+          print("Falta cerrar paréntesis"
+      
+      class NoColon
+          pass
+    on_fail: "skip"
+
+  # ========================================
+  # EJEMPLO 7: Caso exitoso
+  # ========================================
+  
+  - id: "STEP-008"
+    description: "Crear archivo válido"
+    action: "create_file"
+    path: "valid_file.py"
+    content: |
+      """Archivo válido para demostrar éxito"""
+      
+      def calculate_sum(a: int, b: int) -> int:
+          """Suma dos números"""
+          return a + b
+      
+      # Test
+      result = calculate_sum(5, 3)
+      print(f"5 + 3 = {result}")
+    verify:
+      - type: "file_exists"
+        path: "valid_file.py"
+      - type: "syntax_valid"
+        language: "python"
+        path: "valid_file.py"
+      - type: "file_contains"
+        path: "valid_file.py"
+        text: "calculate_sum"
+
+  # ========================================
+  # LIMPIEZA
+  # ========================================
+  
+  - id: "STEP-009"
+    description: "Limpiar archivos de prueba"
+    action: "delete_file"
+    path: "test_file.py"
+    staging: true  # Mover a staging, no borrar
+
+  - id: "STEP-010"
+    description: "Limpiar más archivos"
+    action: "delete_file"
+    path: "valid_file.py"
+    staging: true
+
+final_validation:
+  - description: "Verificar que los archivos se movieron a staging"
+    checks:
+      - type: "file_not_exists"
+        path: "test_file.py"
+      - type: "file_not_exists"
+        path: "valid_file.py"
+
+# Notas para testing:
+# 
+# 1. Ejecutar con runner normal para ver errores en tiempo de ejecución:
+#    python runner.py execution_plan.yaml
+#
+# 2. Ejecutar con enhanced runner para ver validación previa:
+#    python enhanced_runner.py execution_plan.yaml
+#
+# 3. Ejecutar en modo dry-run para solo validar:
+#    python enhanced_runner.py execution_plan.yaml --dry-run
+#
+# 4. Ejecutar en modo strict para rechazar variables no resueltas:
+#    python enhanced_runner.py execution_plan.yaml --strict
+#
+# 5. Forzar ejecución a pesar de advertencias:
+#    python enhanced_runner.py execution_plan.yaml --force

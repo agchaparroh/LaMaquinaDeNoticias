@@ -3,10 +3,11 @@ Modelos Pydantic para validación de requests/responses de la API
 """
 from typing import Optional, Dict, Any, List, Literal
 from datetime import datetime
-from pydantic import BaseModel, Field, HttpUrl, validator
+from pydantic import BaseModel, Field, HttpUrl, field_validator
 from enum import Enum
 
 from .analyzer import AnalysisStrategy, AnalysisConfidence
+from .config import AREAS_GEOGRAFICAS_VALIDAS
 
 
 class SpiderStatus(str, Enum):
@@ -20,19 +21,25 @@ class SpiderStatus(str, Enum):
 
 class DuplicateCheckRequest(BaseModel):
     """Request para verificar si un medio ya existe"""
-    domain: str = Field(..., description="Dominio del medio a verificar")
-    name: Optional[str] = Field(None, description="Nombre del medio")
+    medio: str = Field(..., description="Nombre del medio")
+    seccion: str = Field(..., description="Sección específica")
     
-    @validator('domain')
-    def clean_domain(cls, v):
-        """Limpia y normaliza el dominio"""
-        # Remover protocolo si existe
-        v = v.replace('https://', '').replace('http://', '')
-        # Remover www si existe
-        v = v.replace('www.', '')
-        # Remover trailing slash
-        v = v.rstrip('/')
-        return v.lower()
+    @field_validator('medio', 'seccion')
+    @classmethod
+    def clean_names(cls, v: str) -> str:
+        """Limpia y normaliza nombres para formar spider_name"""
+        # Convertir a minúsculas y reemplazar caracteres no válidos
+        import re
+        v = v.lower().strip()
+        v = re.sub(r'[^a-z0-9]+', '_', v)
+        v = re.sub(r'_+', '_', v)  # Eliminar guiones bajos múltiples
+        v = v.strip('_')  # Eliminar guiones bajos al inicio/final
+        return v
+    
+    @property
+    def spider_name(self) -> str:
+        """Genera el nombre del spider como {medio}_{seccion}"""
+        return f"{self.medio}_{self.seccion}"
 
 
 class DuplicateCheckResponse(BaseModel):
@@ -50,9 +57,16 @@ class DuplicateCheckResponse(BaseModel):
 class AnalysisRequest(BaseModel):
     """Request para analizar un sitio web"""
     url: HttpUrl = Field(..., description="URL del sitio a analizar")
-    section_name: Optional[str] = Field(
-        None, 
-        description="Nombre de la sección específica"
+    medio: str = Field(..., description="Nombre del medio")
+    seccion: str = Field(..., description="Nombre de la sección")
+    area_geografica: str = Field(..., description="Área geográfica del medio")
+    tipo_medio: Literal["diario", "revista", "agencia"] = Field(
+        ..., 
+        description="Tipo de medio"
+    )
+    rss_url: Optional[HttpUrl] = Field(
+        None,
+        description="URL del RSS si es conocida"
     )
     force_analysis: bool = Field(
         False, 
@@ -63,11 +77,25 @@ class AnalysisRequest(BaseModel):
         description="Verificar si el sitio tiene RSS"
     )
     
+    @field_validator('area_geografica')
+    @classmethod
+    def validate_area_geografica(cls, v: str) -> str:
+        """Valida que el área geográfica sea válida"""
+        if v not in AREAS_GEOGRAFICAS_VALIDAS:
+            raise ValueError(
+                f"Área geográfica inválida: {v}. Debe ser una de: {', '.join(AREAS_GEOGRAFICAS_VALIDAS)}"
+            )
+        return v
+    
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "url": "https://example.com/news",
-                "section_name": "politica",
+                "medio": "Example News",
+                "seccion": "politica",
+                "area_geografica": "ESPAÑA",
+                "tipo_medio": "diario",
+                "rss_url": "https://example.com/rss",
                 "force_analysis": False,
                 "check_rss": True
             }
@@ -111,21 +139,33 @@ class GenerateSpiderRequest(BaseModel):
         description="ID del patrón a usar (alternativa a analysis_url)"
     )
     
-    # Información del spider
-    spider_name: str = Field(
+    # Información del medio (OBLIGATORIOS)
+    medio: str = Field(
         ..., 
-        description="Nombre del spider (snake_case)",
-        pattern="^[a-z][a-z0-9_]*$"
+        description="Nombre del medio"
     )
-    media_name: str = Field(
+    seccion: str = Field(
+        ...,
+        description="Sección del medio"
+    )
+    area_geografica: str = Field(
         ..., 
-        description="Nombre del medio para display"
+        description="Área geográfica del medio"
+    )
+    tipo_medio: Literal["diario", "revista", "agencia"] = Field(
+        ...,
+        description="Tipo de medio"
     )
     
     # Configuración adicional
-    area_geografica: Optional[str] = Field(
-        None, 
-        description="Área geográfica del medio"
+    frecuencia_minutos: Optional[int] = Field(
+        60,
+        description="Frecuencia de actualización en minutos",
+        ge=1
+    )
+    comentarios: Optional[str] = Field(
+        None,
+        description="Comentarios adicionales sobre el medio o spider"
     )
     excluded_urls: List[str] = Field(
         default_factory=list,
@@ -146,20 +186,56 @@ class GenerateSpiderRequest(BaseModel):
         description="Configuración personalizada de Scrapy"
     )
     
-    @validator('analysis_url', 'pattern_id')
-    def validate_source(cls, v, values):
+    @field_validator('medio', 'seccion')
+    @classmethod
+    def clean_names(cls, v: str) -> str:
+        """Limpia y normaliza nombres"""
+        import re
+        v = v.lower().strip()
+        v = re.sub(r'[^a-z0-9]+', '_', v)
+        v = re.sub(r'_+', '_', v)
+        v = v.strip('_')
+        return v
+    
+    @field_validator('area_geografica')
+    @classmethod
+    def validate_area_geografica(cls, v: str) -> str:
+        """Valida que el área geográfica sea válida"""
+        if v not in AREAS_GEOGRAFICAS_VALIDAS:
+            raise ValueError(
+                f"Área geográfica inválida: {v}. Debe ser una de: {', '.join(AREAS_GEOGRAFICAS_VALIDAS)}"
+            )
+        return v
+    
+    @property
+    def spider_name(self) -> str:
+        """Genera automáticamente el nombre del spider como {medio}_{seccion}"""
+        return f"{self.medio}_{self.seccion}"
+    
+    @property
+    def media_name(self) -> str:
+        """Mantiene compatibilidad con media_name para el frontend"""
+        return self.medio.replace('_', ' ').title()
+    
+    @field_validator('analysis_url')
+    @classmethod
+    def validate_source(cls, v: Optional[HttpUrl], info) -> Optional[HttpUrl]:
         """Valida que se proporcione analysis_url o pattern_id"""
-        if not v and not values.get('pattern_id') and not values.get('analysis_url'):
+        values = info.data
+        if not v and not values.get('pattern_id'):
             raise ValueError("Debe proporcionar analysis_url o pattern_id")
         return v
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "analysis_url": "https://example.com/news",
-                "spider_name": "example_news",
-                "media_name": "Example News",
+                "medio": "example",
+                "seccion": "news",
                 "area_geografica": "ESPAÑA",
+                "tipo_medio": "diario",
+                "frecuencia_minutos": 60,
+                "comentarios": "Principal sección de noticias",
                 "excluded_urls": ["*/tags/*", "*/author/*"],
                 "follow_pagination": True,
                 "max_pages": 50
@@ -194,9 +270,9 @@ class BatchAnalysisRequest(BaseModel):
     )
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
-                "csv_content": "url,nombre,area\nhttps://example.com,Example News,Nacional\n",
+                "csv_content": "medio,seccion,url,area_geografica,tipo_medio,frecuencia_minutos,rss_url\nexample,news,https://example.com/news,ESPAÑA,diario,60,https://example.com/rss\n",
                 "force_analysis": False,
                 "check_rss": True
             }

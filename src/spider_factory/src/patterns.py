@@ -485,6 +485,209 @@ class PatternStorage:
         # Índice por estrategia (futuro)
         # strategy_key = f"{RedisKeys.PATTERNS_PREFIX}:strategy:{pattern.strategy.value}"
         # self.redis.sadd(strategy_key, f"{pattern.domain}:{pattern.section}")
+    
+    def search_by_domain(self, domain: str) -> List[Pattern]:
+        """
+        Busca todos los patrones de un dominio específico
+        Nueva estructura: patterns:{dominio}
+        """
+        pattern_key = f"patterns:{domain}"
+        domain_data = self.redis.hgetall(pattern_key)
+        
+        patterns = []
+        if domain_data:
+            # Obtener metadata del dominio
+            area_geografica = domain_data.get(b'area_geografica', b'').decode() if b'area_geografica' in domain_data else None
+            tipo_medio = domain_data.get(b'tipo_medio', b'').decode() if b'tipo_medio' in domain_data else None
+            comentarios = domain_data.get(b'comentarios', b'').decode() if b'comentarios' in domain_data else None
+            
+            # Procesar cada sección
+            for key, value in domain_data.items():
+                key_str = key.decode()
+                # Ignorar campos de metadata
+                if key_str in ['area_geografica', 'tipo_medio', 'comentarios']:
+                    continue
+                
+                try:
+                    # Decodificar patrón de la sección
+                    section_data = json.loads(value.decode())
+                    
+                    # Crear Pattern object
+                    pattern = Pattern(
+                        domain=domain,
+                        section=key_str,
+                        strategy=AnalysisStrategy(section_data['strategy']),
+                        confidence=float(section_data.get('confidence', 0.7)),
+                        needs_javascript=section_data.get('needs_javascript', False),
+                        metadata=PatternMetadata(
+                            area_geografica=area_geografica,
+                            tipo_medio=tipo_medio,
+                            comentarios=comentarios
+                        )
+                    )
+                    
+                    if 'selectors' in section_data:
+                        pattern.selectors = SiteSelectors(**section_data['selectors'])
+                    
+                    patterns.append(pattern)
+                    
+                except Exception as e:
+                    logger.error(f"Error procesando patrón {domain}/{key_str}: {e}")
+        
+        return patterns
+    
+    def search_by_strategy(self, strategy: AnalysisStrategy) -> List[Pattern]:
+        """
+        Busca patrones por estrategia (RSS, scraping, playwright)
+        """
+        patterns = []
+        
+        # Obtener todas las claves de patrones
+        pattern_keys = self.redis.keys("patterns:*")
+        
+        for key in pattern_keys:
+            domain = key.decode().replace("patterns:", "")
+            domain_patterns = self.search_by_domain(domain)
+            
+            # Filtrar por estrategia
+            for pattern in domain_patterns:
+                if pattern.strategy == strategy:
+                    patterns.append(pattern)
+        
+        return patterns
+    
+    def get_all_patterns(self, limit: int = 100) -> List[Pattern]:
+        """
+        Obtiene todos los patrones con límite
+        """
+        all_patterns = []
+        
+        # Obtener todas las claves de patrones
+        pattern_keys = self.redis.keys("patterns:*")[:limit]
+        
+        for key in pattern_keys:
+            domain = key.decode().replace("patterns:", "")
+            domain_patterns = self.search_by_domain(domain)
+            all_patterns.extend(domain_patterns)
+            
+            if len(all_patterns) >= limit:
+                break
+        
+        return all_patterns[:limit]
+    
+    def save_domain_metadata(
+        self, 
+        domain: str, 
+        area_geografica: str, 
+        tipo_medio: str, 
+        comentarios: Optional[str] = None
+    ) -> bool:
+        """
+        Guarda metadata de un dominio
+        """
+        pattern_key = f"patterns:{domain}"
+        
+        metadata = {
+            "area_geografica": area_geografica,
+            "tipo_medio": tipo_medio
+        }
+        
+        if comentarios:
+            metadata["comentarios"] = comentarios
+        
+        try:
+            for key, value in metadata.items():
+                self.redis.hset(pattern_key, key, value)
+            
+            logger.info(f"Metadata guardada para dominio {domain}")
+            return True
+        except Exception as e:
+            logger.error(f"Error guardando metadata: {e}")
+            return False
+    
+    def get_domain_metadata(self, domain: str) -> Dict:
+        """
+        Obtiene metadata de un dominio
+        """
+        pattern_key = f"patterns:{domain}"
+        domain_data = self.redis.hgetall(pattern_key)
+        
+        metadata = {}
+        if domain_data:
+            if b'area_geografica' in domain_data:
+                metadata['area_geografica'] = domain_data[b'area_geografica'].decode()
+            if b'tipo_medio' in domain_data:
+                metadata['tipo_medio'] = domain_data[b'tipo_medio'].decode()
+            if b'comentarios' in domain_data:
+                metadata['comentarios'] = domain_data[b'comentarios'].decode()
+        
+        return metadata
+    
+    def save_section_pattern(
+        self, 
+        domain: str, 
+        section: str, 
+        pattern_data: Dict
+    ) -> bool:
+        """
+        Guarda patrón de una sección específica
+        """
+        pattern_key = f"patterns:{domain}"
+        
+        try:
+            # Asegurar que pattern_data tenga los campos mínimos
+            pattern_dict = {
+                "strategy": pattern_data.get("strategy", "scraping"),
+                "confidence": pattern_data.get("confidence", 0.7),
+                "needs_javascript": pattern_data.get("needs_javascript", False),
+                "created_at": datetime.now().isoformat(),
+                "last_used": datetime.now().isoformat()
+            }
+            
+            if "selectors" in pattern_data:
+                pattern_dict["selectors"] = pattern_data["selectors"]
+            
+            self.redis.hset(pattern_key, section, json.dumps(pattern_dict))
+            
+            # Incrementar contador
+            self.increment_usage_counter(domain, section)
+            
+            logger.info(f"Patrón guardado para {domain}/{section}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error guardando patrón de sección: {e}")
+            return False
+    
+    def increment_usage_counter(self, domain: str, section: str) -> bool:
+        """
+        Incrementa el contador de uso de un patrón
+        """
+        usage_key = "pattern_usage"
+        pattern_id = f"{domain}:{section}"
+        
+        try:
+            self.redis.zincrby(usage_key, 1, pattern_id)
+            return True
+        except Exception as e:
+            logger.error(f"Error incrementando contador: {e}")
+            return False
+    
+    def get_popular_patterns(self, limit: int = 10) -> List[Tuple[str, int]]:
+        """
+        Obtiene los patrones más populares por uso
+        """
+        usage_key = "pattern_usage"
+        
+        # Obtener top patterns con scores
+        top_patterns = self.redis.zrevrange(usage_key, 0, limit - 1, withscores=True)
+        
+        result = []
+        for pattern_bytes, score in top_patterns:
+            pattern_id = pattern_bytes.decode()
+            result.append((pattern_id, int(score)))
+        
+        return result
 
 
 # Función auxiliar para testing

@@ -1,9 +1,14 @@
 """
 Spider generado automáticamente por Spider Factory 2.0
-Estrategia: Playwright (JavaScript rendering)
-Sitio: {{ site_name }}
+Medio: {{ medio }}
+Sección: {{ seccion }}
 Fecha: {{ generation_date }}
+Estrategia: {{ strategy }}
+
+GENERADO AUTOMÁTICAMENTE - NO EDITAR MANUALMENTE
+Los cambios manuales se perderán en la próxima generación
 """
+import re
 import scrapy
 from scrapy import signals
 from scrapy_playwright.page import PageMethod
@@ -12,29 +17,32 @@ import asyncio
 import logging
 from typing import Dict, Any, Optional, List
 import json
-import re
 
 
-class {{ spider_class_name }}(scrapy.Spider):
+class {{ medio|title|replace(' ', '') }}{{ seccion|title|replace(' ', '') }}Spider(scrapy.Spider):
     """
-    Spider para {{ site_name }}
+    Spider Playwright para {{ medio }} - {{ seccion }}
     
     Utiliza Playwright para renderizar JavaScript y extraer contenido dinámico.
-    {% if metadata.description %}
-    {{ metadata.description }}
-    {% endif %}
+    Área geográfica: {{ area_geografica }}
+    Tipo de medio: {{ tipo_medio }}
     """
-    name = "{{ spider_name }}"
+    name = "{{ medio|lower|replace(' ', '_') }}_{{ seccion|lower|replace(' ', '_') }}"
     allowed_domains = ["{{ domain }}"]
     start_urls = ["{{ base_url }}"]
     
     # Configuración
     custom_settings = {
-        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'ROBOTSTXT_OBEY': True,
         'CONCURRENT_REQUESTS': 1,  # Playwright es más pesado, reducir concurrencia
-        'DOWNLOAD_DELAY': 2,
+        'DOWNLOAD_DELAY': 3,
         'COOKIES_ENABLED': True,
+        
+        # Scrapy-crawl-once configuration
+        'CRAWL_ONCE_ENABLED': True,
+        'CRAWL_ONCE_PATH': f'.scrapy/crawl_once/{{ medio|lower|replace(" ", "_") }}_{{ seccion|lower|replace(" ", "_") }}',
+        'CRAWL_ONCE_DEFAULT': False,
         
         # Configuración de Playwright
         'DOWNLOAD_HANDLERS': {
@@ -48,27 +56,31 @@ class {{ spider_class_name }}(scrapy.Spider):
             'args': ['--no-sandbox', '--disable-dev-shm-usage']
         },
         
-        # Output
-        'FEEDS': {
-            f'output/{{ spider_name }}_%(time)s.json': {
-                'format': 'json',
-                'encoding': 'utf8',
-                'indent': 2
-            }
-        }
+        # Configuración de encoding
+        'FEED_EXPORT_ENCODING': 'utf-8',
+        
+        # SCRAPYD CONFIGURATION:
+        # Schedule: Every {{ frecuencia_minutos }} minutes
+        # Project: lamaquina
+        # Spider: {{ medio|lower|replace(" ", "_") }}_{{ seccion|lower|replace(" ", "_") }}
+        # Arguments: -a max_items=50
     }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.articles_scraped = 0
-        self.max_articles = int(kwargs.get('max_articles', 50))  # Menos artículos por defecto
+        self.max_articles = int(kwargs.get('max_items', 50))  # Menos artículos por defecto
         self.wait_time = int(kwargs.get('wait_time', 3000))  # ms para esperar carga
-        {% if metadata %}
-        # Metadata adicional
-        {% for key, value in metadata.items() %}
-        self.{{ key }} = "{{ value }}"
-        {% endfor %}
-        {% endif %}
+        
+        # Información del medio
+        self.medio_info = {
+            'medio': "{{ medio }}",
+            'seccion': "{{ seccion }}",
+            'area_geografica': "{{ area_geografica }}",
+            'tipo_medio': "{{ tipo_medio }}",
+            'medio_url_principal': "{{ base_url }}",
+            'frecuencia_minutos': {{ frecuencia_minutos }},
+        }
     
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -121,19 +133,20 @@ class {{ spider_class_name }}(scrapy.Spider):
             
             # Generar requests para cada artículo
             for link in article_links[:self.max_articles]:
-                yield scrapy.Request(
-                    response.urljoin(link),
-                    meta={
-                        'playwright': True,
-                        'playwright_include_page': True,
-                        'playwright_page_methods': [
-                            PageMethod('wait_for_load_state', 'networkidle'),
-                            PageMethod('wait_for_timeout', 2000),
-                        ],
-                    },
-                    callback=self.parse_article,
-                    errback=self.handle_error
-                )
+                if self._is_section_article(link):
+                    yield scrapy.Request(
+                        response.urljoin(link),
+                        meta={
+                            'playwright': True,
+                            'playwright_include_page': True,
+                            'playwright_page_methods': [
+                                PageMethod('wait_for_load_state', 'networkidle'),
+                                PageMethod('wait_for_timeout', 2000),
+                            ],
+                        },
+                        callback=self.parse_article,
+                        errback=self.handle_error
+                    )
             
             # Buscar paginación
             {% if pagination_enabled %}
@@ -144,6 +157,22 @@ class {{ spider_class_name }}(scrapy.Spider):
             self.logger.error(f"Error en parse: {e}")
             if page:
                 await page.close()
+    
+    def _is_section_article(self, url: str) -> bool:
+        """Valida si la URL pertenece a la sección objetivo"""
+        excluded_patterns = [
+            r'/archivo/', r'/hemeroteca/', r'/newsletter/',
+            r'/multimedia/', r'/video/', r'/podcast/',
+            r'/tags?/', r'/autor/', r'/busca[rd]?/',
+        ]
+        
+        for pattern in excluded_patterns:
+            if re.search(pattern, url, re.IGNORECASE):
+                return False
+        
+        # Verificar que pertenece a la sección
+        section_pattern = re.compile(r'/{{ seccion|lower|replace(" ", "[-_]?") }}/', re.IGNORECASE)
+        return bool(section_pattern.search(url))
     
     async def extract_article_links_js(self, page) -> List[str]:
         """Extrae enlaces usando JavaScript en el navegador"""
@@ -212,12 +241,24 @@ class {{ spider_class_name }}(scrapy.Spider):
             return
         
         try:
+            # Crear item con campos obligatorios
             article_data = {
-                'source': '{{ site_name }}',
-                'source_url': '{{ base_url }}',
-                'article_url': response.url,
-                'scraped_at': datetime.now().isoformat(),
-                'rendered_with': 'playwright'
+                # Campos obligatorios
+                'url': response.url,
+                'medio': self.medio_info['medio'],
+                'medio_url_principal': self.medio_info['medio_url_principal'],
+                'area_geografica': self.medio_info['area_geografica'],
+                'tipo_medio': self.medio_info['tipo_medio'],
+                'seccion': self.medio_info['seccion'],
+                'fuente': self.name,
+                'fecha_extraccion': datetime.now().isoformat(),
+                
+                # Metadata
+                'metadata': {
+                    'spider_type': 'playwright',
+                    'extraction_method': 'javascript_rendering',
+                    'rendered_with': 'playwright'
+                }
             }
             
             # Verificar si es realmente un artículo
@@ -249,39 +290,44 @@ class {{ spider_class_name }}(scrapy.Spider):
                 {% if selectors.title %}
                 // Título
                 const titleEl = document.querySelector('{{ selectors.title }}');
-                if (titleEl) data.title = titleEl.textContent.trim();
+                if (titleEl) data.titular = titleEl.textContent.trim();
                 {% endif %}
                 
                 {% if selectors.content %}
                 // Contenido
                 const contentEls = document.querySelectorAll('{{ selectors.content }}');
                 if (contentEls.length > 0) {
-                    data.content = Array.from(contentEls)
+                    data.contenido_texto = Array.from(contentEls)
                         .map(el => el.textContent.trim())
                         .filter(text => text.length > 0)
                         .join('\\n\\n');
+                    
+                    // También capturar HTML
+                    data.contenido_html = Array.from(contentEls)
+                        .map(el => el.outerHTML)
+                        .join('\\n');
                 }
                 {% endif %}
                 
                 {% if selectors.author %}
                 // Autor
                 const authorEl = document.querySelector('{{ selectors.author }}');
-                if (authorEl) data.author = authorEl.textContent.trim();
+                if (authorEl) data.autor = authorEl.textContent.trim();
                 {% endif %}
                 
                 {% if selectors.date %}
                 // Fecha
                 const dateEl = document.querySelector('{{ selectors.date }}');
                 if (dateEl) {
-                    data.published_date = dateEl.getAttribute('datetime') || 
-                                         dateEl.textContent.trim();
+                    data.fecha_publicacion = dateEl.getAttribute('datetime') || 
+                                           dateEl.textContent.trim();
                 }
                 {% endif %}
                 
                 {% if selectors.image %}
                 // Imagen principal
                 const imageEl = document.querySelector('{{ selectors.image }}');
-                if (imageEl) data.main_image = imageEl.src || imageEl.getAttribute('data-src');
+                if (imageEl) data.imagen_principal = imageEl.src || imageEl.getAttribute('data-src');
                 {% endif %}
                 
                 return data;
@@ -295,19 +341,26 @@ class {{ spider_class_name }}(scrapy.Spider):
             
             # Extraer metadata adicional
             metadata = await self.extract_metadata_js(page)
-            article_data.update(metadata)
+            if metadata:
+                article_data['metadata'].update(metadata)
+            
+            # Intentar extraer fecha si no se encontró
+            if 'fecha_publicacion' not in article_data:
+                fecha = await self._extract_date_js(page)
+                if fecha:
+                    article_data['fecha_publicacion'] = fecha
             
             # Tomar screenshot si está habilitado
             {% if capture_screenshot %}
             screenshot = await page.screenshot(full_page=False)
-            article_data['screenshot_base64'] = screenshot.hex()
+            article_data['metadata']['screenshot_base64'] = screenshot.hex()
             {% endif %}
             
             # Cerrar página para liberar recursos
             await page.close()
             
             # Validar datos mínimos
-            if not article_data.get('title') or not article_data.get('content'):
+            if not article_data.get('titular') or not article_data.get('contenido_texto'):
                 self.logger.warning(f"Artículo sin título o contenido: {response.url}")
                 return
             
@@ -315,7 +368,7 @@ class {{ spider_class_name }}(scrapy.Spider):
             article_data = self.clean_article_data(article_data)
             
             self.articles_scraped += 1
-            self.logger.info(f"Artículo {self.articles_scraped} extraído: {article_data.get('title', 'Sin título')}")
+            self.logger.info(f"Artículo {self.articles_scraped} extraído: {article_data.get('titular', 'Sin título')}")
             
             yield article_data
             
@@ -347,28 +400,35 @@ class {{ spider_class_name }}(scrapy.Spider):
             for (const selector of titleSelectors) {
                 const el = document.querySelector(selector);
                 if (el) {
-                    data.title = el.content || el.textContent.trim();
+                    data.titular = el.content || el.textContent.trim();
                     break;
                 }
             }
             
             // Contenido - buscar y combinar párrafos
             const contentSelectors = [
-                'article p',
-                '[itemprop="articleBody"] p',
-                '.article-content p',
-                '.post-content p',
-                '.entry-content p',
-                'main p'
+                'article',
+                '[itemprop="articleBody"]',
+                '.article-content',
+                '.post-content',
+                '.entry-content',
+                'main'
             ];
             
             for (const selector of contentSelectors) {
-                const paragraphs = document.querySelectorAll(selector);
-                if (paragraphs.length > 0) {
-                    data.content = Array.from(paragraphs)
-                        .map(p => p.textContent.trim())
-                        .filter(text => text.length > 20)  // Filtrar párrafos muy cortos
-                        .join('\\n\\n');
+                const container = document.querySelector(selector);
+                if (container) {
+                    // Extraer texto
+                    const paragraphs = container.querySelectorAll('p');
+                    if (paragraphs.length > 0) {
+                        data.contenido_texto = Array.from(paragraphs)
+                            .map(p => p.textContent.trim())
+                            .filter(text => text.length > 20)
+                            .join('\\n\\n');
+                    }
+                    
+                    // Extraer HTML
+                    data.contenido_html = container.innerHTML;
                     break;
                 }
             }
@@ -385,26 +445,7 @@ class {{ spider_class_name }}(scrapy.Spider):
             for (const selector of authorSelectors) {
                 const el = document.querySelector(selector);
                 if (el) {
-                    data.author = el.content || el.textContent.trim();
-                    break;
-                }
-            }
-            
-            // Fecha
-            const dateSelectors = [
-                'time[datetime]',
-                '[itemprop="datePublished"]',
-                'meta[property="article:published_time"]',
-                '.publish-date',
-                '.article-date'
-            ];
-            
-            for (const selector of dateSelectors) {
-                const el = document.querySelector(selector);
-                if (el) {
-                    data.published_date = el.getAttribute('datetime') || 
-                                         el.content || 
-                                         el.textContent.trim();
+                    data.autor = el.content || el.textContent.trim();
                     break;
                 }
             }
@@ -421,7 +462,7 @@ class {{ spider_class_name }}(scrapy.Spider):
             for (const selector of imageSelectors) {
                 const el = document.querySelector(selector);
                 if (el) {
-                    data.main_image = el.content || el.src || el.getAttribute('data-src');
+                    data.imagen_principal = el.content || el.src || el.getAttribute('data-src');
                     break;
                 }
             }
@@ -429,13 +470,43 @@ class {{ spider_class_name }}(scrapy.Spider):
             // Categorías y tags
             const categoryEls = document.querySelectorAll('[rel="category tag"], .category, .tag');
             if (categoryEls.length > 0) {
-                data.categories = Array.from(categoryEls)
+                data.categorias = Array.from(categoryEls)
                     .map(el => el.textContent.trim())
                     .filter(text => text.length > 0);
             }
             
             return data;
         }''')
+    
+    async def _extract_date_js(self, page) -> Optional[str]:
+        """Extrae fecha usando JavaScript"""
+        date_str = await page.evaluate('''() => {
+            const dateSelectors = [
+                'meta[property="article:published_time"]',
+                'meta[name="publish_date"]',
+                'meta[name="DC.date.issued"]',
+                'time[datetime]',
+                'time[pubdate]',
+                '[itemprop="datePublished"]',
+                '.publish-date',
+                '.article-date'
+            ];
+            
+            for (const selector of dateSelectors) {
+                const el = document.querySelector(selector);
+                if (el) {
+                    return el.getAttribute('datetime') || 
+                           el.getAttribute('content') || 
+                           el.textContent.trim();
+                }
+            }
+            
+            return null;
+        }''')
+        
+        if date_str:
+            return self.parse_date(date_str)
+        return None
     
     async def extract_metadata_js(self, page) -> Dict[str, Any]:
         """Extrae metadata usando JavaScript"""
@@ -455,13 +526,6 @@ class {{ spider_class_name }}(scrapy.Spider):
                 const name = tag.getAttribute('name').replace('twitter:', 'twitter_');
                 metadata[name] = tag.content;
             });
-            
-            // Meta description y keywords
-            const description = document.querySelector('meta[name="description"]');
-            if (description) metadata.meta_description = description.content;
-            
-            const keywords = document.querySelector('meta[name="keywords"]');
-            if (keywords) metadata.meta_keywords = keywords.content;
             
             // JSON-LD
             const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
@@ -510,20 +574,31 @@ class {{ spider_class_name }}(scrapy.Spider):
     def clean_article_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Limpia y normaliza los datos del artículo"""
         # Limpiar espacios en blanco
-        for key in ['title', 'content', 'author']:
+        for key in ['titular', 'contenido_texto', 'autor']:
             if key in data and data[key]:
                 data[key] = re.sub(r'\s+', ' ', str(data[key])).strip()
         
         # Validar longitud de contenido
-        if 'content' in data and len(data['content']) < 100:
-            self.logger.warning(f"Contenido muy corto: {len(data['content'])} caracteres")
+        if 'contenido_texto' in data and len(data['contenido_texto']) < 100:
+            self.logger.warning(f"Contenido muy corto: {len(data['contenido_texto'])} caracteres")
         
         # Normalizar fecha si es posible
-        if 'published_date' in data:
-            data['published_date'] = self.parse_date(data['published_date'])
+        if 'fecha_publicacion' in data:
+            data['fecha_publicacion'] = self.parse_date(data['fecha_publicacion'])
         
         # Eliminar campos vacíos o None
-        return {k: v for k, v in data.items() if v}
+        cleaned_data = {}
+        for k, v in data.items():
+            if v:
+                if k == 'metadata' and isinstance(v, dict):
+                    # Limpiar metadata recursivamente
+                    cleaned_metadata = {mk: mv for mk, mv in v.items() if mv}
+                    if cleaned_metadata:
+                        cleaned_data[k] = cleaned_metadata
+                else:
+                    cleaned_data[k] = v
+        
+        return cleaned_data
     
     def parse_date(self, date_string: str) -> str:
         """Intenta normalizar la fecha"""
@@ -535,6 +610,26 @@ class {{ spider_class_name }}(scrapy.Spider):
             return date_string
         
         try:
+            # Intentar parsear con datetime
+            from datetime import datetime
+            
+            # Formatos comunes
+            formats = [
+                '%Y-%m-%dT%H:%M:%S',
+                '%Y-%m-%d %H:%M:%S',
+                '%Y-%m-%d',
+                '%d/%m/%Y',
+                '%d-%m-%Y',
+            ]
+            
+            for fmt in formats:
+                try:
+                    dt = datetime.strptime(date_string[:19], fmt)
+                    return dt.isoformat()
+                except:
+                    continue
+                    
+            # Si no funciona, intentar con dateutil si está disponible
             from dateutil import parser
             return parser.parse(date_string).isoformat()
         except:
@@ -556,6 +651,8 @@ class {{ spider_class_name }}(scrapy.Spider):
         self.logger.info(f"""
         ========== RESUMEN DE SCRAPING (PLAYWRIGHT) ==========
         Spider: {spider.name}
+        Medio: {self.medio_info['medio']}
+        Sección: {self.medio_info['seccion']}
         Artículos extraídos: {self.articles_scraped}
         Páginas renderizadas: {stats.get('playwright/page_count', 0)}
         Duración: {stats.get('elapsed_time_seconds', 0):.2f} segundos

@@ -1,341 +1,142 @@
-# 📚 Spider Factory 2.0 - Documentación API
+# API Documentation - Spider Factory 2.0
 
-## Base URL
+Base URL: `http://localhost/spider-factory/api`
 
-```
-http://localhost:8000
-```
+## Authentication
 
-## Autenticación
+Currently, the API does not require authentication. This may change in future versions.
 
-Actualmente la API no requiere autenticación. En producción se recomienda implementar API keys o JWT.
+## Rate Limiting
+
+- **Global limit**: 10 requests per minute per IP
+- **Batch operations**: Limited to 100 items per request
 
 ## Endpoints
 
-### 🏥 Health Check
+### 1. Health Check
 
-Verificar el estado del sistema.
+Check if the service is running and healthy.
 
-```http
-GET /health
-```
+**Endpoint:** `GET /health`
 
 **Response:**
 ```json
 {
   "status": "healthy",
-  "timestamp": "2024-03-15T10:30:00",
   "version": "2.0.0",
-  "services": {
-    "redis": "healthy",
-    "firecrawl": "configured",
-    "generator": "healthy"
-  }
+  "redis": "connected",
+  "timestamp": "2024-12-27T12:00:00Z"
 }
 ```
 
-### 🔍 Análisis de Sitio
+### 2. Analyze Website
 
-Analizar un sitio web para determinar la mejor estrategia de scraping.
+Analyze a website to determine the best extraction strategy.
 
-```http
-POST /analyze
-Content-Type: application/json
-```
+**Endpoint:** `POST /analyze`
 
-**Request:**
+**Request Body:**
 ```json
 {
-  "url": "https://example-news.com",
-  "force_analysis": false,
-  "check_rss": true
+  "url": "https://elpais.com/internacional",
+  "medio": "El País",
+  "seccion": "Internacional",
+  "area_geografica": "ESPAÑA",
+  "tipo_medio": "diario",
+  "frecuencia_minutos": 60,
+  "rss_url": "https://elpais.com/internacional/rss"
 }
 ```
 
 **Response:**
 ```json
 {
-  "url": "https://example-news.com",
-  "strategy": "rss",
-  "confidence": 0.95,
-  "rss_url": "https://example-news.com/feed",
-  "selectors": {
-    "title": "h1.article-title",
-    "content": "div.article-body",
-    "author": "span.author-name",
-    "date": "time.publish-date"
-  },
+  "url": "https://elpais.com/internacional",
+  "domain": "elpais.com",
+  "strategy": "RSS",
+  "confidence": 0.98,
+  "rss_url": "https://elpais.com/internacional/rss",
+  "selectors": null,
   "needs_javascript": false,
+  "url_patterns": [],
+  "sample_articles": [],
   "from_cache": false,
-  "sample_articles": [
-    {
-      "title": "Sample Article",
-      "url": "https://example-news.com/article-1"
-    }
-  ],
-  "analysis_time": 2.34
+  "medio": "El País",
+  "seccion": "Internacional",
+  "area_geografica": "ESPAÑA",
+  "tipo_medio": "diario"
 }
 ```
 
-### 🕷️ Generar Spider
+### 3. Generate Spider
 
-Generar código de spider basado en análisis previo.
+Generate a new spider based on analysis results.
 
-```http
-POST /generate
-Content-Type: application/json
-```
+**Endpoint:** `POST /generate`
 
-**Request:**
+**Request Body:**
 ```json
 {
+  "medio": "El País",
+  "seccion": "Internacional",
+  "area_geografica": "ESPAÑA",
+  "tipo_medio": "diario",
+  "url": "https://elpais.com/internacional",
+  "frecuencia_minutos": 60,
+  "comentarios": "Spider para noticias internacionales"
+}
+```
+
+**Response:**
+```json
+{
+  "spider_name": "el_pais_internacional",
+  "file_path": "/src/module_scraper/scraper_core/spiders/el_pais_internacional.py",
+  "code": "# -*- coding: utf-8 -*-\n...",
   "analysis_result": {
-    "url": "https://example-news.com",
-    "strategy": "rss",
-    "confidence": 0.95,
-    "rss_url": "https://example-news.com/feed",
-    "selectors": {},
-    "needs_javascript": false
-  },
-  "spider_name": "example_news",
-  "site_name": "Example News",
-  "metadata": {
-    "area_geografica": "internacional",
-    "follow_pagination": true,
-    "max_pages": 10
+    "strategy": "RSS",
+    "confidence": 0.98,
+    "rss_url": "https://elpais.com/internacional/rss"
   }
 }
 ```
 
-**Response:**
+### 4. Check Duplicate
+
+Check if a spider already exists for a medio/seccion combination.
+
+**Endpoint:** `POST /check-duplicate`
+
+**Request Body:**
 ```json
 {
-  "spider_name": "example_news",
-  "file_path": "generated_spiders/example_news.py",
-  "code_preview": "import scrapy\nfrom scrapy import signals\n...",
-  "is_valid": true,
-  "generation_time": 0.45
-}
-```
-
-### 📊 Análisis Masivo
-
-Analizar múltiples sitios desde archivo CSV.
-
-```http
-POST /batch/analyze
-Content-Type: multipart/form-data
-```
-
-**Request:**
-```
-file: [archivo CSV]
-session_id: "batch_001"
-```
-
-**CSV Format:**
-```csv
-url,name,category
-https://site1.com,Site 1,technology
-https://site2.com,Site 2,sports
-```
-
-**Response:**
-```json
-{
-  "batch_id": "batch_20240315_103000",
-  "total_sites": 2,
-  "processed": 2,
-  "successful": 2,
-  "failed": 0,
-  "results": [
-    {
-      "site": "Site 1",
-      "url": "https://site1.com",
-      "success": true,
-      "analysis": {
-        "strategy": "scraping",
-        "confidence": 0.85
-      }
-    }
-  ],
-  "start_time": "2024-03-15T10:30:00",
-  "end_time": "2024-03-15T10:30:05",
-  "duration_seconds": 5.2
-}
-```
-
-### 🔎 Buscar Patrones
-
-Buscar patrones almacenados en el sistema.
-
-```http
-POST /patterns/search
-Content-Type: application/json
-```
-
-**Request:**
-```json
-{
-  "domain": "example.com",
-  "strategy": "rss",
-  "min_confidence": 0.7
+  "medio": "El País",
+  "seccion": "Internacional"
 }
 ```
 
 **Response:**
 ```json
 {
-  "patterns": [
-    {
-      "domain": "example.com",
-      "strategy": "rss",
-      "confidence": 0.95,
-      "selectors": {
-        "title": "h1.title",
-        "content": "div.content"
-      },
-      "last_updated": "2024-03-15T10:00:00",
-      "times_used": 42,
-      "success_rate": 0.98
-    }
-  ],
-  "total": 1
+  "exists": true,
+  "spider_name": "el_pais_internacional",
+  "file_path": "/src/module_scraper/scraper_core/spiders/el_pais_internacional.py",
+  "similar_spiders": ["el_pais_deportes", "el_pais_economia"],
+  "message": "Spider already exists"
 }
 ```
 
-### 📥 Descargar Spider
+## Valid Values
 
-Descargar archivo de spider generado.
-
-```http
-GET /download/{spider_name}
+### area_geografica
+```
+GLOBAL, ESPAÑA, MEXICO, ARGENTINA, COLOMBIA, CHILE, PERU, VENEZUELA, 
+ECUADOR, BOLIVIA, PARAGUAY, URUGUAY, BRASIL, COSTA_RICA, PANAMA, 
+GUATEMALA, HONDURAS, EL_SALVADOR, NICARAGUA, REPUBLICA_DOMINICANA, 
+PUERTO_RICO, CUBA, USA, CANADA, EUROPA, ASIA, AFRICA, OCEANIA
 ```
 
-**Response:**
-- Content-Type: text/x-python
-- Content-Disposition: attachment; filename="spider_name.py"
-
-### 🔌 WebSocket
-
-Conectar para recibir actualizaciones en tiempo real.
-
-```javascript
-const ws = new WebSocket('ws://localhost:8000/ws/session_123');
-
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log('Update:', data);
-};
-```
-
-**Mensajes:**
-```json
-{
-  "type": "site_processing",
-  "batch_id": "batch_001",
-  "site_name": "Example News",
-  "site_url": "https://example.com",
-  "progress": 45.5
-}
-```
-
-## Códigos de Estado
-
-| Código | Descripción |
-|--------|-------------|
-| 200 | Éxito |
-| 400 | Petición inválida |
-| 404 | Recurso no encontrado |
-| 409 | Conflicto (ej: spider ya existe) |
-| 500 | Error interno del servidor |
-| 503 | Servicio no disponible |
-
-## Ejemplos con cURL
-
-### Análisis simple
-```bash
-curl -X POST http://localhost:8000/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://techcrunch.com"}'
-```
-
-### Generación con metadata
-```bash
-curl -X POST http://localhost:8000/generate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "analysis_result": {...},
-    "spider_name": "techcrunch_spider",
-    "site_name": "TechCrunch",
-    "metadata": {
-      "area_geografica": "usa",
-      "follow_pagination": true,
-      "max_pages": 20,
-      "excluded_urls": ["/tag/", "/author/"]
-    }
-  }'
-```
-
-### Carga masiva
-```bash
-curl -X POST http://localhost:8000/batch/analyze \
-  -F "file=@sites.csv" \
-  -F "session_id=my_batch"
-```
-
-## Límites y Cuotas
-
-- Tamaño máximo de archivo CSV: 10MB
-- Máximo sitios por batch: 100
-- Timeout por análisis: 30 segundos
-- Rate limit: 100 requests/hora (configurable)
-
-## Manejo de Errores
-
-Todos los errores siguen el formato:
-
-```json
-{
-  "error": "HTTP 400",
-  "detail": "Descripción del error",
-  "timestamp": "2024-03-15T10:30:00"
-}
-```
-
-## SDK Python
-
-```python
-import httpx
-
-class SpiderFactoryClient:
-    def __init__(self, base_url="http://localhost:8000"):
-        self.base_url = base_url
-        self.client = httpx.AsyncClient()
-    
-    async def analyze(self, url):
-        response = await self.client.post(
-            f"{self.base_url}/analyze",
-            json={"url": url}
-        )
-        return response.json()
-    
-    async def generate(self, analysis_result, spider_name, site_name):
-        response = await self.client.post(
-            f"{self.base_url}/generate",
-            json={
-                "analysis_result": analysis_result,
-                "spider_name": spider_name,
-                "site_name": site_name
-            }
-        )
-        return response.json()
-```
-
-## Postman Collection
-
-Importar [spider_factory.postman_collection.json](postman/spider_factory.postman_collection.json) para testing rápido.
-
----
-
-**Documentación interactiva**: http://localhost:8000/docs
+### tipo_medio
+- `diario`
+- `revista`
+- `agencia`

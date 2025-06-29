@@ -1,0 +1,22 @@
+{
+  "backups": {
+    "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/src/module_scraper/scraper_core/settings.py": {
+      "original": "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/src/module_scraper/scraper_core/settings.py",
+      "backup": "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/.cpms3_staging/backups/src/module_scraper/scraper_core/20250628_102831_settings.py",
+      "timestamp": "20250628_102831"
+    },
+    "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/src/spider_factory/templates/spiders/base_spider.j2": {
+      "original": "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/src/spider_factory/templates/spiders/base_spider.j2",
+      "backup": "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/.cpms3_staging/backups/src/spider_factory/templates/spiders/20250628_102831_base_spider.j2",
+      "timestamp": "20250628_102831"
+    }
+  },
+  "deletions": {},
+  "operations": [
+    {
+      "type": "restore_backup",
+      "file": "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/src/module_scraper/scraper_core/settings.py",
+      "timestamp": "2025-06-28T09:53:12.550378"
+    }
+  ]
+}

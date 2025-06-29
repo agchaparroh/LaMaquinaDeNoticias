@@ -1,0 +1,225 @@
+# CPMS3 Example - Hello World Project
+# Demuestra las capacidades básicas del sistema
+
+meta:
+  id: "HELLO-001"
+  name: "Hello World CPMS3"
+  goal: "Crear una aplicación Python simple con tests y documentación"
+  version: "3.0"
+  created: "2025-06-28"
+
+config:
+  base_path: "."  # Relativo al directorio del plan
+  staging_dir: ".cpms3_staging"
+  max_retries: 2
+  command_timeout: 60
+
+constants:
+  app_name: "hello_cpms3"
+  python_version: "3.8+"
+
+steps:
+  # Crear estructura de directorios
+  - id: "STEP-001"
+    description: "Crear estructura del proyecto"
+    action: "create_file"
+    path: "src/__init__.py"
+    content: |
+      """Hello CPMS3 Package"""
+      __version__ = "1.0.0"
+    verify:
+      - type: "file_exists"
+        path: "src/__init__.py"
+
+  - id: "STEP-002"
+    description: "Crear módulo principal"
+    action: "create_file"
+    path: "src/main.py"
+    content: |
+      #!/usr/bin/env python3
+      """
+      Hello CPMS3 - Demostración del sistema
+      """
+      
+      def greet(name: str = "CPMS3") -> str:
+          """Genera un saludo personalizado"""
+          return f"Hello {name}! Welcome to CPMS3."
+      
+      def main():
+          """Función principal"""
+          print(greet())
+          print("This project was created automatically by CPMS3!")
+          return 0
+      
+      if __name__ == "__main__":
+          exit(main())
+    verify:
+      - type: "file_exists"
+        path: "src/main.py"
+      - type: "file_contains"
+        path: "src/main.py"
+        text: "def greet"
+      - type: "syntax_valid"
+        language: "python"
+        path: "src/main.py"
+
+  - id: "STEP-003"
+    description: "Crear tests"
+    action: "create_file"
+    path: "tests/test_main.py"
+    content: |
+      """Tests para hello_cpms3"""
+      import sys
+      from pathlib import Path
+      
+      # Agregar src al path
+      sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+      
+      from main import greet
+      
+      def test_greet_default():
+          """Test saludo por defecto"""
+          assert greet() == "Hello CPMS3! Welcome to CPMS3."
+      
+      def test_greet_custom():
+          """Test saludo personalizado"""
+          assert greet("World") == "Hello World! Welcome to CPMS3."
+      
+      def test_greet_empty():
+          """Test con string vacío"""
+          assert greet("") == "Hello ! Welcome to CPMS3."
+      
+      if __name__ == "__main__":
+          # Mini test runner
+          print("Running tests...")
+          test_greet_default()
+          test_greet_custom()
+          test_greet_empty()
+          print("✅ All tests passed!")
+    verify:
+      - type: "file_exists"
+        path: "tests/test_main.py"
+      - type: "syntax_valid"
+        language: "python"
+        path: "tests/test_main.py"
+
+  - id: "STEP-004"
+    description: "Ejecutar tests"
+    action: "run_command"
+    command: "python tests/test_main.py"
+    verify:
+      - type: "command_output_contains"
+        command: "python tests/test_main.py"
+        contains: "All tests passed"
+
+  - id: "STEP-005"
+    description: "Crear README"
+    action: "create_file"
+    path: "README.md"
+    content: |
+      # Hello CPMS3
+      
+      Este proyecto fue creado automáticamente por CPMS3 - Sistema de Ejecución Determinista.
+      
+      ## Características
+      
+      - ✅ Creación 100% automática
+      - ✅ Verificación sin intervención humana
+      - ✅ Tests incluidos y ejecutados
+      - ✅ Estructura de proyecto completa
+      
+      ## Uso
+      
+      ```bash
+      python src/main.py
+      ```
+      
+      ## Tests
+      
+      ```bash
+      python tests/test_main.py
+      ```
+      
+      ## Creado con CPMS3
+      
+      Este proyecto demuestra las capacidades de CPMS3:
+      - Un archivo de configuración
+      - Ejecución determinista
+      - Verificación automática
+      - Staging para cambios seguros
+      
+      Fecha: {created}
+    verify:
+      - type: "file_exists"
+        path: "README.md"
+      - type: "file_contains"
+        path: "README.md"
+        text: "CPMS3"
+
+  - id: "STEP-006"
+    description: "Crear archivo de configuración (ejemplo de modificación)"
+    action: "create_file"
+    path: "config.ini"
+    content: |
+      [app]
+      name = {app_name}
+      version = 1.0.0
+      debug = true
+    verify:
+      - type: "file_exists"
+        path: "config.ini"
+
+  - id: "STEP-007"
+    description: "Cambiar modo debug a false"
+    action: "modify_file"
+    path: "config.ini"
+    backup: true
+    changes:
+      - find: "debug = true"
+        replace: "debug = false"
+    verify:
+      - type: "file_contains"
+        path: "config.ini"
+        text: "debug = false"
+
+  - id: "STEP-008"
+    description: "Ejecutar aplicación"
+    action: "run_command"
+    command: "python src/main.py"
+    verify:
+      - type: "command_output_contains"
+        command: "python src/main.py"
+        contains: "Hello CPMS3!"
+
+  - id: "STEP-009"
+    description: "Crear archivo temporal para demostrar staging"
+    action: "create_file"
+    path: "temp_file.txt"
+    content: "Este archivo será eliminado de forma segura"
+    verify:
+      - type: "file_exists"
+        path: "temp_file.txt"
+
+  - id: "STEP-010"
+    description: "Eliminar archivo temporal (con staging)"
+    action: "delete_file"
+    path: "temp_file.txt"
+    staging: true
+    verify:
+      - type: "file_not_exists"
+        path: "temp_file.txt"
+      - type: "file_exists"
+        path: ".cpms3_staging/deleted/temp_file.txt"
+
+final_validation:
+  - type: "goal_achieved"
+    checks:
+      - "Estructura de proyecto creada"
+      - "Código principal implementado"
+      - "Tests creados y pasando"
+      - "README documentado"
+      - "Aplicación ejecutable"
+
+post_execution:
+  - action: "create_summary"
+    path: "EXECUTION_SUMMARY.md"

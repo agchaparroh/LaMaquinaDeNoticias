@@ -14,7 +14,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 import httpx
 
 from .analyzer import SmartAnalyzer, SiteAnalysisRequest, AnalysisResult, AnalysisStrategy
@@ -25,8 +25,8 @@ from .websocket_manager import ConnectionManager
 from .batch_processor import BatchProcessor, BatchRequest, BatchResponse, BatchSite
 
 # Pydantic models para API
-from pydantic import BaseModel, HttpUrl, Field
-from typing import List, Dict, Any, Optional
+from pydantic import BaseModel, HttpUrl, Field, validator
+from typing import List, Dict, Any, Optional, Literal
 from datetime import datetime
 from enum import Enum
 
@@ -52,8 +52,40 @@ class ErrorResponse(BaseModel):
 
 class AnalysisRequest(BaseModel):
     url: HttpUrl
+    name: str = ""  # MANTENER por compatibilidad
     force_analysis: bool = False
     check_rss: bool = True
+    
+    # Nuevos campos opcionales (Fase 1 - retrocompatibilidad)
+    medio: Optional[str] = None
+    seccion: Optional[str] = None
+    area_geografica: Optional[str] = None
+    tipo_medio: Optional[Literal["diario", "revista", "agencia"]] = None
+    frecuencia_minutos: Optional[int] = 60
+    comentarios: Optional[str] = None
+    rss_url: Optional[HttpUrl] = None
+    
+    @validator('medio', pre=True, always=True)
+    def set_medio_from_name(cls, v, values):
+        # Si no hay medio, usar name como fallback
+        return v or values.get('name', 'Sin nombre')
+    
+    @validator('seccion', pre=True, always=True)
+    def set_default_seccion(cls, v):
+        # Si no hay sección, usar "general" por defecto
+        return v or 'general'
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "url": "https://elpais.com/internacional",
+                "medio": "El País",
+                "seccion": "Internacional",
+                "area_geografica": "ESPAÑA",
+                "tipo_medio": "diario",
+                "frecuencia_minutos": 60
+            }
+        }
 
 
 class AnalysisResponse(BaseModel):
@@ -66,13 +98,45 @@ class AnalysisResponse(BaseModel):
     from_cache: bool = False
     sample_articles: Optional[List[Dict[str, Any]]] = None
     analysis_time: float
+    
+    # Nuevos campos
+    medio: str
+    seccion: str
+    area_geografica: str
+    tipo_medio: str
+    frecuencia_minutos: int
 
 
 class GenerateSpiderRequest(BaseModel):
     analysis_result: Dict[str, Any]  # AnalysisResult as dict
-    spider_name: str
-    site_name: str
+    spider_name: str = ""  # MANTENER por compatibilidad
+    site_name: str = ""  # MANTENER por compatibilidad  
     metadata: Dict[str, Any] = {}
+    
+    # Nuevos campos opcionales
+    medio: Optional[str] = None
+    seccion: Optional[str] = None
+    area_geografica: Optional[str] = None
+    tipo_medio: Optional[Literal["diario", "revista", "agencia"]] = None
+    frecuencia_minutos: Optional[int] = 60
+    
+    @validator('spider_name', pre=True, always=True)
+    def generate_spider_name(cls, v, values):
+        # Si hay medio y sección, generar automáticamente
+        if values.get('medio') and values.get('seccion'):
+            return f"{values['medio']}_{values['seccion']}".lower().replace(' ', '_')
+        return v or "default_spider"
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "analysis_result": {"strategy": "scraping", "confidence": 0.85},
+                "medio": "El País",
+                "seccion": "Internacional",
+                "area_geografica": "ESPAÑA",
+                "tipo_medio": "diario"
+            }
+        }
 
 
 class GenerateSpiderResponse(BaseModel):
@@ -92,6 +156,27 @@ class PatternSearchRequest(BaseModel):
 class PatternSearchResponse(BaseModel):
     patterns: List[Dict[str, Any]]
     total: int
+
+
+class DuplicateCheckRequest(BaseModel):
+    medio: str = Field(..., description="Nombre del medio")
+    seccion: str = Field(..., description="Sección específica del medio")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "medio": "El País",
+                "seccion": "Internacional"
+            }
+        }
+
+
+class DuplicateCheckResponse(BaseModel):
+    exists: bool
+    spider_name: Optional[str] = None
+    file_path: Optional[str] = None
+    similar_spiders: List[str] = []
+    message: str
 
 
 # Crear aplicación FastAPI
@@ -201,9 +286,22 @@ async def analyze_site(request: AnalysisRequest):
     start_time = time.time()
     
     try:
-        # Crear request para el analyzer
+        # Usar nuevos campos si están presentes, sino fallback a los antiguos
+        medio = request.medio or request.name
+        seccion = request.seccion or "general"
+        area_geografica = request.area_geografica or "GLOBAL"
+        tipo_medio = request.tipo_medio or "diario"
+        
+        # Crear request para el analyzer con nuevos campos
         analysis_request = SiteAnalysisRequest(
             url=str(request.url),
+            medio=medio,
+            seccion=seccion,
+            area_geografica=area_geografica,
+            tipo_medio=tipo_medio,
+            frecuencia_minutos=request.frecuencia_minutos,
+            comentarios=request.comentarios,
+            rss_url=request.rss_url,
             force_analysis=request.force_analysis,
             check_rss=request.check_rss
         )
@@ -216,12 +314,18 @@ async def analyze_site(request: AnalysisRequest):
             url=str(result.url),
             strategy=result.strategy.value,
             confidence=result.confidence,
-            rss_url=result.rss_url,
-            selectors=result.selectors,
+            rss_url=str(result.rss_url) if result.rss_url else None,
+            selectors=result.selectors.dict() if result.selectors else None,
             needs_javascript=result.needs_javascript,
             from_cache=result.from_cache,
             sample_articles=result.sample_articles,
-            analysis_time=time.time() - start_time
+            analysis_time=time.time() - start_time,
+            # Nuevos campos
+            medio=result.medio,
+            seccion=result.seccion,
+            area_geografica=result.area_geografica,
+            tipo_medio=result.tipo_medio,
+            frecuencia_minutos=result.frecuencia_minutos
         )
         
     except httpx.HTTPError as e:
@@ -235,32 +339,98 @@ async def analyze_site(request: AnalysisRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post(
+    "/api/check-duplicate",
+    response_model=DuplicateCheckResponse,
+    summary="Verifica duplicados de spiders",
+    description="Verifica si ya existe un spider para el medio y sección especificados",
+    responses={
+        200: {"description": "Verificación completada"},
+        400: {"description": "Datos inválidos"},
+        500: {"description": "Error del servidor"}
+    }
+)
+async def check_duplicate(request: DuplicateCheckRequest):
+    """Verifica si un spider medio_seccion ya existe"""
+    try:
+        # Generar nombre del spider
+        spider_name = f"{request.medio.lower().replace(' ', '_')}_{request.seccion.lower().replace(' ', '_')}"
+        
+        # Verificar si existe el archivo
+        file_path = Path(settings.SPIDER_OUTPUT_PATH) / f"{spider_name}.py"
+        exists = file_path.exists()
+        
+        # Buscar spiders similares
+        similar_spiders = []
+        if Path(settings.SPIDER_OUTPUT_PATH).exists():
+            # Buscar archivos que contengan el nombre del medio
+            medio_pattern = request.medio.lower().replace(' ', '_')
+            for spider_file in Path(settings.SPIDER_OUTPUT_PATH).glob("*.py"):
+                if medio_pattern in spider_file.stem and spider_file.stem != spider_name:
+                    similar_spiders.append(spider_file.stem)
+        
+        return DuplicateCheckResponse(
+            exists=exists,
+            spider_name=spider_name if exists else None,
+            file_path=str(file_path) if exists else None,
+            similar_spiders=similar_spiders[:5],  # Limitar a 5 similares
+            message="Spider ya existe" if exists else "Nombre disponible"
+        )
+        
+    except Exception as e:
+        logger.error(f"Error verificando duplicado: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/generate", response_model=GenerateSpiderResponse)
 async def generate_spider(request: GenerateSpiderRequest):
     """Generar un spider basado en análisis"""
     start_time = time.time()
     
     try:
-        # Reconstruir AnalysisResult desde el dict
+        # Extraer campos obligatorios con fallbacks
+        medio = request.medio or request.analysis_result.get("medio", request.site_name or "default")
+        seccion = request.seccion or request.analysis_result.get("seccion", "general")
+        area_geografica = request.area_geografica or request.analysis_result.get("area_geografica", "GLOBAL")
+        tipo_medio = request.tipo_medio or request.analysis_result.get("tipo_medio", "diario")
+        frecuencia_minutos = request.frecuencia_minutos or request.analysis_result.get("frecuencia_minutos", 60)
+        
+        # Generar nombre del spider automáticamente si no se proporciona
+        if not request.spider_name or request.spider_name == "default_spider":
+            spider_name = f"{medio}_{seccion}".lower().replace(' ', '_').replace('-', '_')
+        else:
+            spider_name = request.spider_name
+        
+        # Reconstruir AnalysisResult desde el dict con campos nuevos
         analysis_result = AnalysisResult(
             url=request.analysis_result.get("url"),
             domain=request.analysis_result.get("domain", ""),
-            strategy=ScrapingStrategy(request.analysis_result.get("strategy", "scraping")),
+            strategy=AnalysisStrategy(request.analysis_result.get("strategy", "scraping")),
             confidence=request.analysis_result.get("confidence", 0.5),
             rss_url=request.analysis_result.get("rss_url"),
             selectors=request.analysis_result.get("selectors"),
             needs_javascript=request.analysis_result.get("needs_javascript", False),
             url_patterns=request.analysis_result.get("url_patterns"),
             sample_articles=request.analysis_result.get("sample_articles"),
-            from_cache=request.analysis_result.get("from_cache", False)
+            from_cache=request.analysis_result.get("from_cache", False),
+            # Nuevos campos
+            medio=medio,
+            seccion=seccion,
+            area_geografica=area_geografica,
+            tipo_medio=tipo_medio,
+            frecuencia_minutos=frecuencia_minutos
         )
         
-        # Generar código del spider
-        spider_code = generator.generate_spider(
-            analysis_result,
-            request.spider_name,
-            request.site_name,
-            request.metadata
+        # Generar código del spider con todos los parámetros
+        spider_code = await generator.generate_spider(
+            analysis_result=analysis_result,
+            spider_name=spider_name,
+            medio=medio,
+            seccion=seccion,
+            area_geografica=area_geografica,
+            tipo_medio=tipo_medio,
+            frecuencia_minutos=frecuencia_minutos,
+            metadata=request.metadata
         )
         
         # Validar código
@@ -269,11 +439,11 @@ async def generate_spider(request: GenerateSpiderRequest):
         if not is_valid:
             raise ValueError("El código generado tiene errores de sintaxis")
         
-        # Guardar spider
-        output_dir = Path("generated_spiders")
-        output_dir.mkdir(exist_ok=True)
+        # Directorio de salida correcto según el plan
+        output_dir = Path(settings.SPIDER_OUTPUT_PATH)
+        output_dir.mkdir(parents=True, exist_ok=True)
         
-        file_path = output_dir / f"{request.spider_name}.py"
+        file_path = output_dir / f"{spider_name}.py"
         file_path.write_text(spider_code, encoding="utf-8")
         
         # Preview del código (primeras 50 líneas)
@@ -282,8 +452,10 @@ async def generate_spider(request: GenerateSpiderRequest):
         if len(code_lines) > 50:
             code_preview += "\n\n# ... (código truncado)"
         
+        logger.info(f"Spider generado: {spider_name} en {file_path}")
+        
         return GenerateSpiderResponse(
-            spider_name=request.spider_name,
+            spider_name=spider_name,
             file_path=str(file_path),
             code_preview=code_preview,
             is_valid=is_valid,
@@ -338,7 +510,7 @@ async def search_patterns(request: PatternSearchRequest):
         if request.domain:
             patterns = await pattern_storage.search_by_domain(request.domain)
         elif request.strategy:
-            patterns = await pattern_storage.search_by_strategy(ScrapingStrategy(request.strategy))
+            patterns = await pattern_storage.search_by_strategy(AnalysisStrategy(request.strategy))
         else:
             # Obtener todos los patrones
             patterns = await pattern_storage.get_all_patterns(limit=100)
@@ -410,6 +582,102 @@ async def download_spider(spider_name: str):
         filename=f"{spider_name}.py",
         media_type="text/x-python"
     )
+
+
+@app.get("/metrics")
+async def get_metrics():
+    """
+    Obtiene métricas del sistema según KPIs del plan
+    
+    Retorna métricas de:
+    - Tiempo de generación (reducción 97%)
+    - Tiempos promedio por estrategia
+    - Precisión de spiders
+    - Cache hit rate
+    - Throughput diario
+    """
+    try:
+        # Importar aquí para evitar import circular
+        from .metrics import Metrics
+        from .performance_metrics import PerformanceMetrics
+        
+        # Obtener cliente Redis
+        redis_client = get_redis_client()
+        
+        # Inicializar sistemas de métricas
+        metrics = Metrics(redis_client)
+        performance = PerformanceMetrics(redis_client)
+        
+        # Obtener métricas completas
+        system_metrics = await metrics.get_system_metrics()
+        performance_trends = await performance.analyze_performance_trends()
+        cost_savings = await performance.calculate_cost_savings()
+        
+        # Combinar todas las métricas
+        response = {
+            **system_metrics,
+            "performance_trends": performance_trends,
+            "cost_savings": cost_savings,
+            "service": "Spider Factory 2.0",
+            "version": "2.0.0"
+        }
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo métricas: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error obteniendo métricas: {str(e)}"
+        )
+
+
+@app.get("/metrics/summary")
+async def get_metrics_summary():
+    """
+    Obtiene resumen de métricas en formato texto
+    Útil para dashboards simples o alertas
+    """
+    try:
+        from .metrics import Metrics
+        
+        redis_client = get_redis_client()
+        metrics = Metrics(redis_client)
+        
+        summary = await metrics.get_metrics_summary()
+        
+        return PlainTextResponse(summary)
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo resumen de métricas: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error obteniendo resumen: {str(e)}"
+        )
+
+
+@app.get("/metrics/performance")
+async def get_performance_report():
+    """
+    Obtiene reporte detallado de rendimiento
+    Incluye análisis de tendencias y cuellos de botella
+    """
+    try:
+        from .performance_metrics import PerformanceMetrics
+        
+        redis_client = get_redis_client()
+        performance = PerformanceMetrics(redis_client)
+        
+        report = await performance.get_performance_report()
+        
+        return PlainTextResponse(report)
+        
+    except Exception as e:
+        logger.error(f"Error generando reporte de rendimiento: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generando reporte: {str(e)}"
+        )
 
 
 # Manejo de errores global

@@ -1,0 +1,133 @@
+"""
+Spider generado automáticamente por Spider Factory 2.0
+Medio: {{ medio }}
+Sección: {{ seccion }}
+Fecha: {{ generation_date }}
+Estrategia: {{ strategy }}
+
+GENERADO AUTOMÁTICAMENTE - NO EDITAR MANUALMENTE
+Los cambios manuales se perderán en la próxima generación
+"""
+import re
+from datetime import datetime
+from typing import Optional, Dict, Any
+import scrapy
+from scrapy.http import Response
+
+# Configuración de scrapy-crawl-once
+CRAWL_ONCE_ENABLED = True
+
+
+class Base{{ medio|title|replace(' ', '') }}{{ seccion|title|replace(' ', '') }}Spider(scrapy.Spider):
+    """Spider base con configuración común para {{ medio }} - {{ seccion }}"""
+    
+    name = "{{ medio|lower|replace(' ', '_') }}_{{ seccion|lower|replace(' ', '_') }}"
+    
+    # Configuración básica de Scrapy
+    custom_settings = {
+        {%- if custom_headers %}
+        'DEFAULT_REQUEST_HEADERS': {
+            {% for key, value in custom_headers.items() -%}
+            '{{ key }}': '{{ value }}',
+            {% endfor -%}
+        },
+        {%- endif %}
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'ROBOTSTXT_OBEY': True,
+        'COOKIES_ENABLED': True,
+        'DOWNLOAD_DELAY': 2,
+        'CONCURRENT_REQUESTS': 2,
+        'DOWNLOAD_TIMEOUT': 30,
+        
+        # Scrapy-crawl-once configuration
+        'CRAWL_ONCE_ENABLED': True,
+        'CRAWL_ONCE_PATH': f'.scrapy/crawl_once/{{ medio|lower|replace(" ", "_") }}_{{ seccion|lower|replace(" ", "_") }}',
+        'CRAWL_ONCE_DEFAULT': False,
+        
+        # Configuración de encoding
+        'FEED_EXPORT_ENCODING': 'utf-8',
+        
+        # SCRAPYD CONFIGURATION:
+        # Schedule: Every {{ frecuencia_minutos }} minutes
+        # Project: lamaquina
+        # Spider: {{ medio|lower|replace(" ", "_") }}_{{ seccion|lower|replace(" ", "_") }}
+        # Arguments: -a max_items=100
+    }
+    
+    # Información del medio
+    medio_info = {
+        'medio': "{{ medio }}",
+        'seccion': "{{ seccion }}",
+        'area_geografica': "{{ area_geografica }}",
+        'tipo_medio': "{{ tipo_medio }}",
+        'medio_url_principal': "{{ base_url }}",
+        'frecuencia_minutos': {{ frecuencia_minutos }},
+    }
+    
+    def _is_section_article(self, url: str) -> bool:
+        """Valida si la URL pertenece a la sección objetivo"""
+        excluded_patterns = [
+            r'/archivo/', r'/hemeroteca/', r'/newsletter/',
+            r'/multimedia/', r'/video/', r'/podcast/',
+            r'/tags?/', r'/autor/', r'/busca[rd]?/',
+            r'/opinion/', r'/blogs?/', r'/especiales/',
+        ]
+        
+        for pattern in excluded_patterns:
+            if re.search(pattern, url, re.IGNORECASE):
+                self.logger.debug(f"URL excluida por patrón {pattern}: {url}")
+                return False
+        
+        # Verificar que pertenece a la sección
+        section_pattern = re.compile(r'/{{ seccion|lower|replace(" ", "[-_]?") }}/', re.IGNORECASE)
+        if section_pattern.search(url):
+            return True
+            
+        # Si no hay patrón de sección específico, aceptar URLs del dominio
+        if "{{ domain }}" in url:
+            return True
+            
+        return False
+    
+    def _extract_date(self, response: Response) -> Optional[datetime]:
+        """Intenta extraer la fecha de publicación del artículo"""
+        # Buscar en meta tags comunes
+        date_selectors = [
+            'meta[property="article:published_time"]::attr(content)',
+            'meta[name="publish_date"]::attr(content)',
+            'meta[name="DC.date.issued"]::attr(content)',
+            'time[datetime]::attr(datetime)',
+            'time[pubdate]::attr(datetime)',
+        ]
+        
+        for selector in date_selectors:
+            date_str = response.css(selector).get()
+            if date_str:
+                try:
+                    # Intentar parsear diferentes formatos
+                    for fmt in ['%Y-%m-%dT%H:%M:%S', '%Y-%m-%d', '%d/%m/%Y']:
+                        try:
+                            return datetime.strptime(date_str[:19], fmt)
+                        except:
+                            continue
+                except Exception as e:
+                    self.logger.debug(f"Error parseando fecha {date_str}: {e}")
+        
+        return None
+    
+    def _create_item_base(self, response: Response) -> Dict[str, Any]:
+        """Crea un item base con todos los campos obligatorios"""
+        return {
+            'url': response.url,
+            'medio': self.medio_info['medio'],
+            'medio_url_principal': self.medio_info['medio_url_principal'],
+            'area_geografica': self.medio_info['area_geografica'],
+            'tipo_medio': self.medio_info['tipo_medio'],
+            'seccion': self.medio_info['seccion'],
+            'fuente': self.name,
+            'fecha_extraccion': datetime.now().isoformat(),
+            'metadata': {
+                'spider_type': '{{ strategy|lower }}',
+                'frecuencia_minutos': self.medio_info['frecuencia_minutos'],
+            }
+        }

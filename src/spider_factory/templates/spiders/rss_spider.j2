@@ -1,9 +1,14 @@
 """
 Spider generado automáticamente por Spider Factory 2.0
-Estrategia: RSS
-Sitio: {{ site_name }}
+Medio: {{ medio }}
+Sección: {{ seccion }}
 Fecha: {{ generation_date }}
+Estrategia: {{ strategy }}
+
+GENERADO AUTOMÁTICAMENTE - NO EDITAR MANUALMENTE
+Los cambios manuales se perderán en la próxima generación
 """
+import re
 import scrapy
 from scrapy import signals
 from scrapy.exceptions import CloseSpider
@@ -13,45 +18,55 @@ import logging
 from typing import Dict, Any, Optional, Iterator
 
 
-class {{ spider_class_name }}(scrapy.Spider):
+class {{ medio|title|replace(' ', '') }}{{ seccion|title|replace(' ', '') }}Spider(scrapy.Spider):
     """
-    Spider para {{ site_name }}
+    Spider RSS para {{ medio }} - {{ seccion }}
     
     Utiliza feeds RSS para obtener artículos de noticias.
-    {% if metadata.description %}
-    {{ metadata.description }}
-    {% endif %}
+    Área geográfica: {{ area_geografica }}
+    Tipo de medio: {{ tipo_medio }}
     """
-    name = "{{ spider_name }}"
+    name = "{{ medio|lower|replace(' ', '_') }}_{{ seccion|lower|replace(' ', '_') }}"
     allowed_domains = ["{{ domain }}"]
     
     # Configuración
     custom_settings = {
-        'USER_AGENT': 'Mozilla/5.0 (compatible; NewsBot/1.0; +http://example.com/bot)',
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'ROBOTSTXT_OBEY': True,
         'CONCURRENT_REQUESTS': 2,
-        'DOWNLOAD_DELAY': 1,
-        'COOKIES_ENABLED': False,
-        'FEEDS': {
-            f'output/{{ spider_name }}_%(time)s.json': {
-                'format': 'json',
-                'encoding': 'utf8',
-                'indent': 2
-            }
-        }
+        'DOWNLOAD_DELAY': 2,
+        'COOKIES_ENABLED': True,
+        
+        # Scrapy-crawl-once configuration
+        'CRAWL_ONCE_ENABLED': True,
+        'CRAWL_ONCE_PATH': f'.scrapy/crawl_once/{{ medio|lower|replace(" ", "_") }}_{{ seccion|lower|replace(" ", "_") }}',
+        'CRAWL_ONCE_DEFAULT': False,
+        
+        # Configuración de encoding
+        'FEED_EXPORT_ENCODING': 'utf-8',
+        
+        # SCRAPYD CONFIGURATION:
+        # Schedule: Every {{ frecuencia_minutos }} minutes
+        # Project: lamaquina
+        # Spider: {{ medio|lower|replace(" ", "_") }}_{{ seccion|lower|replace(" ", "_") }}
+        # Arguments: -a max_items=100
     }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rss_url = "{{ rss_url }}"
         self.articles_scraped = 0
-        self.max_articles = int(kwargs.get('max_articles', 100))
-        {% if metadata %}
-        # Metadata adicional
-        {% for key, value in metadata.items() %}
-        self.{{ key }} = "{{ value }}"
-        {% endfor %}
-        {% endif %}
+        self.max_articles = int(kwargs.get('max_items', 100))
+        
+        # Información del medio
+        self.medio_info = {
+            'medio': "{{ medio }}",
+            'seccion': "{{ seccion }}",
+            'area_geografica': "{{ area_geografica }}",
+            'tipo_medio': "{{ tipo_medio }}",
+            'medio_url_principal': "{{ base_url }}",
+            'frecuencia_minutos': {{ frecuencia_minutos }},
+        }
     
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -88,57 +103,108 @@ class {{ spider_class_name }}(scrapy.Spider):
             
             # Procesar cada entrada del feed
             for entry in feed.entries[:self.max_articles]:
-                article_data = self.extract_rss_data(entry)
-                
-                if article_data.get('link'):
-                    yield scrapy.Request(
-                        url=article_data['link'],
-                        callback=self.parse_article,
-                        errback=self.handle_error,
-                        meta={'article_data': article_data}
-                    )
-                else:
-                    # Si no hay link, yield directo los datos del RSS
-                    yield article_data
+                # Verificar si el artículo pertenece a la sección
+                if self._belongs_to_section(entry):
+                    article_data = self.extract_rss_data(entry)
+                    
+                    if article_data.get('url'):
+                        yield scrapy.Request(
+                            url=article_data['url'],
+                            callback=self.parse_article,
+                            errback=self.handle_error,
+                            meta={'article_data': article_data}
+                        )
+                    else:
+                        # Si no hay link, yield directo los datos del RSS
+                        yield article_data
                 
         except Exception as e:
             self.logger.error(f"Error parseando RSS: {e}")
     
+    def _belongs_to_section(self, entry) -> bool:
+        """Verifica si la entrada RSS pertenece a la sección objetivo"""
+        # Verificar por categorías
+        if hasattr(entry, 'tags'):
+            categories = [tag.term.lower() for tag in entry.tags]
+            if "{{ seccion|lower }}" in categories:
+                return True
+        
+        # Verificar por URL
+        if hasattr(entry, 'link'):
+            return self._is_section_article(entry.link)
+        
+        # Por defecto incluir todo si no se puede determinar
+        return True
+    
+    def _is_section_article(self, url: str) -> bool:
+        """Valida si la URL pertenece a la sección objetivo"""
+        excluded_patterns = [
+            r'/archivo/', r'/hemeroteca/', r'/newsletter/',
+            r'/multimedia/', r'/video/', r'/podcast/',
+            r'/tags?/', r'/autor/', r'/busca[rd]?/',
+        ]
+        
+        for pattern in excluded_patterns:
+            if re.search(pattern, url, re.IGNORECASE):
+                return False
+        
+        # Verificar que pertenece a la sección
+        section_pattern = re.compile(r'/{{ seccion|lower|replace(" ", "[-_]?") }}/', re.IGNORECASE)
+        return bool(section_pattern.search(url))
+    
     def extract_rss_data(self, entry) -> Dict[str, Any]:
-        """Extrae datos estructurados de una entrada RSS"""
-        article_data = {
-            'source': '{{ site_name }}',
-            'source_url': '{{ base_url }}',
-            'scraped_at': datetime.now().isoformat(),
-            'from_rss': True
-        }
-        
-        # Campos estándar RSS
-        fields_mapping = {
-            'title': 'title',
-            'link': 'link',
-            'description': 'summary',
-            'author': 'author',
-            'guid': 'id'
-        }
-        
-        for our_field, rss_field in fields_mapping.items():
-            if hasattr(entry, rss_field):
-                article_data[our_field] = getattr(entry, rss_field)
-        
-        # Fecha de publicación
+        """Extrae datos estructurados de una entrada RSS con campos obligatorios"""
+        # Extraer fecha de publicación
+        fecha_pub = None
         if hasattr(entry, 'published_parsed'):
-            article_data['published_date'] = datetime(*entry.published_parsed[:6]).isoformat()
+            fecha_pub = datetime(*entry.published_parsed[:6])
         elif hasattr(entry, 'updated_parsed'):
-            article_data['published_date'] = datetime(*entry.updated_parsed[:6]).isoformat()
+            fecha_pub = datetime(*entry.updated_parsed[:6])
+        
+        # Extraer contenido
+        contenido = ""
+        if hasattr(entry, 'summary'):
+            contenido = entry.summary
+        elif hasattr(entry, 'description'):
+            contenido = entry.description
+        
+        # Crear item con TODOS los campos obligatorios
+        article_data = {
+            # Campos obligatorios
+            'url': getattr(entry, 'link', ''),
+            'titular': getattr(entry, 'title', ''),  # IMPORTANTE: 'titular' no 'titulo'
+            'medio': self.medio_info['medio'],
+            'medio_url_principal': self.medio_info['medio_url_principal'],
+            'area_geografica': self.medio_info['area_geografica'],
+            'tipo_medio': self.medio_info['tipo_medio'],
+            'seccion': self.medio_info['seccion'],
+            'fecha_publicacion': fecha_pub.isoformat() if fecha_pub else None,
+            'contenido_texto': contenido,
+            'contenido_html': contenido,  # RSS normalmente no tiene HTML separado
+            'fuente': self.name,
+            'fecha_extraccion': datetime.now().isoformat(),
+            
+            # Metadata adicional
+            'metadata': {
+                'spider_type': 'rss',
+                'extraction_method': 'feedparser',
+                'section_filter': 'none',
+                'rss_guid': getattr(entry, 'id', None),
+                'from_rss': True,
+            }
+        }
+        
+        # Campos opcionales
+        if hasattr(entry, 'author'):
+            article_data['autor'] = entry.author
         
         # Categorías/Tags
         if hasattr(entry, 'tags'):
-            article_data['categories'] = [tag.term for tag in entry.tags]
+            article_data['metadata']['categorias'] = [tag.term for tag in entry.tags]
         
         # Media/Imágenes
         if hasattr(entry, 'media_content'):
-            article_data['media'] = [
+            article_data['metadata']['media'] = [
                 {'url': media.get('url'), 'type': media.get('type')}
                 for media in entry.media_content
             ]
@@ -154,8 +220,8 @@ class {{ spider_class_name }}(scrapy.Spider):
             return
         
         article_data = response.meta['article_data']
-        article_data['article_url'] = response.url
-        article_data['http_status'] = response.status
+        article_data['url'] = response.url  # Actualizar con URL final (redirects)
+        article_data['metadata']['http_status'] = response.status
         
         try:
             # Extraer contenido usando selectores
@@ -164,48 +230,62 @@ class {{ spider_class_name }}(scrapy.Spider):
             {% if selectors.title %}
             title = response.css('{{ selectors.title }}::text').get()
             if title:
-                article_data['title'] = title.strip()
+                article_data['titular'] = title.strip()
             {% endif %}
             
             {% if selectors.content %}
+            # Extraer texto plano
             content_elements = response.css('{{ selectors.content }}')
             if content_elements:
-                article_data['content'] = '\n'.join([
-                    elem.css('::text').getall() 
-                    for elem in content_elements
-                ]).strip()
+                text_content = ' '.join(content_elements.css('::text').getall())
+                article_data['contenido_texto'] = text_content.strip()
+                
+                # Extraer HTML
+                html_content = ''.join(content_elements.extract())
+                article_data['contenido_html'] = html_content
             {% endif %}
             
             {% if selectors.author %}
             author = response.css('{{ selectors.author }}::text').get()
             if author:
-                article_data['author'] = author.strip()
+                article_data['autor'] = author.strip()
             {% endif %}
             
             {% if selectors.date %}
-            date = response.css('{{ selectors.date }}::text').get()
-            if date:
-                article_data['published_date_from_article'] = date.strip()
+            date_str = response.css('{{ selectors.date }}::attr(datetime)').get() or \
+                      response.css('{{ selectors.date }}::text').get()
+            if date_str:
+                article_data['metadata']['fecha_articulo'] = date_str.strip()
             {% endif %}
             
             {% if selectors.image %}
             image = response.css('{{ selectors.image }}::attr(src)').get()
             if image:
-                article_data['main_image'] = response.urljoin(image)
+                article_data['imagen_principal'] = response.urljoin(image)
             {% endif %}
             {% else %}
             # Selectores genéricos si no hay específicos
-            article_data['content'] = self.extract_generic_content(response)
+            content = self.extract_generic_content(response)
+            if content:
+                article_data['contenido_texto'] = content
+                article_data['contenido_html'] = response.css('article').get() or \
+                                               response.css('main').get() or \
+                                               response.css('[role="main"]').get()
             {% endif %}
             
             # Extraer metadata adicional
-            article_data.update(self.extract_metadata(response))
+            self.extract_metadata(response, article_data)
+            
+            # Actualizar fecha si se encontró en la página
+            fecha = self._extract_date(response)
+            if fecha:
+                article_data['fecha_publicacion'] = fecha.isoformat()
             
         except Exception as e:
             self.logger.error(f"Error extrayendo contenido de {response.url}: {e}")
         
         self.articles_scraped += 1
-        self.logger.info(f"Artículo {self.articles_scraped} extraído: {article_data.get('title', 'Sin título')}")
+        self.logger.info(f"Artículo {self.articles_scraped} extraído: {article_data.get('titular', 'Sin título')}")
         
         yield article_data
     
@@ -213,18 +293,18 @@ class {{ spider_class_name }}(scrapy.Spider):
         """Extracción genérica de contenido cuando no hay selectores específicos"""
         # Intentar encontrar el contenido principal
         content_selectors = [
-            'article::text',
-            'main::text',
-            '[role="main"]::text',
-            '.post-content::text',
-            '.entry-content::text',
-            '.article-body::text',
-            '.story-body::text',
-            '#content::text'
+            'article',
+            'main',
+            '[role="main"]',
+            '.post-content',
+            '.entry-content',
+            '.article-body',
+            '.story-body',
+            '#content'
         ]
         
         for selector in content_selectors:
-            content = response.css(selector).getall()
+            content = response.css(f'{selector} ::text').getall()
             if content:
                 return ' '.join(content).strip()
         
@@ -232,10 +312,34 @@ class {{ spider_class_name }}(scrapy.Spider):
         paragraphs = response.css('p::text').getall()
         return ' '.join(paragraphs).strip()
     
-    def extract_metadata(self, response) -> Dict[str, Any]:
-        """Extrae metadata adicional de la página"""
-        metadata = {}
+    def _extract_date(self, response) -> Optional[datetime]:
+        """Intenta extraer la fecha de publicación del artículo"""
+        # Buscar en meta tags comunes
+        date_selectors = [
+            'meta[property="article:published_time"]::attr(content)',
+            'meta[name="publish_date"]::attr(content)',
+            'meta[name="DC.date.issued"]::attr(content)',
+            'time[datetime]::attr(datetime)',
+            'time[pubdate]::attr(datetime)',
+        ]
         
+        for selector in date_selectors:
+            date_str = response.css(selector).get()
+            if date_str:
+                try:
+                    # Intentar parsear ISO format
+                    return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                except:
+                    try:
+                        # Intentar otros formatos comunes
+                        return datetime.strptime(date_str[:19], '%Y-%m-%dT%H:%M:%S')
+                    except:
+                        pass
+        
+        return None
+    
+    def extract_metadata(self, response, article_data: Dict[str, Any]):
+        """Extrae metadata adicional de la página"""
         # Open Graph
         og_mappings = {
             'og_title': 'meta[property="og:title"]::attr(content)',
@@ -247,32 +351,25 @@ class {{ spider_class_name }}(scrapy.Spider):
         for key, selector in og_mappings.items():
             value = response.css(selector).get()
             if value:
-                metadata[key] = value
+                article_data['metadata'][key] = value
         
-        # Twitter Card
-        twitter_mappings = {
-            'twitter_title': 'meta[name="twitter:title"]::attr(content)',
-            'twitter_description': 'meta[name="twitter:description"]::attr(content)',
-            'twitter_image': 'meta[name="twitter:image"]::attr(content)',
-        }
-        
-        for key, selector in twitter_mappings.items():
-            value = response.css(selector).get()
-            if value:
-                metadata[key] = value
+        # Si no hay imagen principal, usar og:image
+        if 'imagen_principal' not in article_data and 'og_image' in article_data['metadata']:
+            article_data['imagen_principal'] = article_data['metadata']['og_image']
         
         # Schema.org/JSON-LD
         json_ld = response.css('script[type="application/ld+json"]::text').getall()
         if json_ld:
-            metadata['structured_data'] = json_ld
-        
-        return metadata
+            article_data['metadata']['structured_data'] = json_ld
     
     def handle_error(self, failure):
         """Maneja errores durante el scraping"""
         self.logger.error(f"Error en request: {failure.value}")
         
         # Log del tipo de error
+        from scrapy.spidermiddlewares.httperror import HttpError
+        from twisted.internet.error import DNSLookupError, TimeoutError
+        
         if failure.check(HttpError):
             response = failure.value.response
             self.logger.error(f"HTTP Error {response.status} en {response.url}")
@@ -288,17 +385,11 @@ class {{ spider_class_name }}(scrapy.Spider):
         self.logger.info(f"""
         ========== RESUMEN DE SCRAPING ==========
         Spider: {spider.name}
+        Medio: {self.medio_info['medio']}
+        Sección: {self.medio_info['seccion']}
         Artículos extraídos: {self.articles_scraped}
         Duración: {stats.get('elapsed_time_seconds', 0):.2f} segundos
         Requests exitosos: {stats.get('downloader/response_status_count/200', 0)}
         Errores: {stats.get('downloader/exception_count', 0)}
         ========================================
         """)
-    
-    {% if metadata.area_geografica %}
-    def should_follow_link(self, url: str) -> bool:
-        """Determina si se debe seguir un enlace basado en filtros"""
-        # Filtros específicos para {{ metadata.area_geografica }}
-        # Personalizar según necesidad
-        return True
-    {% endif %}

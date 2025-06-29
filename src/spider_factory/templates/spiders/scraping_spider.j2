@@ -1,49 +1,59 @@
 """
 Spider generado automáticamente por Spider Factory 2.0
-Estrategia: Scraping
-Sitio: {{ site_name }}
+Medio: {{ medio }}
+Sección: {{ seccion }}
 Fecha: {{ generation_date }}
+Estrategia: {{ strategy }}
+
+GENERADO AUTOMÁTICAMENTE - NO EDITAR MANUALMENTE
+Los cambios manuales se perderán en la próxima generación
 """
+import re
 import scrapy
 from scrapy import signals
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from datetime import datetime
-import re
 from urllib.parse import urlparse, urljoin
 import logging
 from typing import Dict, Any, Optional, List
 
 
-class {{ spider_class_name }}(CrawlSpider):
+class {{ medio|title|replace(' ', '') }}{{ seccion|title|replace(' ', '') }}Spider(CrawlSpider):
     """
-    Spider para {{ site_name }}
+    Spider de scraping para {{ medio }} - {{ seccion }}
     
     Utiliza scraping tradicional con reglas de crawling.
-    {% if metadata.description %}
-    {{ metadata.description }}
-    {% endif %}
+    Área geográfica: {{ area_geografica }}
+    Tipo de medio: {{ tipo_medio }}
     """
-    name = "{{ spider_name }}"
+    name = "{{ medio|lower|replace(' ', '_') }}_{{ seccion|lower|replace(' ', '_') }}"
     allowed_domains = ["{{ domain }}"]
     start_urls = ["{{ base_url }}"]
     
     # Configuración
     custom_settings = {
-        'USER_AGENT': 'Mozilla/5.0 (compatible; NewsBot/1.0; +http://example.com/bot)',
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'ROBOTSTXT_OBEY': True,
         'CONCURRENT_REQUESTS': 2,
-        'DOWNLOAD_DELAY': 1.5,
-        'COOKIES_ENABLED': False,
+        'DOWNLOAD_DELAY': 2,
+        'COOKIES_ENABLED': True,
         'AUTOTHROTTLE_ENABLED': True,
         'AUTOTHROTTLE_TARGET_CONCURRENCY': 2.0,
-        'FEEDS': {
-            f'output/{{ spider_name }}_%(time)s.json': {
-                'format': 'json',
-                'encoding': 'utf8',
-                'indent': 2
-            }
-        }
+        
+        # Scrapy-crawl-once configuration
+        'CRAWL_ONCE_ENABLED': True,
+        'CRAWL_ONCE_PATH': f'.scrapy/crawl_once/{{ medio|lower|replace(" ", "_") }}_{{ seccion|lower|replace(" ", "_") }}',
+        'CRAWL_ONCE_DEFAULT': False,
+        
+        # Configuración de encoding
+        'FEED_EXPORT_ENCODING': 'utf-8',
+        
+        # SCRAPYD CONFIGURATION:
+        # Schedule: Every {{ frecuencia_minutos }} minutes
+        # Project: lamaquina
+        # Spider: {{ medio|lower|replace(" ", "_") }}_{{ seccion|lower|replace(" ", "_") }}
+        # Arguments: -a max_items=100
     }
     
     # Reglas de crawling
@@ -66,16 +76,18 @@ class {{ spider_class_name }}(CrawlSpider):
         Rule(
             LinkExtractor(
                 allow=(
+                    r'/{{ seccion|lower|replace(" ", "[-_]?") }}/',  # URLs de la sección
                     r'/\d{4}/\d{2}/\d{2}/',  # Formato fecha: /2024/03/15/
                     r'/article/',
                     r'/news/',
                     r'/story/',
                 ),
                 deny=(
-                    r'/tag/',
-                    r'/category/',
-                    r'/author/',
-                    r'/search',
+                    r'/archivo/', r'/hemeroteca/', r'/newsletter/',
+                    r'/multimedia/', r'/video/', r'/podcast/',
+                    r'/tags?/', r'/autor/', r'/busca[rd]?/',
+                    r'/categoria/', r'/category/',
+                    r'/search', r'/login', r'/register',
                     r'\?',  # Evitar URLs con parámetros
                 )
             ),
@@ -87,7 +99,7 @@ class {{ spider_class_name }}(CrawlSpider):
         # Regla para seguir paginación
         Rule(
             LinkExtractor(
-                allow=(r'/page/\d+', r'\?page=\d+'),
+                allow=(r'/page/\d+', r'\?page=\d+', r'/pagina/\d+'),
                 restrict_css='.pagination, .pager, nav[aria-label="pagination"]'
             ),
             follow=True
@@ -97,13 +109,17 @@ class {{ spider_class_name }}(CrawlSpider):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.articles_scraped = 0
-        self.max_articles = int(kwargs.get('max_articles', 100))
-        {% if metadata %}
-        # Metadata adicional
-        {% for key, value in metadata.items() %}
-        self.{{ key }} = "{{ value }}"
-        {% endfor %}
-        {% endif %}
+        self.max_articles = int(kwargs.get('max_items', 100))
+        
+        # Información del medio
+        self.medio_info = {
+            'medio': "{{ medio }}",
+            'seccion': "{{ seccion }}",
+            'area_geografica': "{{ area_geografica }}",
+            'tipo_medio': "{{ tipo_medio }}",
+            'medio_url_principal': "{{ base_url }}",
+            'frecuencia_minutos': {{ frecuencia_minutos }},
+        }
     
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -141,14 +157,29 @@ class {{ spider_class_name }}(CrawlSpider):
         # Filtrar y validar enlaces
         valid_links = []
         for link in links:
-            if self.is_article_url(link):
+            if self._is_section_article(link):
                 valid_links.append(link)
         
         return list(set(valid_links))  # Eliminar duplicados
     
-    def is_article_url(self, url: str) -> bool:
-        """Determina si una URL corresponde a un artículo"""
-        # Patrones que indican que es un artículo
+    def _is_section_article(self, url: str) -> bool:
+        """Valida si la URL pertenece a la sección objetivo"""
+        excluded_patterns = [
+            r'/archivo/', r'/hemeroteca/', r'/newsletter/',
+            r'/multimedia/', r'/video/', r'/podcast/',
+            r'/tags?/', r'/autor/', r'/busca[rd]?/',
+        ]
+        
+        for pattern in excluded_patterns:
+            if re.search(pattern, url, re.IGNORECASE):
+                return False
+        
+        # Verificar que pertenece a la sección
+        section_pattern = re.compile(r'/{{ seccion|lower|replace(" ", "[-_]?") }}/', re.IGNORECASE)
+        if section_pattern.search(url):
+            return True
+            
+        # Verificar otros indicadores de artículo
         article_patterns = [
             r'/\d{4}/\d{2}/\d{2}/',  # Fecha en URL
             r'/article/',
@@ -157,36 +188,11 @@ class {{ spider_class_name }}(CrawlSpider):
             r'-\d{5,}',  # ID numérico
         ]
         
-        # Patrones que indican que NO es un artículo
-        non_article_patterns = [
-            r'/tag/',
-            r'/category/',
-            r'/author/',
-            r'/search',
-            r'/login',
-            r'/register',
-            r'/contact',
-            r'/about',
-        ]
-        
-        # Verificar patrones negativos primero
-        for pattern in non_article_patterns:
-            if re.search(pattern, url):
-                return False
-        
-        # Verificar patrones positivos
         for pattern in article_patterns:
             if re.search(pattern, url):
                 return True
         
-        # Si tiene una extensión de archivo que no es .html, probablemente no es un artículo
-        parsed = urlparse(url)
-        if '.' in parsed.path:
-            ext = parsed.path.split('.')[-1].lower()
-            if ext not in ['html', 'htm', 'php', 'asp', 'aspx']:
-                return False
-        
-        return True  # Por defecto, asumir que es un artículo
+        return False
     
     def parse_article(self, response):
         """Parsea una página de artículo"""
@@ -199,12 +205,24 @@ class {{ spider_class_name }}(CrawlSpider):
             self.logger.debug(f"No es un artículo: {response.url}")
             return
         
+        # Crear item con campos obligatorios
         article_data = {
-            'source': '{{ site_name }}',
-            'source_url': '{{ base_url }}',
-            'article_url': response.url,
-            'scraped_at': datetime.now().isoformat(),
-            'http_status': response.status
+            # Campos obligatorios
+            'url': response.url,
+            'medio': self.medio_info['medio'],
+            'medio_url_principal': self.medio_info['medio_url_principal'],
+            'area_geografica': self.medio_info['area_geografica'],
+            'tipo_medio': self.medio_info['tipo_medio'],
+            'seccion': self.medio_info['seccion'],
+            'fuente': self.name,
+            'fecha_extraccion': datetime.now().isoformat(),
+            
+            # Metadata
+            'metadata': {
+                'spider_type': 'scraping',
+                'extraction_method': 'css_selectors',
+                'http_status': response.status,
+            }
         }
         
         try:
@@ -214,60 +232,69 @@ class {{ spider_class_name }}(CrawlSpider):
             {% if selectors.title %}
             title = response.css('{{ selectors.title }}::text').get()
             if title:
-                article_data['title'] = title.strip()
+                article_data['titular'] = title.strip()
             {% endif %}
             
             {% if selectors.content %}
             content_elements = response.css('{{ selectors.content }}')
             if content_elements:
-                # Extraer texto de cada elemento y unir
-                content_parts = []
-                for elem in content_elements:
-                    text = ' '.join(elem.css('::text').getall())
-                    if text.strip():
-                        content_parts.append(text.strip())
-                article_data['content'] = '\n\n'.join(content_parts)
+                # Extraer texto
+                text_content = ' '.join(content_elements.css('::text').getall())
+                article_data['contenido_texto'] = text_content.strip()
+                
+                # Extraer HTML
+                html_content = ''.join(content_elements.extract())
+                article_data['contenido_html'] = html_content
             {% endif %}
             
             {% if selectors.author %}
             author = response.css('{{ selectors.author }}::text').get()
             if author:
-                article_data['author'] = author.strip()
+                article_data['autor'] = author.strip()
             {% endif %}
             
             {% if selectors.date %}
-            date = response.css('{{ selectors.date }}::text').get()
-            if date:
-                article_data['published_date'] = self.parse_date(date.strip())
+            date_str = response.css('{{ selectors.date }}::attr(datetime)').get() or \
+                      response.css('{{ selectors.date }}::text').get()
+            if date_str:
+                fecha = self.parse_date(date_str.strip())
+                if fecha:
+                    article_data['fecha_publicacion'] = fecha
             {% endif %}
             
             {% if selectors.categories %}
             categories = response.css('{{ selectors.categories }}::text').getall()
             if categories:
-                article_data['categories'] = [cat.strip() for cat in categories]
+                article_data['metadata']['categorias'] = [cat.strip() for cat in categories]
             {% endif %}
             
             {% if selectors.tags %}
             tags = response.css('{{ selectors.tags }}::text').getall()
             if tags:
-                article_data['tags'] = [tag.strip() for tag in tags]
+                article_data['metadata']['tags'] = [tag.strip() for tag in tags]
             {% endif %}
             
             {% if selectors.image %}
             image = response.css('{{ selectors.image }}::attr(src)').get()
             if image:
-                article_data['main_image'] = response.urljoin(image)
+                article_data['imagen_principal'] = response.urljoin(image)
             {% endif %}
             {% else %}
             # Extracción genérica si no hay selectores específicos
-            article_data.update(self.extract_generic_article(response))
+            self.extract_generic_article(response, article_data)
             {% endif %}
             
             # Extraer metadata adicional
-            article_data.update(self.extract_metadata(response))
+            self.extract_metadata(response, article_data)
+            
+            # Intentar extraer fecha si no se encontró
+            if 'fecha_publicacion' not in article_data:
+                fecha = self._extract_date(response)
+                if fecha:
+                    article_data['fecha_publicacion'] = fecha.isoformat()
             
             # Validar que tenemos contenido mínimo
-            if not article_data.get('title') or not article_data.get('content'):
+            if not article_data.get('titular') or not article_data.get('contenido_texto'):
                 self.logger.warning(f"Artículo sin título o contenido: {response.url}")
                 return
             
@@ -279,7 +306,7 @@ class {{ spider_class_name }}(CrawlSpider):
             return
         
         self.articles_scraped += 1
-        self.logger.info(f"Artículo {self.articles_scraped} extraído: {article_data.get('title', 'Sin título')}")
+        self.logger.info(f"Artículo {self.articles_scraped} extraído: {article_data.get('titular', 'Sin título')}")
         
         yield article_data
         
@@ -313,10 +340,8 @@ class {{ spider_class_name }}(CrawlSpider):
         
         return False
     
-    def extract_generic_article(self, response) -> Dict[str, Any]:
+    def extract_generic_article(self, response, article_data: Dict[str, Any]):
         """Extracción genérica cuando no hay selectores específicos"""
-        data = {}
-        
         # Título
         title_selectors = [
             'h1::text',
@@ -325,24 +350,30 @@ class {{ spider_class_name }}(CrawlSpider):
         ]
         for selector in title_selectors:
             title = response.css(selector).get()
-            if title:
-                data['title'] = title.strip()
+            if title and 'titular' not in article_data:
+                article_data['titular'] = title.strip()
                 break
         
         # Contenido
         content_selectors = [
-            'article p::text',
-            '[itemprop="articleBody"] p::text',
-            '.post-content p::text',
-            '.article-content p::text',
-            '.entry-content p::text',
-            'main p::text'
+            'article',
+            '[itemprop="articleBody"]',
+            '.post-content',
+            '.article-content',
+            '.entry-content',
+            'main'
         ]
         for selector in content_selectors:
-            paragraphs = response.css(selector).getall()
-            if paragraphs:
-                data['content'] = ' '.join(p.strip() for p in paragraphs if p.strip())
-                break
+            content = response.css(f'{selector} ::text').getall()
+            if content:
+                text_content = ' '.join(p.strip() for p in content if p.strip())
+                if text_content and 'contenido_texto' not in article_data:
+                    article_data['contenido_texto'] = text_content
+                    # También obtener HTML
+                    html_content = response.css(selector).get()
+                    if html_content:
+                        article_data['contenido_html'] = html_content
+                    break
         
         # Autor
         author_selectors = [
@@ -354,66 +385,68 @@ class {{ spider_class_name }}(CrawlSpider):
         ]
         for selector in author_selectors:
             author = response.css(selector).get()
-            if author:
-                data['author'] = author.strip()
-                break
-        
-        # Fecha
-        date_selectors = [
-            'time::attr(datetime)',
-            '[itemprop="datePublished"]::attr(content)',
-            '.publish-date::text',
-            '.article-date::text'
-        ]
-        for selector in date_selectors:
-            date = response.css(selector).get()
-            if date:
-                data['published_date'] = self.parse_date(date.strip())
+            if author and 'autor' not in article_data:
+                article_data['autor'] = author.strip()
                 break
         
         # Imagen principal
-        image_selectors = [
-            'meta[property="og:image"]::attr(content)',
-            '[itemprop="image"]::attr(src)',
-            'article img::attr(src)',
-            '.featured-image img::attr(src)'
-        ]
-        for selector in image_selectors:
-            image = response.css(selector).get()
-            if image:
-                data['main_image'] = response.urljoin(image)
-                break
-        
-        return data
+        if 'imagen_principal' not in article_data:
+            image_selectors = [
+                'meta[property="og:image"]::attr(content)',
+                '[itemprop="image"]::attr(src)',
+                'article img::attr(src)',
+                '.featured-image img::attr(src)'
+            ]
+            for selector in image_selectors:
+                image = response.css(selector).get()
+                if image:
+                    article_data['imagen_principal'] = response.urljoin(image)
+                    break
     
-    def extract_metadata(self, response) -> Dict[str, Any]:
-        """Extrae metadata adicional de la página"""
-        metadata = {}
+    def _extract_date(self, response) -> Optional[datetime]:
+        """Intenta extraer la fecha de publicación del artículo"""
+        # Buscar en meta tags comunes
+        date_selectors = [
+            'meta[property="article:published_time"]::attr(content)',
+            'meta[name="publish_date"]::attr(content)',
+            'meta[name="DC.date.issued"]::attr(content)',
+            'time[datetime]::attr(datetime)',
+            'time[pubdate]::attr(datetime)',
+            '[itemprop="datePublished"]::attr(content)',
+        ]
         
+        for selector in date_selectors:
+            date_str = response.css(selector).get()
+            if date_str:
+                try:
+                    # Intentar parsear ISO format
+                    return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                except:
+                    try:
+                        # Intentar otros formatos comunes
+                        return datetime.strptime(date_str[:19], '%Y-%m-%dT%H:%M:%S')
+                    except:
+                        pass
+        
+        return None
+    
+    def extract_metadata(self, response, article_data: Dict[str, Any]):
+        """Extrae metadata adicional de la página"""
         # Open Graph
         og_fields = ['title', 'description', 'image', 'type', 'url', 'site_name']
         for field in og_fields:
             value = response.css(f'meta[property="og:{field}"]::attr(content)').get()
             if value:
-                metadata[f'og_{field}'] = value
+                article_data['metadata'][f'og_{field}'] = value
         
-        # Twitter Card
-        twitter_fields = ['title', 'description', 'image', 'card']
-        for field in twitter_fields:
-            value = response.css(f'meta[name="twitter:{field}"]::attr(content)').get()
-            if value:
-                metadata[f'twitter_{field}'] = value
-        
-        # Otros meta tags útiles
-        metadata['meta_description'] = response.css('meta[name="description"]::attr(content)').get()
-        metadata['meta_keywords'] = response.css('meta[name="keywords"]::attr(content)').get()
+        # Si no hay imagen principal, usar og:image
+        if 'imagen_principal' not in article_data and 'og_image' in article_data['metadata']:
+            article_data['imagen_principal'] = article_data['metadata']['og_image']
         
         # Schema.org/JSON-LD
         json_ld = response.css('script[type="application/ld+json"]::text').getall()
         if json_ld:
-            metadata['structured_data'] = json_ld
-        
-        return metadata
+            article_data['metadata']['structured_data'] = json_ld
     
     def parse_date(self, date_string: str) -> Optional[str]:
         """Intenta parsear una fecha a formato ISO"""
@@ -425,28 +458,58 @@ class {{ spider_class_name }}(CrawlSpider):
             return date_string
         
         # Intentar parsear formatos comunes
-        from dateutil import parser
         try:
+            # Import dateutil solo si está disponible
+            from dateutil import parser
             parsed_date = parser.parse(date_string)
             return parsed_date.isoformat()
         except:
+            # Intentar formatos manuales comunes
+            date_formats = [
+                '%Y-%m-%d %H:%M:%S',
+                '%d/%m/%Y',
+                '%d-%m-%Y',
+                '%Y/%m/%d',
+                '%B %d, %Y',
+                '%b %d, %Y',
+                '%d de %B de %Y',
+            ]
+            
+            for fmt in date_formats:
+                try:
+                    parsed_date = datetime.strptime(date_string, fmt)
+                    return parsed_date.isoformat()
+                except:
+                    continue
+            
             self.logger.warning(f"No se pudo parsear fecha: {date_string}")
-            return date_string
+            return None
     
     def clean_article_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Limpia y normaliza los datos del artículo"""
         # Limpiar espacios en blanco excesivos
-        if 'content' in data:
-            data['content'] = re.sub(r'\s+', ' ', data['content']).strip()
+        if 'contenido_texto' in data:
+            data['contenido_texto'] = re.sub(r'\s+', ' ', data['contenido_texto']).strip()
             # Eliminar contenido muy corto (probablemente no es el artículo real)
-            if len(data['content']) < 100:
-                self.logger.warning(f"Contenido muy corto ({len(data['content'])} chars)")
+            if len(data['contenido_texto']) < 100:
+                self.logger.warning(f"Contenido muy corto ({len(data['contenido_texto'])} chars)")
         
-        if 'title' in data:
-            data['title'] = re.sub(r'\s+', ' ', data['title']).strip()
+        if 'titular' in data:
+            data['titular'] = re.sub(r'\s+', ' ', data['titular']).strip()
         
         # Eliminar campos vacíos
-        return {k: v for k, v in data.items() if v}
+        cleaned_data = {}
+        for k, v in data.items():
+            if v:
+                if k == 'metadata' and isinstance(v, dict):
+                    # Limpiar metadata recursivamente
+                    cleaned_metadata = {mk: mv for mk, mv in v.items() if mv}
+                    if cleaned_metadata:
+                        cleaned_data[k] = cleaned_metadata
+                else:
+                    cleaned_data[k] = v
+        
+        return cleaned_data
     
     def spider_closed(self, spider):
         """Llamado cuando el spider termina"""
@@ -455,6 +518,8 @@ class {{ spider_class_name }}(CrawlSpider):
         self.logger.info(f"""
         ========== RESUMEN DE SCRAPING ==========
         Spider: {spider.name}
+        Medio: {self.medio_info['medio']}
+        Sección: {self.medio_info['seccion']}
         Artículos extraídos: {self.articles_scraped}
         Páginas visitadas: {stats.get('downloader/request_count', 0)}
         Duración: {stats.get('elapsed_time_seconds', 0):.2f} segundos

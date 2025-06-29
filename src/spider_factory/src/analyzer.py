@@ -73,6 +73,14 @@ class AnalysisResult(BaseModel):
     pattern_id: Optional[str] = None
     notes: Optional[str] = None
     
+    # Nuevos campos obligatorios del medio
+    medio: str = Field(..., description="Nombre del medio")
+    seccion: str = Field(..., description="Sección del medio")
+    area_geografica: str = Field(..., description="Área geográfica del medio")
+    tipo_medio: str = Field(..., description="Tipo de medio: diario, revista, agencia")
+    comentarios: Optional[str] = Field(None, description="Comentarios adicionales")
+    frecuencia_minutos: int = Field(60, description="Frecuencia de actualización en minutos")
+    
     @validator('confidence')
     def validate_confidence(cls, v):
         return round(v, 2)
@@ -81,7 +89,13 @@ class AnalysisResult(BaseModel):
 class SiteAnalysisRequest(BaseModel):
     """Request para analizar un sitio"""
     url: HttpUrl
-    section_name: str
+    medio: str
+    seccion: str
+    area_geografica: str
+    tipo_medio: str
+    frecuencia_minutos: int = 60
+    comentarios: Optional[str] = None
+    rss_url: Optional[HttpUrl] = None
     force_analysis: bool = False  # Ignorar cache y forzar nuevo análisis
     check_rss: bool = True  # Verificar si tiene RSS
 
@@ -95,6 +109,23 @@ class SmartAnalyzer:
         self.redis = get_redis_client()
         self.config = settings
         self._http_client = None
+        
+        # Firmas específicas de protección anti-bot (basado en Context7)
+        self.protection_signatures = {
+            'cloudflare': {
+                'headers': ['cf-ray', 'cf-cache-status', '__cf_bm', 'cf-request-id'],
+                'server_patterns': ['cloudflare'],
+                'content_patterns': ['checking your browser', 'cloudflare ray id']
+            },
+            'recaptcha': {
+                'content_patterns': ['g-recaptcha', 'grecaptcha', 'recaptcha-element'],
+                'script_patterns': ['google.com/recaptcha', 'recaptcha/api.js']
+            },
+            'rate_limiting': {
+                'headers': ['x-ratelimit-limit', 'x-ratelimit-remaining', 'retry-after'],
+                'status_codes': [429, 503]
+            }
+        }
         
     @property
     def http_client(self) -> httpx.AsyncClient:
@@ -111,15 +142,39 @@ class SmartAnalyzer:
     
     async def analyze(self, request: SiteAnalysisRequest) -> AnalysisResult:
         """
-        Analiza un sitio siguiendo el flujo de decisión inteligente
+        Analiza un sitio siguiendo el flujo de decisión inteligente:
+        1. ¿Tiene RSS? → Estrategia RSS directa
+        2. ¿Está en cache? → Usar cache (0 requests)
+        3. ¿Hay patrón conocido? → Aplicar patrón (0 requests)
+        4. Si no → Análisis con Firecrawl (1 request)
         """
-        logger.info(f"Analizando {request.url} para sección '{request.section_name}'")
+        logger.info(f"Analizando {request.url} para {request.medio}/{request.seccion}")
         
         # Extraer dominio
         parsed_url = urlparse(str(request.url))
         domain = parsed_url.netloc.lower().replace('www.', '')
         
-        # 1. Verificar si tiene RSS (si está habilitado)
+        # 1. Si ya tiene RSS URL proporcionada, usar directamente
+        if request.rss_url:
+            logger.info(f"RSS proporcionado para {domain}: {request.rss_url}")
+            return AnalysisResult(
+                url=request.url,
+                domain=domain,
+                strategy=AnalysisStrategy.RSS,
+                confidence=AnalysisConfidence.HIGH,
+                rss_url=request.rss_url,
+                from_cache=False,
+                notes="RSS proporcionado por el usuario",
+                # Campos obligatorios del medio
+                medio=request.medio,
+                seccion=request.seccion,
+                area_geografica=request.area_geografica,
+                tipo_medio=request.tipo_medio,
+                comentarios=request.comentarios,
+                frecuencia_minutos=request.frecuencia_minutos
+            )
+        
+        # 2. Verificar si tiene RSS (si está habilitado)
         if request.check_rss and not request.force_analysis:
             rss_result = await self._check_rss(request.url, domain)
             if rss_result:
@@ -131,36 +186,66 @@ class SmartAnalyzer:
                     confidence=AnalysisConfidence.HIGH,
                     rss_url=rss_result,
                     from_cache=False,
-                    notes="RSS detectado automáticamente"
+                    notes="RSS detectado automáticamente",
+                    # Campos obligatorios del medio
+                    medio=request.medio,
+                    seccion=request.seccion,
+                    area_geografica=request.area_geografica,
+                    tipo_medio=request.tipo_medio,
+                    comentarios=request.comentarios,
+                    frecuencia_minutos=request.frecuencia_minutos
                 )
         
-        # 2. Buscar en cache (análisis previo)
+        # 3. Buscar en cache (análisis previo)
         if not request.force_analysis:
-            cached_result = await self._get_cached_analysis(request.url)
+            cached_result = await self._get_cached_analysis(request.url, request.medio, request.seccion)
             if cached_result:
                 logger.info(f"Usando análisis cacheado para {request.url}")
                 cached_result.from_cache = True
+                # Actualizar campos que podrían haber cambiado
+                cached_result.medio = request.medio
+                cached_result.seccion = request.seccion
+                cached_result.area_geografica = request.area_geografica
+                cached_result.tipo_medio = request.tipo_medio
+                cached_result.comentarios = request.comentarios
+                cached_result.frecuencia_minutos = request.frecuencia_minutos
                 return cached_result
         
-        # 3. Buscar patrón conocido para este dominio/sección
+        # 4. Buscar patrón conocido para este dominio/sección
         if not request.force_analysis:
-            pattern_result = await self._get_known_pattern(domain, request.section_name)
+            pattern_result = await self._get_known_pattern(domain, request.seccion)
             if pattern_result:
-                logger.info(f"Aplicando patrón conocido para {domain}/{request.section_name}")
+                logger.info(f"Aplicando patrón conocido para {domain}/{request.seccion}")
                 pattern_result.url = request.url
                 pattern_result.from_cache = True
+                # Agregar campos obligatorios del medio
+                pattern_result.medio = request.medio
+                pattern_result.seccion = request.seccion
+                pattern_result.area_geografica = request.area_geografica
+                pattern_result.tipo_medio = request.tipo_medio
+                pattern_result.comentarios = request.comentarios
+                pattern_result.frecuencia_minutos = request.frecuencia_minutos
                 return pattern_result
         
-        # 4. Análisis nuevo con Firecrawl
+        # 5. Análisis nuevo con Firecrawl
         logger.info(f"Ejecutando análisis nuevo para {request.url}")
-        analysis_result = await self._analyze_with_firecrawl(request.url, domain)
+        analysis_result = await self._analyze_with_firecrawl(
+            request.url, 
+            domain,
+            request.medio,
+            request.seccion,
+            request.area_geografica,
+            request.tipo_medio,
+            request.comentarios,
+            request.frecuencia_minutos
+        )
         
-        # Guardar en cache
+        # Guardar en cache con TTL de 7 días
         await self._cache_analysis(request.url, analysis_result)
         
         # Si el análisis fue exitoso, guardar como patrón
         if analysis_result.confidence >= AnalysisConfidence.MEDIUM:
-            await self._save_pattern(domain, request.section_name, analysis_result)
+            await self._save_pattern(domain, request.seccion, analysis_result)
         
         return analysis_result
     
@@ -241,11 +326,12 @@ class SmartAnalyzer:
         
         return None
     
-    async def _get_cached_analysis(self, url: HttpUrl) -> Optional[AnalysisResult]:
+    async def _get_cached_analysis(self, url: HttpUrl, medio: str, seccion: str) -> Optional[AnalysisResult]:
         """Busca análisis previo en cache"""
-        # Generar hash de la URL para clave única
-        url_hash = hashlib.md5(str(url).encode()).hexdigest()
-        cache_key = RedisKeys.format_key(RedisKeys.ANALYSIS_KEY, domain=url_hash)
+        # Generar hash único basado en URL, medio y sección
+        cache_str = f"{str(url)}:{medio}:{seccion}"
+        url_hash = hashlib.md5(cache_str.encode()).hexdigest()
+        cache_key = f"analysis:{url_hash}"
         
         cached_data = self.redis.get(cache_key)
         if cached_data:
@@ -258,37 +344,56 @@ class SmartAnalyzer:
         return None
     
     async def _get_known_pattern(self, domain: str, section: str) -> Optional[AnalysisResult]:
-        """Busca un patrón conocido para el dominio/sección"""
-        pattern_key = RedisKeys.format_key(
-            RedisKeys.PATTERN_KEY, 
-            domain=domain, 
-            section=section
-        )
+        """
+        Busca un patrón conocido para el dominio/sección
+        Nueva estructura Redis:
+        patterns:{dominio} → {
+            "seccion": '{"strategy": "scraping", "selectors": {...}}',
+            "area_geografica": "ESPAÑA",
+            "tipo_medio": "diario",
+            ...
+        }
+        """
+        # Clave del dominio completo
+        pattern_key = f"patterns:{domain}"
         
-        pattern_data = self.redis.hgetall(pattern_key)
-        if pattern_data:
+        # Obtener todos los datos del dominio
+        domain_data = self.redis.hgetall(pattern_key)
+        
+        if domain_data and section.encode() in domain_data:
             try:
                 # Incrementar contador de uso
-                usage_key = RedisKeys.STATS_PATTERN_USAGE
+                usage_key = "pattern_usage"
                 self.redis.zincrby(usage_key, 1, f"{domain}:{section}")
                 
-                # Construir resultado desde el patrón
-                selectors = None
-                if pattern_data.get('selectors'):
-                    selectors = SiteSelectors(**json.loads(pattern_data['selectors']))
+                # Obtener patrón de la sección
+                section_pattern = json.loads(domain_data[section.encode()].decode())
                 
+                # Construir selectores si existen
+                selectors = None
+                if section_pattern.get('selectors'):
+                    selectors = SiteSelectors(**section_pattern['selectors'])
+                
+                # Crear resultado con los datos del patrón
+                # Nota: Los campos obligatorios del medio se agregarán en el método analyze()
                 return AnalysisResult(
                     url=HttpUrl("https://placeholder.com"),  # Se sobrescribirá
                     domain=domain,
-                    strategy=AnalysisStrategy(pattern_data['strategy']),
-                    confidence=float(pattern_data.get('confidence', 0.7)),
+                    strategy=AnalysisStrategy(section_pattern['strategy']),
+                    confidence=float(section_pattern.get('confidence', 0.7)),
                     selectors=selectors,
-                    needs_javascript=pattern_data.get('needs_javascript', '').lower() == 'true',
+                    needs_javascript=section_pattern.get('needs_javascript', False),
                     pattern_id=f"{domain}:{section}",
-                    notes=f"Patrón aplicado desde {pattern_data.get('last_used', 'desconocido')}"
+                    notes=f"Patrón conocido aplicado",
+                    # Campos placeholder que se actualizarán en analyze()
+                    medio="",
+                    seccion=section,
+                    area_geografica="",
+                    tipo_medio="",
+                    frecuencia_minutos=60
                 )
             except Exception as e:
-                logger.error(f"Error cargando patrón: {e}")
+                logger.error(f"Error cargando patrón para {domain}/{section}: {e}")
         
         return None
     
@@ -296,10 +401,21 @@ class SmartAnalyzer:
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=10)
     )
-    async def _analyze_with_firecrawl(self, url: HttpUrl, domain: str) -> AnalysisResult:
+    async def _analyze_with_firecrawl(
+        self, 
+        url: HttpUrl, 
+        domain: str,
+        medio: str,
+        seccion: str,
+        area_geografica: str,
+        tipo_medio: str,
+        comentarios: Optional[str],
+        frecuencia_minutos: int
+    ) -> AnalysisResult:
         """
         Analiza el sitio usando Firecrawl API
         Detecta selectores y determina la mejor estrategia
+        Obtiene HTML, Markdown y screenshot en 1 request
         """
         if not self.config.firecrawl_api_key:
             logger.warning("Firecrawl API key no configurada, usando análisis básico")
@@ -352,17 +468,37 @@ class SmartAnalyzer:
                     selectors=selectors,
                     needs_javascript=needs_js,
                     sample_articles=sample_articles[:5],  # Máximo 5 ejemplos
-                    notes="Análisis completo con Firecrawl"
+                    notes="Análisis completo con Firecrawl",
+                    # Campos obligatorios del medio
+                    medio=medio,
+                    seccion=seccion,
+                    area_geografica=area_geografica,
+                    tipo_medio=tipo_medio,
+                    comentarios=comentarios,
+                    frecuencia_minutos=frecuencia_minutos
                 )
             else:
                 logger.error(f"Firecrawl API error: {response.status_code}")
-                return await self._basic_analysis(url, domain)
+                return await self._basic_analysis(
+                    url, domain, medio, seccion, area_geografica, 
+                    tipo_medio, comentarios, frecuencia_minutos
+                )
                 
         except Exception as e:
             logger.error(f"Error en análisis con Firecrawl: {e}")
             return await self._basic_analysis(url, domain)
     
-    async def _basic_analysis(self, url: HttpUrl, domain: str) -> AnalysisResult:
+    async def _basic_analysis(
+        self, 
+        url: HttpUrl, 
+        domain: str,
+        medio: str,
+        seccion: str,
+        area_geografica: str,
+        tipo_medio: str,
+        comentarios: Optional[str],
+        frecuencia_minutos: int
+    ) -> AnalysisResult:
         """Análisis básico sin Firecrawl"""
         try:
             response = await self.http_client.get(str(url))
@@ -387,7 +523,14 @@ class SmartAnalyzer:
                     confidence=AnalysisConfidence.LOW,
                     selectors=selectors,
                     needs_javascript=needs_js,
-                    notes="Análisis básico sin Firecrawl"
+                    notes="Análisis básico sin Firecrawl",
+                    # Campos obligatorios del medio
+                    medio=medio,
+                    seccion=seccion,
+                    area_geografica=area_geografica,
+                    tipo_medio=tipo_medio,
+                    comentarios=comentarios,
+                    frecuencia_minutos=frecuencia_minutos
                 )
         except Exception as e:
             logger.error(f"Error en análisis básico: {e}")
@@ -399,7 +542,14 @@ class SmartAnalyzer:
             strategy=AnalysisStrategy.SCRAPING,
             confidence=AnalysisConfidence.LOW,
             selectors=SiteSelectors(),
-            notes="Análisis fallido, usando valores por defecto"
+            notes="Análisis fallido, usando valores por defecto",
+            # Campos obligatorios del medio
+            medio=medio,
+            seccion=seccion,
+            area_geografica=area_geografica,
+            tipo_medio=tipo_medio,
+            comentarios=comentarios,
+            frecuencia_minutos=frecuencia_minutos
         )
     
     def _detect_javascript_requirement(self, html_content: str) -> bool:
@@ -504,6 +654,76 @@ class SmartAnalyzer:
         
         return selectors, sample_articles
     
+    def detect_protection_level(self, response_data: Dict[str, Any]) -> str:
+        """
+        Detecta nivel de protección basándose en headers, status y contenido.
+        Implementación basada en documentación oficial de Scrapy.
+        
+        Args:
+            response_data: Dict con 'headers', 'status_code', 'content'
+            
+        Returns:
+            str: 'basic', 'medium', 'high'
+        """
+        headers = response_data.get('headers', {})
+        status_code = response_data.get('status_code', 200)
+        content = response_data.get('content', '')
+        
+        protection_score = 0
+        detected_systems = []
+        
+        # Normalizar headers para comparación case-insensitive
+        headers_lower = {k.lower(): str(v).lower() for k, v in headers.items()}
+        content_lower = content.lower()
+        
+        # Verificar firmas específicas
+        for system, signatures in self.protection_signatures.items():
+            system_detected = False
+            
+            # Check headers
+            for header in signatures.get('headers', []):
+                if header.lower() in headers_lower:
+                    protection_score += 3
+                    system_detected = True
+                    break
+            
+            # Check server patterns
+            server_header = headers_lower.get('server', '')
+            for pattern in signatures.get('server_patterns', []):
+                if pattern in server_header:
+                    protection_score += 3
+                    system_detected = True
+                    break
+            
+            # Check content patterns
+            for pattern in signatures.get('content_patterns', []):
+                if pattern in content_lower:
+                    protection_score += 2
+                    system_detected = True
+                    break
+            
+            # Check status codes
+            if status_code in signatures.get('status_codes', []):
+                protection_score += 4
+                system_detected = True
+            
+            if system_detected:
+                detected_systems.append(system)
+        
+        # Determinar nivel basado en score y sistemas detectados
+        if protection_score >= 6 or 'cloudflare' in detected_systems:
+            level = 'high'
+        elif protection_score >= 3 or 'rate_limiting' in detected_systems:
+            level = 'medium'
+        else:
+            level = 'basic'
+        
+        if detected_systems:
+            logger.info(f"Protection systems detected: {', '.join(detected_systems)}")
+        
+        logger.info(f"Protection level: {level} (score: {protection_score})")
+        return level
+    
     def _calculate_confidence(
         self, 
         selectors: SiteSelectors, 
@@ -529,9 +749,13 @@ class SmartAnalyzer:
         return min(confidence, 0.95)  # Máximo 0.95 para análisis nuevos
     
     async def _cache_analysis(self, url: HttpUrl, result: AnalysisResult):
-        """Guarda el análisis en cache"""
-        url_hash = hashlib.md5(str(url).encode()).hexdigest()
-        cache_key = RedisKeys.format_key(RedisKeys.ANALYSIS_KEY, domain=url_hash)
+        """Guarda el análisis en cache con TTL de 7 días"""
+        # Generar hash único basado en URL, medio y sección
+        cache_str = f"{str(url)}:{result.medio}:{result.seccion}"
+        url_hash = hashlib.md5(cache_str.encode()).hexdigest()
+        
+        # Nueva estructura de cache según plan
+        cache_key = f"analysis:{url_hash}"
         
         # Serializar resultado
         data = result.dict()
@@ -541,12 +765,15 @@ class SmartAnalyzer:
         if data.get('rss_url'):
             data['rss_url'] = str(data['rss_url'])
         
+        # TTL de 7 días (604800 segundos)
+        TTL_7_DAYS = 604800
+        
         self.redis.setex(
             cache_key,
-            self.config.cache_ttl_analysis,
+            TTL_7_DAYS,
             json.dumps(data)
         )
-        logger.info(f"Análisis cacheado para {url}")
+        logger.info(f"Análisis cacheado para {url} con TTL de 7 días")
     
     async def _save_pattern(
         self, 
@@ -554,35 +781,48 @@ class SmartAnalyzer:
         section: str, 
         result: AnalysisResult
     ):
-        """Guarda un patrón exitoso para reutilización futura"""
-        pattern_key = RedisKeys.format_key(
-            RedisKeys.PATTERN_KEY,
-            domain=domain,
-            section=section
-        )
+        """
+        Guarda un patrón exitoso para reutilización futura
+        Nueva estructura:
+        patterns:{dominio} → {
+            "seccion": '{"strategy": "scraping", "selectors": {...}}',
+            "area_geografica": "ESPAÑA",
+            "tipo_medio": "diario",
+            ...
+        }
+        """
+        # Clave del dominio
+        pattern_key = f"patterns:{domain}"
         
-        pattern_data = {
+        # Datos del patrón de la sección
+        section_pattern = {
             "strategy": result.strategy.value,
-            "confidence": str(result.confidence),
-            "needs_javascript": str(result.needs_javascript),
+            "confidence": result.confidence,
+            "needs_javascript": result.needs_javascript,
             "last_used": datetime.now().isoformat(),
             "created_at": datetime.now().isoformat()
         }
         
         if result.selectors:
-            pattern_data["selectors"] = json.dumps(result.selectors.dict())
+            section_pattern["selectors"] = result.selectors.dict()
         
-        self.redis.hset(pattern_key, mapping=pattern_data)
+        # Guardar patrón de la sección
+        self.redis.hset(pattern_key, section, json.dumps(section_pattern))
         
-        # Agregar a índice de patrones por dominio
-        domain_key = RedisKeys.format_key(
-            RedisKeys.PATTERNS_BY_DOMAIN,
-            domain=domain
-        )
-        self.redis.sadd(domain_key, section)
+        # Guardar metadata del dominio si no existe
+        existing_data = self.redis.hgetall(pattern_key)
+        if b'area_geografica' not in existing_data:
+            # Guardar metadata del medio
+            metadata = {
+                "area_geografica": result.area_geografica,
+                "tipo_medio": result.tipo_medio,
+                "comentarios": result.comentarios or ""
+            }
+            for key, value in metadata.items():
+                self.redis.hset(pattern_key, key, value)
         
         # Inicializar contador de uso
-        usage_key = RedisKeys.STATS_PATTERN_USAGE
+        usage_key = "pattern_usage"
         self.redis.zadd(usage_key, {f"{domain}:{section}": 1})
         
         logger.info(f"Patrón guardado para {domain}/{section}")

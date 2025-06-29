@@ -1,6 +1,0 @@
-project:
-  name: ""
-  code_location: ""  # Ruta completa al código real
-  language: ""
-  framework: ""
-  status: "planning"  # planning, development, testing, production
