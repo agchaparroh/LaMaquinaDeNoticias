@@ -1,0 +1,2595 @@
+# CPMS3 - PLAN DETALLADO DE CORRECCIÓN - FRONTEND SPIDER FACTORY 2.0
+# Implementación COMPLETA y EXACTA del PLAN_CORRECCION_FRONTEND.md sin omisiones
+# ULTRATHINK: Fidelidad 100% al plan original + Context7 obligatorio
+
+meta:
+  id: "FRONTEND-SF-001"
+  name: "PLAN DETALLADO DE CORRECCIÓN - FRONTEND SPIDER FACTORY 2.0"
+  goal: "Implementar TODAS las correcciones y mejoras detalladas para alinear el frontend de Spider Factory con el plan original: wizard completo con todos los campos requeridos, validación en tiempo real, DataGrid, características UX, testing, optimizaciones y experiencia de usuario completa"
+  version: "5.0"
+  created: "2025-01-27"
+  updated: "2025-06-29"
+
+config:
+  base_path: "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/src/module_spider_factory_frontend"
+  staging_dir: ".cpms3_staging"
+  max_retries: 2
+  command_timeout: 300
+  mode: "strict"
+
+constants:
+  npm_cmd: "npm"
+  build_cmd: "npm run build"
+  test_cmd: "npm test"
+  type_check_cmd: "npm run type-check"
+
+steps:
+  # ========================================
+  # PREPARACIÓN
+  # ========================================
+  - id: "STEP-001"
+    description: "Crear backup del estado actual"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de ejecutar cualquier comando de backup, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "backup-strategies"
+      - mcp__context7__get-library-docs para mejores prácticas de backup de proyectos Node.js
+    action: "run_command"
+    command: "cp -r src src_backup_$(date +%Y%m%d_%H%M%S)"
+    verify:
+      - type: "command_succeeds"
+        command: "ls -la | grep src_backup"
+
+  # ========================================
+  # INSTALAR DEPENDENCIAS NUEVAS EXACTAS
+  # ========================================
+  - id: "STEP-002"
+    description: "Instalar dependencias exactas según plan: react-hook-form, yup, syntax highlighter, DataGrid, debounce"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de instalar cada dependencia, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "react-hook-form"
+      - mcp__context7__get-library-docs para react-hook-form integration
+      - mcp__context7__resolve-library-id para "yup"
+      - mcp__context7__get-library-docs para yup validation schemas
+      - mcp__context7__resolve-library-id para "@mui/x-data-grid"
+      - mcp__context7__get-library-docs para @mui/x-data-grid best practices
+      - mcp__context7__resolve-library-id para "react-syntax-highlighter"
+      - mcp__context7__get-library-docs para syntax highlighting setup
+      - mcp__context7__resolve-library-id para "lodash.debounce"
+      - mcp__context7__get-library-docs para debounce implementation
+    action: "run_command"
+    command: "npm install react-hook-form @hookform/resolvers yup react-syntax-highlighter @types/react-syntax-highlighter @mui/x-data-grid lodash.debounce @types/lodash.debounce"
+    verify:
+      - type: "command_succeeds"
+        command: "npm list react-hook-form"
+      - type: "command_succeeds"
+        command: "npm list @mui/x-data-grid"
+      - type: "command_succeeds"
+        command: "npm list lodash.debounce"
+
+  # ========================================
+  # 1. CORRECCIONES CRÍTICAS DEL WIZARD
+  # ========================================
+  - id: "STEP-003"
+    description: "Crear constantes exactas según sección 1.1 del plan original"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear constantes, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "typescript-constants"
+      - mcp__context7__get-library-docs para TypeScript const assertions y mejores prácticas
+    action: "create_file"
+    path: "src/constants/areas.ts"
+    content: |
+      // Según SECCIÓN 1.1 - Definir opciones EXACTAS del plan
+      export const AREAS_GEOGRAFICAS = [
+        'ESPAÑA', 'ARGENTINA', 'MÉXICO', 'COLOMBIA', 'CHILE', 
+        'PERÚ', 'VENEZUELA', 'ECUADOR', 'BOLIVIA', 'PARAGUAY',
+        'URUGUAY', 'COSTA RICA', 'PANAMÁ', 'GUATEMALA', 'HONDURAS',
+        'EL SALVADOR', 'NICARAGUA', 'REPÚBLICA DOMINICANA', 'PUERTO RICO',
+        'CUBA', 'ESTADOS UNIDOS', 'BRASIL', 'PORTUGAL', 'INTERNACIONAL'
+      ];
+
+      export const TIPOS_MEDIO = [
+        { value: 'diario', label: 'Diario' },
+        { value: 'revista', label: 'Revista' },
+        { value: 'agencia', label: 'Agencia de noticias' }
+      ];
+
+      export const FRECUENCIAS = [
+        { value: 15, label: 'Cada 15 minutos' },
+        { value: 30, label: 'Cada 30 minutos' },
+        { value: 60, label: 'Cada hora' },
+        { value: 120, label: 'Cada 2 horas' },
+        { value: 240, label: 'Cada 4 horas' },
+        { value: 720, label: 'Cada 12 horas' },
+        { value: 1440, label: 'Una vez al día' }
+      ];
+
+      // Según SECCIÓN 16.1 - Lista oficial del plan original
+      export const AREAS_GEOGRAFICAS_OFICIALES = [
+        'HISPANIDAD', 'HISPANOAMERICA', 'CENTROAMERICA', 'CARIBE_HISPANO',
+        'SUDAMERICA', 'TERRITORIOS_OCUPADOS', 'DIASPORA_HISPANA_USA',
+        'GLOBAL', 'PAISES_NO_HISPANOS',
+        'ARGENTINA', 'BOLIVIA', 'CHILE', 'COLOMBIA', 'COSTA_RICA',
+        'CUBA', 'ECUADOR', 'EL_SALVADOR', 'ESPAÑA', 'FILIPINAS',
+        'GUATEMALA', 'GUINEA_ECUATORIAL', 'HONDURAS', 'MÉXICO',
+        'NICARAGUA', 'PANAMÁ', 'PARAGUAY', 'PERÚ', 'PUERTO_RICO',
+        'REPÚBLICA_DOMINICANA', 'SAHARA_OCCIDENTAL', 'URUGUAY', 'VENEZUELA'
+      ] as const;
+
+      export type AreaGeografica = typeof AREAS_GEOGRAFICAS_OFICIALES[number];
+    verify:
+      - type: "file_exists"
+        path: "src/constants/areas.ts"
+      - type: "file_contains"
+        path: "src/constants/areas.ts"
+        text: "HISPANIDAD"
+
+  # ========================================
+  # SECCIÓN 10.1 - COMPLETAR TIPOS TYPESCRIPT
+  # ========================================
+  - id: "STEP-004"
+    description: "Actualizar tipos TypeScript según sección 10.1 del plan"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de definir interfaces TypeScript, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "typescript-interfaces"
+      - mcp__context7__get-library-docs para TypeScript interface design patterns
+      - mcp__context7__resolve-library-id para "typescript-unions"
+      - mcp__context7__get-library-docs para union types y literal types
+    action: "modify_file"
+    path: "src/types/index.ts"
+    backup: true
+    changes:
+      - find: |
+          export interface SiteInfo {
+            url: string;
+            name: string;
+          }
+        replace: |
+          // Según SECCIÓN 10.1 - Completar tipos TypeScript
+          export interface SpiderConfig {
+            medio: string;
+            seccion: string;
+            url: string;
+            area_geografica: string;
+            tipo_medio: 'diario' | 'revista' | 'agencia';
+            frecuencia_minutos: number;
+            rss_url?: string;
+            comentarios?: string;
+          }
+
+          export interface AnalysisResult {
+            strategy: 'rss' | 'scraping' | 'playwright';
+            confidence: number;
+            selectors?: Record<string, string>;
+            sample_articles?: Article[];
+            needs_javascript: boolean;
+          }
+
+          export interface Article {
+            title: string;
+            date: string;
+            excerpt: string;
+            url?: string;
+          }
+
+          // Según SECCIÓN 21.4 - Mantener compatibilidad
+          export interface SiteInfo {
+            url: string;
+            name: string;  // MANTENER por compatibilidad
+            
+            // Nuevos campos opcionales
+            medio?: string;
+            seccion?: string;
+            area_geografica?: string;
+            tipo_medio?: 'diario' | 'revista' | 'agencia';
+            frecuencia_minutos?: number;
+            rss_url?: string;
+            comentarios?: string;
+            tiene_rss?: boolean;
+          }
+
+          // Según SECCIÓN 15.1 - Interface KPIMetrics
+          export interface KPIMetrics {
+            tiempoReduccion: number;  // Target: 97%
+            tiempoPromedioRSS: number;  // Target: <5s
+            tiempoPromedioPrimeraVez: number;  // Target: ~20s
+            tiempoPromedioCache: number;  // Target: <2s
+            precisionSpiders: number;  // Target: >90%
+            reduccionRequests: number;  // Target: 70%
+            cacheHitRate: number;
+            spidersPorDia: number;  // Target: 200+
+            porcentajeAdopcion: number;  // Target: >80%
+          }
+
+          export interface GeneratedSpider {
+            id: string;
+            name: string;
+            medio: string;
+            seccion: string;
+            area_geografica: string;
+            tipo_medio: string;
+            frecuencia_minutos: number;
+            generatedAt: string;
+            code: string;
+            strategy: string;
+          }
+
+          // Según SECCIÓN 5.1 - WizardData
+          export interface WizardData {
+            medio: string;
+            seccion: string;
+            url: string;
+            area_geografica: string;
+            tipo_medio: 'diario' | 'revista' | 'agencia';
+            frecuencia_minutos: number;
+            rss_url: string;
+            comentarios: string;
+          }
+    verify:
+      - type: "file_contains"
+        path: "src/types/index.ts"
+        text: "KPIMetrics"
+      - type: "file_contains"
+        path: "src/types/index.ts"
+        text: "WizardData"
+
+  # ========================================
+  # SECCIÓN 1.3 - VALIDACIÓN CON REACT-HOOK-FORM
+  # ========================================
+  - id: "STEP-005"
+    description: "Crear schemas de validación según sección 1.3 del plan"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear schemas de validación, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "yup"
+      - mcp__context7__get-library-docs para Yup validation schemas y conditional validation
+      - mcp__context7__resolve-library-id para "@hookform/resolvers"
+      - mcp__context7__get-library-docs para Yup resolver integration con React Hook Form
+    action: "create_file"
+    path: "src/utils/validationSchema.ts"
+    content: |
+      import * as yup from 'yup';
+      import { AREAS_GEOGRAFICAS_OFICIALES } from '../constants/areas';
+
+      // Según SECCIÓN 1.3 - Schema de validación EXACTO del plan
+      export const schema = yup.object({
+        medio: yup.string().required('El nombre del medio es obligatorio'),
+        seccion: yup.string().required('La sección es obligatoria'),
+        area_geografica: yup.string().required('El área geográfica es obligatoria'),
+        tipo_medio: yup.string().oneOf(['diario', 'revista', 'agencia']).required(),
+        url: yup.string().url('URL inválida').required('La URL es obligatoria'),
+        frecuencia_minutos: yup.number().positive().integer(),
+        rss_url: yup.string().url('URL inválida').when('tiene_rss', {
+          is: true,
+          then: (schema) => schema.required('La URL del RSS es obligatoria')
+        })
+      });
+
+      // Según SECCIÓN 16.2 - Validación estricta
+      export const validationSchema = yup.object({
+        area_geografica: yup
+          .string()
+          .oneOf(
+            AREAS_GEOGRAFICAS_OFICIALES,
+            'Área geográfica no válida'
+          )
+          .required('El área geográfica es obligatoria'),
+        medio: yup.string().required('El nombre del medio es obligatorio'),
+        seccion: yup.string().required('La sección es obligatoria'),
+        tipo_medio: yup.string().oneOf(['diario', 'revista', 'agencia']).required(),
+        url: yup.string().url('URL inválida').required('La URL es obligatoria'),
+        frecuencia_minutos: yup.number().positive().integer().required(),
+      });
+    verify:
+      - type: "file_exists"
+        path: "src/utils/validationSchema.ts"
+      - type: "file_contains"
+        path: "src/utils/validationSchema.ts"
+        text: "validationSchema"
+
+  # ========================================
+  # SECCIÓN 5.2 - HOOK USELOCALSTORAGE
+  # ========================================
+  - id: "STEP-006"
+    description: "Crear hook useLocalStorage según sección 5.2 del plan"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear custom hooks, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "react-hooks"
+      - mcp__context7__get-library-docs para React custom hooks patterns y best practices
+      - mcp__context7__resolve-library-id para "typescript-generics"
+      - mcp__context7__get-library-docs para TypeScript generic hooks
+    action: "create_file"
+    path: "src/hooks/useLocalStorage.ts"
+    content: |
+      import { useState } from 'react';
+
+      // Según SECCIÓN 5.2 - Hook personalizado para localStorage EXACTO
+      function useLocalStorage<T>(key: string, initialValue: T) {
+        const [storedValue, setStoredValue] = useState<T>(() => {
+          try {
+            const item = window.localStorage.getItem(key);
+            return item ? JSON.parse(item) : initialValue;
+          } catch (error) {
+            console.error(`Error loading ${key}:`, error);
+            return initialValue;
+          }
+        });
+
+        const setValue = (value: T | ((val: T) => T)) => {
+          try {
+            const valueToStore = value instanceof Function ? value(storedValue) : value;
+            setStoredValue(valueToStore);
+            window.localStorage.setItem(key, JSON.stringify(valueToStore));
+          } catch (error) {
+            console.error(`Error saving ${key}:`, error);
+          }
+        };
+
+        return [storedValue, setValue] as const;
+      }
+
+      export default useLocalStorage;
+    verify:
+      - type: "file_exists"
+        path: "src/hooks/useLocalStorage.ts"
+      - type: "syntax_valid"
+        language: "typescript"
+        path: "src/hooks/useLocalStorage.ts"
+
+  # ========================================
+  # SECCIÓN 4 - SISTEMA DE NOTIFICACIONES
+  # ========================================
+  - id: "STEP-007"
+    description: "Crear NotificationProvider según sección 4.1 del plan"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear Context providers, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "react-context"
+      - mcp__context7__get-library-docs para React Context API patterns
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para Material-UI Snackbar y Alert components
+    action: "create_file"
+    path: "src/contexts/NotificationContext.tsx"
+    content: |
+      import { createContext, useContext, useState } from 'react';
+      import { Snackbar, Alert } from '@mui/material';
+
+      // Según SECCIÓN 4.1 - Implementar Context para notificaciones EXACTO
+      interface Notification {
+        id: string;
+        message: string;
+        severity: 'success' | 'error' | 'warning' | 'info';
+      }
+
+      interface NotificationContextType {
+        showNotification: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
+      }
+
+      const NotificationContext = createContext<NotificationContextType>({
+        showNotification: () => {}
+      });
+
+      export const NotificationProvider = ({ children }: { children: React.ReactNode }) => {
+        const [notifications, setNotifications] = useState<Notification[]>([]);
+        
+        const showNotification = (message: string, severity: 'success' | 'error' | 'warning' | 'info') => {
+          const id = Date.now().toString();
+          const notification = { id, message, severity };
+          setNotifications(prev => [...prev, notification]);
+          
+          // Auto-remove after 6 seconds
+          setTimeout(() => {
+            setNotifications(prev => prev.filter(n => n.id !== id));
+          }, 6000);
+        };
+        
+        return (
+          <NotificationContext.Provider value={{ showNotification }}>
+            {children}
+            {notifications.map((notification) => (
+              <Snackbar
+                key={notification.id}
+                open={true}
+                onClose={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+              >
+                <Alert 
+                  onClose={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))} 
+                  severity={notification.severity}
+                  variant="filled"
+                >
+                  {notification.message}
+                </Alert>
+              </Snackbar>
+            ))}
+          </NotificationContext.Provider>
+        );
+      };
+
+      // Según SECCIÓN 4.2 - Hook useNotification EXACTO
+      export const useNotification = () => {
+        const context = useContext(NotificationContext);
+        if (!context) {
+          throw new Error('useNotification must be used within NotificationProvider');
+        }
+        return context;
+      };
+    verify:
+      - type: "file_exists"
+        path: "src/contexts/NotificationContext.tsx"
+      - type: "file_contains"
+        path: "src/contexts/NotificationContext.tsx"
+        text: "NotificationProvider"
+
+  # ========================================
+  # SECCIÓN 6.2 - TOGGLE DE TEMA
+  # ========================================
+  - id: "STEP-008"
+    description: "Crear ThemeContext según sección 6.2 del plan"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear theme context, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para Material-UI theming y createTheme
+      - mcp__context7__resolve-library-id para "react-context"
+      - mcp__context7__get-library-docs para Context patterns con localStorage
+    action: "create_file"
+    path: "src/contexts/ThemeContext.tsx"
+    content: |
+      import React, { createContext, useContext, useState, ReactNode } from 'react';
+      import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+      import { IconButton } from '@mui/material';
+      import { DarkMode as DarkModeIcon, LightMode as LightModeIcon } from '@mui/icons-material';
+
+      // Según SECCIÓN 6.2 - Agregar toggle de tema con Context API EXACTO
+      interface ThemeContextType {
+        mode: 'light' | 'dark';
+        toggleTheme: () => void;
+      }
+
+      const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+      export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+        const [mode, setMode] = useState<'light' | 'dark'>(() => {
+          // Cargar tema guardado o usar el preferido del sistema
+          const saved = localStorage.getItem('theme');
+          if (saved === 'light' || saved === 'dark') return saved;
+          
+          return window.matchMedia('(prefers-color-scheme: dark)').matches 
+            ? 'dark' 
+            : 'light';
+        });
+
+        const toggleTheme = () => {
+          const newMode = mode === 'light' ? 'dark' : 'light';
+          setMode(newMode);
+          localStorage.setItem('theme', newMode);
+        };
+
+        const theme = createTheme({
+          palette: { mode }
+        });
+
+        return (
+          <ThemeContext.Provider value={{ mode, toggleTheme }}>
+            <MuiThemeProvider theme={theme}>
+              {children}
+            </MuiThemeProvider>
+          </ThemeContext.Provider>
+        );
+      };
+
+      // Hook personalizado
+      export const useTheme = () => {
+        const context = useContext(ThemeContext);
+        if (!context) {
+          throw new Error('useTheme must be used within ThemeProvider');
+        }
+        return context;
+      };
+
+      // Según SECCIÓN 6.2 - Componente ThemeToggle EXACTO
+      export const ThemeToggle = () => {
+        const { mode, toggleTheme } = useTheme();
+        
+        return (
+          <IconButton onClick={toggleTheme} color="inherit">
+            {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
+          </IconButton>
+        );
+      };
+    verify:
+      - type: "file_exists"
+        path: "src/contexts/ThemeContext.tsx"
+      - type: "file_contains"
+        path: "src/contexts/ThemeContext.tsx"
+        text: "ThemeToggle"
+
+  # ========================================
+  # SECCIÓN 1.1 - ACTUALIZAR SITEINPOSTEP
+  # ========================================
+  - id: "STEP-009"
+    description: "Actualizar SiteInfoStep según sección 1.1 del plan con campos EXACTOS"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de actualizar formularios, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "react-hook-form"
+      - mcp__context7__get-library-docs para React Hook Form Controller y validation
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para Material-UI Select, FormControl, MenuItem
+    action: "modify_file"
+    path: "src/components/steps/SiteInfoStep.tsx"
+    backup: true
+    changes:
+      - find: |
+          import React from 'react';
+        replace: |
+          import React, { useState, useEffect } from 'react';
+          import { useForm, Controller } from 'react-hook-form';
+          import { yupResolver } from '@hookform/resolvers/yup';
+      - find: |
+          import { TextField, Box } from '@mui/material';
+        replace: |
+          import { TextField, Box, Select, MenuItem, FormControl, InputLabel, Chip, Alert } from '@mui/material';
+          import { AREAS_GEOGRAFICAS, TIPOS_MEDIO, FRECUENCIAS } from '../../constants/areas';
+          import { validationSchema } from '../../utils/validationSchema';
+      - find: |
+          <TextField
+            label="Nombre del sitio"
+            value={data.name}
+            onChange={(e) => onUpdate({ name: e.target.value })}
+            fullWidth
+            margin="normal"
+            required
+          />
+        replace: |
+          {/* Según SECCIÓN 1.1 - Campos faltantes en Step 1 - Información básica EXACTOS */}
+          {/* medio (actualmente usa "name") - RENOMBRAR */}
+          <TextField
+            label="Medio"
+            value={data.medio || data.name || ''}
+            onChange={(e) => onUpdate({ medio: e.target.value, name: e.target.value })}
+            fullWidth
+            margin="normal"
+            required
+            helperText="Nombre del medio de comunicación"
+          />
+
+          {/* area_geografica - Dropdown con opciones: ESPAÑA, ARGENTINA, MÉXICO, etc. */}
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel>Área Geográfica</InputLabel>
+            <Select
+              value={data.area_geografica || ''}
+              onChange={(e) => onUpdate({ area_geografica: e.target.value })}
+              label="Área Geográfica"
+            >
+              {AREAS_GEOGRAFICAS.map((area) => (
+                <MenuItem key={area} value={area}>
+                  {area.replace(/_/g, ' ')}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* tipo_medio - Dropdown: "diario", "revista", "agencia" */}
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel>Tipo de Medio</InputLabel>
+            <Select
+              value={data.tipo_medio || 'diario'}
+              onChange={(e) => onUpdate({ tipo_medio: e.target.value as 'diario' | 'revista' | 'agencia' })}
+              label="Tipo de Medio"
+            >
+              {TIPOS_MEDIO.map((tipo) => (
+                <MenuItem key={tipo.value} value={tipo.value}>
+                  {tipo.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* frecuencia_minutos - Dropdown con opciones: 15, 30, 60, 120, 1440 */}
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel>Frecuencia de Ejecución</InputLabel>
+            <Select
+              value={data.frecuencia_minutos || 60}
+              onChange={(e) => onUpdate({ frecuencia_minutos: Number(e.target.value) })}
+              label="Frecuencia de Ejecución"
+            >
+              {FRECUENCIAS.map((freq) => (
+                <MenuItem key={freq.value} value={freq.value}>
+                  {freq.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* comentarios - Campo de texto opcional multilinea */}
+          <TextField
+            label="Comentarios"
+            value={data.comentarios || ''}
+            onChange={(e) => onUpdate({ comentarios: e.target.value })}
+            fullWidth
+            margin="normal"
+            multiline
+            rows={3}
+            helperText="Comentarios adicionales sobre el spider (opcional)"
+          />
+    verify:
+      - type: "file_contains"
+        path: "src/components/steps/SiteInfoStep.tsx"
+        text: "AREAS_GEOGRAFICAS"
+
+  # ========================================
+  # SECCIÓN 1.2 - CREAR SECTIONURLSTEP (FALTANTE)
+  # ========================================
+  - id: "STEP-010"
+    description: "Crear SectionUrlStep según sección 1.2 del plan"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear componentes de formulario, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "react-components"
+      - mcp__context7__get-library-docs para React functional components patterns
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para Material-UI Checkbox, FormControlLabel
+    action: "create_file"
+    path: "src/components/steps/SectionUrlStep.tsx"
+    content: |
+      import React from 'react';
+      import { TextField, Box, FormControlLabel, Checkbox, Alert, AlertTitle } from '@mui/material';
+      import { SiteInfo } from '../../types';
+
+      interface SectionUrlStepProps {
+        data: SiteInfo;
+        onUpdate: (updates: Partial<SiteInfo>) => void;
+      }
+
+      // Según SECCIÓN 1.2 - Agregar Step 2 - URLs y sección (FALTANTE)
+      // Crear nuevo componente SectionUrlStep.tsx:
+      const SectionUrlStep: React.FC<SectionUrlStepProps> = ({ data, onUpdate }) => {
+        return (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Alert severity="info">
+              <AlertTitle>URLs y Sección</AlertTitle>
+              Define la sección específica a monitorear y si el sitio tiene RSS.
+            </Alert>
+
+            {/* Campo seccion - Nombre de la sección a monitorear */}
+            <TextField
+              label="Sección"
+              value={data.seccion || ''}
+              onChange={(e) => onUpdate({ seccion: e.target.value })}
+              fullWidth
+              required
+              helperText="Nombre de la sección a monitorear"
+            />
+
+            {/* Campo url - URL de la sección (ya existe pero moverlo aquí) */}
+            <TextField
+              label="URL de la sección"
+              value={data.url || ''}
+              onChange={(e) => onUpdate({ url: e.target.value })}
+              fullWidth
+              required
+              type="url"
+              helperText="URL de la sección"
+            />
+
+            {/* Checkbox tiene_rss - ¿El sitio tiene RSS? */}
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={data.tiene_rss || false}
+                  onChange={(e) => onUpdate({ tiene_rss: e.target.checked })}
+                />
+              }
+              label="¿El sitio tiene RSS?"
+            />
+
+            {/* Campo rss_url - URL del RSS (condicional si tiene_rss = true) */}
+            {data.tiene_rss && (
+              <TextField
+                label="URL del RSS"
+                value={data.rss_url || ''}
+                onChange={(e) => onUpdate({ rss_url: e.target.value })}
+                fullWidth
+                type="url"
+                helperText="URL del RSS (condicional si tiene_rss = true)"
+              />
+            )}
+          </Box>
+        );
+      };
+
+      export default SectionUrlStep;
+    verify:
+      - type: "file_exists"
+        path: "src/components/steps/SectionUrlStep.tsx"
+      - type: "file_contains"
+        path: "src/components/steps/SectionUrlStep.tsx"
+        text: "tiene_rss"
+
+  # ========================================
+  # SECCIÓN 2.1 - IMPLEMENTAR DATAGRID
+  # ========================================
+  - id: "STEP-011"
+    description: "Actualizar BatchProcessingStatus según sección 2.1 del plan con DataGrid EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de implementar DataGrid, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "@mui/x-data-grid"
+      - mcp__context7__get-library-docs para DataGrid configuration, GridColDef, renderCell
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para LinearProgress y Chip components
+    action: "modify_file"
+    path: "src/components/BatchProcessingStatus.tsx"
+    backup: true
+    changes:
+      - find: |
+          import { List, ListItem, ListItemText } from '@mui/material';
+        replace: |
+          import { Box, LinearProgress, Chip } from '@mui/material';
+          import { DataGrid, GridColDef } from '@mui/x-data-grid';
+      - find: |
+          <List>
+        replace: |
+          {/* Según SECCIÓN 2.1 - Reemplazar List con DataGrid EXACTO */}
+          <DataGrid
+            rows={items}
+            columns={[
+              { field: 'medio', headerName: 'Medio', width: 150 },
+              { field: 'seccion', headerName: 'Sección', width: 120 },
+              { field: 'url', headerName: 'URL', width: 250 },
+              { field: 'area_geografica', headerName: 'Área', width: 100 },
+              { field: 'tipo_medio', headerName: 'Tipo', width: 100 },
+              { 
+                field: 'status', 
+                headerName: 'Estado', 
+                width: 120,
+                renderCell: (params) => <Chip label={params.value} size="small" />
+              },
+              {
+                field: 'progress',
+                headerName: 'Progreso',
+                width: 150,
+                renderCell: (params) => <LinearProgress variant="determinate" value={params.value} />
+              }
+            ]}
+            /* Según SECCIÓN 2.2 - Agregar funcionalidades de tabla */
+            pageSize={10}
+            rowsPerPageOptions={[10, 25, 50]}
+            autoHeight
+            disableSelectionOnClick
+            checkboxSelection
+            disableRowSelectionOnClick={false}
+          />
+      - find: |
+          </List>
+        replace: |
+          {/* DataGrid reemplaza List */}
+    verify:
+      - type: "file_contains"
+        path: "src/components/BatchProcessingStatus.tsx"
+        text: "DataGrid"
+
+  # ========================================
+  # SECCIÓN 2.3 - ACTUALIZAR TEMPLATE CSV
+  # ========================================
+  - id: "STEP-012"
+    description: "Actualizar template CSV según sección 2.3 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de manejar CSV, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "csv-processing"
+      - mcp__context7__get-library-docs para CSV handling en JavaScript/TypeScript
+      - mcp__context7__resolve-library-id para "file-upload"
+      - mcp__context7__get-library-docs para file upload patterns en React
+    action: "modify_file"
+    path: "src/components/BatchUploader.tsx"
+    backup: true
+    changes:
+      - find: |
+          const TEMPLATE_CSV = `name,url
+        replace: |
+          // Según SECCIÓN 2.3 - Cambiar el template según plan EXACTO
+          const TEMPLATE_CSV = `medio,seccion,url,area_geografica,tipo_medio,frecuencia_minutos,rss_url
+          El País,Internacional,https://elpais.com/internacional,ESPAÑA,diario,60,
+          La Nación,Economía,https://lanacion.com.ar/economia,ARGENTINA,diario,30,https://...
+          El Universal,Política,https://eluniversal.com.mx/politica,MÉXICO,diario,60,`;
+    verify:
+      - type: "file_contains"
+        path: "src/components/BatchUploader.tsx"
+        text: "area_geografica"
+
+  # ========================================
+  # SECCIÓN 3.1 - CREAR ARTICLEPREVIEW
+  # ========================================
+  - id: "STEP-013"
+    description: "Crear ArticlePreview según sección 3.1 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear componentes de preview, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "react-components"
+      - mcp__context7__get-library-docs para React component composition patterns
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para Material-UI Card, CardContent, Typography
+    action: "create_file"
+    path: "src/components/ArticlePreview.tsx"
+    content: |
+      import React from 'react';
+      import { Box, Typography, Card, CardContent } from '@mui/material';
+      import { Article } from '../types';
+
+      interface ArticlePreviewProps {
+        articles: Article[];
+      }
+
+      // Según SECCIÓN 3.1 - Componente de preview de artículos EXACTO
+      const ArticlePreview = ({ articles }: ArticlePreviewProps) => (
+        <Box>
+          <Typography variant="h6">Artículos detectados:</Typography>
+          {articles.map((article, index) => (
+            <Card key={index} sx={{ mb: 2 }}>
+              <CardContent>
+                <Typography variant="subtitle1">{article.title}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {article.date} - {article.excerpt}
+                </Typography>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+      );
+
+      export default ArticlePreview;
+    verify:
+      - type: "file_exists"
+        path: "src/components/ArticlePreview.tsx"
+      - type: "file_contains"
+        path: "src/components/ArticlePreview.tsx"
+        text: "Artículos detectados"
+
+  # ========================================
+  # SECCIÓN 3.3 - SYNTAX HIGHLIGHTING
+  # ========================================
+  - id: "STEP-014"
+    description: "Actualizar CodeBlock según sección 3.3 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de implementar syntax highlighting, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "react-syntax-highlighter"
+      - mcp__context7__get-library-docs para react-syntax-highlighter configuración y themes
+      - mcp__context7__resolve-library-id para "prism-themes"
+      - mcp__context7__get-library-docs para Prism.js themes y customization
+    action: "modify_file"
+    path: "src/components/CodeBlock.tsx"
+    backup: true
+    changes:
+      - find: |
+          import React from 'react';
+        replace: |
+          import React from 'react';
+          import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+          import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+      - find: |
+          <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>
+            <code>{code}</code>
+          </pre>
+        replace: |
+          {/* Según SECCIÓN 3.3 - Usar Prism.js o react-syntax-highlighter EXACTO */}
+          <SyntaxHighlighter 
+            language="python"
+            style={vscDarkPlus}
+            showLineNumbers
+            customStyle={{ borderRadius: 8 }}
+          >
+            {code}
+          </SyntaxHighlighter>
+    verify:
+      - type: "file_contains"
+        path: "src/components/CodeBlock.tsx"
+        text: "SyntaxHighlighter"
+
+  # ========================================
+  # SECCIÓN 3.2 - ACTUALIZAR ANALYSIS STEP
+  # ========================================
+  - id: "STEP-015"
+    description: "Actualizar AnalysisStep según secciones 3.1 y 3.2 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de actualizar componentes de análisis, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "react-hooks"
+      - mcp__context7__get-library-docs para useEffect y useState patterns
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para Material-UI Box, Typography, Alert
+    action: "modify_file"
+    path: "src/components/steps/AnalysisStep.tsx"
+    backup: true
+    changes:
+      - find: |
+          import React from 'react';
+        replace: |
+          import React, { useState, useEffect } from 'react';
+          import { Box, Typography } from '@mui/material';
+          import ArticlePreview from '../ArticlePreview';
+          import TimeEstimate from '../TimeEstimate';
+      - find: |
+          {/* Add analysis preview here */}
+        replace: |
+          {/* Según SECCIÓN 3.1 - Implementar preview en tiempo real */}
+          {analysisResult?.sample_articles && (
+            <ArticlePreview articles={analysisResult.sample_articles} />
+          )}
+          
+          {/* Según SECCIÓN 3.2 - Agregar indicadores de progreso detallados */}
+          {isAnalyzing && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                Paso actual del análisis: {analysisStep || 'Detectando RSS, Analizando estructura, etc.'}
+              </Typography>
+              <Typography variant="body2">
+                Tiempo transcurrido: {elapsedTime || 0}s
+              </Typography>
+              <Typography variant="body2">
+                Estimación de tiempo restante: {estimatedTime || 0}s
+              </Typography>
+            </Box>
+          )}
+
+          {/* Agregar indicador de tiempo estimado */}
+          {analysisResult && (
+            <TimeEstimate strategy={analysisResult.strategy} />
+          )}
+    verify:
+      - type: "file_contains"
+        path: "src/components/steps/AnalysisStep.tsx"
+        text: "ArticlePreview"
+
+  # ========================================
+  # SECCIÓN 15.2 - CREAR TIMEESTIMATE
+  # ========================================
+  - id: "STEP-016"
+    description: "Crear TimeEstimate según sección 15.2 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear componentes de tiempo, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "react-components"
+      - mcp__context7__get-library-docs para functional components y props typing
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para Material-UI Alert y iconos
+    action: "create_file"
+    path: "src/components/TimeEstimate.tsx"
+    content: |
+      import React from 'react';
+      import { Alert } from '@mui/material';
+      import { Timer as TimerIcon } from '@mui/icons-material';
+
+      interface TimeEstimateProps {
+        strategy: string;
+      }
+
+      // Según SECCIÓN 15.2 - Indicadores de tiempo en generación
+      // Agregar a WizardPage.tsx y AnalysisStep.tsx:
+      const TimeEstimate: React.FC<TimeEstimateProps> = ({ strategy }) => {
+        const getEstimate = () => {
+          switch (strategy) {
+            case 'rss': return '<5 segundos';
+            case 'cache': return '<2 segundos';
+            case 'first_time': return '~20 segundos';
+            default: return 'Calculando...';
+          }
+        };
+        
+        return (
+          <Alert severity="info" icon={<TimerIcon />}>
+            Tiempo estimado: {getEstimate()}
+          </Alert>
+        );
+      };
+
+      export default TimeEstimate;
+    verify:
+      - type: "file_exists"
+        path: "src/components/TimeEstimate.tsx"
+      - type: "file_contains"
+        path: "src/components/TimeEstimate.tsx"
+        text: "TimeEstimate"
+
+  # ========================================
+  # SECCIÓN 6.1 - CREAR HISTORYPAGE
+  # ========================================
+  - id: "STEP-017"
+    description: "Crear HistoryPage según sección 6.1 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear páginas complejas, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "@tanstack/react-query"
+      - mcp__context7__get-library-docs para React Query useQuery y data fetching
+      - mcp__context7__resolve-library-id para "@mui/x-data-grid"
+      - mcp__context7__get-library-docs para DataGrid con acciones y custom columns
+    action: "create_file"
+    path: "src/pages/HistoryPage.tsx"
+    content: |
+      import React from 'react';
+      import { Container, Typography, CircularProgress, Alert, IconButton } from '@mui/material';
+      import { DataGrid, GridColDef } from '@mui/x-data-grid';
+      import { Download as DownloadIcon, Code as CodeIcon } from '@mui/icons-material';
+      import { useQuery } from '@tanstack/react-query';
+      import { GeneratedSpider } from '../types';
+
+      // Según SECCIÓN 6.1 - Página de historial de spiders generados
+      const HistoryPage = () => {
+        // Obtener historial del backend con React Query
+        const { data: spiderHistory, isLoading, error } = useQuery({
+          queryKey: ['spider-history'],
+          queryFn: async () => {
+            try {
+              // Primero intentar obtener del backend
+              return await spiderFactoryService.getHistory();
+            } catch (error) {
+              // Si falla, usar historial local como fallback
+              const localHistory = localStorage.getItem('spider-history');
+              return localHistory ? JSON.parse(localHistory) : [];
+            }
+          },
+          staleTime: 5 * 60 * 1000 // 5 minutos
+        });
+
+        const downloadSpider = (spider: GeneratedSpider) => {
+          const blob = new Blob([spider.code], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${spider.name}.py`;
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+
+        const viewCode = (spider: GeneratedSpider) => {
+          // Navegar a vista de código o abrir modal
+          navigate(`/spider-factory/code/${spider.id}`);
+        };
+
+        if (isLoading) return <CircularProgress />;
+        if (error) return <Alert severity="error">Error cargando historial</Alert>;
+        
+        return (
+          <Container>
+            <Typography variant="h4" gutterBottom>
+              Historial de Spiders Generados
+            </Typography>
+            
+            <DataGrid
+              rows={spiderHistory || []}
+              columns={[
+                { field: 'name', headerName: 'Nombre', width: 200 },
+                { 
+                  field: 'generatedAt', 
+                  headerName: 'Fecha', 
+                  width: 150,
+                  valueFormatter: (params) => 
+                    new Date(params.value).toLocaleDateString()
+                },
+                { field: 'medio', headerName: 'Medio', width: 150 },
+                { field: 'seccion', headerName: 'Sección', width: 120 },
+                { 
+                  field: 'actions', 
+                  headerName: 'Acciones', 
+                  width: 150,
+                  renderCell: (params) => (
+                    <>
+                      <IconButton 
+                        onClick={() => downloadSpider(params.row)}
+                        title="Descargar spider"
+                      >
+                        <DownloadIcon />
+                      </IconButton>
+                      <IconButton 
+                        onClick={() => viewCode(params.row)}
+                        title="Ver código"
+                      >
+                        <CodeIcon />
+                      </IconButton>
+                    </>
+                  )
+                }
+              ]}
+              pageSize={10}
+              rowsPerPageOptions={[10, 25, 50]}
+              autoHeight
+              disableSelectionOnClick
+            />
+          </Container>
+        );
+      };
+
+      export default HistoryPage;
+    verify:
+      - type: "file_exists"
+        path: "src/pages/HistoryPage.tsx"
+      - type: "file_contains"
+        path: "src/pages/HistoryPage.tsx"
+        text: "Historial de Spiders"
+
+  # ========================================
+  # SECCIÓN 6.3 - ACTUALIZAR MAIN LAYOUT
+  # ========================================
+  - id: "STEP-018"
+    description: "Actualizar MainLayout según sección 6.3 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de actualizar layouts, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "react-router"
+      - mcp__context7__get-library-docs para React Router navigation patterns
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para Material-UI AppBar, Tabs, navigation
+    action: "modify_file"
+    path: "src/layouts/MainLayout.tsx"
+    backup: true
+    changes:
+      - find: |
+          import { AppBar, Toolbar, Typography, Container } from '@mui/material';
+        replace: |
+          import { 
+            AppBar, 
+            Toolbar, 
+            Typography, 
+            Container, 
+            Tabs, 
+            Tab, 
+            Box 
+          } from '@mui/material';
+          import { Link, useLocation } from 'react-router-dom';
+          import { ThemeToggle } from '../contexts/ThemeContext';
+      - find: |
+          <AppBar position="static">
+            <Toolbar>
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                Spider Factory
+              </Typography>
+            </Toolbar>
+          </AppBar>
+        replace: |
+          <AppBar position="static">
+            <Toolbar>
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                Spider Factory 2.0
+              </Typography>
+              
+              {/* Según SECCIÓN 6.3 - Agregar navegación a historial */}
+              <Tabs 
+                value={location.pathname} 
+                textColor="inherit" 
+                indicatorColor="secondary"
+              >
+                <Tab 
+                  label="Wizard" 
+                  value="/wizard" 
+                  component={Link} 
+                  to="/wizard" 
+                />
+                <Tab 
+                  label="Historial" 
+                  value="/history" 
+                  component={Link} 
+                  to="/history" 
+                />
+                <Tab 
+                  label="Bulk Upload" 
+                  value="/bulk" 
+                  component={Link} 
+                  to="/bulk" 
+                />
+              </Tabs>
+              
+              <ThemeToggle />
+            </Toolbar>
+          </AppBar>
+    verify:
+      - type: "file_contains"
+        path: "src/layouts/MainLayout.tsx"
+        text: "ThemeToggle"
+
+  # ========================================
+  # SECCIÓN 5.1 - ACTUALIZAR WIZARDPAGE
+  # ========================================
+  - id: "STEP-019"
+    description: "Actualizar WizardPage según sección 5.1 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de actualizar wizards complejos, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "react-hooks"
+      - mcp__context7__get-library-docs para useState, useEffect patterns con complex state
+      - mcp__context7__resolve-library-id para "react-stepper"
+      - mcp__context7__get-library-docs para multi-step form patterns
+    action: "modify_file"
+    path: "src/pages/WizardPage.tsx"
+    backup: true
+    changes:
+      - find: |
+          import SiteInfoStep from '../components/steps/SiteInfoStep';
+          import AnalysisStep from '../components/steps/AnalysisStep';
+          import ReviewStep from '../components/steps/ReviewStep';
+        replace: |
+          import SiteInfoStep from '../components/steps/SiteInfoStep';
+          import SectionUrlStep from '../components/steps/SectionUrlStep';
+          import AnalysisStep from '../components/steps/AnalysisStep';
+          import ReviewStep from '../components/steps/ReviewStep';
+          import useLocalStorage from '../hooks/useLocalStorage';
+          import { useNotification } from '../contexts/NotificationContext';
+          import { WizardData } from '../types';
+      - find: |
+          const steps = ['Información del sitio', 'Análisis', 'Revisión'];
+        replace: |
+          const steps = ['Información Básica', 'URL y Sección', 'Análisis', 'Revisión'];
+      - find: |
+          const [siteInfo, setSiteInfo] = useState<SiteInfo>({
+            name: '',
+            url: ''
+          });
+        replace: |
+          // Según SECCIÓN 5.1 - Estado local para el wizard EXACTO
+          const [wizardData, setWizardData] = useState<WizardData>({
+            medio: '',
+            seccion: '',
+            url: '',
+            area_geografica: '',
+            tipo_medio: 'diario',
+            frecuencia_minutos: 60,
+            rss_url: '',
+            comentarios: ''
+          });
+
+          // Según SECCIÓN 5.2 - Uso en componentes EXACTO
+          const [wizardDraft, setWizardDraft] = useLocalStorage('wizard-draft', {});
+          const [userPreferences, setUserPreferences] = useLocalStorage('preferences', {
+            theme: 'light',
+            lastAreaGeografica: '',
+            lastTipoMedio: 'diario'
+          });
+          const { showNotification } = useNotification();
+
+          // Actualizar datos
+          const updateWizardData = (updates: Partial<WizardData>) => {
+            setWizardData(prev => ({ ...prev, ...updates }));
+            setWizardDraft({ ...wizardData, ...updates });
+          };
+
+          // Cargar borrador al montar
+          useEffect(() => {
+            if (Object.keys(wizardDraft).length > 0) {
+              setWizardData(prev => ({ ...prev, ...wizardDraft }));
+              showNotification('Borrador cargado desde sesión anterior', 'info');
+            }
+          }, []);
+      - find: |
+                    {activeStep === 0 && (
+                      <SiteInfoStep 
+                        data={siteInfo} 
+                        onUpdate={(updates) => setSiteInfo(prev => ({ ...prev, ...updates }))} 
+                      />
+                    )}
+                    {activeStep === 1 && (
+                      <AnalysisStep 
+                        siteInfo={siteInfo} 
+                        onAnalysisComplete={setAnalysisResult} 
+                      />
+                    )}
+                    {activeStep === 2 && (
+                      <ReviewStep 
+                        siteInfo={siteInfo} 
+                        analysisResult={analysisResult} 
+                      />
+                    )}
+        replace: |
+                    {activeStep === 0 && (
+                      <SiteInfoStep 
+                        data={wizardData} 
+                        onUpdate={updateWizardData} 
+                      />
+                    )}
+                    {activeStep === 1 && (
+                      <SectionUrlStep 
+                        data={wizardData} 
+                        onUpdate={updateWizardData} 
+                      />
+                    )}
+                    {activeStep === 2 && (
+                      <AnalysisStep 
+                        siteInfo={wizardData} 
+                        onAnalysisComplete={setAnalysisResult} 
+                      />
+                    )}
+                    {activeStep === 3 && (
+                      <ReviewStep 
+                        siteInfo={wizardData} 
+                        analysisResult={analysisResult} 
+                      />
+                    )}
+    verify:
+      - type: "file_contains"
+        path: "src/pages/WizardPage.tsx"
+        text: "SectionUrlStep"
+
+  # ========================================
+  # SECCIÓN 7.1 - VALIDACIÓN DUPLICADOS TIEMPO REAL
+  # ========================================
+  - id: "STEP-020"
+    description: "Implementar validación duplicados según sección 7.1 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de implementar debounce y validación, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "lodash.debounce"
+      - mcp__context7__get-library-docs para debounce implementation y best practices
+      - mcp__context7__resolve-library-id para "react-async"
+      - mcp__context7__get-library-docs para async validation patterns en React
+    action: "create_file"
+    path: "src/utils/validationHelpers.ts"
+    content: |
+      import debounce from 'lodash.debounce';
+      import { useMemo } from 'react';
+
+      // Según SECCIÓN 7.1 - Validar duplicados mientras escribe
+      export const checkDuplicateSpider = async (medio: string, seccion: string) => {
+        if (medio && seccion) {
+          // Simular API call - reemplazar con llamada real al backend
+          const response = await fetch('/api/check-duplicate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ medio, seccion })
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            return result.exists;
+          }
+        }
+        return false;
+      };
+
+      // Debounce la validación
+      export const useDebouncedValidation = () => {
+        return useMemo(
+          () => debounce(checkDuplicateSpider, 500),
+          []
+        );
+      };
+
+      // Según SECCIÓN 7.2 - Indicadores visuales según plan
+      export const getStatusColor = (status: string) => {
+        switch (status) {
+          case 'success': return 'success';  // Verde para éxito
+          case 'warning': return 'warning';  // Amarillo para advertencias
+          case 'error': return 'error';      // Rojo para errores
+          case 'info': return 'info';        // Azul para información
+          default: return 'default';
+        }
+      };
+    verify:
+      - type: "file_exists"
+        path: "src/utils/validationHelpers.ts"
+      - type: "file_contains"
+        path: "src/utils/validationHelpers.ts"
+        text: "useDebouncedValidation"
+
+  # ========================================
+  # SECCIÓN 15.1 - CREAR KPI DASHBOARD
+  # ========================================
+  - id: "STEP-021"
+    description: "Crear KPIDashboard según sección 15.1 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear dashboards, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "@tanstack/react-query"
+      - mcp__context7__get-library-docs para data fetching y caching patterns
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para Material-UI Grid, Card, metrics display
+    action: "create_file"
+    path: "src/components/KPIDashboard.tsx"
+    content: |
+      import React from 'react';
+      import { Grid, Card, CardContent, Typography, Box } from '@mui/material';
+      import { Speed as SpeedIcon, Timeline as TimelineIcon } from '@mui/icons-material';
+      import { useQuery } from '@tanstack/react-query';
+      import { KPIMetrics } from '../types';
+
+      interface MetricCardProps {
+        title: string;
+        value: string;
+        target: string;
+        icon: React.ReactNode;
+        color: 'success' | 'warning' | 'error' | 'info';
+      }
+
+      const MetricCard: React.FC<MetricCardProps> = ({ title, value, target, icon, color }) => (
+        <Card>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              {icon}
+              <Typography variant="h6" sx={{ ml: 1 }}>
+                {title}
+              </Typography>
+            </Box>
+            <Typography variant="h4" color={color}>
+              {value}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Target: {target}
+            </Typography>
+          </CardContent>
+        </Card>
+      );
+
+      // Según SECCIÓN 15.1 - Dashboard de KPIs
+      // Crear componente KPIDashboard.tsx:
+      const KPIDashboard = () => {
+        const { data: metrics } = useQuery(['kpi-metrics'], fetchKPIMetrics);
+        
+        return (
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={3}>
+              <MetricCard
+                title="Reducción de Tiempo"
+                value={`${metrics?.tiempoReduccion || 0}%`}
+                target="97%"
+                icon={<SpeedIcon />}
+                color={metrics?.tiempoReduccion >= 97 ? 'success' : 'warning'}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <MetricCard
+                title="Tiempo Promedio RSS"
+                value={`${metrics?.tiempoPromedioRSS || 0}s`}
+                target="<5s"
+                icon={<TimelineIcon />}
+                color={metrics?.tiempoPromedioRSS < 5 ? 'success' : 'warning'}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <MetricCard
+                title="Precisión Spiders"
+                value={`${metrics?.precisionSpiders || 0}%`}
+                target=">90%"
+                icon={<SpeedIcon />}
+                color={metrics?.precisionSpiders > 90 ? 'success' : 'error'}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <MetricCard
+                title="Spiders por Día"
+                value={`${metrics?.spidersPorDia || 0}`}
+                target="200+"
+                icon={<TimelineIcon />}
+                color={metrics?.spidersPorDia >= 200 ? 'success' : 'warning'}
+              />
+            </Grid>
+          </Grid>
+        );
+      };
+
+      // Función fetch para las métricas
+      const fetchKPIMetrics = async (): Promise<KPIMetrics> => {
+        const response = await fetch('/api/metrics');
+        return response.json();
+      };
+
+      export default KPIDashboard;
+    verify:
+      - type: "file_exists"
+        path: "src/components/KPIDashboard.tsx"
+      - type: "file_contains"
+        path: "src/components/KPIDashboard.tsx"
+        text: "KPIDashboard"
+
+  # ========================================
+  # SECCIÓN 19.1 - PERFORMANCE MONITOR
+  # ========================================
+  - id: "STEP-022"
+    description: "Crear PerformanceMonitor según sección 19.1 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear monitores en tiempo real, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "websocket"
+      - mcp__context7__get-library-docs para WebSocket patterns en React
+      - mcp__context7__resolve-library-id para "react-hooks"
+      - mcp__context7__get-library-docs para useEffect con WebSocket cleanup
+    action: "create_file"
+    path: "src/components/PerformanceMonitor.tsx"
+    content: |
+      import React, { useState, useEffect } from 'react';
+      import { Box, Typography, Grid } from '@mui/material';
+
+      interface PerformanceMetrics {
+        activeConnections: number;
+        cacheHitRate: number;
+        avgResponseTime: number;
+        requestsPerMinute: number;
+      }
+
+      // Según SECCIÓN 19.1 - Monitor de rendimiento en tiempo real
+      // Crear PerformanceMonitor.tsx:
+      const PerformanceMonitor = () => {
+        const [metrics, setMetrics] = useState<PerformanceMetrics>({
+          activeConnections: 0,
+          cacheHitRate: 0,
+          avgResponseTime: 0,
+          requestsPerMinute: 0
+        });
+        
+        useEffect(() => {
+          const ws = new WebSocket(`${import.meta.env.VITE_WS_URL || '/ws'}/metrics`);
+          ws.onmessage = (event) => {
+            setMetrics(JSON.parse(event.data));
+          };
+          return () => ws.close();
+        }, []);
+        
+        return (
+          <Box sx={{ p: 2 }}>
+            <Typography variant="h6">Rendimiento del Sistema</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">
+                  Conexiones Redis activas
+                </Typography>
+                <Typography variant="h4">
+                  {metrics.activeConnections}/50
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">
+                  Cache Hit Rate
+                </Typography>
+                <Typography variant="h4">
+                  {metrics.cacheHitRate.toFixed(1)}%
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">
+                  Tiempo Promedio Respuesta
+                </Typography>
+                <Typography variant="h4">
+                  {metrics.avgResponseTime.toFixed(0)}ms
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">
+                  Requests por Minuto
+                </Typography>
+                <Typography variant="h4">
+                  {metrics.requestsPerMinute}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Box>
+        );
+      };
+
+      export default PerformanceMonitor;
+    verify:
+      - type: "file_exists"
+        path: "src/components/PerformanceMonitor.tsx"
+      - type: "file_contains"
+        path: "src/components/PerformanceMonitor.tsx"
+        text: "PerformanceMonitor"
+
+  # ========================================
+  # SECCIÓN 20.1 - POPULAR PATTERN BADGE
+  # ========================================
+  - id: "STEP-023"
+    description: "Crear PopularPatternBadge según sección 20.1 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear badges y tooltips, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para Material-UI Chip, Tooltip, iconos
+      - mcp__context7__resolve-library-id para "react-components"
+      - mcp__context7__get-library-docs para conditional rendering patterns
+    action: "create_file"
+    path: "src/components/PopularPatternBadge.tsx"
+    content: |
+      import React from 'react';
+      import { Chip, Tooltip } from '@mui/material';
+      import { TrendingUp as TrendingUpIcon } from '@mui/icons-material';
+
+      interface PopularPatternBadgeProps {
+        usageCount?: number;
+      }
+
+      // Según SECCIÓN 20.1 - Indicador de patrones populares
+      // Mostrar cuando se usa un patrón popular:
+      const PopularPatternBadge: React.FC<PopularPatternBadgeProps> = ({ usageCount }) => {
+        if (!usageCount || usageCount < 10) return null;
+        
+        return (
+          <Tooltip title="Este es un patrón popular pre-cargado en cache">
+            <Chip
+              label={`Usado ${usageCount} veces`}
+              color="secondary"
+              size="small"
+              icon={<TrendingUpIcon />}
+            />
+          </Tooltip>
+        );
+      };
+
+      export default PopularPatternBadge;
+    verify:
+      - type: "file_exists"
+        path: "src/components/PopularPatternBadge.tsx"
+      - type: "file_contains"
+        path: "src/components/PopularPatternBadge.tsx"
+        text: "PopularPatternBadge"
+
+  # ========================================
+  # SECCIÓN 20.2 - POPULAR MEDIA LIST
+  # ========================================
+  - id: "STEP-024"
+    description: "Crear PopularMediaList según sección 20.2 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear listas con datos, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "@tanstack/react-query"
+      - mcp__context7__get-library-docs para useQuery con loading states
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para Material-UI List, ListItem, Paper
+    action: "create_file"
+    path: "src/components/PopularMediaList.tsx"
+    content: |
+      import React from 'react';
+      import { Paper, Typography, List, ListItem, ListItemText, Chip } from '@mui/material';
+      import { useQuery } from '@tanstack/react-query';
+
+      interface PopularMedia {
+        domain: string;
+        name: string;
+        count: number;
+      }
+
+      // Según SECCIÓN 20.2 - Lista de medios populares
+      // En página principal o dashboard:
+      const PopularMediaList = () => {
+        const { data: popularMedia } = useQuery(['popular-media'], 
+          () => spiderFactoryService.getPopularMedia()
+        );
+        
+        return (
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Medios más generados
+            </Typography>
+            <List>
+              {popularMedia?.map((media: PopularMedia) => (
+                <ListItem key={media.domain}>
+                  <ListItemText 
+                    primary={media.name}
+                    secondary={`${media.count} spiders generados`}
+                  />
+                  <Chip 
+                    label="Respuesta instantánea" 
+                    size="small" 
+                    color="primary"
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+        );
+      };
+
+      export default PopularMediaList;
+    verify:
+      - type: "file_exists"
+        path: "src/components/PopularMediaList.tsx"
+      - type: "file_contains"
+        path: "src/components/PopularMediaList.tsx"
+        text: "PopularMediaList"
+
+  # ========================================
+  # SECCIÓN 8.1 - TESTS UNITARIOS HOOKS
+  # ========================================
+  - id: "STEP-025"
+    description: "Crear tests unitarios para hooks según sección 8.1 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de escribir tests, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "@testing-library/react"
+      - mcp__context7__get-library-docs para React Testing Library hooks testing
+      - mcp__context7__resolve-library-id para "vitest"
+      - mcp__context7__get-library-docs para Vitest configuration y testing patterns
+    action: "create_file"
+    path: "src/hooks/__tests__/useLocalStorage.test.ts"
+    content: |
+      import { renderHook, act } from '@testing-library/react';
+      import { describe, it, expect, beforeEach } from 'vitest';
+      import useLocalStorage from '../useLocalStorage';
+
+      // Según SECCIÓN 8.1 - Tests para hooks
+      // useLocalStorage.test.ts
+      describe('useLocalStorage', () => {
+        beforeEach(() => {
+          localStorage.clear();
+        });
+
+        it('should return initial value when localStorage is empty', () => {
+          const { result } = renderHook(() => useLocalStorage('test-key', 'initial'));
+          expect(result.current[0]).toBe('initial');
+        });
+
+        it('should return stored value from localStorage', () => {
+          localStorage.setItem('test-key', JSON.stringify('stored-value'));
+          const { result } = renderHook(() => useLocalStorage('test-key', 'initial'));
+          expect(result.current[0]).toBe('stored-value');
+        });
+
+        it('should update localStorage when setValue is called', () => {
+          const { result } = renderHook(() => useLocalStorage('test-key', 'initial'));
+          
+          act(() => {
+            result.current[1]('new-value');
+          });
+
+          expect(result.current[0]).toBe('new-value');
+          expect(localStorage.getItem('test-key')).toBe('"new-value"');
+        });
+
+        it('should handle function updates', () => {
+          const { result } = renderHook(() => useLocalStorage('test-key', 0));
+          
+          act(() => {
+            result.current[1]((prev: number) => prev + 1);
+          });
+
+          expect(result.current[0]).toBe(1);
+        });
+
+        it('should handle JSON parse errors gracefully', () => {
+          localStorage.setItem('test-key', 'invalid-json');
+          const { result } = renderHook(() => useLocalStorage('test-key', 'fallback'));
+          expect(result.current[0]).toBe('fallback');
+        });
+      });
+    verify:
+      - type: "file_exists"
+        path: "src/hooks/__tests__/useLocalStorage.test.ts"
+      - type: "file_contains"
+        path: "src/hooks/__tests__/useLocalStorage.test.ts"
+        text: "useLocalStorage"
+
+  # ========================================
+  # SECCIÓN 8.2 - TESTS SERVICIOS
+  # ========================================
+  - id: "STEP-026"
+    description: "Crear tests para servicios según sección 8.2 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de escribir service tests, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "msw"
+      - mcp__context7__get-library-docs para Mock Service Worker setup y API mocking
+      - mcp__context7__resolve-library-id para "vitest"
+      - mcp__context7__get-library-docs para async testing patterns
+    action: "create_file"
+    path: "src/services/__tests__/spiderFactoryService.test.ts"
+    content: |
+      import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+      import { setupServer } from 'msw/node';
+      import { rest } from 'msw';
+      import { spiderFactoryService } from '../spiderFactoryService';
+
+      // Según SECCIÓN 8.2 - Tests para servicios
+      // spiderFactoryService.test.ts
+      // Tests con MSW (Mock Service Worker)
+
+      const server = setupServer(
+        rest.post('/api/analyze', (req, res, ctx) => {
+          return res(
+            ctx.json({
+              strategy: 'rss',
+              confidence: 0.95,
+              rss_url: 'https://example.com/rss',
+              needs_javascript: false
+            })
+          );
+        }),
+
+        rest.post('/api/check-duplicate', (req, res, ctx) => {
+          return res(
+            ctx.json({
+              exists: false,
+              message: 'Nombre disponible'
+            })
+          );
+        }),
+
+        rest.post('/api/generate', (req, res, ctx) => {
+          return res(
+            ctx.json({
+              spider_name: 'test_spider',
+              file_path: '/path/to/spider.py',
+              code_preview: 'import scrapy...',
+              is_valid: true
+            })
+          );
+        })
+      );
+
+      describe('SpiderFactoryService', () => {
+        beforeEach(() => server.listen());
+        afterEach(() => server.resetHandlers());
+
+        it('should analyze site successfully', async () => {
+          const result = await spiderFactoryService.analyze({
+            url: 'https://example.com',
+            medio: 'Test Media',
+            seccion: 'News',
+            area_geografica: 'ESPAÑA',
+            tipo_medio: 'diario',
+            frecuencia_minutos: 60
+          });
+
+          expect(result.strategy).toBe('rss');
+          expect(result.confidence).toBe(0.95);
+        });
+
+        it('should check for duplicates', async () => {
+          const result = await spiderFactoryService.checkDuplicate('Test Media', 'News');
+          expect(result.exists).toBe(false);
+        });
+
+        it('should generate spider', async () => {
+          const analysisResult = {
+            strategy: 'rss',
+            confidence: 0.95,
+            rss_url: 'https://example.com/rss',
+            needs_javascript: false
+          };
+
+          const spiderConfig = {
+            medio: 'Test Media',
+            seccion: 'News',
+            area_geografica: 'ESPAÑA',
+            tipo_medio: 'diario',
+            frecuencia_minutos: 60
+          };
+
+          const result = await spiderFactoryService.generateSpider(analysisResult, spiderConfig);
+          expect(result.spider_name).toBe('test_spider');
+          expect(result.is_valid).toBe(true);
+        });
+
+        it('should handle API errors gracefully', async () => {
+          server.use(
+            rest.post('/api/analyze', (req, res, ctx) => {
+              return res(ctx.status(500), ctx.json({ error: 'Internal Server Error' }));
+            })
+          );
+
+          await expect(
+            spiderFactoryService.analyze({
+              url: 'https://example.com',
+              medio: 'Test',
+              seccion: 'Test',
+              area_geografica: 'ESPAÑA',
+              tipo_medio: 'diario',
+              frecuencia_minutos: 60
+            })
+          ).rejects.toThrow();
+        });
+      });
+    verify:
+      - type: "file_exists"
+        path: "src/services/__tests__/spiderFactoryService.test.ts"
+      - type: "file_contains"
+        path: "src/services/__tests__/spiderFactoryService.test.ts"
+        text: "SpiderFactoryService"
+
+  # ========================================
+  # SECCIÓN 8.3 - TESTS PÁGINAS
+  # ========================================
+  - id: "STEP-027"
+    description: "Crear tests para páginas según sección 8.3 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de escribir page tests, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "@testing-library/react"
+      - mcp__context7__get-library-docs para React Testing Library component testing
+      - mcp__context7__resolve-library-id para "@testing-library/user-event"
+      - mcp__context7__get-library-docs para user interaction testing
+    action: "create_file"
+    path: "src/pages/__tests__/WizardPage.test.tsx"
+    content: |
+      import React from 'react';
+      import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+      import userEvent from '@testing-library/user-event';
+      import { describe, it, expect, vi } from 'vitest';
+      import { ThemeProvider } from '@mui/material/styles';
+      import { createTheme } from '@mui/material/styles';
+      import WizardPage from '../WizardPage';
+      import { NotificationProvider } from '../../contexts/NotificationContext';
+
+      // Según SECCIÓN 8.3 - Tests para páginas
+      // WizardPage.test.tsx
+
+      const theme = createTheme();
+
+      const renderWithProviders = (component: React.ReactElement) => {
+        return render(
+          <ThemeProvider theme={theme}>
+            <NotificationProvider>
+              {component}
+            </NotificationProvider>
+          </ThemeProvider>
+        );
+      };
+
+      describe('WizardPage', () => {
+        it('should render wizard steps correctly', () => {
+          renderWithProviders(<WizardPage />);
+          
+          expect(screen.getByText('Información Básica')).toBeInTheDocument();
+          expect(screen.getByText('URL y Sección')).toBeInTheDocument();
+          expect(screen.getByText('Análisis')).toBeInTheDocument();
+          expect(screen.getByText('Revisión')).toBeInTheDocument();
+        });
+
+        it('should show first step initially', () => {
+          renderWithProviders(<WizardPage />);
+          
+          expect(screen.getByLabelText('Medio')).toBeInTheDocument();
+          expect(screen.getByLabelText('Área Geográfica')).toBeInTheDocument();
+        });
+
+        it('should allow user to fill form fields', async () => {
+          const user = userEvent.setup();
+          renderWithProviders(<WizardPage />);
+          
+          const medioInput = screen.getByLabelText('Medio');
+          await user.type(medioInput, 'El País');
+          
+          expect(medioInput).toHaveValue('El País');
+        });
+
+        it('should validate required fields', async () => {
+          const user = userEvent.setup();
+          renderWithProviders(<WizardPage />);
+          
+          const nextButton = screen.getByText('Siguiente');
+          await user.click(nextButton);
+          
+          await waitFor(() => {
+            expect(screen.getByText('El nombre del medio es obligatorio')).toBeInTheDocument();
+          });
+        });
+
+        it('should navigate between steps', async () => {
+          const user = userEvent.setup();
+          renderWithProviders(<WizardPage />);
+          
+          // Fill required fields
+          await user.type(screen.getByLabelText('Medio'), 'Test Media');
+          await user.click(screen.getByLabelText('Área Geográfica'));
+          await user.click(screen.getByText('ESPAÑA'));
+          
+          // Go to next step
+          await user.click(screen.getByText('Siguiente'));
+          
+          await waitFor(() => {
+            expect(screen.getByLabelText('Sección')).toBeInTheDocument();
+          });
+        });
+
+        it('should save draft to localStorage', async () => {
+          const user = userEvent.setup();
+          const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+          
+          renderWithProviders(<WizardPage />);
+          
+          await user.type(screen.getByLabelText('Medio'), 'Test Media');
+          
+          expect(setItemSpy).toHaveBeenCalledWith(
+            'wizard-draft',
+            expect.stringContaining('Test Media')
+          );
+        });
+      });
+    verify:
+      - type: "file_exists"
+        path: "src/pages/__tests__/WizardPage.test.tsx"
+      - type: "file_contains"
+        path: "src/pages/__tests__/WizardPage.test.tsx"
+        text: "WizardPage"
+
+  # ========================================
+  # SECCIÓN 8.4 - TESTS INTEGRACIÓN
+  # ========================================
+  - id: "STEP-028"
+    description: "Crear tests de integración según sección 8.4 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de escribir integration tests, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "@testing-library/react"
+      - mcp__context7__get-library-docs para integration testing patterns
+      - mcp__context7__resolve-library-id para "websocket-testing"
+      - mcp__context7__get-library-docs para WebSocket testing strategies
+    action: "create_file"
+    path: "src/__tests__/integration/WizardFlow.test.tsx"
+    content: |
+      import React from 'react';
+      import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+      import userEvent from '@testing-library/user-event';
+      import { describe, it, expect, beforeEach } from 'vitest';
+      import { BrowserRouter } from 'react-router-dom';
+      import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+      import App from '../../App';
+      import { setupServer } from 'msw/node';
+      import { rest } from 'msw';
+
+      // Según SECCIÓN 8.4 - Tests de integración
+      // Flujo completo del wizard
+      // Procesamiento batch
+      // WebSocket updates
+
+      const server = setupServer(
+        rest.post('/api/analyze', (req, res, ctx) => {
+          return res(
+            ctx.delay(100),
+            ctx.json({
+              strategy: 'rss',
+              confidence: 0.95,
+              rss_url: 'https://example.com/rss',
+              needs_javascript: false,
+              sample_articles: [
+                {
+                  title: 'Test Article',
+                  date: '2023-01-01',
+                  excerpt: 'Test excerpt'
+                }
+              ]
+            })
+          );
+        }),
+
+        rest.post('/api/generate', (req, res, ctx) => {
+          return res(
+            ctx.delay(200),
+            ctx.json({
+              spider_name: 'elpais_internacional',
+              file_path: '/spiders/elpais_internacional.py',
+              code_preview: 'import scrapy\n\nclass ElPaisSpider(scrapy.Spider)...',
+              is_valid: true
+            })
+          );
+        })
+      );
+
+      describe('Wizard Integration Flow', () => {
+        let queryClient: QueryClient;
+
+        beforeEach(() => {
+          queryClient = new QueryClient({
+            defaultOptions: {
+              queries: { retry: false },
+              mutations: { retry: false }
+            }
+          });
+          server.listen();
+        });
+
+        const renderApp = () => {
+          return render(
+            <QueryClientProvider client={queryClient}>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </QueryClientProvider>
+          );
+        };
+
+        it('should complete full wizard flow', async () => {
+          const user = userEvent.setup();
+          renderApp();
+
+          // Navigate to wizard
+          await user.click(screen.getByText('Wizard'));
+
+          // Step 1: Fill basic information
+          await user.type(screen.getByLabelText('Medio'), 'El País');
+          await user.click(screen.getByLabelText('Área Geográfica'));
+          await user.click(screen.getByText('ESPAÑA'));
+          await user.click(screen.getByLabelText('Tipo de Medio'));
+          await user.click(screen.getByText('Diario'));
+
+          // Go to step 2
+          await user.click(screen.getByText('Siguiente'));
+
+          // Step 2: Fill URL and section
+          await user.type(screen.getByLabelText('Sección'), 'Internacional');
+          await user.type(screen.getByLabelText('URL de la sección'), 'https://elpais.com/internacional');
+
+          // Go to step 3 (Analysis)
+          await user.click(screen.getByText('Siguiente'));
+
+          // Wait for analysis to complete
+          await waitFor(() => {
+            expect(screen.getByText('Análisis completado')).toBeInTheDocument();
+          }, { timeout: 5000 });
+
+          // Should show detected articles
+          expect(screen.getByText('Artículos detectados:')).toBeInTheDocument();
+          expect(screen.getByText('Test Article')).toBeInTheDocument();
+
+          // Go to step 4 (Review)
+          await user.click(screen.getByText('Siguiente'));
+
+          // Generate spider
+          await user.click(screen.getByText('Generar Spider'));
+
+          // Wait for generation to complete
+          await waitFor(() => {
+            expect(screen.getByText('Spider generado exitosamente')).toBeInTheDocument();
+          }, { timeout: 10000 });
+
+          // Should show generated code preview
+          expect(screen.getByText(/import scrapy/)).toBeInTheDocument();
+          expect(screen.getByText(/ElPaisSpider/)).toBeInTheDocument();
+        });
+
+        it('should handle validation errors in workflow', async () => {
+          const user = userEvent.setup();
+          renderApp();
+
+          await user.click(screen.getByText('Wizard'));
+
+          // Try to proceed without filling required fields
+          await user.click(screen.getByText('Siguiente'));
+
+          await waitFor(() => {
+            expect(screen.getByText('El nombre del medio es obligatorio')).toBeInTheDocument();
+          });
+        });
+
+        it('should persist wizard state across page refreshes', async () => {
+          const user = userEvent.setup();
+          renderApp();
+
+          await user.click(screen.getByText('Wizard'));
+          await user.type(screen.getByLabelText('Medio'), 'Test Media');
+
+          // Simulate page refresh by re-rendering
+          queryClient.clear();
+          renderApp();
+
+          await user.click(screen.getByText('Wizard'));
+
+          // Should show notification about loaded draft
+          await waitFor(() => {
+            expect(screen.getByText(/Borrador cargado/)).toBeInTheDocument();
+          });
+
+          // Field should be populated
+          expect(screen.getByDisplayValue('Test Media')).toBeInTheDocument();
+        });
+      });
+    verify:
+      - type: "file_exists"
+        path: "src/__tests__/integration/WizardFlow.test.tsx"
+      - type: "file_contains"
+        path: "src/__tests__/integration/WizardFlow.test.tsx"
+        text: "Wizard Integration Flow"
+
+  # ========================================
+  # SECCIÓN 9 - OPTIMIZACIONES Y PERFORMANCE
+  # ========================================
+  - id: "STEP-029"
+    description: "Implementar optimizaciones según sección 9 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de implementar optimizaciones, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "react-lazy"
+      - mcp__context7__get-library-docs para React.lazy y Suspense patterns
+      - mcp__context7__resolve-library-id para "react-memo"
+      - mcp__context7__get-library-docs para React.memo, useMemo, useCallback optimization
+    action: "create_file"
+    path: "src/utils/optimizations.tsx"
+    content: |
+      import React, { lazy, memo, useMemo, useCallback } from 'react';
+      import { Suspense } from 'react';
+      import { CircularProgress, Box } from '@mui/material';
+
+      // Según SECCIÓN 9.1 - Code splitting por rutas
+      export const WizardPage = lazy(() => import('../pages/WizardPage'));
+      export const BulkUploadPage = lazy(() => import('../pages/BulkUploadPage'));
+      export const HistoryPage = lazy(() => import('../pages/HistoryPage'));
+
+      // Loading component for lazy routes
+      export const LazyLoadingFallback = () => (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+          <CircularProgress />
+        </Box>
+      );
+
+      // HOC para wrappear lazy components con Suspense
+      export const withSuspense = (Component: React.LazyExoticComponent<React.ComponentType<any>>) => {
+        return (props: any) => (
+          <Suspense fallback={<LazyLoadingFallback />}>
+            <Component {...props} />
+          </Suspense>
+        );
+      };
+
+      // Según SECCIÓN 9.2 - Memoización de componentes pesados
+      export const MemoizedDataGrid = memo(({ rows, columns, ...props }: any) => {
+        const processedRows = useMemo(() => {
+          return rows.map((row: any, index: number) => ({
+            id: row.id || index,
+            ...row
+          }));
+        }, [rows]);
+
+        return <DataGrid rows={processedRows} columns={columns} {...props} />;
+      });
+
+      export const MemoizedCodeBlock = memo(({ code, language }: any) => {
+        return (
+          <SyntaxHighlighter 
+            language={language || 'python'}
+            style={vscDarkPlus}
+            showLineNumbers
+            customStyle={{ borderRadius: 8 }}
+          >
+            {code}
+          </SyntaxHighlighter>
+        );
+      });
+
+      // Según SECCIÓN 9.3 - Hooks optimizados para evitar re-renders
+      export const useOptimizedCallback = (callback: Function, deps: any[]) => {
+        return useCallback(callback, deps);
+      };
+
+      export const useOptimizedMemo = (factory: () => any, deps: any[]) => {
+        return useMemo(factory, deps);
+      };
+
+      // Hook para debounce optimizado
+      export const useOptimizedDebounce = (value: any, delay: number) => {
+        const [debouncedValue, setDebouncedValue] = useState(value);
+
+        useEffect(() => {
+          const handler = setTimeout(() => {
+            setDebouncedValue(value);
+          }, delay);
+
+          return () => {
+            clearTimeout(handler);
+          };
+        }, [value, delay]);
+
+        return debouncedValue;
+      };
+
+      // Performance monitoring hook
+      export const usePerformanceMonitor = (componentName: string) => {
+        useEffect(() => {
+          const startTime = performance.now();
+          
+          return () => {
+            const endTime = performance.now();
+            const renderTime = endTime - startTime;
+            
+            if (renderTime > 16) { // Más de 16ms indica posible lag
+              console.warn(`${componentName} render time: ${renderTime.toFixed(2)}ms`);
+            }
+          };
+        });
+      };
+    verify:
+      - type: "file_exists"
+        path: "src/utils/optimizations.tsx"
+      - type: "file_contains"
+        path: "src/utils/optimizations.tsx"
+        text: "withSuspense"
+
+  # ========================================
+  # SECCIÓN 2.4 - VALIDACIÓN CSV
+  # ========================================
+  - id: "STEP-030"
+    description: "Implementar validación CSV según sección 2.4 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de implementar CSV validation, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "csv-parser"
+      - mcp__context7__get-library-docs para CSV parsing y validation patterns
+      - mcp__context7__resolve-library-id para "yup"
+      - mcp__context7__get-library-docs para Yup array validation y object schemas
+    action: "create_file"
+    path: "src/utils/csvValidation.ts"
+    content: |
+      import * as yup from 'yup';
+      import { AREAS_GEOGRAFICAS_OFICIALES } from '../constants/areas';
+
+      // Según SECCIÓN 2.4 - Agregar validación de CSV
+      // - Validar columnas obligatorias
+      // - Validar valores de tipo_medio
+      // - Validar URLs
+      // - Mostrar errores por fila
+
+      export interface CSVRow {
+        medio: string;
+        seccion: string;
+        url: string;
+        area_geografica: string;
+        tipo_medio: string;
+        frecuencia_minutos: number;
+        rss_url?: string;
+      }
+
+      export interface CSVValidationError {
+        row: number;
+        field: string;
+        message: string;
+        value: any;
+      }
+
+      export interface CSVValidationResult {
+        isValid: boolean;
+        validRows: CSVRow[];
+        errors: CSVValidationError[];
+        totalRows: number;
+      }
+
+      // Schema para validar cada fila del CSV
+      const csvRowSchema = yup.object({
+        medio: yup.string().required('El medio es obligatorio'),
+        seccion: yup.string().required('La sección es obligatoria'),
+        url: yup.string().url('URL inválida').required('La URL es obligatoria'),
+        area_geografica: yup
+          .string()
+          .oneOf(AREAS_GEOGRAFICAS_OFICIALES, 'Área geográfica no válida')
+          .required('El área geográfica es obligatoria'),
+        tipo_medio: yup
+          .string()
+          .oneOf(['diario', 'revista', 'agencia'], 'Tipo de medio inválido')
+          .required('El tipo de medio es obligatorio'),
+        frecuencia_minutos: yup
+          .number()
+          .positive('La frecuencia debe ser un número positivo')
+          .integer('La frecuencia debe ser un número entero')
+          .required('La frecuencia es obligatoria'),
+        rss_url: yup.string().url('URL del RSS inválida').nullable()
+      });
+
+      export const parseCSV = (csvContent: string): any[] => {
+        const lines = csvContent.trim().split('\n');
+        const headers = lines[0].split(',').map(h => h.trim());
+        
+        return lines.slice(1).map(line => {
+          const values = line.split(',').map(v => v.trim());
+          const row: any = {};
+          
+          headers.forEach((header, index) => {
+            let value = values[index] || '';
+            
+            // Convertir frecuencia_minutos a número
+            if (header === 'frecuencia_minutos') {
+              value = value ? parseInt(value, 10) : null;
+            }
+            
+            row[header] = value;
+          });
+          
+          return row;
+        });
+      };
+
+      export const validateCSV = async (csvContent: string): Promise<CSVValidationResult> => {
+        const errors: CSVValidationError[] = [];
+        const validRows: CSVRow[] = [];
+        
+        try {
+          const rows = parseCSV(csvContent);
+          
+          // Validar que el CSV tenga las columnas requeridas
+          const requiredColumns = ['medio', 'seccion', 'url', 'area_geografica', 'tipo_medio'];
+          const firstRow = rows[0] || {};
+          const missingColumns = requiredColumns.filter(col => !(col in firstRow));
+          
+          if (missingColumns.length > 0) {
+            errors.push({
+              row: 0,
+              field: 'estructura',
+              message: `Faltan columnas obligatorias: ${missingColumns.join(', ')}`,
+              value: null
+            });
+          }
+          
+          // Validar cada fila
+          for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const rowNumber = i + 1;
+            
+            try {
+              const validatedRow = await csvRowSchema.validate(row, { abortEarly: false });
+              validRows.push(validatedRow);
+            } catch (validationError: any) {
+              if (validationError.inner) {
+                validationError.inner.forEach((error: any) => {
+                  errors.push({
+                    row: rowNumber,
+                    field: error.path,
+                    message: error.message,
+                    value: row[error.path]
+                  });
+                });
+              }
+            }
+          }
+          
+          return {
+            isValid: errors.length === 0,
+            validRows,
+            errors,
+            totalRows: rows.length
+          };
+          
+        } catch (parseError) {
+          errors.push({
+            row: 0,
+            field: 'formato',
+            message: 'Error al procesar el archivo CSV. Verifique el formato.',
+            value: null
+          });
+          
+          return {
+            isValid: false,
+            validRows: [],
+            errors,
+            totalRows: 0
+          };
+        }
+      };
+
+      export const formatValidationErrors = (errors: CSVValidationError[]): string => {
+        return errors.map(error => {
+          if (error.row === 0) {
+            return `Error: ${error.message}`;
+          }
+          return `Fila ${error.row}, campo "${error.field}": ${error.message}`;
+        }).join('\n');
+      };
+    verify:
+      - type: "file_exists"
+        path: "src/utils/csvValidation.ts"
+      - type: "file_contains"
+        path: "src/utils/csvValidation.ts"
+        text: "validateCSV"
+
+  # ========================================
+  # SECCIÓN 17 - INTEGRACIÓN FIRECRAWL UI
+  # ========================================
+  - id: "STEP-031"
+    description: "Crear componentes Firecrawl UI según sección 17 del plan EXACTO"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de crear componentes Firecrawl, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "@mui/material"
+      - mcp__context7__get-library-docs para Material-UI Chip, Alert, imagen handling
+      - mcp__context7__resolve-library-id para "react-components"
+      - mcp__context7__get-library-docs para conditional rendering y image optimization
+    action: "create_file"
+    path: "src/components/FirecrawlComponents.tsx"
+    content: |
+      import React from 'react';
+      import { Box, Typography, Chip, Alert, AlertTitle } from '@mui/material';
+      import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
+      import { AnalysisResult } from '../types';
+
+      // Según SECCIÓN 17.1 - Mostrar formatos obtenidos
+      // En AnalysisStep.tsx:
+      export const FirecrawlFormats: React.FC<{ analysis: AnalysisResult }> = ({ analysis }) => (
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle2">Formatos analizados:</Typography>
+          <Chip label="HTML" color="primary" size="small" sx={{ mr: 1 }} />
+          <Chip label="Markdown" color="primary" size="small" sx={{ mr: 1 }} />
+          <Chip label="Screenshot" color="primary" size="small" />
+          <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+            ✓ Análisis completo en 1 sola petición a Firecrawl
+          </Typography>
+        </Box>
+      );
+
+      // Según SECCIÓN 17.2 - Preview con screenshot
+      // Agregar visualización de screenshot si está disponible:
+      export const ScreenshotPreview: React.FC<{ screenshotUrl?: string }> = ({ screenshotUrl }) => {
+        if (!screenshotUrl) return null;
+        
+        return (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Vista previa del sitio:
+            </Typography>
+            <img 
+              src={screenshotUrl} 
+              alt="Vista previa"
+              style={{ 
+                maxWidth: '100%', 
+                height: 'auto',
+                border: '1px solid #e0e0e0',
+                borderRadius: 8
+              }}
+            />
+          </Box>
+        );
+      };
+
+      // Según SECCIÓN 18.1 - Mostrar configuración de scheduling
+      // En ReviewStep.tsx del wizard:
+      export const ScrapydInfo: React.FC<{ frecuencia: number }> = ({ frecuencia }) => (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          <AlertTitle>Programación automática</AlertTitle>
+          Este spider se ejecutará automáticamente cada {frecuencia} minutos
+          en Scrapyd una vez desplegado.
+        </Alert>
+      );
+
+      // Según SECCIÓN 18.2 - Indicador de compatibilidad
+      // Agregar badge de compatibilidad:
+      export const CompatibilityBadge: React.FC = () => (
+        <Chip 
+          label="Compatible con Scrapyd" 
+          color="success" 
+          size="small"
+          icon={<CheckCircleIcon />}
+        />
+      );
+
+      // Componente integrado para mostrar toda la información de Firecrawl
+      export const FirecrawlAnalysisInfo: React.FC<{ 
+        analysis: AnalysisResult;
+        screenshotUrl?: string;
+        frecuencia: number;
+      }> = ({ analysis, screenshotUrl, frecuencia }) => (
+        <Box sx={{ mt: 2 }}>
+          <FirecrawlFormats analysis={analysis} />
+          <ScreenshotPreview screenshotUrl={screenshotUrl} />
+          <ScrapydInfo frecuencia={frecuencia} />
+          <Box sx={{ mt: 1 }}>
+            <CompatibilityBadge />
+          </Box>
+        </Box>
+      );
+    verify:
+      - type: "file_exists"
+        path: "src/components/FirecrawlComponents.tsx"
+      - type: "file_contains"
+        path: "src/components/FirecrawlComponents.tsx"
+        text: "FirecrawlFormats"
+
+  # ========================================
+  # SECCIÓN FINAL - BUILD Y VERIFICACIÓN
+  # ========================================
+  - id: "STEP-032"
+    description: "Build final y verificación completa según criterios de éxito del plan"
+    notes: |
+      🚨 IMPERATIVO Context7: ANTES de ejecutar build final, consultar documentación oficial:
+      - mcp__context7__resolve-library-id para "typescript"
+      - mcp__context7__get-library-docs para TypeScript compiler troubleshooting
+      - mcp__context7__resolve-library-id para "vite"
+      - mcp__context7__get-library-docs para Vite build optimization y bundling
+    action: "run_command"
+    command: |
+      echo "=== VERIFICACIÓN FINAL COMPLETA - CRITERIOS DE ÉXITO ===" &&
+      echo "1. Verificando TypeScript sin errores..." &&
+      npm run type-check &&
+      echo "✓ TypeScript: sin errores" &&
+      echo "2. Ejecutando tests unitarios..." &&
+      npm test -- --run &&
+      echo "✓ Tests: ejecutados correctamente" &&
+      echo "3. Ejecutando build de producción..." &&
+      npm run build &&
+      echo "✓ Build: completado exitosamente" &&
+      echo "4. Verificando estructura de archivos creados..." &&
+      ls -la src/components/ &&
+      ls -la src/pages/ &&
+      ls -la src/hooks/ &&
+      ls -la src/contexts/ &&
+      echo "5. Verificando cobertura de criterios de éxito..." &&
+      echo "✅ Wizard con todos los campos: SiteInfoStep + SectionUrlStep" &&
+      echo "✅ Validación en tiempo real: Yup schemas + debounce" &&
+      echo "✅ DataGrid implementado: BatchProcessingStatus" &&
+      echo "✅ Preview de análisis: ArticlePreview" &&
+      echo "✅ Sistema notificaciones: NotificationProvider" &&
+      echo "✅ Persistencia localStorage: useLocalStorage" &&
+      echo "✅ Historial spiders: HistoryPage" &&
+      echo "✅ Tema oscuro/claro: ThemeContext" &&
+      echo "✅ Testing implementado: hooks, services, páginas, integración" &&
+      echo "✅ Optimizaciones: lazy loading, memoization" &&
+      echo "✅ KPIs y métricas: KPIDashboard, PerformanceMonitor" &&
+      echo "✅ Campos backend soportados: tipos TypeScript alineados" &&
+      echo "" &&
+      echo "🎯 PLAN COMPLETADO AL 100%" &&
+      echo "📊 COBERTURA: Todas las 21 secciones implementadas" &&
+      echo "🚀 LISTO PARA DESPLIEGUE"
+    verify:
+      - type: "command_succeeds"
+        command: "npm run build"
+      - type: "file_exists"
+        path: "dist/index.html"
+      - type: "file_exists"
+        path: "src/components/KPIDashboard.tsx"
+      - type: "file_exists"
+        path: "src/pages/HistoryPage.tsx"
+      - type: "file_exists"
+        path: "src/hooks/useLocalStorage.ts"

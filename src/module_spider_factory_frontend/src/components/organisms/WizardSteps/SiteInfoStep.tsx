@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
 import { 
   Box, 
   TextField, 
@@ -6,19 +8,25 @@ import {
   Typography,
   FormControlLabel,
   Checkbox,
-  Alert
+  Alert,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Chip,
+  Tooltip,
+  FormHelperText
 } from '@mui/material'
-import { SiteAnalysisRequest } from '@hooks/useSpiderGeneration'
+import { WizardData } from '../../../types';
+import { AREAS_GEOGRAFICAS_OFICIALES, TIPOS_MEDIO, FRECUENCIAS } from '../../../constants/areas';
 
 interface SiteInfoStepProps {
-  onNext: (siteInfo: SiteAnalysisRequest) => void
-  initialData?: SiteAnalysisRequest | null
+  data: WizardData
+  onUpdate: (updates: Partial<WizardData>) => void
+  onNext: () => void
 }
 
-function SiteInfoStep({ onNext, initialData }: SiteInfoStepProps) {
-  const [url, setUrl] = useState(initialData?.url || '')
-  const [name, setName] = useState(initialData?.name || '')
-  const [forceAnalysis, setForceAnalysis] = useState(false)
+function SiteInfoStep({ data, onUpdate, onNext }: SiteInfoStepProps) {
   const [errors, setErrors] = useState<{ url?: string; name?: string }>({})
 
   const validateUrl = (value: string): boolean => {
@@ -33,15 +41,15 @@ function SiteInfoStep({ onNext, initialData }: SiteInfoStepProps) {
   const validateForm = (): boolean => {
     const newErrors: { url?: string; name?: string } = {}
     
-    if (!url) {
+    if (!data.url) {
       newErrors.url = 'La URL es requerida'
-    } else if (!validateUrl(url)) {
+    } else if (!validateUrl(data.url)) {
       newErrors.url = 'Ingresa una URL válida'
     }
     
-    if (!name.trim()) {
+    if (!data.medio.trim()) {
       newErrors.name = 'El nombre del medio es requerido'
-    } else if (name.length < 3) {
+    } else if (data.medio.length < 3) {
       newErrors.name = 'El nombre debe tener al menos 3 caracteres'
     }
     
@@ -49,13 +57,9 @@ function SiteInfoStep({ onNext, initialData }: SiteInfoStepProps) {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = () => {
+  const handleNext = () => {
     if (validateForm()) {
-      onNext({
-        url,
-        name: name.trim(),
-        force_analysis: forceAnalysis
-      })
+      onNext()
     }
   }
 
@@ -73,30 +77,81 @@ function SiteInfoStep({ onNext, initialData }: SiteInfoStepProps) {
           fullWidth
           label="URL del sitio"
           placeholder="https://ejemplo.com"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          value={data.url}
+          onChange={(e) => onUpdate({ url: e.target.value })}
           error={!!errors.url}
           helperText={errors.url}
           margin="normal"
           autoFocus
         />
 
+        {/* Según SECCIÓN 1.1 - Campos faltantes en Step 1 - Información básica EXACTOS */}
+        {/* medio (actualmente usa "name") - RENOMBRAR */}
         <TextField
           fullWidth
-          label="Nombre del medio"
+          label="Medio"
           placeholder="Ejemplo Noticias"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={data.medio}
+          onChange={(e) => onUpdate({ medio: e.target.value })}
           error={!!errors.name}
-          helperText={errors.name}
+          helperText={errors.name || "Nombre del medio de comunicación"}
           margin="normal"
+          required
         />
+
+        {/* area_geografica - Dropdown con opciones: ESPAÑA, ARGENTINA, MÉXICO, etc. */}
+        <FormControl fullWidth margin="normal" required>
+          <InputLabel>Área Geográfica</InputLabel>
+          <Select
+            value={data.area_geografica}
+            onChange={(e) => onUpdate({ area_geografica: e.target.value })}
+            label="Área Geográfica"
+          >
+            {AREAS_GEOGRAFICAS_OFICIALES.map((area) => (
+              <MenuItem key={area} value={area}>
+                {area.replace(/_/g, ' ')}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* tipo_medio - Dropdown: "diario", "revista", "agencia" */}
+        <FormControl fullWidth margin="normal" required>
+          <InputLabel>Tipo de Medio</InputLabel>
+          <Select
+            value={data.tipo_medio}
+            onChange={(e) => onUpdate({ tipo_medio: e.target.value as 'diario' | 'revista' | 'agencia' })}
+            label="Tipo de Medio"
+          >
+            {TIPOS_MEDIO.map((tipo) => (
+              <MenuItem key={tipo.value} value={tipo.value}>
+                {tipo.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* frecuencia_minutos - Dropdown con opciones: 15, 30, 60, 120, 1440 */}
+        <FormControl fullWidth margin="normal" required>
+          <InputLabel>Frecuencia de Ejecución</InputLabel>
+          <Select
+            value={data.frecuencia_minutos}
+            onChange={(e) => onUpdate({ frecuencia_minutos: Number(e.target.value) })}
+            label="Frecuencia de Ejecución"
+          >
+            {FRECUENCIAS.map((freq) => (
+              <MenuItem key={freq.value} value={freq.value}>
+                {freq.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
         <FormControlLabel
           control={
             <Checkbox
-              checked={forceAnalysis}
-              onChange={(e) => setForceAnalysis(e.target.checked)}
+              checked={data.force_analysis || false}
+              onChange={(e) => onUpdate({ force_analysis: e.target.checked })}
             />
           }
           label="Forzar análisis nuevo (ignorar caché)"
@@ -116,7 +171,7 @@ function SiteInfoStep({ onNext, initialData }: SiteInfoStepProps) {
         <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             variant="contained"
-            onClick={handleSubmit}
+            onClick={handleNext}
             size="large"
           >
             Siguiente

@@ -87,11 +87,79 @@ export interface BatchProgressMessage {
 }
 
 // Tipos para la configuración del sitio
+// Según SECCIÓN 10.1 - Completar tipos TypeScript
+export interface SpiderConfig {
+  medio: string
+  seccion: string
+  url: string
+  area_geografica: string
+  tipo_medio: 'diario' | 'revista' | 'agencia'
+  frecuencia_minutos: number
+  rss_url?: string
+  comentarios?: string
+}
+
+
+export interface Article {
+  title: string
+  date: string
+  excerpt: string
+  url?: string
+}
+
+// Según SECCIÓN 21.4 - Mantener compatibilidad
 export interface SiteInfo {
   url: string
-  name: string
+  name: string  // MANTENER por compatibilidad
+  
+  // Nuevos campos opcionales
+  medio?: string
+  seccion?: string
+  area_geografica?: string
+  tipo_medio?: 'diario' | 'revista' | 'agencia'
+  frecuencia_minutos?: number
+  rss_url?: string
+  comentarios?: string
+  tiene_rss?: boolean
   language?: string
   category?: string
+}
+
+// Interface unificada para wizard y análisis - SIMPLICIDAD MÁXIMA
+export interface WizardData {
+  url: string
+  medio: string  // Nombre del medio (antes 'name')
+  seccion: string
+  area_geografica: string
+  tipo_medio: 'diario' | 'revista' | 'agencia'
+  frecuencia_minutos: number
+  rss_url?: string
+  comentarios?: string
+  tiene_rss?: boolean
+  force_analysis?: boolean
+}
+
+// Para compatibilidad con servicios existentes
+export interface SiteAnalysisRequest {
+  url: string
+  name: string
+  force_analysis?: boolean
+  section_name?: string
+  check_rss?: boolean
+}
+
+// Según SECCIÓN 15.1 - Interface KPIMetrics
+export interface KPIMetrics {
+  tiempoReduccion: number  // Target: 97%
+  tiempoPromedioRSS: number  // Target: <5s
+  tiempoPromedioPrimeraVez: number  // Target: ~20s
+  tiempoPromedioCache: number  // Target: <2s
+  precisionSpiders: number  // Target: >90%
+  reduccionRequests: number  // Target: 70%
+  cacheHitRate: number
+  spidersPorDia: number  // Target: 200+
+  errorRate: number
+  uptimePercentage: number
 }
 
 // Tipos para los pasos del wizard

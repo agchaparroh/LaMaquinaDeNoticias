@@ -109,6 +109,15 @@ class SmartAnalyzer:
         self.redis = get_redis_client()
         self.config = settings
         self._http_client = None
+        # Métricas de efectividad por fase
+        self.rss_metrics = {
+            'phase_1_hits': 0,    # Detección estándar
+            'phase_2_hits': 0,    # Por sección  
+            'phase_3_hits': 0,    # Patrones regionales
+            'phase_4_hits': 0,    # Búsqueda avanzada
+            'total_searches': 0,  # Total de búsquedas
+            'cache_hits': 0       # Hits de cache
+        }
         
         # Firmas específicas de protección anti-bot (basado en Context7)
         self.protection_signatures = {
@@ -129,13 +138,20 @@ class SmartAnalyzer:
         
     @property
     def http_client(self) -> httpx.AsyncClient:
-        """Cliente HTTP con configuración optimizada"""
+        """Cliente HTTP con configuración optimizada y rate limiting"""
         if self._http_client is None:
+            # Rate limiting integrado en el cliente
+            limits = httpx.Limits(
+                max_connections=10,      # Máximo 10 conexiones concurrentes
+                max_keepalive_connections=5  # Reutilizar conexiones
+            )
             self._http_client = httpx.AsyncClient(
-                timeout=httpx.Timeout(30.0),
+                timeout=httpx.Timeout(30.0, read=15.0),  # 30s total, 15s read
                 follow_redirects=True,
+                limits=limits,
                 headers={
-                    "User-Agent": "Mozilla/5.0 (compatible; SpiderFactory/2.0; +https://lamaquinadenoticias.com)"
+                    "User-Agent": "Mozilla/5.0 (compatible; SpiderFactory/2.0; +https://lamaquinadenoticias.com)",
+                    "Accept": "text/html,application/xhtml+xml,application/xml,application/rss+xml,application/atom+xml;q=0.9,*/*;q=0.8"
                 }
             )
         return self._http_client
@@ -176,7 +192,7 @@ class SmartAnalyzer:
         
         # 2. Verificar si tiene RSS (si está habilitado)
         if request.check_rss and not request.force_analysis:
-            rss_result = await self._check_rss(request.url, domain)
+            rss_result = await self._check_rss(request.url, domain, request.seccion)
             if rss_result:
                 logger.info(f"RSS detectado para {domain}: {rss_result}")
                 return AnalysisResult(
@@ -249,8 +265,14 @@ class SmartAnalyzer:
         
         return analysis_result
     
-    async def _check_rss(self, url: HttpUrl, domain: str) -> Optional[HttpUrl]:
-        """Verifica si el sitio tiene RSS"""
+    async def _check_rss(self, url: HttpUrl, domain: str, seccion: str = None) -> Optional[HttpUrl]:
+        """
+        Verifica si el sitio tiene RSS usando búsqueda en 4 fases:
+        - Fase 1: Detección estándar (HTML + URLs comunes)
+        - Fase 2: Búsqueda por sección específica
+        - Fase 3: Patrones regionales latinoamericanos
+        - Fase 4: Búsqueda avanzada (texto HTML + parámetros GET)
+        """
         # Primero verificar en cache
         cache_key = RedisKeys.format_key(RedisKeys.CACHE_RSS_CHECK, url=str(url))
         cached = self.redis.get(cache_key)
@@ -258,24 +280,76 @@ class SmartAnalyzer:
         if cached:
             data = json.loads(cached)
             if data.get('has_rss'):
+                self.rss_metrics['cache_hits'] += 1
+                self._update_redis_metrics()
+                logger.info(f"RSS encontrado en cache para {domain}: {data['feed_url']} (fuente: {data.get('source', 'unknown')})")
                 return HttpUrl(data['feed_url'])
             return None
         
-        # URLs comunes de RSS para probar
-        rss_paths = [
-            '/rss', '/feed', '/feeds/rss', '/rss.xml', '/feed.xml',
-            '/index.xml', '/atom.xml', '/feeds', '/.rss',
-            f'/{domain}/rss', f'/{domain}/feed'
-        ]
+        # Incrementar contador de búsquedas totales
+        self.rss_metrics['total_searches'] += 1
         
         base_url = f"{urlparse(str(url)).scheme}://{urlparse(str(url)).netloc}"
         
+        # FASE 1: Detección estándar (85% de casos)
+        logger.info(f"Fase 1: Detección estándar RSS para {domain}")
+        result = await self._rss_phase_1_standard(url, base_url, cache_key)
+        if result:
+            self.rss_metrics['phase_1_hits'] += 1
+            self._update_redis_metrics()
+            return result
+        
+        # FASE 2: Búsqueda por sección específica (+8% adicional)
+        if seccion:
+            logger.info(f"Fase 2: Búsqueda por sección '{seccion}' para {domain}")
+            result = await self._rss_phase_2_section(base_url, seccion, cache_key)
+            if result:
+                self.rss_metrics['phase_2_hits'] += 1
+                self._update_redis_metrics()
+                return result
+        
+        # FASE 3: Patrones regionales (+5% adicional)
+        logger.info(f"Fase 3: Patrones regionales para {domain}")
+        result = await self._rss_phase_3_regional(base_url, domain, cache_key)
+        if result:
+            self.rss_metrics['phase_3_hits'] += 1
+            self._update_redis_metrics()
+            return result
+        
+        # FASE 4: Búsqueda avanzada (texto HTML + parámetros GET)
+        logger.info(f"Fase 4: Búsqueda avanzada para {domain}")
+        result = await self._rss_phase_4_advanced(url, base_url, cache_key)
+        if result:
+            self.rss_metrics['phase_4_hits'] += 1
+            self._update_redis_metrics()
+            return result
+        
+        # Cache negativo diferenciado por tipo de resultado
+        # TTL más corto para resultados negativos para permitir re-detección
+        negative_ttl = 3600  # 1 hora base para negativos
+        
+        # Si fue búsqueda exhaustiva (llegó hasta fase 4), cache más tiempo
+        if seccion:  # Búsqueda con sección = más exhaustiva
+            negative_ttl = 7200  # 2 horas
+        
+        self.redis.setex(
+            cache_key,
+            negative_ttl,
+            json.dumps({
+                "has_rss": False, 
+                "search_depth": "exhaustive" if seccion else "basic",
+                "timestamp": datetime.now().isoformat()
+            })
+        )
+        logger.info(f"No se encontró RSS para {domain} después de 4 fases")
+        return None
+    
+    async def _rss_phase_1_standard(self, url: HttpUrl, base_url: str, cache_key: str) -> Optional[HttpUrl]:
+        """Fase 1: Detección estándar (HTML + URLs comunes)"""
         try:
-            # Intentar detectar RSS en la página principal
+            # Detectar RSS en HTML
             response = await self.http_client.get(str(url))
             if response.status_code == 200:
-                content = response.text.lower()
-                
                 # Buscar enlaces RSS en el HTML
                 rss_pattern = re.compile(
                     r'<link[^>]+type=["\']application/(rss|atom)\+xml["\'][^>]+href=["\']([^"\']+)["\']',
@@ -285,46 +359,221 @@ class SmartAnalyzer:
                 
                 if matches:
                     feed_url = urljoin(base_url, matches[0][1])
-                    # Verificar que el feed es válido
-                    feed_response = await self.http_client.get(feed_url)
-                    if feed_response.status_code == 200 and 'xml' in feed_response.headers.get('content-type', ''):
-                        # Cachear resultado positivo
-                        self.redis.setex(
-                            cache_key,
-                            self.config.cache_ttl_analysis,
-                            json.dumps({"has_rss": True, "feed_url": feed_url})
-                        )
+                    if await self._validate_feed(feed_url):
+                        await self._cache_positive_result(cache_key, feed_url, "Fase 1: HTML link")
                         return HttpUrl(feed_url)
             
-            # Probar URLs comunes de RSS
-            for rss_path in rss_paths:
+            # URLs comunes estándar
+            standard_paths = [
+                '/rss', '/feed', '/rss.xml', '/feed.xml', '/atom.xml',
+                '/index.xml', '/feeds', '/.rss'
+            ]
+            
+            for rss_path in standard_paths:
                 feed_url = urljoin(base_url, rss_path)
-                try:
-                    response = await self.http_client.get(feed_url)
-                    if response.status_code == 200:
-                        content_type = response.headers.get('content-type', '').lower()
-                        if 'xml' in content_type or 'rss' in content_type:
-                            # Cachear resultado positivo
-                            self.redis.setex(
-                                cache_key,
-                                self.config.cache_ttl_analysis,
-                                json.dumps({"has_rss": True, "feed_url": feed_url})
-                            )
-                            return HttpUrl(feed_url)
-                except:
-                    continue
-            
-            # Cachear resultado negativo (menos tiempo)
-            self.redis.setex(
-                cache_key,
-                3600,  # 1 hora para resultados negativos
-                json.dumps({"has_rss": False})
-            )
-            
+                if await self._validate_feed(feed_url):
+                    await self._cache_positive_result(cache_key, feed_url, f"Fase 1: {rss_path}")
+                    return HttpUrl(feed_url)
+                    
         except Exception as e:
-            logger.error(f"Error verificando RSS para {url}: {e}")
+            logger.error(f"Error en Fase 1 RSS para {url}: {e}")
         
         return None
+    
+    async def _rss_phase_2_section(self, base_url: str, seccion: str, cache_key: str) -> Optional[HttpUrl]:
+        """Fase 2: Búsqueda por sección específica"""
+        # Patrones por sección
+        section_patterns = [
+            f'/{seccion}/rss',           # /internacional/rss
+            f'/{seccion}/feed',          # /deportes/feed
+            f'/{seccion}/rss.xml',       # /economia/rss.xml
+            f'/{seccion}/feed.xml',      # /politica/feed.xml
+            f'/{seccion}.xml',           # /internacional.xml
+            f'/rss/{seccion}',           # /rss/internacional
+            f'/rss/{seccion}.xml',       # /rss/deportes.xml
+            f'/feed/{seccion}',          # /feed/internacional
+            f'/feed/{seccion}.xml',      # /feed/deportes.xml
+            f'/feeds/{seccion}',         # /feeds/internacional
+            f'/feeds/{seccion}.xml',     # /feeds/deportes.xml
+            f'/{seccion}/index.xml',     # /cultura/index.xml
+        ]
+        
+        try:
+            for pattern in section_patterns:
+                feed_url = urljoin(base_url, pattern)
+                if await self._validate_feed(feed_url):
+                    await self._cache_positive_result(cache_key, feed_url, f"Fase 2: {pattern}")
+                    return HttpUrl(feed_url)
+        except Exception as e:
+            logger.error(f"Error en Fase 2 RSS para sección {seccion}: {e}")
+        
+        return None
+    
+    async def _rss_phase_3_regional(self, base_url: str, domain: str, cache_key: str) -> Optional[HttpUrl]:
+        """Fase 3: Patrones específicos de medios latinoamericanos"""
+        # Patrones regionales comunes
+        regional_patterns = [
+            '/arc/outboundfeeds/rss/',   # La Nación Argentina, Washington Post
+            '/rss/portada',              # El Universal México
+            '/rss/lo-ultimo/',           # Clarín Argentina
+            '/feeds/rss/',               # Infobae, varios medios
+            '/noticias/rss',             # Varios medios españoles/latinos
+            '/actualidad/rss',           # Medios de actualidad
+            '/rss/noticias',             # Orden inverso
+            '/feed/noticias',            # Variante con feed
+            '/api/rss',                  # APIs modernas
+            '/rss/main',                 # RSS principal
+            '/feed/main',                # Feed principal
+            '/rss/index',                # Índice RSS
+            '/contenidos/rss',           # Algunos CMS
+            '/rss/general',              # RSS general
+            '/xml/rss',                  # En subcarpeta XML
+            '/export/rss',               # Exportación RSS
+            '/syndication/rss',          # Sindicación
+            f'/{domain}/rss',            # Con nombre del dominio
+            f'/{domain}/feed',           # Variante feed
+        ]
+        
+        try:
+            for pattern in regional_patterns:
+                feed_url = urljoin(base_url, pattern)
+                if await self._validate_feed(feed_url):
+                    await self._cache_positive_result(cache_key, feed_url, f"Fase 3: {pattern}")
+                    return HttpUrl(feed_url)
+        except Exception as e:
+            logger.error(f"Error en Fase 3 RSS para {domain}: {e}")
+        
+        return None
+    
+    async def _rss_phase_4_advanced(self, url: HttpUrl, base_url: str, cache_key: str) -> Optional[HttpUrl]:
+        """Fase 4: Búsqueda avanzada (texto HTML + parámetros GET)"""
+        try:
+            # Buscar enlaces con texto "RSS" o "Feed" en HTML
+            response = await self.http_client.get(str(url))
+            if response.status_code == 200:
+                # Patrón para enlaces con texto RSS/Feed
+                text_rss_pattern = re.compile(
+                    r'<a[^>]+href=["\']([^"\']*(?:rss|feed|xml)[^"\']*)["\'][^>]*>(?:[^<]*(?:RSS|Feed|Suscri|XML)[^<]*)</a>',
+                    re.IGNORECASE
+                )
+                matches = text_rss_pattern.findall(response.text)
+                
+                for href in matches:
+                    feed_url = urljoin(base_url, href)
+                    if await self._validate_feed(feed_url):
+                        await self._cache_positive_result(cache_key, feed_url, f"Fase 4: Texto HTML")
+                        return HttpUrl(feed_url)
+            
+            # Parámetros GET comunes
+            get_patterns = [
+                '/?format=rss',              # ?format=rss
+                '/?feed=rss',               # ?feed=rss
+                '/?type=rss',               # ?type=rss
+                '/index.php?format=feed',    # CMS Joomla
+                '/rss.php',                 # PHP directo
+                '/?format=feed&type=rss',   # Joomla completo
+                '/?option=com_rss',         # Joomla component
+                '/feed.php',                # PHP feed
+                '/?feed=atom',              # Atom feed
+            ]
+            
+            for pattern in get_patterns:
+                feed_url = urljoin(base_url, pattern)
+                if await self._validate_feed(feed_url):
+                    await self._cache_positive_result(cache_key, feed_url, f"Fase 4: {pattern}")
+                    return HttpUrl(feed_url)
+                    
+        except Exception as e:
+            logger.error(f"Error en Fase 4 RSS para {url}: {e}")
+        
+        return None
+    
+    async def _validate_feed(self, feed_url: str) -> bool:
+        """Valida que el feed RSS/Atom sea funcional con rate limiting"""
+        try:
+            # Rate limiting: timeout reducido para validación rápida
+            response = await self.http_client.get(
+                feed_url, 
+                timeout=httpx.Timeout(5.0),  # 5 segundos máximo por validación
+                headers={"User-Agent": "Mozilla/5.0 (compatible; SpiderFactory-RSS/2.0)"}
+            )
+            
+            if response.status_code == 200:
+                content_type = response.headers.get('content-type', '').lower()
+                # Verificar content-type válido
+                valid_types = ['xml', 'rss', 'atom', 'application/rss', 'application/atom']
+                if any(ct in content_type for ct in valid_types):
+                    # Verificación básica de contenido XML válido (primeros 1000 chars)
+                    content = response.text[:1000].strip().lower()
+                    xml_indicators = ['<?xml', '<rss', '<feed', 'xmlns:', 'version=']
+                    if any(indicator in content for indicator in xml_indicators):
+                        return True
+                        
+        except httpx.TimeoutException:
+            logger.debug(f"Timeout validando feed: {feed_url}")
+        except Exception as e:
+            logger.debug(f"Error validando feed {feed_url}: {e}")
+        
+        return False
+    
+    async def _cache_positive_result(self, cache_key: str, feed_url: str, source: str):
+        """Cachea resultado positivo con TTL diferenciado por fuente"""
+        # TTL diferenciado según confianza de la fuente
+        if "HTML link" in source:
+            ttl = self.config.cache_ttl_analysis * 2  # 48 horas - máxima confianza
+        elif "Fase 1:" in source:
+            ttl = self.config.cache_ttl_analysis  # 24 horas - alta confianza  
+        elif "Fase 2:" in source:
+            ttl = self.config.cache_ttl_analysis // 2  # 12 horas - media confianza
+        else:  # Fase 3 y 4
+            ttl = self.config.cache_ttl_analysis // 4  # 6 horas - baja confianza
+        
+        cache_data = {
+            "has_rss": True, 
+            "feed_url": feed_url,
+            "source": source,
+            "confidence": "high" if "HTML link" in source or "Fase 1:" in source else "medium",
+            "timestamp": datetime.now().isoformat(),
+            "ttl_hours": ttl // 3600
+        }
+        
+        self.redis.setex(cache_key, ttl, json.dumps(cache_data))
+        logger.info(f"RSS cacheado: {feed_url} (fuente: {source}, TTL: {ttl//3600}h)")
+    
+    def _update_redis_metrics(self):
+        """Actualiza métricas RSS en Redis para monitoreo"""
+        try:
+            metrics_key = "rss_detection_metrics"
+            # Usar pipeline para operaciones atómicas
+            pipeline = self.redis.pipeline()
+            for metric, value in self.rss_metrics.items():
+                pipeline.hset(metrics_key, metric, value)
+            pipeline.hset(metrics_key, "last_updated", datetime.now().isoformat())
+            pipeline.execute()
+        except Exception as e:
+            logger.error(f"Error actualizando métricas RSS: {e}")
+    
+    def get_rss_effectiveness_stats(self) -> Dict[str, float]:
+        """Retorna estadísticas de efectividad de cada fase"""
+        total = self.rss_metrics['total_searches']
+        if total == 0:
+            return {"error": "No hay datos suficientes"}
+        
+        return {
+            "total_searches": total,
+            "cache_hit_rate": round(self.rss_metrics['cache_hits'] / total * 100, 2),
+            "phase_1_effectiveness": round(self.rss_metrics['phase_1_hits'] / total * 100, 2),
+            "phase_2_effectiveness": round(self.rss_metrics['phase_2_hits'] / total * 100, 2), 
+            "phase_3_effectiveness": round(self.rss_metrics['phase_3_hits'] / total * 100, 2),
+            "phase_4_effectiveness": round(self.rss_metrics['phase_4_hits'] / total * 100, 2),
+            "total_rss_found": round((
+                self.rss_metrics['phase_1_hits'] + 
+                self.rss_metrics['phase_2_hits'] + 
+                self.rss_metrics['phase_3_hits'] + 
+                self.rss_metrics['phase_4_hits'] +
+                self.rss_metrics['cache_hits']
+            ) / total * 100, 2)
+        }
     
     async def _get_cached_analysis(self, url: HttpUrl, medio: str, seccion: str) -> Optional[AnalysisResult]:
         """Busca análisis previo en cache"""

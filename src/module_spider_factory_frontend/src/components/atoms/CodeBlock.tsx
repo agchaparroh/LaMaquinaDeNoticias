@@ -1,3 +1,6 @@
+import React from 'react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Box, Paper, IconButton, Tooltip, useTheme } from '@mui/material'
 import { ContentCopy as CopyIcon, Check as CheckIcon } from '@mui/icons-material'
 import { useState } from 'react'
@@ -60,50 +63,15 @@ function CodeBlock({ code, language = 'python', showLineNumbers = true }: CodeBl
         </Tooltip>
       </Box>
       
-      <Box
-        component="pre"
-        sx={{
-          m: 0,
-          p: 2,
-          overflow: 'auto',
-          fontFamily: 'Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace',
-          fontSize: '0.875rem',
-          lineHeight: 1.5,
-        }}
+      {/* Según SECCIÓN 3.3 - Usar Prism.js o react-syntax-highlighter EXACTO */}
+      <SyntaxHighlighter 
+        language={language}
+        style={vscDarkPlus}
+        showLineNumbers={showLineNumbers}
+        customStyle={{ borderRadius: 8 }}
       >
-        {showLineNumbers ? (
-          <Box component="code" sx={{ display: 'table' }}>
-            {lines.map((line, index) => (
-              <Box key={index} sx={{ display: 'table-row' }}>
-                <Box
-                  component="span"
-                  sx={{
-                    display: 'table-cell',
-                    pr: 2,
-                    textAlign: 'right',
-                    color: 'text.secondary',
-                    userSelect: 'none',
-                    width: `${maxLineNumberWidth + 0.5}em`,
-                  }}
-                >
-                  {index + 1}
-                </Box>
-                <Box
-                  component="span"
-                  sx={{
-                    display: 'table-cell',
-                    whiteSpace: 'pre',
-                  }}
-                >
-                  {line || '\n'}
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        ) : (
-          <Box component="code">{code}</Box>
-        )}
-      </Box>
+        {code}
+      </SyntaxHighlighter>
     </Paper>
   )
 }

@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
+import { Box, Typography } from '@mui/material';
+import ArticlePreview from '../../ArticlePreview';
+import TimeEstimate from '../../TimeEstimate';
 import { 
-  Box, 
-  Typography,
   Paper,
   Chip,
   List,
@@ -26,6 +27,9 @@ interface AnalysisStepProps {
   onAnalyze: () => void
   onNext: () => void
   onBack: () => void
+  analysisStep?: string
+  elapsedTime?: number
+  estimatedTime?: number
 }
 
 const strategyIcons = {
@@ -46,13 +50,13 @@ function AnalysisStep({
   error,
   onAnalyze,
   onNext,
-  onBack
+  onBack,
+  analysisStep,
+  elapsedTime,
+  estimatedTime
 }: AnalysisStepProps) {
-  useEffect(() => {
-    if (!analysisResult && !error && !isAnalyzing) {
-      onAnalyze()
-    }
-  }, [analysisResult, error, isAnalyzing, onAnalyze])
+  // El análisis se dispara desde SectionUrlStep cuando se tienen todos los datos
+  // No necesitamos auto-disparar aquí
 
   if (isAnalyzing) {
     return (
@@ -64,6 +68,21 @@ function AnalysisStep({
         <Typography variant="body2" color="text.secondary" align="center">
           Esto puede tomar unos momentos mientras examinamos la estructura del sitio
         </Typography>
+        
+        {/* Según SECCIÓN 3.2 - Agregar indicadores de progreso detallados */}
+        {isAnalyzing && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              Paso actual del análisis: {analysisStep || 'Detectando RSS, Analizando estructura, etc.'}
+            </Typography>
+            <Typography variant="body2">
+              Tiempo transcurrido: {elapsedTime || 0}s
+            </Typography>
+            <Typography variant="body2">
+              Estimación de tiempo restante: {estimatedTime || 0}s
+            </Typography>
+          </Box>
+        )}
       </Box>
     )
   }
@@ -165,22 +184,14 @@ function AnalysisStep({
         </Box>
       )}
 
-      {analysisResult.sample_articles && analysisResult.sample_articles.length > 0 && (
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Artículos de muestra encontrados:
-          </Typography>
-          <List dense>
-            {analysisResult.sample_articles.slice(0, 3).map((article, index) => (
-              <ListItem key={index}>
-                <ListItemText
-                  primary={article.title}
-                  secondary={article.date}
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Box>
+      {/* Según SECCIÓN 3.1 - Implementar preview en tiempo real */}
+      {analysisResult?.sample_articles && (
+        <ArticlePreview articles={analysisResult.sample_articles} />
+      )}
+      
+      {/* Agregar indicador de tiempo estimado */}
+      {analysisResult && (
+        <TimeEstimate strategy={analysisResult.strategy || analysisResult.suggested_strategy} />
       )}
 
       <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>

@@ -2,9 +2,16 @@ import { apiClient, downloadFile } from './api'
 import {
   SiteAnalysisRequest,
   AnalysisResult,
-  SpiderGenerationRequest,
   SpiderCode,
-} from '@hooks/useSpiderGeneration'
+} from '@/types'
+
+// Interface temporal para compatibilidad
+interface SpiderGenerationRequest {
+  analysis_result: AnalysisResult
+  spider_name: string
+  start_urls?: string[]
+  custom_settings?: Record<string, any>
+}
 
 // Interfaces extendidas para propiedades adicionales del servicio
 interface ExtendedSiteAnalysisRequest extends SiteAnalysisRequest {

@@ -6,27 +6,25 @@ import {
   Stepper, 
   Typography 
 } from '@mui/material'
-import { useSpiderGeneration } from '@hooks/useSpiderGeneration'
-import {
-  SiteInfoStep,
-  AnalysisStep,
-  ConfigurationStep,
-  GenerationStep
-} from '@components/organisms/WizardSteps'
+import { useState, useEffect } from 'react'
+import { useWizardSpiderGeneration } from '@hooks/useWizardSpiderGeneration'
+import SiteInfoStep from '../components/organisms/WizardSteps/SiteInfoStep'
+import SectionUrlStep from '../components/steps/SectionUrlStep'
+import AnalysisStep from '../components/organisms/WizardSteps/AnalysisStep'
+import ConfigurationStep from '../components/organisms/WizardSteps/ConfigurationStep'
+import GenerationStep from '../components/organisms/WizardSteps/GenerationStep'
+import useLocalStorage from '../hooks/useLocalStorage'
+import { useNotification } from '../contexts/NotificationContext'
+import { WizardData } from '../types'
 
-const steps = [
-  'Información del sitio',
-  'Análisis automático',
-  'Configuración de extracción',
-  'Generación del spider'
-]
+const steps = ['Información Básica', 'URL y Sección', 'Análisis', 'Revisión']
 
 function WizardPage() {
   const {
     currentStep,
     setCurrentStep,
-    siteInfo,
-    setSiteInfo,
+    wizardData,
+    updateWizardData,
     analysisResult,
     generatedCode,
     isAnalyzing,
@@ -36,10 +34,43 @@ function WizardPage() {
     analyzeSite,
     generateSpider,
     reset
-  } = useSpiderGeneration()
+  } = useWizardSpiderGeneration({
+    url: '',
+    medio: '',
+    seccion: '',
+    area_geografica: '',
+    tipo_medio: 'diario',
+    frecuencia_minutos: 60,
+    rss_url: '',
+    comentarios: '',
+    tiene_rss: false,
+    force_analysis: false
+  })
 
-  const handleSiteInfoNext = (info: typeof siteInfo) => {
-    setSiteInfo(info)
+  // Estado local manejado por el hook especializado
+  const [wizardDraft, setWizardDraft] = useLocalStorage('wizard-draft', {});
+  const [userPreferences, setUserPreferences] = useLocalStorage('preferences', {
+    theme: 'light',
+    lastAreaGeografica: '',
+    lastTipoMedio: 'diario'
+  });
+  const { showNotification } = useNotification();
+
+  // Actualizar draft cuando wizardData cambia
+  useEffect(() => {
+    setWizardDraft(wizardData);
+  }, [wizardData, setWizardDraft]);
+
+  // Cargar borrador al montar
+  useEffect(() => {
+    if (Object.keys(wizardDraft).length > 0) {
+      updateWizardData(wizardDraft);
+      showNotification('Borrador cargado desde sesión anterior', 'info');
+    }
+  }, []);
+
+  // Función simplificada - el hook maneja la navegación
+  const handleSiteInfoNext = () => {
     setCurrentStep(1)
   }
 
@@ -75,13 +106,29 @@ function WizardPage() {
 
         <Box sx={{ mt: 4, minHeight: 400 }}>
           {currentStep === 0 && (
-            <SiteInfoStep
+            <SiteInfoStep 
+              data={wizardData} 
+              onUpdate={updateWizardData}
               onNext={handleSiteInfoNext}
-              initialData={siteInfo}
             />
           )}
           
           {currentStep === 1 && (
+            <SectionUrlStep 
+              data={wizardData} 
+              onUpdate={updateWizardData}
+              onNext={() => {
+                // Validar datos antes de continuar al análisis
+                if (wizardData.seccion && wizardData.url) {
+                  analyzeSite() // Disparar análisis automáticamente
+                } else {
+                  showNotification('Completa todos los campos requeridos', 'warning')
+                }
+              }}
+            />
+          )}
+          
+          {currentStep === 2 && (
             <AnalysisStep
               isAnalyzing={isAnalyzing}
               analysisResult={analysisResult}
@@ -92,21 +139,11 @@ function WizardPage() {
             />
           )}
           
-          {currentStep === 2 && analysisResult && (
+          {currentStep === 3 && analysisResult && (
             <ConfigurationStep
               analysisResult={analysisResult}
               onNext={handleConfigurationNext}
               onBack={handleBack}
-            />
-          )}
-          
-          {currentStep === 3 && (
-            <GenerationStep
-              isGenerating={isGenerating}
-              generatedCode={generatedCode}
-              error={generateError}
-              onGenerate={() => generateSpider({})}
-              onReset={reset}
             />
           )}
         </Box>

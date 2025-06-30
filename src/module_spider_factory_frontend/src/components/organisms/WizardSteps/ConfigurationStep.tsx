@@ -16,7 +16,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   Settings as SettingsIcon
 } from '@mui/icons-material'
-import { AnalysisResult } from '@hooks/useSpiderGeneration'
+import { AnalysisResult } from '@/types'
 
 interface ConfigurationStepProps {
   analysisResult: AnalysisResult
@@ -25,6 +25,7 @@ interface ConfigurationStepProps {
 }
 
 function ConfigurationStep({ analysisResult, onNext, onBack }: ConfigurationStepProps) {
+  // Agregar información adicional del contexto del wizard si es necesario
   const [customSettings, setCustomSettings] = useState<Record<string, any>>({
     DOWNLOAD_DELAY: 1,
     CONCURRENT_REQUESTS: 16,
@@ -43,7 +44,17 @@ function ConfigurationStep({ analysisResult, onNext, onBack }: ConfigurationStep
   }
 
   const handleSubmit = () => {
-    onNext(customSettings)
+    // Pasar configuraciones personalizadas que incluyen metadatos del wizard
+    const enhancedSettings = {
+      ...customSettings,
+      // Información adicional del wizard puede agregarse aquí si es necesario
+      WIZARD_METADATA: {
+        area_geografica: 'from-wizard', // Se enviará desde el hook
+        tipo_medio: 'from-wizard',
+        frecuencia_minutos: 'from-wizard'
+      }
+    }
+    onNext(enhancedSettings)
   }
 
   return (

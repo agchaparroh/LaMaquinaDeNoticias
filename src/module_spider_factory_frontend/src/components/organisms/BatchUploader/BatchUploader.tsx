@@ -24,10 +24,11 @@ interface BatchUploaderProps {
   isProcessing?: boolean
 }
 
-const TEMPLATE_CSV = `url,name,language,category
-https://ejemplo1.com,Ejemplo Noticias,es,general
-https://ejemplo2.com/noticias,Blog Tech,es,tecnologia
-https://ejemplo3.com,Medio Local,es,local`
+// Según SECCIÓN 2.3 - Cambiar el template según plan EXACTO
+const TEMPLATE_CSV = `medio,seccion,url,area_geografica,tipo_medio,frecuencia_minutos,rss_url
+El País,Internacional,https://elpais.com/internacional,ESPAÑA,diario,60,
+La Nación,Economía,https://lanacion.com.ar/economia,ARGENTINA,diario,30,https://...
+El Universal,Política,https://eluniversal.com.mx/politica,MÉXICO,diario,60,`
 
 function BatchUploader({ 
   onFileAccepted, 
@@ -169,10 +170,10 @@ function BatchUploader({
           <strong>Formato del archivo CSV:</strong>
         </Typography>
         <Typography variant="caption" component="div" sx={{ fontFamily: 'monospace' }}>
-          url,name,language,category
+          medio,seccion,url,area_geografica,tipo_medio,frecuencia_minutos,rss_url
         </Typography>
         <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-          Los campos language y category son opcionales
+          Los campos rss_url es opcional
         </Typography>
       </Alert>
     </Box>

@@ -5,22 +5,15 @@ import {
   Paper,
   Typography,
   LinearProgress,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   Chip,
-  Collapse,
-  IconButton,
   Alert
 } from '@mui/material'
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import {
   CheckCircle as SuccessIcon,
   Error as ErrorIcon,
   HourglassEmpty as PendingIcon,
-  Sync as ProcessingIcon,
-  ExpandMore as ExpandIcon,
-  ExpandLess as CollapseIcon
+  Sync as ProcessingIcon
 } from '@mui/icons-material'
 import { StatusChip } from '@components/atoms'
 import type { BatchItem } from '@/types'
@@ -36,20 +29,6 @@ function BatchProcessingStatus({
   totalProgress,
   isProcessing 
 }: BatchProcessingStatusProps) {
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
-
-  const toggleExpand = (id: string) => {
-    setExpandedItems(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(id)) {
-        newSet.delete(id)
-      } else {
-        newSet.add(id)
-      }
-      return newSet
-    })
-  }
-
   const getStatusIcon = (status: BatchItem['status']) => {
     switch (status) {
       case 'completed':
@@ -124,85 +103,45 @@ function BatchProcessingStatus({
         Detalle de Procesamiento
       </Typography>
 
-      <List>
-        {items.map((item) => (
-          <Paper key={item.id} sx={{ mb: 1 }}>
-            <ListItem
-              secondaryAction={
-                item.status !== 'pending' && (
-                  <IconButton onClick={() => toggleExpand(item.id)}>
-                    {expandedItems.has(item.id) ? <CollapseIcon /> : <ExpandIcon />}
-                  </IconButton>
-                )
-              }
-            >
-              <ListItemIcon>
-                {getStatusIcon(item.status)}
-              </ListItemIcon>
-              <ListItemText
-                primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="subtitle2">{item.name}</Typography>
-                    <StatusChip
-                      status={
-                        item.status === 'completed' ? 'success' :
-                        item.status === 'error' ? 'error' :
-                        item.status === 'processing' ? 'info' :
-                        'pending'
-                      }
-                      label={
-                        item.status === 'completed' ? 'Completado' :
-                        item.status === 'error' ? 'Error' :
-                        item.status === 'processing' ? 'Procesando' :
-                        'Pendiente'
-                      }
-                    />
-                  </Box>
-                }
-                secondary={
-                  <Typography variant="caption" color="text.secondary">
-                    {item.url}
-                  </Typography>
-                }
-              />
-            </ListItem>
-            
-            <Collapse in={expandedItems.has(item.id)} timeout="auto" unmountOnExit>
-              <Box sx={{ px: 3, pb: 2 }}>
-                {item.status === 'processing' && item.progress !== undefined && (
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={item.progress} 
-                    sx={{ mb: 2 }}
-                  />
-                )}
-                
-                {item.result && (
-                  <>
-                    {item.status === 'completed' && (
-                      <Alert severity="success" sx={{ mb: 1 }}>
-                        Spider generado exitosamente
-                        {item.result.spider_count > 0 && 
-                          ` - ${item.result.spider_count} spider(s) creado(s)`
-                        }
-                        {item.result.strategy && 
-                          ` usando estrategia ${item.result.strategy}`
-                        }
-                      </Alert>
-                    )}
-                    
-                    {item.status === 'error' && (
-                      <Alert severity="error">
-                        {item.result.error || 'Error desconocido al procesar el sitio'}
-                      </Alert>
-                    )}
-                  </>
-                )}
-              </Box>
-            </Collapse>
-          </Paper>
-        ))}
-      </List>
+      {/* Según SECCIÓN 2.1 - Reemplazar List con DataGrid EXACTO */}
+      <DataGrid
+        rows={items.map(item => ({
+          id: item.id,
+          medio: item.name,
+          seccion: item.seccion || 'N/A',
+          url: item.url,
+          area_geografica: item.area_geografica || 'N/A',
+          tipo_medio: item.tipo_medio || 'N/A',
+          status: item.status,
+          progress: item.progress || 0
+        }))}
+        columns={[
+          { field: 'medio', headerName: 'Medio', width: 150 },
+          { field: 'seccion', headerName: 'Sección', width: 120 },
+          { field: 'url', headerName: 'URL', width: 250 },
+          { field: 'area_geografica', headerName: 'Área', width: 100 },
+          { field: 'tipo_medio', headerName: 'Tipo', width: 100 },
+          { 
+            field: 'status', 
+            headerName: 'Estado', 
+            width: 120,
+            renderCell: (params) => <Chip label={params.value} size="small" />
+          },
+          {
+            field: 'progress',
+            headerName: 'Progreso',
+            width: 150,
+            renderCell: (params) => <LinearProgress variant="determinate" value={params.value} />
+          }
+        ]}
+        /* Según SECCIÓN 2.2 - Agregar funcionalidades de tabla */
+        pageSize={10}
+        rowsPerPageOptions={[10, 25, 50]}
+        autoHeight
+        disableSelectionOnClick
+        checkboxSelection
+        disableRowSelectionOnClick={false}
+      />
 
       <Global 
         styles={css`

@@ -11,6 +11,7 @@ import { es } from 'date-fns/locale/es'
 
 import App from './App'
 import theme from './theme'
+import { initializeServiceWorker } from './utils/serviceWorker'
 
 // Configuración de React Query
 const queryClient = new QueryClient({
@@ -41,3 +42,17 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </React.StrictMode>
 )
+
+// Según SECCIÓN 9.4 - Inicializar Service Worker después del render
+// Inicializar service worker en producción
+if (import.meta.env.PROD) {
+  initializeServiceWorker().then((status) => {
+    if (status.isRegistered) {
+      console.log('Service Worker inicializado correctamente');
+    } else {
+      console.log('Service Worker no pudo inicializarse');
+    }
+  }).catch((error) => {
+    console.error('Error al inicializar Service Worker:', error);
+  });
+}

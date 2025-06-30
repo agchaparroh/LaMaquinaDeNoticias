@@ -101,11 +101,22 @@ class {{ medio|title|replace(' ', '') }}{{ seccion|title|replace(' ', '') }}Spid
             
             self.logger.info(f"Encontrados {len(feed.entries)} artículos en RSS")
             
+            # Contadores para estadísticas
+            articles_processed = 0
+            articles_accepted = 0
+            
             # Procesar cada entrada del feed
             for entry in feed.entries[:self.max_articles]:
+                articles_processed += 1
+                
                 # Verificar si el artículo pertenece a la sección
                 if self._belongs_to_section(entry):
+                    articles_accepted += 1
                     article_data = self.extract_rss_data(entry)
+                    
+                    # Agregar información de filtrado a metadata
+                    article_data['metadata']['section_filter'] = 'accepted'
+                    article_data['metadata']['filter_reason'] = self._get_filter_reason(entry)
                     
                     if article_data.get('url'):
                         yield scrapy.Request(
@@ -117,40 +128,160 @@ class {{ medio|title|replace(' ', '') }}{{ seccion|title|replace(' ', '') }}Spid
                     else:
                         # Si no hay link, yield directo los datos del RSS
                         yield article_data
+                else:
+                    # Log de artículos rechazados para debugging
+                    self.logger.debug(f"Artículo rechazado: {getattr(entry, 'title', 'Sin título')} - "
+                                    f"Razón: {self._get_rejection_reason(entry)}")
+            
+            # Log de estadísticas de filtrado
+            filter_rate = (articles_accepted / articles_processed * 100) if articles_processed > 0 else 0
+            self.logger.info(f"Filtrado RSS: {articles_accepted}/{articles_processed} artículos aceptados "
+                           f"({filter_rate:.1f}%) para sección '{{ seccion }}'")
                 
         except Exception as e:
             self.logger.error(f"Error parseando RSS: {e}")
     
+    def _get_filter_reason(self, entry) -> str:
+        """Determina por qué se aceptó un artículo (para debugging)"""
+        target_section = "{{ seccion|lower }}"
+        
+        # Verificar categorías
+        if hasattr(entry, 'tags') and entry.tags:
+            categories = [tag.term.lower().strip() for tag in entry.tags if hasattr(tag, 'term')]
+            if target_section in categories:
+                return "categoria_exacta"
+            for category in categories:
+                if target_section in category or category in target_section:
+                    return "categoria_parcial"
+        
+        # Verificar URL
+        if hasattr(entry, 'link') and entry.link:
+            if self._is_section_article(entry.link):
+                return "url_pattern"
+        
+        return "inclusion_por_defecto"
+    
+    def _get_rejection_reason(self, entry) -> str:
+        """Determina por qué se rechazó un artículo (para debugging)"""
+        if not hasattr(entry, 'link') or not entry.link:
+            return "sin_url"
+        
+        # Este método solo se llama si _belongs_to_section devuelve False
+        # Que en el código actual solo ocurre si _is_section_article devuelve False
+        # Ya que _belongs_to_section devuelve True por defecto
+        return "url_no_coincide_con_seccion"
+    
     def _belongs_to_section(self, entry) -> bool:
-        """Verifica si la entrada RSS pertenece a la sección objetivo"""
-        # Verificar por categorías
-        if hasattr(entry, 'tags'):
-            categories = [tag.term.lower() for tag in entry.tags]
-            if "{{ seccion|lower }}" in categories:
+        """
+        Verifica si la entrada RSS pertenece a la sección objetivo.
+        
+        Criterios de filtrado:
+        1. Categorías RSS (tags) - primera prioridad
+        2. Patrones de URL - segunda prioridad  
+        3. Inclusión por defecto si no se puede determinar
+        
+        Args:
+            entry: Entrada del feed RSS parseada por feedparser
+            
+        Returns:
+            bool: True si la entrada pertenece a la sección
+        """
+        target_section = "{{ seccion|lower }}"
+        
+        # Criterio 1: Verificar por categorías RSS
+        if hasattr(entry, 'tags') and entry.tags:
+            categories = [tag.term.lower().strip() for tag in entry.tags if hasattr(tag, 'term')]
+            
+            # Buscar coincidencia exacta primero
+            if target_section in categories:
+                self.logger.debug(f"Artículo aceptado por categoría exacta: {target_section}")
                 return True
+            
+            # Buscar coincidencia parcial en categorías
+            for category in categories:
+                if target_section in category or category in target_section:
+                    self.logger.debug(f"Artículo aceptado por categoría parcial: {category}")
+                    return True
         
-        # Verificar por URL
-        if hasattr(entry, 'link'):
-            return self._is_section_article(entry.link)
+        # Criterio 2: Verificar por URL si hay link
+        if hasattr(entry, 'link') and entry.link:
+            url_matches = self._is_section_article(entry.link)
+            if url_matches:
+                self.logger.debug(f"Artículo aceptado por URL: {entry.link}")
+                return url_matches
         
-        # Por defecto incluir todo si no se puede determinar
+        # Criterio 3: Por defecto incluir si no podemos determinar sección
+        # Esto evita perder contenido válido de feeds mal configurados
+        self.logger.debug(f"Artículo incluido por defecto (sin información de sección)")
         return True
     
     def _is_section_article(self, url: str) -> bool:
-        """Valida si la URL pertenece a la sección objetivo"""
+        """
+        Valida si la URL del artículo pertenece a la sección objetivo.
+        
+        Filtros aplicados:
+        1. Exclusión de contenido no deseado (archivos, multimedia, etc.)
+        2. Verificación de patrones de sección en la URL
+        
+        Args:
+            url: URL del artículo a verificar
+            
+        Returns:
+            bool: True si la URL pertenece a la sección objetivo
+        """
+        if not url:
+            return False
+        
+        # Patrones a excluir (contenido no deseado)
         excluded_patterns = [
-            r'/archivo/', r'/hemeroteca/', r'/newsletter/',
-            r'/multimedia/', r'/video/', r'/podcast/',
-            r'/tags?/', r'/autor/', r'/busca[rd]?/',
+            r'/archivo/',          # Archivos/hemeroteca
+            r'/hemeroteca/',       # Archivo histórico  
+            r'/newsletter/',       # Boletines
+            r'/multimedia/',       # Contenido multimedia
+            r'/video[s]?/',        # Videos
+            r'/podcast[s]?/',      # Podcasts
+            r'/audio[s]?/',        # Audio
+            r'/galeria[s]?/',      # Galerías de fotos
+            r'/foto[s]?/',         # Fotos
+            r'/infografia[s]?/',   # Infografías
+            r'/tags?/',            # Páginas de tags
+            r'/etiqueta[s]?/',     # Etiquetas (español)
+            r'/autor[es]?/',       # Páginas de autor
+            r'/busca[rd]?/',       # Búsquedas
+            r'/search/',           # Búsquedas (inglés)
+            r'/categoria[s]?/',    # Páginas de categoría
+            r'/archivo-por-fecha/',# Archivo por fecha
+            r'/rss/',              # Feeds RSS
+            r'/feed/',             # Feeds
+            r'/sitemap/',          # Sitemaps
         ]
         
+        # Verificar exclusiones
         for pattern in excluded_patterns:
             if re.search(pattern, url, re.IGNORECASE):
+                self.logger.debug(f"URL excluida por patrón {pattern}: {url}")
                 return False
         
+        # Crear patrón de sección (flexible para espacios, guiones, guiones bajos)
+        target_section = "{{ seccion|lower|replace(' ', '[-_\\s]?') }}"
+        section_patterns = [
+            rf'/{target_section}/',          # /internacional/
+            rf'/{target_section}\.html',     # /internacional.html
+            rf'/{target_section}-',          # /internacional-algo
+            rf'/{target_section}_',          # /internacional_algo
+            rf'-{target_section}-',          # algo-internacional-algo
+            rf'_{target_section}_',          # algo_internacional_algo
+        ]
+        
         # Verificar que pertenece a la sección
-        section_pattern = re.compile(r'/{{ seccion|lower|replace(" ", "[-_]?") }}/', re.IGNORECASE)
-        return bool(section_pattern.search(url))
+        for pattern in section_patterns:
+            if re.search(pattern, url, re.IGNORECASE):
+                self.logger.debug(f"URL aceptada por patrón {pattern}: {url}")
+                return True
+        
+        # Si no encuentra patrón específico, rechazar para ser conservador
+        self.logger.debug(f"URL no contiene patrón de sección '{target_section}': {url}")
+        return False
     
     def extract_rss_data(self, entry) -> Dict[str, Any]:
         """Extrae datos estructurados de una entrada RSS con campos obligatorios"""
@@ -188,9 +319,13 @@ class {{ medio|title|replace(' ', '') }}{{ seccion|title|replace(' ', '') }}Spid
             'metadata': {
                 'spider_type': 'rss',
                 'extraction_method': 'feedparser',
-                'section_filter': 'none',
+                'section_filter': 'pending',  # Se actualiza en parse_rss
                 'rss_guid': getattr(entry, 'id', None),
                 'from_rss': True,
+                'rss_url': self.rss_url,
+                'spider_name': self.name,
+                'generation_date': "{{ generation_date }}",
+                'frecuencia_minutos': {{ frecuencia_minutos }},
             }
         }
         
@@ -383,13 +518,16 @@ class {{ medio|title|replace(' ', '') }}{{ seccion|title|replace(' ', '') }}Spid
         stats = spider.crawler.stats.get_stats()
         
         self.logger.info(f"""
-        ========== RESUMEN DE SCRAPING ==========
+        ========== RESUMEN DE SCRAPING RSS ==========
         Spider: {spider.name}
         Medio: {self.medio_info['medio']}
         Sección: {self.medio_info['seccion']}
+        RSS URL: {self.rss_url}
         Artículos extraídos: {self.articles_scraped}
         Duración: {stats.get('elapsed_time_seconds', 0):.2f} segundos
         Requests exitosos: {stats.get('downloader/response_status_count/200', 0)}
-        Errores: {stats.get('downloader/exception_count', 0)}
-        ========================================
+        Requests fallidos: {stats.get('downloader/response_status_count/404', 0) + stats.get('downloader/response_status_count/500', 0)}
+        Errores de red: {stats.get('downloader/exception_count', 0)}
+        Items generados: {stats.get('item_scraped_count', 0)}
+        ============================================
         """)
