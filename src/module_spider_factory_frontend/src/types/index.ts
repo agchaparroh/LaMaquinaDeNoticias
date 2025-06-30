@@ -211,6 +211,55 @@ export interface HistoryItem {
   status: 'success' | 'error'
 }
 
+// Tipo para spiders generados (HistoryPage)
+export interface GeneratedSpider {
+  id: string
+  name: string
+  domain: string
+  created_at: string
+  status: 'active' | 'inactive' | 'error'
+  strategy: string
+  last_run?: string
+  articles_count?: number
+}
+
+// Tipos para verificación de duplicados
+export interface DuplicateCheckRequest {
+  domain?: string
+  medio?: string
+  seccion?: string
+  url?: string
+}
+
+export interface DuplicateCheckResponse {
+  exists: boolean
+  spider_name?: string
+  spider_id?: string
+  domain?: string
+  message?: string
+}
+
+// Tipos para generación de spiders
+export interface SpiderGenerationRequest {
+  analysis_result: AnalysisResult
+  config: {
+    medio: string
+    seccion: string
+    url: string
+    area_geografica: string
+    tipo_medio: 'diario' | 'revista' | 'agencia'
+    frecuencia_minutos: number
+    rss_url?: string
+    comentarios?: string
+  }
+  spider_name: string
+  start_urls: string[]
+  media_name: string  // Compatibilidad con useWizardSpiderGeneration
+  area_geografica: string  // Compatibilidad
+  custom_settings?: Record<string, unknown>
+  excluded_urls?: string[]
+}
+
 // Re-exportar tipos de bibliotecas externas que usamos frecuentemente
 export type { Theme } from '@mui/material/styles'
 export type { SxProps } from '@mui/material'

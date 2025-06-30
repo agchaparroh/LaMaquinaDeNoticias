@@ -3,7 +3,7 @@ import {
   SiteAnalysisRequest,
   AnalysisResult,
   SpiderCode,
-} from '@/types'
+} from '../types'
 
 // Interface temporal para compatibilidad
 interface SpiderGenerationRequest {

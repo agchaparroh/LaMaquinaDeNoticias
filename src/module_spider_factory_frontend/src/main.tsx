@@ -10,7 +10,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { es } from 'date-fns/locale/es'
 
 import App from './App'
-import theme from './theme'
+import customTheme from './theme/customTheme'
 import { initializeServiceWorker } from './utils/serviceWorker'
 
 // Configuración de React Query
@@ -31,7 +31,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter basename={basename}>
-        <ThemeProvider theme={theme}>
+        <ThemeProvider theme={customTheme}>
           <CssBaseline />
           <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
             <App />
