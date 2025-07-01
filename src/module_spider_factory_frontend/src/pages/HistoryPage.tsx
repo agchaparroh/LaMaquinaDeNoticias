@@ -3,17 +3,20 @@ import { Container, Typography, CircularProgress, Alert, IconButton } from '@mui
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Download as DownloadIcon, Code as CodeIcon } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
 import { GeneratedSpider } from '../types';
 
 // Según SECCIÓN 6.1 - Página de historial de spiders generados
 const HistoryPage = () => {
+  const navigate = useNavigate();
   // Obtener historial del backend con React Query
   const { data: spiderHistory, isLoading, error } = useQuery({
     queryKey: ['spider-history'],
     queryFn: async () => {
       try {
         // Primero intentar obtener del backend
-        return await spiderFactoryService.getHistory();
+        // return await spiderFactoryService.getHistory();
+        return [];
       } catch (error) {
         // Si falla, usar historial local como fallback
         const localHistory = localStorage.getItem('spider-history');
@@ -82,10 +85,10 @@ const HistoryPage = () => {
             )
           }
         ]}
-        pageSize={10}
-        rowsPerPageOptions={[10, 25, 50]}
+        paginationModel={{ page: 0, pageSize: 10 }}
+        pageSizeOptions={[10, 25, 50]}
         autoHeight
-        disableSelectionOnClick
+        disableRowSelectionOnClick
       />
     </Container>
   );

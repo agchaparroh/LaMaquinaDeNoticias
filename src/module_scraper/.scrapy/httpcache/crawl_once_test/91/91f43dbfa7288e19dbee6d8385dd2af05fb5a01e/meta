@@ -1,1 +1,0 @@
-{'url': 'https://httpbin.org/user-agent', 'method': 'GET', 'status': 200, 'response_url': 'https://httpbin.org/user-agent', 'timestamp': 1748829128.2935517}

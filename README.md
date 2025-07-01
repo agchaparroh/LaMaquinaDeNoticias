@@ -4,9 +4,9 @@
 
 ## 🎯 **Estado del Proyecto: MVP FUNCIONAL** ✅
 
-**La Máquina de Noticias** ha alcanzado un **Producto Mínimo Viable (MVP)** completamente funcional con **6 módulos implementados** que cubren el flujo completo desde recopilación hasta presentación.
+**La Máquina de Noticias** ha alcanzado un **Producto Mínimo Viable (MVP)** completamente funcional con **8 módulos implementados** que cubren el flujo completo desde recopilación hasta presentación, incluyendo **Spider Factory** para generación inteligente de spiders.
 
-> 📋 **Ver [GOALS.md](GOALS.md)** para objetivos detallados, roadmap y lecciones aprendidas del MVP.
+> 📋 **Ver [GOALS.md](docs/GOALS.md)** para objetivos detallados, roadmap y lecciones aprendidas del MVP.
 
 ---
 
@@ -18,14 +18,23 @@
 graph TD
     A[🕷️ module_scraper] --> B[🔗 module_connector]
     B --> C[⚙️ module_pipeline] 
-    C --> D[🔧 module_dashboard_backend]
-    D --> E[📱 module_dashboard_frontend]
+    C --> D[🔧 module_dashboard_review_backend]
+    D --> E[📱 module_dashboard_review_frontend]
     F[🌐 nginx_reverse_proxy] --> D
     F --> E
+    F --> I
+    F --> J
     G[(🗄️ Supabase)] <--> A
     G <--> C
     G <--> D
+    G <--> I
     H[🤖 Groq/Anthropic] <--> C
+    I[🤖 spider_factory] --> A
+    J[📱 module_spider_factory_frontend] --> I
+    K[📡 Scrapyd] --> A
+    L[🎛️ ScrapydWeb] --> K
+    M[🔄 Redis] <--> I
+    M <--> K
 ```
 
 ### **Principios de Diseño MVP**
@@ -47,17 +56,27 @@ graph TD
 | **module_dashboard_review_backend** | Python 3.9 + FastAPI | 8004 | ✅ **Implementado** | API backend dashboard editorial |
 | **module_dashboard_review_frontend** | React 18 + TypeScript + Vite | 3001→80 | ✅ **Implementado** | UI dashboard para periodistas |
 | **nginx_reverse_proxy** | Nginx 1.25 Alpine | 80, 443 | ✅ **Implementado** | Proxy reverso y balanceador |
-| **spider_factory** | Python 3.9 + FastAPI + Redis | 8005 | ✅ **Implementado** | Generación inteligente de spiders |
+| **spider_factory** | Python 3.9 + FastAPI + Redis | 8000 | ✅ **Implementado** | Generación inteligente de spiders |
 | **module_spider_factory_frontend** | React 18 + TypeScript + Vite | 3002→80 | ✅ **Implementado** | UI para generación de spiders |
+
+### **Servicios de Infraestructura Adicionales**
+
+| **Servicio** | **Tecnología** | **Puerto** | **Estado** | **Función** |
+|--------------|----------------|------------|------------|-------------|
+| **scrapyd** | Python + Twisted | 6800 | ✅ **Implementado** | Servidor de despliegue de spiders |
+| **scrapydweb** | Python + Flask | 5000 | ✅ **Implementado** | Dashboard de gestión Scrapy |
+| **redis** | Redis 7 Alpine | 6379 | ✅ **Implementado** | Sistema de caché multinivel |
 
 ### **Flujo de Datos MVP**
 
-1. **🤖 Generación**: `spider_factory` genera spiders inteligentes basados en análisis de sitios web
-2. **🕷️ Extracción**: `module_scraper` recopila noticias de fuentes web usando Scrapy + Playwright
-3. **🔗 Conectividad**: `module_connector` transfiere datos entre scraper y pipeline  
-4. **⚙️ Procesamiento**: `module_pipeline` aplica IA/ML para análisis con LLMs (Groq/Anthropic)
-5. **🗄️ Almacenamiento**: Datos estructurados almacenados en Supabase (PostgreSQL + Storage)
-6. **📱 Presentación**: Dashboard web para periodistas accesible vía `nginx_reverse_proxy`
+1. **🤖 Generación**: `spider_factory` analiza sitios web con IA y genera spiders inteligentes
+2. **📡 Despliegue**: Spiders generados se despliegan automáticamente en `scrapyd`
+3. **🎛️ Gestión**: `scrapydweb` permite monitoreo y gestión visual de todos los spiders
+4. **🕷️ Extracción**: `module_scraper` ejecuta spiders para recopilar noticias usando Scrapy + Playwright
+5. **🔗 Conectividad**: `module_connector` transfiere datos entre scraper y pipeline  
+6. **⚙️ Procesamiento**: `module_pipeline` aplica IA/ML para análisis con LLMs (Groq/Anthropic)
+7. **🗄️ Almacenamiento**: Datos estructurados almacenados en Supabase (PostgreSQL + pgvector)
+8. **📱 Presentación**: Dashboard web para periodistas accesible vía `nginx_reverse_proxy`
 
 ---
 
@@ -136,9 +155,12 @@ LaMaquinaDeNoticias/
 |--------------|----------------------|----------------------|-------------------|
 | Pipeline API | `module_pipeline:8003` | `localhost:8003` | `/docs` |
 | Dashboard API | `module_dashboard_review_backend:8004` | `localhost:8004` | `/docs` |
-| Frontend UI | `module_dashboard_review_frontend:80` | `localhost` (via nginx) | N/A |
-| Spider Factory API | `spider_factory:8000` | `localhost:8005` | `/docs` |
-| Spider Factory UI | `module_spider_factory_frontend:80` | `localhost:3002` | N/A |
+| Frontend UI | `module_dashboard_review_frontend:80` | `localhost:3001` | N/A |
+| Spider Factory API | `spider_factory_backend:8000` | `localhost:8005` | `/docs` |
+| Spider Factory UI | `spider_factory_frontend:80` | `localhost:3002` | N/A |
+| Scrapyd API | `scrapyd:6800` | `localhost:6800` | `/daemonstatus.json` |
+| ScrapydWeb UI | `scrapydweb:5000` | `localhost:5000` | Dashboard completo |
+| Redis Cache | `redis:6379` | `localhost:6379` | N/A |
 
 ---
 
@@ -189,6 +211,11 @@ LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR
 # === SPIDER FACTORY ===
 FIRECRAWL_API_KEY="fc-tu-api-key"  # Para análisis de sitios web
 SPIDER_FACTORY_REDIS_HOST="redis"  # Redis compartido
+
+# === SCRAPYD Y SCRAPING AVANZADO ===
+SCRAPYDWEB_USERNAME="admin"      # Usuario ScrapydWeb (cambiar en producción)
+SCRAPYDWEB_PASSWORD=""           # Contraseña segura requerida
+REDIS_URL="redis://redis:6379"  # Sistema de caché compartido
 ```
 
 **🔧 OPCIONALES (funcionalidades avanzadas):**
@@ -201,6 +228,12 @@ PERPLEXITY_API_KEY=""    # Research capabilities
 # Monitoreo y alertas
 SENTRY_DSN=""            # Error tracking
 SLACK_WEBHOOK=""         # Notificaciones
+
+# ScrapydWeb Dashboard Avanzado
+SMTP_HOST=""             # SMTP para alertas Spidermon
+SMTP_PORT="587"          # Puerto SMTP
+SMTP_USER=""             # Usuario SMTP
+SMTP_PASSWORD=""         # Contraseña SMTP
 
 # Configuración de entorno
 ENVIRONMENT="development"  # development, staging, production
@@ -218,14 +251,16 @@ DEBUG_MODE="false"       # Solo para desarrollo
   - URLs de comunicación inter-servicios
 
 - **⚙️ Variables Específicas** (cada `src/module_*/.env.example`):
-  - **module_scraper**: Configuración Playwright, timeouts
-  - **module_connector**: Directorios, polling intervals
-  - **module_pipeline**: Configuración ML, modelos, límites de contenido
-  - **module_dashboard_backend**: CORS, puerto API
-  - **module_dashboard_frontend**: Variables VITE_*
-  - **nginx_reverse_proxy**: Configuración de proxy
-  - **spider_factory**: Redis, límites de análisis, timeouts
-  - **module_spider_factory_frontend**: URLs de API y WebSocket
+  - **module_scraper**: Configuración Scrapy, Playwright, timeouts, rate limiting
+  - **module_connector**: Directorios, polling intervals, async workers
+  - **module_pipeline**: Configuración ML, modelos, límites de contenido, prompts de IA
+  - **module_dashboard_review_backend**: CORS, puerto API, autenticación
+  - **module_dashboard_review_frontend**: Variables VITE_*, URLs de endpoints
+  - **nginx_reverse_proxy**: Configuración de proxy, SSL, rate limiting
+  - **spider_factory**: Redis, límites de análisis, timeouts, técnicas de evasión
+  - **module_spider_factory_frontend**: URLs de API y WebSocket, configuración UI
+  - **scrapyd**: Configuración de workers, logs, proyectos
+  - **scrapydweb**: Dashboard, autenticación, integración SMTP
 
 **📁 Jerarquía de Configuración:**
 ```
@@ -293,8 +328,20 @@ curl http://localhost:8003/health
 # Test API Dashboard
 curl http://localhost:8004/health
 
+# Test Spider Factory
+curl http://localhost:8005/health
+
+# Test Scrapyd
+curl http://localhost:6800/daemonstatus.json
+
+# Test ScrapydWeb
+curl http://localhost:5000
+
+# Test Redis
+redis-cli -h localhost -p 6379 ping
+
 # Test Frontend
-curl http://localhost/
+curl http://localhost:3001
 ```
 
 **Logs de verificación:**
@@ -305,6 +352,9 @@ docker-compose logs -f
 # Ver logs específicos
 docker-compose logs -f module_pipeline
 docker-compose logs -f module_scraper
+docker-compose logs -f spider_factory_backend
+docker-compose logs -f scrapyd
+docker-compose logs -f scrapydweb
 ```
 
 ### **❗ Troubleshooting Común**
@@ -314,6 +364,10 @@ docker-compose logs -f module_scraper
 | `ModuleNotFoundError` | Dependencias no instaladas | `pip install -r requirements.txt` |
 | `Connection refused Supabase` | Credenciales incorrectas | Verificar `.env` y credenciales |
 | `Groq API Error` | API key inválida | Verificar `GROQ_API_KEY` |
+| `Firecrawl API Error` | API key inválida | Verificar `FIRECRAWL_API_KEY` |
+| `Redis connection failed` | Redis no iniciado | `docker-compose up redis` |
+| `Scrapyd not responding` | Servicio no iniciado | `docker-compose restart scrapyd` |
+| `Spider generation fails` | Spider Factory no configurado | Verificar configuración Redis y APIs |
 | `Port already in use` | Puerto ocupado | Cambiar puertos en `docker-compose.yml` |
 | `Permission denied` | Problemas Docker | `sudo docker-compose up` |
 

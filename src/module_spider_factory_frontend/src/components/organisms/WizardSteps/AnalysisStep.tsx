@@ -186,7 +186,12 @@ function AnalysisStep({
 
       {/* Según SECCIÓN 3.1 - Implementar preview en tiempo real */}
       {analysisResult?.sample_articles && (
-        <ArticlePreview articles={analysisResult.sample_articles} />
+        <ArticlePreview articles={analysisResult.sample_articles.map(article => ({
+          title: article.title,
+          date: article.date || 'Fecha no disponible',
+          excerpt: article.excerpt || 'Sin extracto disponible',
+          url: article.url
+        }))} />
       )}
       
       {/* Agregar indicador de tiempo estimado */}

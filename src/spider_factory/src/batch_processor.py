@@ -261,25 +261,30 @@ class BatchProcessor:
                     "progress": (i / len(sites)) * 100
                 })
                 
-                # Analizar sitio
+                # Analizar sitio con todos los campos obligatorios
                 analysis_request = SiteAnalysisRequest(
-                    url=str(site.url),
+                    url=site.url,
+                    medio=site.medio,
+                    seccion=site.seccion,
+                    area_geografica=site.area_geografica,
+                    tipo_medio=site.tipo_medio,
+                    frecuencia_minutos=site.frecuencia_minutos or 60,
+                    comentarios=site.comentarios,
+                    rss_url=site.rss_url,
                     check_rss=True
                 )
                 
                 analysis_result = await self.analyzer.analyze(analysis_request)
                 
-                # Generar spider con nomenclatura {medio}_{seccion}
-                spider_name = f"{site.medio}_{site.seccion}"
+                # Generar spider usando interfaz correcta del generator
                 spider_code = self.generator.generate_spider(
-                    analysis_result,
-                    spider_name,
-                    site.medio,
-                    {
-                        "seccion": site.seccion,
-                        "area_geografica": site.area_geografica,
-                        "tipo_medio": site.tipo_medio,
-                        "frecuencia_minutos": site.frecuencia_minutos,
+                    analysis=analysis_result,
+                    medio=site.medio,
+                    seccion=site.seccion,
+                    area_geografica=site.area_geografica,
+                    tipo_medio=site.tipo_medio,
+                    frecuencia_minutos=site.frecuencia_minutos or 60,
+                    additional_config={
                         "rss_url": str(site.rss_url) if site.rss_url else None,
                         "comentarios": site.comentarios
                     }

@@ -22,6 +22,8 @@ interface GenerationStepProps {
   error: Error | null
   onGenerate: () => void
   onReset: () => void
+  onFinish?: () => void // Añadido para compatibilidad con WizardPage
+  onBack?: () => void // Añadido para compatibilidad con WizardPage
 }
 
 function GenerationStep({
@@ -29,7 +31,9 @@ function GenerationStep({
   generatedCode,
   error,
   onGenerate,
-  onReset
+  onReset,
+  onFinish,
+  onBack
 }: GenerationStepProps) {
   const [copied, setCopied] = useState(false)
 

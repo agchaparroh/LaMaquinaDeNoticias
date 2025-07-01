@@ -11,7 +11,7 @@ import hashlib
 import json
 import logging
 from datetime import datetime
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List, Tuple, Any
 from enum import Enum
 from urllib.parse import urlparse, urljoin
 import re

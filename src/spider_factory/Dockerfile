@@ -1,4 +1,4 @@
-# Multi-stage build para Spider Factory 2.0 Backend
+# Multi-stage build para Spider Factory 2.0 Backend - VIRTUALENV SOLUTION
 FROM python:3.9-slim-bullseye AS builder
 
 # Instalar dependencias de compilación
@@ -11,12 +11,15 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Crear directorio de trabajo
-WORKDIR /build
+# Crear virtualenv en ubicación estándar
+RUN python -m venv /opt/venv
 
-# Copiar requirements y instalar dependencias
+# Activar virtualenv permanentemente para el builder
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Instalar dependencias en virtualenv
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage final - imagen más ligera
 FROM python:3.9-slim-bullseye
@@ -32,8 +35,11 @@ RUN groupadd -r spiderfactory && useradd -r -g spiderfactory spiderfactory
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar dependencias Python desde el builder
-COPY --from=builder /root/.local /home/spiderfactory/.local
+# Copiar virtualenv completo desde builder
+COPY --from=builder /opt/venv /opt/venv
+
+# Activar virtualenv permanentemente
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Copiar código de la aplicación
 COPY --chown=spiderfactory:spiderfactory . .
@@ -41,9 +47,6 @@ COPY --chown=spiderfactory:spiderfactory . .
 # Crear directorios necesarios con permisos correctos
 RUN mkdir -p logs generated_spiders templates/spiders backups/migrations \
     && chown -R spiderfactory:spiderfactory /app
-
-# Configurar PATH para incluir paquetes de usuario
-ENV PATH=/home/spiderfactory/.local/bin:$PATH
 
 # Variables de entorno
 ENV PYTHONUNBUFFERED=1 \
@@ -62,5 +65,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Comando optimizado para producción (sin --reload)
-CMD ["python", "-m", "uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Comando directo - uvicorn está en PATH del virtualenv
+CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

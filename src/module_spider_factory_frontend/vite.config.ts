@@ -44,6 +44,12 @@ export default defineConfig({
     sourcemap: true,
     // Optimización para chunks
     rollupOptions: {
+      external: [
+        // Excluir archivos de test del build
+        /.*\.test\.(js|ts|jsx|tsx)$/,
+        /.*\.spec\.(js|ts|jsx|tsx)$/,
+        /.*\/__tests__\/.*/
+      ],
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],

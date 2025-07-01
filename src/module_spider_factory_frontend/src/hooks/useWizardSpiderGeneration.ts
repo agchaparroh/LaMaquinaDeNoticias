@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { spiderFactoryService } from '@services/spiderFactory.service'
+import { spiderFactoryService, type CustomSettings } from '@services/spiderFactory.service'
 import type { AnalysisResult, SpiderCode, WizardData, SiteAnalysisRequest } from '@/types'
 
 // Interface para el hook especializado en wizard
@@ -25,7 +25,7 @@ interface UseWizardSpiderGenerationReturn {
   
   // Acciones
   analyzeSite: () => void
-  generateSpider: (customSettings?: Record<string, any>) => void
+  generateSpider: (customSettings?: CustomSettings) => void
   reset: () => void
 }
 
@@ -59,7 +59,7 @@ export function useWizardSpiderGeneration(initialData: WizardData): UseWizardSpi
 
   // Mutation para generación - USA TODOS LOS DATOS del wizard
   const generateMutation = useMutation({
-    mutationFn: (customSettings: Record<string, any>) => {
+    mutationFn: (customSettings: CustomSettings) => {
       if (!analysisResult) {
         throw new Error('No hay resultado de análisis disponible')
       }
@@ -69,11 +69,11 @@ export function useWizardSpiderGeneration(initialData: WizardData): UseWizardSpi
         spider_name: wizardData.medio.toLowerCase().replace(/\s+/g, '_'),
         start_urls: [wizardData.url],
         custom_settings: customSettings || {},
-        media_name: wizardData.medio,
-        area_geografica: wizardData.area_geografica,
-        excluded_urls: [],
-        follow_pagination: true,
-        max_pages: 100
+        // media_name: wizardData.medio,
+        // area_geografica: wizardData.area_geografica,
+        // excluded_urls: [],
+        // follow_pagination: true,
+        // max_pages: 100
       })
     },
     onSuccess: (code: SpiderCode) => {
@@ -96,7 +96,7 @@ export function useWizardSpiderGeneration(initialData: WizardData): UseWizardSpi
   }, [wizardData, analyzeMutation])
 
   // Función para generar spider con useCallback
-  const generateSpider = useCallback((customSettings?: Record<string, any>) => {
+  const generateSpider = useCallback((customSettings?: CustomSettings) => {
     generateMutation.mutate(customSettings || {})
   }, [generateMutation])
 

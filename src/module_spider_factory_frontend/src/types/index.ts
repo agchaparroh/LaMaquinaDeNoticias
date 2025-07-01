@@ -9,7 +9,10 @@ export interface AnalysisResult {
   has_rss: boolean
   rss_url?: string
   suggested_strategy: 'rss' | 'scraping' | 'playwright'
+  strategy: 'rss' | 'scraping' | 'playwright' // Alias para compatibilidad
   pattern_confidence: number
+  confidence: number // Alias para compatibilidad
+  estimated_articles?: number
   selectors?: {
     title?: string
     content?: string
@@ -21,8 +24,10 @@ export interface AnalysisResult {
     title: string
     url?: string
     date?: string
+    excerpt?: string // Añadido para compatibilidad
   }>
   requires_javascript?: boolean
+  needs_javascript?: boolean // Alias para compatibilidad
   detected_patterns?: Array<{
     pattern: string
     confidence: number
@@ -32,6 +37,7 @@ export interface AnalysisResult {
 // Tipos para la generación de spiders
 export interface SpiderCode {
   filename: string
+  spider_id?: string
   code?: string  // Añadido para compatibilidad con el servicio
   code_structure?: {
     imports: string[]
@@ -51,6 +57,10 @@ export interface BatchItem {
   id: string
   url: string
   name: string
+  medio: string // Añadido para compatibilidad
+  seccion: string // Añadido para compatibilidad
+  area_geografica: string // Añadido para compatibilidad
+  tipo_medio: 'diario' | 'revista' | 'agencia' // Añadido para compatibilidad
   status: 'pending' | 'processing' | 'completed' | 'error'
   progress?: number
   result?: {
@@ -182,6 +192,7 @@ export interface AnalyzeRequest {
   name: string
 }
 
+// DEPRECATED: Usar SpiderGenerationRequest en su lugar
 export interface GenerateRequest {
   analysis_result: AnalysisResult
   spider_name: string
@@ -221,6 +232,8 @@ export interface GeneratedSpider {
   strategy: string
   last_run?: string
   articles_count?: number
+  code?: string // Añadido para compatibilidad con HistoryPage
+  formatted_code?: string // Añadido para compatibilidad
 }
 
 // Tipos para verificación de duplicados
@@ -239,25 +252,24 @@ export interface DuplicateCheckResponse {
   message?: string
 }
 
-// Tipos para generación de spiders
+// Tipos para generación de spiders - ACTUALIZADO para coincidir con models.py
 export interface SpiderGenerationRequest {
-  analysis_result: AnalysisResult
-  config: {
-    medio: string
-    seccion: string
-    url: string
-    area_geografica: string
-    tipo_medio: 'diario' | 'revista' | 'agencia'
-    frecuencia_minutos: number
-    rss_url?: string
-    comentarios?: string
-  }
-  spider_name: string
-  start_urls: string[]
-  media_name: string  // Compatibilidad con useWizardSpiderGeneration
-  area_geografica: string  // Compatibilidad
-  custom_settings?: Record<string, unknown>
+  // URL a analizar (REQUERIDA)
+  analysis_url: string
+  
+  // Información del medio (OBLIGATORIOS)
+  medio: string
+  seccion: string
+  area_geografica: string
+  tipo_medio: 'diario' | 'revista' | 'agencia'
+  
+  // Configuración adicional
+  frecuencia_minutos?: number
+  comentarios?: string
   excluded_urls?: string[]
+  follow_pagination?: boolean
+  max_pages?: number
+  custom_settings?: Record<string, unknown>
 }
 
 // Re-exportar tipos de bibliotecas externas que usamos frecuentemente

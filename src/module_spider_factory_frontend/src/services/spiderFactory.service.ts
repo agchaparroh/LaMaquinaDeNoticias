@@ -6,11 +6,15 @@ import {
 } from '../types'
 
 // Interface temporal para compatibilidad
+export interface CustomSettings {
+  readonly [key: string]: string | number | boolean | string[] | number[] | boolean[] | null | undefined;
+}
+
 interface SpiderGenerationRequest {
   analysis_result: AnalysisResult
   spider_name: string
   start_urls?: string[]
-  custom_settings?: Record<string, any>
+  custom_settings?: CustomSettings
 }
 
 // Interfaces extendidas para propiedades adicionales del servicio
@@ -22,7 +26,7 @@ interface ExtendedSiteAnalysisRequest extends SiteAnalysisRequest {
 interface ExtendedSpiderGenerationRequest extends SpiderGenerationRequest {
   pattern_id?: string
   media_name?: string
-  excluded_urls?: string[]
+  excluded_urls?: readonly string[]
   follow_pagination?: boolean
   max_pages?: number
   area_geografica?: string
@@ -96,13 +100,13 @@ export interface BatchGenerateRequest {
     spider_name: string
     media_name: string
     area_geografica?: string
-    excluded_urls?: string[]
+    excluded_urls?: readonly string[]
     follow_pagination?: boolean
     max_pages?: number
-    custom_settings?: Record<string, any>
+    custom_settings?: CustomSettings
   }>
   output_format?: string
-  base_settings?: Record<string, any>
+  base_settings?: CustomSettings
   session_id?: string
 }
 
@@ -111,7 +115,7 @@ export interface TaskStatus {
   status: 'pending' | 'processing' | 'completed' | 'failed'
   progress: number
   current_step?: string
-  result?: any
+  result?: unknown
   error?: string
   created_at: string
   updated_at: string
@@ -220,11 +224,11 @@ class SpiderFactoryService {
     spiderName: string,
     mediaName: string,
     options: {
-      excluded_urls?: string[]
+      excluded_urls?: readonly string[]
       follow_pagination?: boolean
       max_pages?: number
       area_geografica?: string
-      custom_settings?: Record<string, any>
+      custom_settings?: CustomSettings
     } = {}
   ): Promise<SpiderCode> {
     const payload = {

@@ -9,6 +9,10 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 interface CSVRow {
   url: string
   name: string
+  medio?: string
+  seccion?: string
+  area_geografica?: string
+  tipo_medio?: 'diario' | 'revista' | 'agencia'
   language?: string
   category?: string
 }
@@ -79,6 +83,10 @@ export function useBatchProcessing(): UseBatchProcessingReturn {
           id: `item-${index}`,
           url: row.url,
           name: row.name,
+          medio: row.medio || row.name, // Usar name como fallback para medio
+          seccion: row.seccion || 'General', // Valor por defecto
+          area_geografica: row.area_geografica || 'ESPAÑA', // Valor por defecto
+          tipo_medio: row.tipo_medio || 'diario', // Valor por defecto
           status: 'pending' as const,
           progress: 0
         }))
@@ -168,9 +176,12 @@ export function useBatchProcessing(): UseBatchProcessingReturn {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            analysis_result: analysisResult,
-            spider_name: row.name.toLowerCase().replace(/\s+/g, '_'),
-            start_urls: [row.url]
+            analysis_url: row.url,
+            medio: row.medio || row.name,
+            seccion: row.seccion || 'General',
+            area_geografica: row.area_geografica || 'ESPAÑA',
+            tipo_medio: row.tipo_medio || 'diario',
+            frecuencia_minutos: 60
           })
         })
 

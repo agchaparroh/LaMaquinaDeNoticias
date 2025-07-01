@@ -20,9 +20,11 @@ import httpx
 from .analyzer import SmartAnalyzer, SiteAnalysisRequest, AnalysisResult, AnalysisStrategy
 from .generator import SpiderGenerator
 from .patterns import PatternStorage, PatternStatus, Pattern
-from .config import settings, get_redis_client
+from .config import settings
+from .redis_pool import get_redis_client
 from .websocket_manager import ConnectionManager
 from .batch_processor import BatchProcessor, BatchRequest, BatchResponse, BatchSite
+from .models import GenerateSpiderRequest
 
 # Pydantic models para API
 from pydantic import BaseModel, HttpUrl, Field, validator
@@ -107,36 +109,7 @@ class AnalysisResponse(BaseModel):
     frecuencia_minutos: int
 
 
-class GenerateSpiderRequest(BaseModel):
-    analysis_result: Dict[str, Any]  # AnalysisResult as dict
-    spider_name: str = ""  # MANTENER por compatibilidad
-    site_name: str = ""  # MANTENER por compatibilidad  
-    metadata: Dict[str, Any] = {}
-    
-    # Nuevos campos opcionales
-    medio: Optional[str] = None
-    seccion: Optional[str] = None
-    area_geografica: Optional[str] = None
-    tipo_medio: Optional[Literal["diario", "revista", "agencia"]] = None
-    frecuencia_minutos: Optional[int] = 60
-    
-    @validator('spider_name', pre=True, always=True)
-    def generate_spider_name(cls, v, values):
-        # Si hay medio y sección, generar automáticamente
-        if values.get('medio') and values.get('seccion'):
-            return f"{values['medio']}_{values['seccion']}".lower().replace(' ', '_')
-        return v or "default_spider"
-    
-    class Config:
-        schema_extra = {
-            "example": {
-                "analysis_result": {"strategy": "scraping", "confidence": 0.85},
-                "medio": "El País",
-                "seccion": "Internacional",
-                "area_geografica": "ESPAÑA",
-                "tipo_medio": "diario"
-            }
-        }
+# GenerateSpiderRequest now imported from models.py
 
 
 class GenerateSpiderResponse(BaseModel):
@@ -215,7 +188,7 @@ async def startup_event():
     
     # Verificar conexión Redis
     try:
-        redis_client = get_redis_client()
+        redis_client = await get_redis_client()
         if redis_client:
             await redis_client.ping()
             logger.info("Redis conectado correctamente")
@@ -255,11 +228,12 @@ async def health_check():
     """Verificar salud del sistema"""
     services = {}
     
-    # Verificar Redis
+    # Verificar Redis con cliente síncrono simple (hotfix temporal)
     try:
-        redis = get_redis_client()
-        if redis:
-            await redis.ping()
+        import redis
+        redis_client = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, decode_responses=True)
+        ping_result = redis_client.ping()
+        if ping_result:
             services["redis"] = "healthy"
         else:
             services["redis"] = "unavailable"
@@ -388,49 +362,53 @@ async def generate_spider(request: GenerateSpiderRequest):
     start_time = time.time()
     
     try:
-        # Extraer campos obligatorios con fallbacks
-        medio = request.medio or request.analysis_result.get("medio", request.site_name or "default")
-        seccion = request.seccion or request.analysis_result.get("seccion", "general")
-        area_geografica = request.area_geografica or request.analysis_result.get("area_geografica", "GLOBAL")
-        tipo_medio = request.tipo_medio or request.analysis_result.get("tipo_medio", "diario")
-        frecuencia_minutos = request.frecuencia_minutos or request.analysis_result.get("frecuencia_minutos", 60)
+        # Los campos básicos ahora son obligatorios en el modelo
+        medio = request.medio
+        seccion = request.seccion
+        area_geografica = request.area_geografica
+        tipo_medio = request.tipo_medio
+        frecuencia_minutos = request.frecuencia_minutos or 60
         
-        # Generar nombre del spider automáticamente si no se proporciona
-        if not request.spider_name or request.spider_name == "default_spider":
-            spider_name = f"{medio}_{seccion}".lower().replace(' ', '_').replace('-', '_')
+        # Generar nombre del spider automáticamente
+        spider_name = request.spider_name  # Usa la propiedad del modelo
+        
+        # Obtener análisis: desde URL o desde patrón
+        analysis_result = None
+        
+        if request.analysis_url:
+            # Realizar análisis de la URL con todos los campos obligatorios
+            analyzer = SmartAnalyzer()
+            analysis_request = SiteAnalysisRequest(
+                url=request.analysis_url,
+                medio=medio,
+                seccion=seccion,
+                area_geografica=area_geografica,
+                tipo_medio=tipo_medio,
+                frecuencia_minutos=frecuencia_minutos,
+                comentarios=request.comentarios
+            )
+            analysis_result = await analyzer.analyze(analysis_request)
+            
         else:
-            spider_name = request.spider_name
+            raise HTTPException(status_code=400, detail="Debe proporcionar analysis_url para el análisis")
         
-        # Reconstruir AnalysisResult desde el dict con campos nuevos
-        analysis_result = AnalysisResult(
-            url=request.analysis_result.get("url"),
-            domain=request.analysis_result.get("domain", ""),
-            strategy=AnalysisStrategy(request.analysis_result.get("strategy", "scraping")),
-            confidence=request.analysis_result.get("confidence", 0.5),
-            rss_url=request.analysis_result.get("rss_url"),
-            selectors=request.analysis_result.get("selectors"),
-            needs_javascript=request.analysis_result.get("needs_javascript", False),
-            url_patterns=request.analysis_result.get("url_patterns"),
-            sample_articles=request.analysis_result.get("sample_articles"),
-            from_cache=request.analysis_result.get("from_cache", False),
-            # Nuevos campos
-            medio=medio,
-            seccion=seccion,
-            area_geografica=area_geografica,
-            tipo_medio=tipo_medio,
-            frecuencia_minutos=frecuencia_minutos
-        )
+        # Generar código del spider usando la instancia global del generator
+        additional_config = {
+            'comentarios': request.comentarios,
+            'excluded_urls': request.excluded_urls,
+            'follow_pagination': request.follow_pagination,
+            'max_pages': request.max_pages,
+            'custom_settings': request.custom_settings
+        }
         
-        # Generar código del spider con todos los parámetros
-        spider_code = await generator.generate_spider(
-            analysis_result=analysis_result,
-            spider_name=spider_name,
+        spider_code = generator.generate_spider(
+            analysis=analysis_result,
             medio=medio,
             seccion=seccion,
             area_geografica=area_geografica,
             tipo_medio=tipo_medio,
             frecuencia_minutos=frecuencia_minutos,
-            metadata=request.metadata
+            additional_config=additional_config
         )
         
         # Validar código
@@ -602,7 +580,7 @@ async def get_metrics():
         from .performance_metrics import PerformanceMetrics
         
         # Obtener cliente Redis
-        redis_client = get_redis_client()
+        redis_client = await get_redis_client()
         
         # Inicializar sistemas de métricas
         metrics = Metrics(redis_client)
@@ -641,7 +619,7 @@ async def get_metrics_summary():
     try:
         from .metrics import Metrics
         
-        redis_client = get_redis_client()
+        redis_client = await get_redis_client()
         metrics = Metrics(redis_client)
         
         summary = await metrics.get_metrics_summary()
@@ -665,7 +643,7 @@ async def get_performance_report():
     try:
         from .performance_metrics import PerformanceMetrics
         
-        redis_client = get_redis_client()
+        redis_client = await get_redis_client()
         performance = PerformanceMetrics(redis_client)
         
         report = await performance.get_performance_report()

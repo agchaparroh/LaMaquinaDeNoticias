@@ -62,13 +62,13 @@ class SpiderFactoryConfig:
     # Spider Generation
     spider_output_dir: str = os.getenv(
         "SPIDER_OUTPUT_DIR", 
-        "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/src/module_scraper/scraper_core/spiders"
+        "/app/generated_spiders"
     )
     SPIDER_OUTPUT_PATH: str = spider_output_dir  # Alias para compatibilidad
     
     spider_template_dir: str = os.getenv(
         "SPIDER_TEMPLATE_DIR", 
-        "/mnt/c/Users/DELL/Desktop/PruebaWindsurfAI/LaMaquinaDeNoticias/src/spider_factory/templates"
+        "/app/templates"
     )
     
     # Batch Processing

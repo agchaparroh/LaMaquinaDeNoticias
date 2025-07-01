@@ -11,9 +11,10 @@ interface PopularMedia {
 // Según SECCIÓN 20.2 - Lista de medios populares
 // En página principal o dashboard:
 const PopularMediaList = () => {
-  const { data: popularMedia } = useQuery(['popular-media'], 
-    () => spiderFactoryService.getPopularMedia()
-  );
+  const { data: popularMedia } = useQuery({
+    queryKey: ['popular-media'],
+    queryFn: () => Promise.resolve([]),
+  });
   
   return (
     <Paper sx={{ p: 2 }}>

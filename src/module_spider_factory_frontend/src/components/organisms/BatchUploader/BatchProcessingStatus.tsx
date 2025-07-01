@@ -135,12 +135,11 @@ function BatchProcessingStatus({
           }
         ]}
         /* Según SECCIÓN 2.2 - Agregar funcionalidades de tabla */
-        pageSize={10}
-        rowsPerPageOptions={[10, 25, 50]}
+        paginationModel={{ page: 0, pageSize: 10 }}
+        pageSizeOptions={[10, 25, 50]}
         autoHeight
-        disableSelectionOnClick
         checkboxSelection
-        disableRowSelectionOnClick={false}
+        disableRowSelectionOnClick
       />
 
       <Global 

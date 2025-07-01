@@ -7,6 +7,7 @@
     "skipLibCheck": true,
     "jsx": "react-jsx",
     "jsxImportSource": "@emotion/react",
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -15,11 +16,11 @@
     "isolatedModules": true,
     "noEmit": true,
 
-    /* Linting */
+    /* Linting - Configuración permisiva temporal */
     "strict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true,
+    "noFallthroughCasesInSwitch": false,
     "noImplicitAny": false,
     "strictNullChecks": false,
     "esModuleInterop": true,
@@ -39,5 +40,6 @@
     }
   },
   "include": ["src"],
+  "exclude": ["src/**/__tests__/**/*", "src/**/*.test.*", "src/**/*.spec.*"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

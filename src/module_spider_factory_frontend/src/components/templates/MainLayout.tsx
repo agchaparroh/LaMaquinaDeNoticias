@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState } from 'react'
+import { AppNavigation } from '../navigation/AppNavigation'
 
 interface MainLayoutProps {
   children: ReactNode
@@ -52,11 +53,8 @@ function MainLayout({ children }: MainLayoutProps) {
 
   const drawer = (
     <Box sx={{ width: 250 }}>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Spider Factory 2.0
-        </Typography>
-      </Toolbar>
+      {/* Espaciado para AppNavigation + AppBar local */}
+      <Box sx={{ height: 64 + 48 }} /> 
       <List>
         {menuItems.map((item) => (
           <ListItem key={item.path} disablePadding>
@@ -75,14 +73,21 @@ function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <Box sx={{ display: 'flex' }}>
+      {/* Barra de navegación global */}
+      <AppNavigation currentApp="spider-factory" />
+      
+      {/* AppBar local para Spider Factory */}
       <AppBar
         position="fixed"
         sx={{
           width: { md: `calc(100% - 250px)` },
           ml: { md: `250px` },
+          top: 64, // Posiciona debajo de AppNavigation
+          zIndex: (theme) => theme.zIndex.drawer - 1,
+          backgroundColor: 'secondary.main'
         }}
       >
-        <Toolbar>
+        <Toolbar variant="dense">
           {isMobile && (
             <IconButton
               color="inherit"
@@ -94,8 +99,8 @@ function MainLayout({ children }: MainLayoutProps) {
               <MenuIcon />
             </IconButton>
           )}
-          <Typography variant="h6" noWrap component="div">
-            {menuItems.find(item => item.path === location.pathname)?.text || 'Spider Factory 2.0'}
+          <Typography variant="h6" noWrap component="div" sx={{ fontSize: '1rem' }}>
+            🕷️ {menuItems.find(item => item.path === location.pathname)?.text || 'Spider Factory'}
           </Typography>
         </Toolbar>
       </AppBar>
@@ -142,10 +147,10 @@ function MainLayout({ children }: MainLayoutProps) {
         sx={{
           flexGrow: 1,
           p: 3,
-          width: { md: `calc(100% - 250px)` }
+          width: { md: `calc(100% - 250px)` },
+          mt: { xs: 7, md: 14 } // Espacio para AppNavigation + AppBar local
         }}
       >
-        <Toolbar />
         <Container maxWidth="xl">
           {children}
         </Container>

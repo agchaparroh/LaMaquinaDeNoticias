@@ -34,7 +34,10 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, target, icon, col
 // Según SECCIÓN 15.1 - Dashboard de KPIs
 // Crear componente KPIDashboard.tsx:
 const KPIDashboard = () => {
-  const { data: metrics } = useQuery(['kpi-metrics'], fetchKPIMetrics);
+  const { data: metrics } = useQuery({
+    queryKey: ['kpi-metrics'],
+    queryFn: fetchKPIMetrics,
+  });
   
   return (
     <Grid container spacing={2}>
@@ -44,7 +47,7 @@ const KPIDashboard = () => {
           value={`${metrics?.tiempoReduccion || 0}%`}
           target="97%"
           icon={<SpeedIcon />}
-          color={metrics?.tiempoReduccion >= 97 ? 'success' : 'warning'}
+          color={(metrics?.tiempoReduccion ?? 0) >= 97 ? 'success' : 'warning'}
         />
       </Grid>
       <Grid item xs={12} md={3}>
@@ -53,7 +56,7 @@ const KPIDashboard = () => {
           value={`${metrics?.tiempoPromedioRSS || 0}s`}
           target="<5s"
           icon={<TimelineIcon />}
-          color={metrics?.tiempoPromedioRSS < 5 ? 'success' : 'warning'}
+          color={(metrics?.tiempoPromedioRSS ?? 0) < 5 ? 'success' : 'warning'}
         />
       </Grid>
       <Grid item xs={12} md={3}>
@@ -62,7 +65,7 @@ const KPIDashboard = () => {
           value={`${metrics?.precisionSpiders || 0}%`}
           target=">90%"
           icon={<SpeedIcon />}
-          color={metrics?.precisionSpiders > 90 ? 'success' : 'error'}
+          color={(metrics?.precisionSpiders ?? 0) > 90 ? 'success' : 'error'}
         />
       </Grid>
       <Grid item xs={12} md={3}>
@@ -71,7 +74,7 @@ const KPIDashboard = () => {
           value={`${metrics?.spidersPorDia || 0}`}
           target="200+"
           icon={<TimelineIcon />}
-          color={metrics?.spidersPorDia >= 200 ? 'success' : 'warning'}
+          color={(metrics?.spidersPorDia ?? 0) >= 200 ? 'success' : 'warning'}
         />
       </Grid>
     </Grid>

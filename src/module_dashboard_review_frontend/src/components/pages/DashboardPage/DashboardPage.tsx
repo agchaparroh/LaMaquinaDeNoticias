@@ -12,6 +12,7 @@ import { FilterHeader, HechosList } from '@/components/organisms';
 import { FeedbackSnackbar, type FeedbackSnackbarRef } from '@/components/molecules';
 import { useDashboard, useFilters, useFeedback } from '@/hooks/dashboard';
 import type { FilterState } from '@/types/domain';
+import { AppNavigation } from '../../navigation/AppNavigation';
 
 export const DashboardPage: React.FC = () => {
   // State management
@@ -104,15 +105,20 @@ export const DashboardPage: React.FC = () => {
   );
 
   return (
-    <Container 
-      maxWidth="xl" 
-      sx={{ 
-        py: { xs: 2, sm: 3, md: 4 },
-        px: { xs: 1, sm: 2, md: 3 },
-        backgroundColor: 'background.default',
-        minHeight: '100vh'
-      }}
-    >
+    <>
+      {/* Barra de navegación global */}
+      <AppNavigation currentApp="dashboard" />
+      
+      <Container 
+        maxWidth="xl" 
+        sx={{ 
+          py: { xs: 2, sm: 3, md: 4 },
+          px: { xs: 1, sm: 2, md: 3 },
+          backgroundColor: 'background.default',
+          minHeight: '100vh',
+          mt: { xs: 7, sm: 8 } // Margen superior para compensar AppBar fijo
+        }}
+      >
       {/* Header premium con gradiente sutil */}
       <Paper
         elevation={0}
@@ -279,5 +285,6 @@ export const DashboardPage: React.FC = () => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       />
     </Container>
+    </>
   );
 };

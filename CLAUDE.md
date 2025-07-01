@@ -30,20 +30,24 @@
 **La Máquina de Noticias** is a modular system for automated news collection, processing, and analysis. It's designed for journalists to extract structured knowledge from large volumes of text using artificial intelligence.
 
 **Current Status**: MVP FUNCTIONAL ✅
-- 6 fully implemented modules covering the complete flow from collection to presentation
-- Production-ready with Docker containerization
-- Integrated with Supabase for data persistence
+- 8 fully implemented modules covering the complete flow from collection to presentation
+- Production-ready with Docker containerization and service orchestration
+- Integrated with Supabase for data persistence and pgvector for semantic search
+- Spider Factory for intelligent spider generation and deployment
+- Scrapyd/ScrapydWeb for advanced spider management and monitoring
 
 ## 🏗️ Architecture
 
 The project follows a **microservices architecture** with Docker containers communicating via REST APIs:
 
 ```
-🕷️ module_scraper → 🔗 module_connector → ⚙️ module_pipeline → 🔧 module_dashboard_backend → 📱 module_dashboard_frontend
-                                                    ↓
-                                            🗄️ Supabase (PostgreSQL + Storage)
-                                                    ↓
-                                            🤖 AI/LLMs (Groq/Anthropic)
+🤖 spider_factory → 📡 scrapyd → 🕷️ module_scraper → 🔗 module_connector → ⚙️ module_pipeline
+       ↓                ↓                                        ↓
+📱 spider_factory_ui   🎛️ scrapydweb                      🗄️ Supabase (PostgreSQL + pgvector)
+       ↓                                                          ↓
+🔄 Redis Cache ←→ 🌐 nginx_reverse_proxy ←→ 📱 dashboard_frontend ← 🔧 dashboard_backend
+                                                                            ↓
+                                                                   🤖 AI/LLMs (Groq/Anthropic)
 ```
 
 ### Key Modules
@@ -56,16 +60,16 @@ The project follows a **microservices architecture** with Docker containers comm
 | **module_dashboard_review_backend** | Python 3.9 + FastAPI | 8004 | Backend API for editorial dashboard |
 | **module_dashboard_review_frontend** | React 18 + TypeScript + Vite | 3001→80 | Frontend UI for journalists |
 | **nginx_reverse_proxy** | Nginx 1.25 Alpine | 80, 443 | Reverse proxy and load balancer |
-| **spider_factory** | Python 3.9 + FastAPI + Redis | 8005 | Intelligent spider generation |
+| **spider_factory** | Python 3.9 + FastAPI + Redis | 8000 | Intelligent spider generation |
 | **module_spider_factory_frontend** | React 18 + TypeScript + Vite | 3002→80 | UI for spider generation |
 
-### Upcoming Services (Sistema Renovado de Scraping)
+### Infrastructure Services
 
 | Service | Technology | Port | Purpose | Status |
 |---------|------------|------|---------|--------|
-| **Scrapyd** | Python + Twisted | 6800 | Spider deployment server | 📅 Planned |
-| **ScrapydWeb** | Python + Flask | 5000 | Management dashboard | 📅 Planned |
-| **Redis** | Redis 7 Alpine | 6379 | Multi-level cache system | 📅 Planned |
+| **Scrapyd** | Python + Twisted | 6800 | Spider deployment server | ✅ **Implemented** |
+| **ScrapydWeb** | Python + Flask | 5000 | Management dashboard | ✅ **Implemented** |
+| **Redis** | Redis 7 Alpine | 6379 | Multi-level cache system | ✅ **Implemented** |
 
 ## 📁 Project Structure
 
@@ -161,6 +165,11 @@ ENVIRONMENT="development"  # development, staging, production
 # Spider Factory (required for spider generation)
 FIRECRAWL_API_KEY="fc_your-api-key"  # For web analysis
 SPIDER_FACTORY_REDIS_HOST="redis"  # Shared Redis instance
+
+# Scrapyd and Advanced Scraping (required for spider deployment)
+SCRAPYDWEB_USERNAME="admin"      # ScrapydWeb user (change in production)
+SCRAPYDWEB_PASSWORD=""           # Secure password required
+REDIS_URL="redis://redis:6379"  # Shared cache system
 ```
 
 ### Optional Variables
@@ -171,24 +180,21 @@ ANTHROPIC_API_KEY=""     # For advanced features
 OPENAI_API_KEY=""        # OpenAI models
 PERPLEXITY_API_KEY=""    # Research capabilities
 
-# Scraping System
-REDIS_URL="redis://redis:6379"  # Shared cache system
+# Advanced Scraping Monitoring
+SMTP_HOST=""             # SMTP server for Spidermon alerts
+SMTP_PORT="587"          # SMTP port
+SMTP_USER=""             # SMTP username
+SMTP_PASSWORD=""         # SMTP password
+SMTP_FROM=""             # From email address
+SMTP_TO=""               # Alert recipient email
 
 # Monitoring
 SENTRY_DSN=""            # Error tracking
 SLACK_WEBHOOK=""         # Notifications
 
-# ScrapydWeb Configuration
-SCRAPYDWEB_USERNAME="admin"      # Change in production
-SCRAPYDWEB_PASSWORD=""           # Set secure password
-
-# SMTP for Spidermon Alerts
-SMTP_HOST=""
-SMTP_PORT="587"
-SMTP_USER=""
-SMTP_PASSWORD=""
-SMTP_FROM=""
-SMTP_TO=""
+# Environment Configuration
+ENVIRONMENT="development"        # development, staging, production
+DEBUG_MODE="false"              # Set to true only for development
 ```
 
 ## 🔧 Common Commands
@@ -276,8 +282,11 @@ python run_e2e_tests.py
 | Pipeline API | module_pipeline:8003 | http://localhost:8003 | /docs |
 | Dashboard API | module_dashboard_review_backend:8004 | http://localhost:8004 | /docs |
 | Frontend UI | module_dashboard_review_frontend:80 | http://localhost:3001 | N/A |
-| Spider Factory API | spider_factory:8000 | http://localhost:8005 | /docs |
-| Spider Factory UI | module_spider_factory_frontend:80 | http://localhost:3002 | N/A |
+| Spider Factory API | spider_factory_backend:8000 | http://localhost:8005 | /docs |
+| Spider Factory UI | spider_factory_frontend:80 | http://localhost:3002 | N/A |
+| Scrapyd API | scrapyd:6800 | http://localhost:6800 | /daemonstatus.json |
+| ScrapydWeb Dashboard | scrapydweb:5000 | http://localhost:5000 | Complete dashboard |
+| Redis Cache | redis:6379 | localhost:6379 | N/A |
 
 ### Health Checks
 
@@ -287,6 +296,18 @@ curl http://localhost:8003/health
 
 # Dashboard API health
 curl http://localhost:8004/health
+
+# Spider Factory health
+curl http://localhost:8005/health
+
+# Scrapyd status
+curl http://localhost:6800/daemonstatus.json
+
+# ScrapydWeb health
+curl http://localhost:5000
+
+# Redis ping
+redis-cli -h localhost -p 6379 ping
 
 # Detailed health status
 curl http://localhost:8003/health/detailed
@@ -309,6 +330,8 @@ Key features:
 - Partitioned tables for scalability
 - Materialized views for performance
 - Automated monitoring and alerts
+- Advanced indexing for spider metadata and performance tracking
+- Integration with Redis for caching frequently accessed data
 
 ## 🔍 Common Workflows
 
@@ -316,10 +339,13 @@ Key features:
 
 ```bash
 # The flow is automated, but you can monitor it:
-# 1. Scraper collects article → saved to Supabase
-# 2. Connector detects new article → sends to pipeline
-# 3. Pipeline processes with AI → extracts entities, facts, quotes
-# 4. Results saved to Supabase → available in dashboard
+# 1. Spider Factory analyzes target site → generates intelligent spider
+# 2. Spider deployed to Scrapyd → scheduled for execution
+# 3. Scraper executes spider → collects articles
+# 4. Connector detects new articles → sends to pipeline
+# 5. Pipeline processes with AI → extracts entities, facts, quotes
+# 6. Results saved to Supabase → available in dashboard
+# 7. ScrapydWeb provides monitoring and management interface
 ```
 
 ### 2. Viewing Processing Status
@@ -328,11 +354,20 @@ Key features:
 # Check pipeline status
 curl http://localhost:8003/monitoring/pipeline-status
 
-# View metrics
-curl http://localhost:8003/metrics
+# View spider factory metrics
+curl http://localhost:8005/metrics
 
-# Access dashboard
+# Check Scrapyd status
+curl http://localhost:6800/daemonstatus.json
+
+# View ScrapydWeb dashboard
+open http://localhost:5000
+
+# Access main dashboard
 open http://localhost:3001
+
+# Access spider factory UI
+open http://localhost:3002
 ```
 
 ### 3. Debugging Issues
@@ -340,13 +375,23 @@ open http://localhost:3001
 ```bash
 # Check service logs
 docker-compose logs -f module_pipeline
+docker-compose logs -f spider_factory_backend
+docker-compose logs -f scrapyd
+docker-compose logs -f scrapydweb
 
 # Run health checks
 curl http://localhost:8003/health/detailed
+curl http://localhost:8005/health
 
 # Check database connection
 cd src/module_pipeline
 python scripts/test_connections.py
+
+# Test Redis connection
+redis-cli -h localhost -p 6379 ping
+
+# Check spider generation
+curl -X POST http://localhost:8005/api/analyze -H "Content-Type: application/json" -d '{"url": "https://example.com"}'
 ```
 
 ## 🚨 Troubleshooting
@@ -356,6 +401,11 @@ python scripts/test_connections.py
 | `ModuleNotFoundError` | Dependencies not installed | `pip install -r requirements.txt` |
 | `Connection refused Supabase` | Invalid credentials | Verify `.env` file |
 | `Groq API Error` | Invalid API key | Check `GROQ_API_KEY` |
+| `Firecrawl API Error` | Invalid API key | Check `FIRECRAWL_API_KEY` |
+| `Redis connection failed` | Redis not started | `docker-compose up redis` |
+| `Scrapyd not responding` | Service not started | `docker-compose restart scrapyd` |
+| `Spider generation fails` | Spider Factory misconfigured | Check Redis and API keys |
+| `ScrapydWeb access denied` | Authentication required | Set `SCRAPYDWEB_PASSWORD` |
 | `Port already in use` | Port conflict | Change ports in `docker-compose.yml` |
 | `Permission denied` | Docker permissions | Use `sudo docker-compose` |
 
@@ -366,8 +416,10 @@ python scripts/test_connections.py
 - **Module-specific docs**: `src/module_*/README.md`
 - **Migration Guide**: `BaseDeDatos_SUPABASE/migrations/MIGRATION_GUIDE.md`
 - **API Documentation**: Access `/docs` endpoint on running services
-- **Scraping System Renovation**: `Investigación/Conclusiones` folder contains all key decisions
-- **CPMS Documentation**: `CPMS-Workspace/docs/CPMS-Sistema-Gestion-Proyectos-Claude.md`
+- **Spider Factory Guide**: `src/spider_factory/README.md`
+- **Spider Factory API**: `src/spider_factory/docs/API_DOCUMENTATION.md`
+- **Scrapyd Integration**: `src/module_scraper/docs/SCRAPYD_SPIDERMON_OVERVIEW.md`
+- **CPMS Documentation**: `CPMS3/` folder for project management system
 
 ## 🔐 Security Notes
 

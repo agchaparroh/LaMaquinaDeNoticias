@@ -79,7 +79,7 @@ class SpiderGenerator:
             templates_dir: Directorio de templates (default: ./templates)
         """
         if templates_dir is None:
-            templates_dir = Path(__file__).parent / "templates"
+            templates_dir = Path(__file__).parent.parent / "templates" / "spiders"
         
         self.templates_dir = Path(templates_dir)
         
@@ -264,8 +264,7 @@ class SpiderGenerator:
         template_map = {
             AnalysisStrategy.RSS: "rss_spider.j2",
             AnalysisStrategy.SCRAPING: "scraping_spider.j2",
-            AnalysisStrategy.PLAYWRIGHT: "playwright_spider.j2",
-            AnalysisStrategy.API: "api_spider.j2"
+            AnalysisStrategy.PLAYWRIGHT: "playwright_spider.j2"
         }
         
         return template_map.get(strategy, "scraping_spider.j2")

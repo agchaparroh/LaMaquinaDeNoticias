@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme } from '@mui/material';
 import { esES } from '@mui/material/locale';
 
 // Tema personalizado para hacer la interfaz más amigable
@@ -95,10 +95,10 @@ const customTheme = createTheme({
             boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
           }
         },
-        large: {
-          padding: '12px 24px',
-          fontSize: '1rem'
-        }
+        // large: {
+        //   padding: '12px 24px',
+        //   fontSize: '1rem'
+        // }
       }
     },
     // TextField más amigable

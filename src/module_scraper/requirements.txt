@@ -43,3 +43,6 @@ defusedxml==0.7.1  # Secure XML parsing to prevent XML bombs and entity expansio
 
 # Slack integration for Spidermon
 slack_sdk>=3.0.0
+
+# RSS feed parsing
+feedparser==6.0.11

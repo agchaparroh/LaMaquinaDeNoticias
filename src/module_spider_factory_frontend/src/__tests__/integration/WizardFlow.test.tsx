@@ -6,7 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from '../../App';
 import { setupServer } from 'msw/node';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 
 // Según SECCIÓN 8.4 - Tests de integración
 // Flujo completo del wizard
@@ -14,35 +14,31 @@ import { rest } from 'msw';
 // WebSocket updates
 
 const server = setupServer(
-  rest.post('/api/analyze', (req, res, ctx) => {
-    return res(
-      ctx.delay(100),
-      ctx.json({
-        strategy: 'rss',
-        confidence: 0.95,
-        rss_url: 'https://example.com/rss',
-        needs_javascript: false,
-        sample_articles: [
-          {
-            title: 'Test Article',
-            date: '2023-01-01',
-            excerpt: 'Test excerpt'
-          }
-        ]
-      })
-    );
+  http.post('/api/analyze', async () => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return HttpResponse.json({
+      strategy: 'rss',
+      confidence: 0.95,
+      rss_url: 'https://example.com/rss',
+      needs_javascript: false,
+      sample_articles: [
+        {
+          title: 'Test Article',
+          date: '2023-01-01',
+          excerpt: 'Test excerpt'
+        }
+      ]
+    });
   }),
 
-  rest.post('/api/generate', (req, res, ctx) => {
-    return res(
-      ctx.delay(200),
-      ctx.json({
-        spider_name: 'elpais_internacional',
-        file_path: '/spiders/elpais_internacional.py',
-        code_preview: 'import scrapy\n\nclass ElPaisSpider(scrapy.Spider)...',
-        is_valid: true
-      })
-    );
+  http.post('/api/generate', async () => {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return HttpResponse.json({
+      spider_name: 'elpais_internacional',
+      file_path: '/spiders/elpais_internacional.py',
+      code_preview: 'import scrapy\n\nclass ElPaisSpider(scrapy.Spider)...',
+      is_valid: true
+    });
   })
 );
 

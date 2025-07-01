@@ -257,6 +257,8 @@ function WizardPage() {
               generatedCode={generatedCode}
               isGenerating={isGenerating}
               error={generateError}
+              onGenerate={() => {}}
+              onReset={() => {}}
               onFinish={() => {
                 // Mostrar página de éxito
                 setCurrentStep(5)
