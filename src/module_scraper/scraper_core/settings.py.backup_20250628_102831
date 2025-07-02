@@ -41,7 +41,7 @@ NEWSPIDER_MODULE = "scraper_core.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = "LaMaquinaDeNoticias/1.0 (+https://github.com/lamaquina)"
+USER_AGENT = "MonitorPersonalPeriodistico/1.0 (Uso profesional individual)"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True

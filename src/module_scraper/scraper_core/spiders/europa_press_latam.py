@@ -42,10 +42,11 @@ class EuropaPressLatamSpider(scrapy.Spider):
     custom_settings = {
         'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
         'ROBOTSTXT_OBEY': False,  # Deshabilitado para feeds RSS
-        'CONCURRENT_REQUESTS': 1,
-        'CONCURRENT_REQUESTS_PER_DOMAIN': 1,
-        'DOWNLOAD_DELAY': 3,
+        'CONCURRENT_REQUESTS': 6,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 3,
+        'DOWNLOAD_DELAY': 1.5,
         'RANDOMIZE_DOWNLOAD_DELAY': 0.5,
+        'AUTOTHROTTLE_TARGET_CONCURRENCY': 2.0,
         'COOKIES_ENABLED': True,
         'RETRY_ENABLED': True,
         'RETRY_TIMES': 3,
