@@ -5,10 +5,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Directory paths
-SCRAPER_OUTPUT_DIR = os.getenv('SCRAPER_OUTPUT_DIR', '/data/scrapy_output/pending')
-PIPELINE_PENDING_DIR = os.getenv('PIPELINE_PENDING_DIR', '/data/pipeline_input/pending')
-PIPELINE_COMPLETED_DIR = os.getenv('PIPELINE_COMPLETED_DIR', '/data/pipeline_input/completed')
-PIPELINE_ERROR_DIR = os.getenv('PIPELINE_ERROR_DIR', '/data/pipeline_input/error')
+SCRAPER_OUTPUT_DIR = os.getenv('SCRAPER_OUTPUT_DIR', '/pruebas_pipeline/scrapy_output/pending')
+PIPELINE_PENDING_DIR = os.getenv('PIPELINE_PENDING_DIR', '/pruebas_pipeline/pipeline_input/pending')
+PIPELINE_COMPLETED_DIR = os.getenv('PIPELINE_COMPLETED_DIR', '/pruebas_pipeline/pipeline_input/completed')
+PIPELINE_ERROR_DIR = os.getenv('PIPELINE_ERROR_DIR', '/pruebas_pipeline/pipeline_input/error')
 
 # API configuration
 PIPELINE_API_URL = os.getenv('PIPELINE_API_URL', 'http://module_pipeline:8003')

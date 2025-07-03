@@ -1,0 +1,401 @@
+# CPMS3 Execution Plan - Pipeline Automático ULTRA-OPTIMIZADO
+# Solo lo estrictamente necesario + corrección de métricas específicas
+
+meta:
+  id: "PIPELINE-AUTO-ULTRAOPT-001"
+  name: "Pipeline Automático Ultra-Optimizado - Solo lo Necesario"
+  goal: "Implementar ÚNICAMENTE dual output y métricas específicas exactas (spider_stats.json, content_quality.json, pipeline_timing.json, error_analysis.json)"
+  version: "3.0"
+  created: "2025-01-02"
+
+config:
+  base_path: "/home/alvaro/proyectos/claude/LaMaquinaDeNoticias"
+  staging_dir: ".cpms3_staging"
+  max_retries: 3
+  command_timeout: 300
+  mode: "strict"
+
+constants:
+  python_cmd: "python3"
+  pipeline_dir: "src/module_pipeline/src"
+  env_file: ".env.example"
+
+steps:
+  # ========================================
+  # PASO 1: Variables de entorno exactas
+  # ========================================
+  - id: "STEP-001"
+    description: "Añadir variables Pipeline Automático al .env.example"
+    action: "modify_file"
+    path: ".env.example"
+    changes:
+      - find: |
+          # =============================================================================
+          # CONFIGURACIÓN ESPECÍFICA POR MÓDULO
+          # =============================================================================
+        replace: |
+          # =============================================================================
+          # PIPELINE AUTOMÁTICO CON MODO DE DESARROLLO
+          # =============================================================================
+          DEVELOPMENT_MODE="false"                          # true = archivos locales, false = Supabase
+          ENABLE_PIPELINE_EXPORT="false"                   # true = habilitar pipeline completo
+          SCRAPY_OUTPUT_DIR="/data/scrapy_output/pending"   # Directorio connector
+          DEVELOPMENT_OUTPUT_DIR="/data/development_outputs" # Directorio desarrollo
+          PIPELINE_API_URL="http://module_pipeline:8003"   # URL pipeline API
+
+          # =============================================================================
+          # CONFIGURACIÓN ESPECÍFICA POR MÓDULO
+          # =============================================================================
+    verify:
+      - type: "file_contains"
+        path: ".env.example"
+        text: "DEVELOPMENT_MODE"
+      - type: "file_contains"
+        path: ".env.example"
+        text: "/data/development_outputs"
+
+  # ========================================
+  # PASO 2: Estructura directorios exacta
+  # ========================================
+  - id: "STEP-002"
+    description: "Crear estructura /data/development_outputs/ exacta"
+    action: "run_command"
+    command: "mkdir -p /data/development_outputs/01_articulos_extraidos/por_spider /data/development_outputs/01_articulos_extraidos/por_fecha /data/development_outputs/02_fases_pipeline/fase_1_triaje/idioma_detectado /data/development_outputs/02_fases_pipeline/fase_1_triaje/relevancia_evaluada /data/development_outputs/02_fases_pipeline/fase_1_triaje/contenido_limpio /data/development_outputs/02_fases_pipeline/fase_2_elementos_basicos/hechos_extraidos /data/development_outputs/02_fases_pipeline/fase_2_elementos_basicos/entidades_identificadas /data/development_outputs/02_fases_pipeline/fase_2_elementos_basicos/clasificacion_asignada /data/development_outputs/02_fases_pipeline/fase_3_citas_datos/citas_textuales /data/development_outputs/02_fases_pipeline/fase_3_citas_datos/datos_cuantitativos /data/development_outputs/02_fases_pipeline/fase_3_citas_datos/fuentes_referenciadas /data/development_outputs/02_fases_pipeline/fase_4_normalizacion/entidades_vinculadas /data/development_outputs/02_fases_pipeline/fase_4_normalizacion/relaciones_detectadas /data/development_outputs/02_fases_pipeline/fase_4_normalizacion/metadatos_enriquecidos /data/development_outputs/03_resultados_finales/exitosos /data/development_outputs/03_resultados_finales/fallidos /data/development_outputs/03_resultados_finales/fallidos/logs_errores /data/development_outputs/04_metricas_rendimiento /data/development_outputs/05_comparativas/antes_vs_despues /data/development_outputs/05_comparativas/calidad_contenido /data/development_outputs/05_comparativas/efectividad_llm"
+    working_dir: "/"
+    verify:
+      - type: "command_succeeds"
+        command: "test -d /data/development_outputs/04_metricas_rendimiento"
+
+  # ========================================
+  # PASO 3: development_storage.py con métricas EXACTAS
+  # ========================================
+  - id: "STEP-003"
+    description: "Crear development_storage.py con archivos de métricas EXACTOS según especificación"
+    action: "create_file"
+    path: "src/module_pipeline/src/services/development_storage.py"
+    content: |
+      """
+      Servicio de almacenamiento para modo de desarrollo
+      Genera archivos de métricas EXACTOS según especificación:
+      - spider_stats.json
+      - content_quality.json  
+      - pipeline_timing.json
+      - error_analysis.json
+      """
+      
+      import os
+      import json
+      import uuid
+      from datetime import datetime
+      from pathlib import Path
+      from typing import Dict, Any, List
+      
+      from ..core.logging_config import logger
+      
+      
+      class DevelopmentStorageService:
+          """Almacenamiento desarrollo con métricas EXACTAS especificadas"""
+          
+          def __init__(self, output_dir: str = "/data/development_outputs"):
+              self.output_dir = Path(output_dir)
+              self._ensure_directory_structure()
+              self._init_metrics_files()
+              logger.info(f"DevelopmentStorageService inicializado: {self.output_dir}")
+          
+          def _ensure_directory_structure(self):
+              """Crear estructura exacta de directorios"""
+              directories = [
+                  "01_articulos_extraidos/por_fecha",
+                  "02_fases_pipeline/fase_1_triaje/contenido_limpio",
+                  "02_fases_pipeline/fase_2_elementos_basicos/hechos_extraidos",
+                  "02_fases_pipeline/fase_2_elementos_basicos/entidades_identificadas",
+                  "02_fases_pipeline/fase_3_citas_datos/citas_textuales",
+                  "02_fases_pipeline/fase_4_normalizacion/relaciones_detectadas",
+                  "03_resultados_finales/exitosos",
+                  "03_resultados_finales/fallidos",
+                  "04_metricas_rendimiento",
+                  "05_comparativas"
+              ]
+              
+              for directory in directories:
+                  (self.output_dir / directory).mkdir(parents=True, exist_ok=True)
+          
+          def _init_metrics_files(self):
+              """Inicializar archivos de métricas EXACTOS según especificación"""
+              metrics_dir = self.output_dir / "04_metricas_rendimiento"
+              
+              # spider_stats.json
+              spider_stats_file = metrics_dir / "spider_stats.json"
+              if not spider_stats_file.exists():
+                  with open(spider_stats_file, 'w') as f:
+                      json.dump({{spiders: {{}}, last_updated: datetime.now().isoformat()}}, f, indent=2)
+              
+              # content_quality.json  
+              content_quality_file = metrics_dir / "content_quality.json"
+              if not content_quality_file.exists():
+                  with open(content_quality_file, 'w') as f:
+                      json.dump({"quality_metrics": [], "last_updated": datetime.now().isoformat()}, f, indent=2)
+              
+              # pipeline_timing.json
+              pipeline_timing_file = metrics_dir / "pipeline_timing.json"
+              if not pipeline_timing_file.exists():
+                  with open(pipeline_timing_file, 'w') as f:
+                      json.dump({"timing_data": [], "last_updated": datetime.now().isoformat()}, f, indent=2)
+              
+              # error_analysis.json
+              error_analysis_file = metrics_dir / "error_analysis.json"
+              if not error_analysis_file.exists():
+                  with open(error_analysis_file, 'w') as f:
+                      json.dump({"errors": [], "last_updated": datetime.now().isoformat()}, f, indent=2)
+          
+          def insertar_fragmento_completo(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+              """Almacenar fragmento y actualizar métricas EXACTAS"""
+              try:
+                  timestamp = datetime.now().isoformat()
+                  fragmento_id = str(uuid.uuid4())
+                  fecha = datetime.now().strftime('%Y-%m-%d')
+                  
+                  resultado = {
+                      "fragmento_id": fragmento_id,
+                      "timestamp": timestamp,
+                      "modo": "desarrollo",
+                      "archivos_creados": [],
+                      "exito": True,
+                      "errores": []
+                  }
+                  
+                  # 1. Guardar artículo extraído
+                  articulo_file = self._save_articulo_extraido(payload, fragmento_id, timestamp, fecha)
+                  resultado["archivos_creados"].append(articulo_file)
+                  
+                  # 2. Guardar fases pipeline
+                  fases_files = self._save_fases_pipeline(payload, fragmento_id, timestamp)
+                  resultado["archivos_creados"].extend(fases_files)
+                  
+                  # 3. Guardar resultado final
+                  resultado_file = self._save_resultado_final(payload, fragmento_id, timestamp)
+                  resultado["archivos_creados"].append(resultado_file)
+                  
+                  # 4. Actualizar métricas EXACTAS según especificación
+                  self._update_exact_metrics(payload, fragmento_id, timestamp)
+                  
+                  logger.info(f"Fragmento {fragmento_id} almacenado con métricas exactas")
+                  return resultado
+                  
+              except Exception as e:
+                  logger.error(f"Error almacenando fragmento: {str(e)}")
+                  return {
+                      "fragmento_id": None,
+                      "timestamp": timestamp,
+                      "modo": "desarrollo", 
+                      "archivos_creados": [],
+                      "exito": False,
+                      "errores": [str(e)]
+                  }
+          
+          def _save_articulo_extraido(self, payload: Dict, fragmento_id: str, timestamp: str, fecha: str) -> str:
+              """Guardar en 01_articulos_extraidos/por_fecha/"""
+              fecha_dir = self.output_dir / "01_articulos_extraidos" / "por_fecha" / fecha
+              fecha_dir.mkdir(parents=True, exist_ok=True)
+              
+              articulo_data = {
+                  "fragmento_id": fragmento_id,
+                  "timestamp": timestamp,
+                  "contenido_original": payload.get("contenido_original", ""),
+                  "titulo": payload.get("titulo", ""),
+                  "url": payload.get("url", ""),
+                  "fuente": payload.get("fuente", "")
+              }
+              
+              filename = f"articulo_{fragmento_id}.json"
+              file_path = fecha_dir / filename
+              
+              with open(file_path, 'w', encoding='utf-8') as f:
+                  json.dump(articulo_data, f, ensure_ascii=False, indent=2)
+              
+              return str(file_path.relative_to(self.output_dir))
+          
+          def _save_fases_pipeline(self, payload: Dict, fragmento_id: str, timestamp: str) -> List[str]:
+              """Guardar outputs de fases en 02_fases_pipeline/"""
+              files_created = []
+              
+              # Fase 2: Entidades
+              if "entidades" in payload:
+                  entidades_dir = self.output_dir / "02_fases_pipeline" / "fase_2_elementos_basicos" / "entidades_identificadas"
+                  entidades_file = entidades_dir / f"entidades_{fragmento_id}.json"
+                  with open(entidades_file, 'w', encoding='utf-8') as f:
+                      json.dump({"fragmento_id": fragmento_id, "entidades": payload["entidades"]}, f, ensure_ascii=False, indent=2)
+                  files_created.append(str(entidades_file.relative_to(self.output_dir)))
+              
+              # Fase 2: Hechos
+              if "hechos" in payload:
+                  hechos_dir = self.output_dir / "02_fases_pipeline" / "fase_2_elementos_basicos" / "hechos_extraidos"
+                  hechos_file = hechos_dir / f"hechos_{fragmento_id}.json"
+                  with open(hechos_file, 'w', encoding='utf-8') as f:
+                      json.dump({"fragmento_id": fragmento_id, "hechos": payload["hechos"]}, f, ensure_ascii=False, indent=2)
+                  files_created.append(str(hechos_file.relative_to(self.output_dir)))
+              
+              # Fase 3: Citas
+              if "citas" in payload:
+                  citas_dir = self.output_dir / "02_fases_pipeline" / "fase_3_citas_datos" / "citas_textuales"
+                  citas_file = citas_dir / f"citas_{fragmento_id}.json"
+                  with open(citas_file, 'w', encoding='utf-8') as f:
+                      json.dump({"fragmento_id": fragmento_id, "citas": payload["citas"]}, f, ensure_ascii=False, indent=2)
+                  files_created.append(str(citas_file.relative_to(self.output_dir)))
+              
+              return files_created
+          
+          def _save_resultado_final(self, payload: Dict, fragmento_id: str, timestamp: str) -> str:
+              """Guardar en 03_resultados_finales/"""
+              has_errors = bool(payload.get("errores") or payload.get("error_detalle"))
+              subfolder = "fallidos" if has_errors else "exitosos"
+              
+              resultado_dir = self.output_dir / "03_resultados_finales" / subfolder
+              resultado_file = resultado_dir / f"resultado_{fragmento_id}.json"
+              
+              resultado_data = {
+                  "fragmento_id": fragmento_id,
+                  "timestamp": timestamp,
+                  "payload_completo": payload,
+                  "estado": "fallido" if has_errors else "exitoso"
+              }
+              
+              with open(resultado_file, 'w', encoding='utf-8') as f:
+                  json.dump(resultado_data, f, ensure_ascii=False, indent=2)
+              
+              return str(resultado_file.relative_to(self.output_dir))
+          
+          def _update_exact_metrics(self, payload: Dict, fragmento_id: str, timestamp: str):
+              """Actualizar archivos de métricas EXACTOS según especificación"""
+              metrics_dir = self.output_dir / "04_metricas_rendimiento"
+              
+              # 1. content_quality.json
+              content_quality_file = metrics_dir / "content_quality.json"
+              with open(content_quality_file, 'r+') as f:
+                  data = json.load(f)
+                  data["quality_metrics"].append({
+                      "fragmento_id": fragmento_id,
+                      "timestamp": timestamp,
+                      "longitud_contenido": len(payload.get("contenido_original", "")),
+                      "entidades_count": len(payload.get("entidades", [])),
+                      "hechos_count": len(payload.get("hechos", [])),
+                      "citas_count": len(payload.get("citas", [])),
+                      "tiene_errores": bool(payload.get("errores")),
+                      "importancia": payload.get("importancia", 5)
+                  })
+                  data["last_updated"] = timestamp
+                  f.seek(0)
+                  json.dump(data, f, ensure_ascii=False, indent=2)
+                  f.truncate()
+              
+              # 2. spider_stats.json
+              spider_stats_file = metrics_dir / "spider_stats.json"
+              fuente = payload.get("fuente", "unknown")
+              with open(spider_stats_file, 'r+') as f:
+                  data = json.load(f)
+                  if fuente not in data["spiders"]:
+                      data["spiders"][fuente] = {"total_articles": 0, "successful": 0, "failed": 0}
+                  data["spiders"][fuente]["total_articles"] += 1
+                  if payload.get("errores"):
+                      data["spiders"][fuente]["failed"] += 1
+                  else:
+                      data["spiders"][fuente]["successful"] += 1
+                  data["last_updated"] = timestamp
+                  f.seek(0)
+                  json.dump(data, f, ensure_ascii=False, indent=2)
+                  f.truncate()
+              
+              # 3. error_analysis.json (si hay errores)
+              if payload.get("errores") or payload.get("error_detalle"):
+                  error_analysis_file = metrics_dir / "error_analysis.json"
+                  with open(error_analysis_file, 'r+') as f:
+                      data = json.load(f)
+                      data["errors"].append({
+                          "fragmento_id": fragmento_id,
+                          "timestamp": timestamp,
+                          "fuente": payload.get("fuente", ""),
+                          "errores": payload.get("errores", []),
+                          "error_detalle": payload.get("error_detalle", "")
+                      })
+                      data["last_updated"] = timestamp
+                      f.seek(0)
+                      json.dump(data, f, ensure_ascii=False, indent=2)
+                      f.truncate()
+    verify:
+      - type: "file_exists"
+        path: "src/module_pipeline/src/services/development_storage.py"
+      - type: "file_contains"
+        path: "src/module_pipeline/src/services/development_storage.py"
+        text: "spider_stats.json"
+      - type: "file_contains"
+        path: "src/module_pipeline/src/services/development_storage.py"
+        text: "content_quality.json"
+      - type: "syntax_valid"
+        language: "python"
+        path: "src/module_pipeline/src/services/development_storage.py"
+
+  # ========================================
+  # PASO 4: Dual output en controller.py
+  # ========================================
+  - id: "STEP-004"
+    description: "Modificar controller.py para dual output"
+    action: "modify_file"
+    path: "src/module_pipeline/src/controller.py"
+    backup: true
+    changes:
+      - find: |
+          resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
+        replace: |
+          # DUAL OUTPUT: Desarrollo vs Producción
+          if os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true':
+              from .services.development_storage import DevelopmentStorageService
+              dev_storage = DevelopmentStorageService(os.getenv('DEVELOPMENT_OUTPUT_DIR', '/data/development_outputs'))
+              resultado_persistencia = dev_storage.insertar_fragmento_completo(payload_dict)
+              logger.info(f"💾 DESARROLLO: Fragmento guardado con métricas exactas")
+          else:
+              resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
+              logger.info("🚀 PRODUCCIÓN: Fragmento guardado en Supabase")
+    verify:
+      - type: "file_contains"
+        path: "src/module_pipeline/src/controller.py"
+        text: "DEVELOPMENT_MODE"
+      - type: "syntax_valid"
+        language: "python"
+        path: "src/module_pipeline/src/controller.py"
+
+  # ========================================
+  # PASO 5: Añadir import os
+  # ========================================
+  - id: "STEP-005"
+    description: "Añadir import os en controller.py"
+    action: "modify_file"
+    path: "src/module_pipeline/src/controller.py"
+    changes:
+      - find: |
+          import uuid
+          import asyncio
+          from datetime import datetime
+        replace: |
+          import os
+          import uuid
+          import asyncio
+          from datetime import datetime
+    verify:
+      - type: "file_contains"
+        path: "src/module_pipeline/src/controller.py"
+        text: "import os"
+
+rollback:
+  enabled: true
+  steps:
+    - action: "restore_from_backup"
+      pattern: "*.py"
+
+final_validation:
+  - type: "goal_achieved"
+    checks:
+      - "Variables de entorno exactas añadidas"
+      - "Estructura /data/development_outputs/ creada"
+      - "development_storage.py con métricas EXACTAS (spider_stats.json, content_quality.json, pipeline_timing.json, error_analysis.json)"
+      - "Controller.py con dual output funcional"
+      - "Sintaxis Python válida"

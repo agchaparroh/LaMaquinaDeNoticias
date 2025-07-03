@@ -41,23 +41,20 @@ NEWSPIDER_MODULE = "scraper_core.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = "MonitorPersonalPeriodistico/1.0 (Uso profesional individual)"
+USER_AGENT = "LaMaquinaDeNoticias/1.0 (+https://github.com/lamaquina)"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-# OPTIMIZADO: Aumentado para RSS feeds
-CONCURRENT_REQUESTS = 16
+CONCURRENT_REQUESTS = 8
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-# OPTIMIZADO: Reducido para RSS feeds
-DOWNLOAD_DELAY = 1.5
+DOWNLOAD_DELAY = 2
 # The download delay setting will honor only one of:
-# OPTIMIZADO: Aumentado para RSS feeds
-CONCURRENT_REQUESTS_PER_DOMAIN = 3
+CONCURRENT_REQUESTS_PER_DOMAIN = 2
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
@@ -68,17 +65,8 @@ CONCURRENT_REQUESTS_PER_DOMAIN = 3
 
 # Override the default request headers:
 DEFAULT_REQUEST_HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Accept-Language": "es-ES,es;q=0.9,en;q=0.8,en-US;q=0.7",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Cache-Control": "no-cache",
-    "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-User": "?1",
-    "Pragma": "no-cache",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "es,en;q=0.9",
 }
 
 # Enable or disable spider middlewares
@@ -90,18 +78,11 @@ SPIDER_MIDDLEWARES = {
     # "scraper_core.middlewares.ScraperCoreSpiderMiddleware": 543,
 }
 
-# RefererMiddleware configuration (Spider Middleware)
-REFERER_ENABLED = True
-REFERRER_POLICY = 'scrapy.spidermiddlewares.referer.OriginWhenCrossOriginPolicy'
-
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     # Enable scrapy-crawl-once for duplicate prevention
     'scrapy_crawl_once.CrawlOnceMiddleware': 50,
-    
-    # Smart Referer Middleware para navegación natural
-    'scraper_core.middlewares.smart_referer_middleware.SmartRefererMiddleware': 585,
     # Disable default user agent middleware
     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
     # Enable random user agent middleware
@@ -156,23 +137,13 @@ ITEM_PIPELINES = {
     # 'scraper_core.pipelines.JsonWriterPipeline': 900,
 }
 
-# =============================================================================
-# JSON EXPORT PIPELINE CONFIGURATION (para module_connector)
-# =============================================================================
-# Pipeline de exportación para procesamiento LLM automático
-# Solo se activa si ENABLE_PIPELINE_EXPORT=true
+# Pipeline de exportación (solo si está habilitado)
 ENABLE_PIPELINE_EXPORT = os.getenv('ENABLE_PIPELINE_EXPORT', 'false').lower() == 'true'
-
 if ENABLE_PIPELINE_EXPORT:
-    # Agregar pipeline de exportación JSON después del almacenamiento en Supabase
     ITEM_PIPELINES['scraper_core.pipelines.json_export.JsonGzExportPipeline'] = 450
-    
-# Configuraciones para JsonGzExportPipeline
-EXPORT_DIRECTORY = os.getenv('EXPORT_DIRECTORY', '/data/scrapy_output/pending')
-EXPORT_COMPRESSION_LEVEL = int(os.getenv('EXPORT_COMPRESSION_LEVEL', '6'))
-EXPORT_INCLUDE_HTML = os.getenv('EXPORT_INCLUDE_HTML', 'true').lower() == 'true'
-EXPORT_FILENAME_PREFIX = os.getenv('EXPORT_FILENAME_PREFIX', 'article')
-EXPORT_MAX_FILENAME_LENGTH = int(os.getenv('EXPORT_MAX_FILENAME_LENGTH', '100'))
+    print(f"✅ JsonGzExportPipeline HABILITADO - ENABLE_PIPELINE_EXPORT={os.getenv('ENABLE_PIPELINE_EXPORT')}")
+else:
+    print(f"❌ JsonGzExportPipeline DESHABILITADO - ENABLE_PIPELINE_EXPORT={os.getenv('ENABLE_PIPELINE_EXPORT')}")
 # =============================================================================
 # PLAYWRIGHT CONFIGURATION (TWISTED_REACTOR)
 # =============================================================================
@@ -231,15 +202,15 @@ HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
 # Enable and configure AutoThrottle
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
 AUTOTHROTTLE_ENABLED = True
-# The initial download delay (seconds) - OPTIMIZADO: Reducido
-AUTOTHROTTLE_START_DELAY = 2
-# The maximum download delay to be set in case of high latencies (seconds) - OPTIMIZADO: Reducido
-AUTOTHROTTLE_MAX_DELAY = 30
+# The initial download delay (seconds)
+AUTOTHROTTLE_START_DELAY = 5
+# The maximum download delay to be set in case of high latencies (seconds)
+AUTOTHROTTLE_MAX_DELAY = 60
 # The average number of requests Scrapy should be sending in parallel to
-# each remote server - OPTIMIZADO: Aumentado para mejor rendimiento RSS
-AUTOTHROTTLE_TARGET_CONCURRENCY = 2.0
+# each remote server
+AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
 # Enable showing throttling stats for every response received:
-AUTOTHROTTLE_DEBUG = True
+AUTOTHROTTLE_DEBUG = False
 
 # =============================================================================
 # ROBOTS.TXT COMPLIANCE
@@ -486,7 +457,6 @@ SPIDERMON_MIN_ITEMS_SCRAPED = int(os.getenv('SPIDERMON_MIN_ITEMS_SCRAPED', 1))
 SPIDERMON_MAX_CRITICAL_ERRORS = int(os.getenv('SPIDERMON_MAX_CRITICAL_ERRORS', 0))
 SPIDERMON_MAX_ERROR_MESSAGES = int(os.getenv('SPIDERMON_MAX_ERROR_MESSAGES', 5))
 SPIDERMON_MAX_RESPONSE_TIME = float(os.getenv('SPIDERMON_MAX_RESPONSE_TIME', 5000))  # milliseconds
-SPIDERMON_MAX_ITEM_VALIDATION_ERRORS = int(os.getenv('SPIDERMON_MAX_ITEM_VALIDATION_ERRORS', 15))  # Conservative value for RSS spiders
 
 # Field coverage monitoring
 SPIDERMON_ADD_FIELD_COVERAGE = True

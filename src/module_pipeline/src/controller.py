@@ -12,6 +12,7 @@ Orquesta la ejecución secuencial de las 4 fases:
 4. Normalización, vinculación y relaciones
 """
 
+import os
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import time
@@ -834,7 +835,15 @@ class PipelineController:
             
             # Llamar a insertar_fragmento_completo
             fragment_logger.info("Llamando RPC insertar_fragmento_completo")
-            resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
+            # DUAL OUTPUT según Pipeline_Automatico_Modo_Desarrollo.md
+            if os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true':
+                from .services.development_storage import DevelopmentStorageService
+                dev_storage = DevelopmentStorageService(os.getenv('DEVELOPMENT_OUTPUT_DIR', '/pruebas_pipeline/development_outputs'))
+                resultado_persistencia = dev_storage.insertar_fragmento_completo(payload_dict)
+                fragment_logger.info("DESARROLLO: Fragmento guardado en estructura exacta")
+            else:
+                resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
+                fragment_logger.info("PRODUCCION: Fragmento guardado en Supabase")
             
             if resultado_persistencia:
                 tiempo_persistencia = time.time() - tiempo_inicio_persistencia

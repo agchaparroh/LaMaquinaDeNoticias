@@ -1,0 +1,161 @@
+config:
+  base_path: /home/alvaro/proyectos/claude/LaMaquinaDeNoticias
+  command_timeout: 300
+  max_retries: 3
+  mode: strict
+  staging_dir: .cpms3_staging
+final_validation:
+- checks:
+  - Variables exactas añadidas según especificación
+  - Estructura /data/development_outputs/ exacta creada
+  - Archivos métricas exactos (spider_stats.json, content_quality.json, pipeline_timing.json,
+    error_analysis.json)
+  - Controller.py modificado líneas 835-837 EXACTO
+  - Import os añadido
+  - Sintaxis Python válida
+  type: goal_achieved
+meta:
+  created: '2025-01-02'
+  goal: Implementar EXACTAMENTE el Pipeline Automático según especificación original
+  id: PIPELINE-AUTO-FINAL-001
+  name: Pipeline Automático - Implementación Exacta
+  version: '3.0'
+rollback:
+  enabled: true
+  steps:
+  - action: restore_from_backup
+    pattern: '*.py'
+steps:
+- action: modify_file
+  changes:
+  - find: '# =============================================================================
+
+      # CONFIGURACIÓN ESPECÍFICA POR MÓDULO
+
+      # =============================================================================
+
+      '
+    replace: '# =============================================================================
+
+      # PIPELINE AUTOMÁTICO CON MODO DE DESARROLLO
+
+      # =============================================================================
+
+      DEVELOPMENT_MODE="false"
+
+      ENABLE_PIPELINE_EXPORT="false"
+
+      SCRAPY_OUTPUT_DIR="/data/scrapy_output/pending"
+
+      DEVELOPMENT_OUTPUT_DIR="/data/development_outputs"
+
+      PIPELINE_API_URL="http://module_pipeline:8003"
+
+
+      # =============================================================================
+
+      # CONFIGURACIÓN ESPECÍFICA POR MÓDULO
+
+      # =============================================================================
+
+      '
+  description: Añadir variables Pipeline Automático al .env.example
+  id: STEP-001
+  path: .env.example
+  verify:
+  - path: .env.example
+    text: DEVELOPMENT_MODE
+    type: file_contains
+  - path: .env.example
+    text: /data/development_outputs
+    type: file_contains
+- action: run_command
+  command: mkdir -p /data/development_outputs/01_articulos_extraidos/por_fecha /data/development_outputs/02_fases_pipeline/fase_2_elementos_basicos/entidades_identificadas
+    /data/development_outputs/02_fases_pipeline/fase_2_elementos_basicos/hechos_extraidos
+    /data/development_outputs/02_fases_pipeline/fase_3_citas_datos/citas_textuales
+    /data/development_outputs/03_resultados_finales/exitosos /data/development_outputs/03_resultados_finales/fallidos
+    /data/development_outputs/04_metricas_rendimiento /data/development_outputs/05_comparativas
+  description: Crear estructura EXACTA según especificación
+  id: STEP-002
+  verify:
+  - command: test -d /data/development_outputs/04_metricas_rendimiento
+    type: command_succeeds
+  - command: test -d /data/development_outputs/01_articulos_extraidos
+    type: command_succeeds
+  working_dir: /
+- action: run_command
+  command: echo '{}' > /data/development_outputs/04_metricas_rendimiento/spider_stats.json
+    && echo '{}' > /data/development_outputs/04_metricas_rendimiento/content_quality.json
+    && echo '{}' > /data/development_outputs/04_metricas_rendimiento/pipeline_timing.json
+    && echo '{}' > /data/development_outputs/04_metricas_rendimiento/error_analysis.json
+  description: Crear archivos de métricas EXACTOS según especificación
+  id: STEP-003
+  verify:
+  - path: /data/development_outputs/04_metricas_rendimiento/spider_stats.json
+    type: file_exists
+  - path: /data/development_outputs/04_metricas_rendimiento/content_quality.json
+    type: file_exists
+  - path: /data/development_outputs/04_metricas_rendimiento/pipeline_timing.json
+    type: file_exists
+  - path: /data/development_outputs/04_metricas_rendimiento/error_analysis.json
+    type: file_exists
+  working_dir: /
+- action: modify_file
+  changes:
+  - find: 'from typing import Dict, Any, Optional, List
+
+      from datetime import datetime
+
+      import time
+
+      import threading
+
+      from loguru import logger
+
+      '
+    replace: 'import os
+
+      from typing import Dict, Any, Optional, List
+
+      from datetime import datetime
+
+      import time
+
+      import threading
+
+      from loguru import logger
+
+      '
+  description: Añadir import os en controller.py
+  id: STEP-004
+  path: src/module_pipeline/src/controller.py
+  verify:
+  - path: src/module_pipeline/src/controller.py
+    text: import os
+    type: file_contains
+- action: modify_file
+  backup: true
+  changes:
+  - find: 'resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
+
+      '
+    replace: "# DUAL OUTPUT según Pipeline_Automatico_Modo_Desarrollo.md\nif os.getenv('DEVELOPMENT_MODE',\
+      \ 'false').lower() == 'true':\n    from .services.development_storage import\
+      \ DevelopmentStorageService\n    dev_storage = DevelopmentStorageService(os.getenv('DEVELOPMENT_OUTPUT_DIR',\
+      \ '/data/development_outputs'))\n    resultado_persistencia = dev_storage.insertar_fragmento_completo(payload_dict)\n\
+      \    logger.info(\"DESARROLLO: Fragmento guardado en estructura exacta\")\n\
+      else:\n    resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)\n\
+      \    logger.info(\"PRODUCCION: Fragmento guardado en Supabase\")\n"
+  description: Modificar controller.py líneas 835-837 para dual output EXACTO
+  id: STEP-005
+  path: src/module_pipeline/src/controller.py
+  verify:
+  - path: src/module_pipeline/src/controller.py
+    text: DEVELOPMENT_MODE
+    type: file_contains
+  - path: src/module_pipeline/src/controller.py
+    text: DevelopmentStorageService
+    type: file_contains
+  - language: python
+    path: src/module_pipeline/src/controller.py
+    type: syntax_valid

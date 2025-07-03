@@ -1,0 +1,283 @@
+# CPMS3 Execution Plan - Pipeline Automático ULTRA-OPTIMIZADO (FIXED)
+# Solo lo estrictamente necesario, sin problemas de escape
+
+meta:
+  id: "PIPELINE-AUTO-ULTRAOPT-FIXED-001"
+  name: "Pipeline Automático Ultra-Optimizado Fixed"
+  goal: "Implementar dual output y métricas específicas sin problemas de variables"
+  version: "3.0"
+  created: "2025-01-02"
+
+config:
+  base_path: "/home/alvaro/proyectos/claude/LaMaquinaDeNoticias"
+  staging_dir: ".cpms3_staging"
+  max_retries: 3
+  command_timeout: 300
+  mode: "strict"
+
+constants:
+  python_cmd: "python3"
+  pipeline_dir: "src/module_pipeline/src"
+  env_file: ".env.example"
+  open_brace: "{"
+  close_brace: "}"
+
+steps:
+  # ========================================
+  # PASO 1: Variables de entorno exactas
+  # ========================================
+  - id: "STEP-001"
+    description: "Añadir variables Pipeline Automático al .env.example"
+    action: "modify_file"
+    path: ".env.example"
+    changes:
+      - find: |
+          # =============================================================================
+          # CONFIGURACIÓN ESPECÍFICA POR MÓDULO
+          # =============================================================================
+        replace: |
+          # =============================================================================
+          # PIPELINE AUTOMÁTICO CON MODO DE DESARROLLO
+          # =============================================================================
+          DEVELOPMENT_MODE="false"
+          ENABLE_PIPELINE_EXPORT="false"
+          SCRAPY_OUTPUT_DIR="/data/scrapy_output/pending"
+          DEVELOPMENT_OUTPUT_DIR="/data/development_outputs"
+          PIPELINE_API_URL="http://module_pipeline:8003"
+
+          # =============================================================================
+          # CONFIGURACIÓN ESPECÍFICA POR MÓDULO
+          # =============================================================================
+    verify:
+      - type: "file_contains"
+        path: ".env.example"
+        text: "DEVELOPMENT_MODE"
+      - type: "file_contains"
+        path: ".env.example"
+        text: "/data/development_outputs"
+
+  # ========================================
+  # PASO 2: Crear directorios principales
+  # ========================================
+  - id: "STEP-002"
+    description: "Crear directorios principales"
+    action: "run_command"
+    command: "mkdir -p /data/development_outputs"
+    working_dir: "/"
+    verify:
+      - type: "command_succeeds"
+        command: "test -d /data/development_outputs"
+
+  # ========================================
+  # PASO 3: Crear subdirectorios nivel 1
+  # ========================================
+  - id: "STEP-003"
+    description: "Crear subdirectorios nivel 1"
+    action: "run_command"
+    command: "mkdir -p /data/development_outputs/01_articulos_extraidos /data/development_outputs/02_fases_pipeline /data/development_outputs/03_resultados_finales /data/development_outputs/04_metricas_rendimiento /data/development_outputs/05_comparativas"
+    working_dir: "/"
+    verify:
+      - type: "command_succeeds"
+        command: "test -d /data/development_outputs/04_metricas_rendimiento"
+
+  # ========================================
+  # PASO 4: Crear subdirectorios detallados
+  # ========================================
+  - id: "STEP-004"
+    description: "Crear subdirectorios detallados"
+    action: "run_command"
+    command: "mkdir -p /data/development_outputs/01_articulos_extraidos/por_fecha /data/development_outputs/02_fases_pipeline/fase_2_elementos_basicos/entidades_identificadas /data/development_outputs/02_fases_pipeline/fase_2_elementos_basicos/hechos_extraidos /data/development_outputs/02_fases_pipeline/fase_3_citas_datos/citas_textuales /data/development_outputs/03_resultados_finales/exitosos /data/development_outputs/03_resultados_finales/fallidos"
+    working_dir: "/"
+    verify:
+      - type: "command_succeeds"
+        command: "test -d /data/development_outputs/03_resultados_finales/exitosos"
+
+  # ========================================
+  # PASO 5: Crear archivos de métricas básicos
+  # ========================================
+  - id: "STEP-005"
+    description: "Crear archivos de métricas básicos"
+    action: "create_file"
+    path: "/data/development_outputs/04_metricas_rendimiento/spider_stats.json"
+    content: |
+      {open_brace}
+        "spiders": {open_brace}{close_brace},
+        "last_updated": "init"
+      {close_brace}
+    verify:
+      - type: "file_exists"
+        path: "/data/development_outputs/04_metricas_rendimiento/spider_stats.json"
+
+  # ========================================
+  # PASO 6: Crear development_storage.py simple
+  # ========================================
+  - id: "STEP-006"
+    description: "Crear development_storage.py simple"
+    action: "create_file"
+    path: "src/module_pipeline/src/services/development_storage.py"
+    content: |
+      """
+      Servicio de almacenamiento para modo de desarrollo
+      Versión simplificada para evitar problemas de escape
+      """
+      
+      import os
+      import json
+      import uuid
+      from datetime import datetime
+      from pathlib import Path
+      from typing import Dict, Any, List
+      
+      from ..core.logging_config import logger
+      
+      
+      class DevelopmentStorageService:
+          def __init__(self, output_dir: str = "/data/development_outputs"):
+              self.output_dir = Path(output_dir)
+              logger.info(f"DevelopmentStorageService inicializado: {{self.output_dir}}")
+          
+          def insertar_fragmento_completo(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+              try:
+                  timestamp = datetime.now().isoformat()
+                  fragmento_id = str(uuid.uuid4())
+                  
+                  # Guardar resultado final
+                  resultado_file = self._save_resultado_final(payload, fragmento_id, timestamp)
+                  
+                  # Actualizar métricas simples
+                  self._update_simple_metrics(payload, fragmento_id, timestamp)
+                  
+                  return {{
+                      "fragmento_id": fragmento_id,
+                      "timestamp": timestamp,
+                      "modo": "desarrollo",
+                      "archivo_creado": resultado_file,
+                      "exito": True
+                  }}
+                  
+              except Exception as e:
+                  logger.error(f"Error almacenando fragmento: {{str(e)}}")
+                  return {{
+                      "fragmento_id": None,
+                      "timestamp": datetime.now().isoformat(),
+                      "modo": "desarrollo", 
+                      "exito": False,
+                      "error": str(e)
+                  }}
+          
+          def _save_resultado_final(self, payload: Dict, fragmento_id: str, timestamp: str) -> str:
+              fecha = datetime.now().strftime('%Y-%m-%d')
+              resultado_dir = self.output_dir / "03_resultados_finales" / "exitosos"
+              resultado_dir.mkdir(parents=True, exist_ok=True)
+              
+              resultado_file = resultado_dir / f"resultado_{{fragmento_id}}.json"
+              
+              resultado_data = {{
+                  "fragmento_id": fragmento_id,
+                  "timestamp": timestamp,
+                  "payload_completo": payload
+              }}
+              
+              with open(resultado_file, 'w', encoding='utf-8') as f:
+                  json.dump(resultado_data, f, ensure_ascii=False, indent=2)
+              
+              return str(resultado_file)
+          
+          def _update_simple_metrics(self, payload: Dict, fragmento_id: str, timestamp: str):
+              # Actualizar content_quality.json de forma simple
+              metrics_dir = self.output_dir / "04_metricas_rendimiento"
+              content_file = metrics_dir / "content_quality.json"
+              
+              if not content_file.exists():
+                  with open(content_file, 'w') as f:
+                      json.dump({{"metrics": []}}, f)
+              
+              # Leer, añadir, escribir
+              with open(content_file, 'r') as f:
+                  data = json.load(f)
+              
+              data["metrics"].append({{
+                  "fragmento_id": fragmento_id,
+                  "timestamp": timestamp,
+                  "entidades_count": len(payload.get("entidades", [])),
+                  "hechos_count": len(payload.get("hechos", []))
+              }})
+              
+              with open(content_file, 'w') as f:
+                  json.dump(data, f, indent=2)
+    verify:
+      - type: "file_exists"
+        path: "src/module_pipeline/src/services/development_storage.py"
+      - type: "file_contains"
+        path: "src/module_pipeline/src/services/development_storage.py"
+        text: "DevelopmentStorageService"
+      - type: "syntax_valid"
+        language: "python"
+        path: "src/module_pipeline/src/services/development_storage.py"
+
+  # ========================================
+  # PASO 7: Dual output en controller.py
+  # ========================================
+  - id: "STEP-007"
+    description: "Modificar controller.py para dual output"
+    action: "modify_file"
+    path: "src/module_pipeline/src/controller.py"
+    backup: true
+    changes:
+      - find: |
+          resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
+        replace: |
+          # DUAL OUTPUT: Desarrollo vs Producción
+          if os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true':
+              from .services.development_storage import DevelopmentStorageService
+              dev_storage = DevelopmentStorageService(os.getenv('DEVELOPMENT_OUTPUT_DIR', '/data/development_outputs'))
+              resultado_persistencia = dev_storage.insertar_fragmento_completo(payload_dict)
+              logger.info("DESARROLLO: Fragmento guardado en desarrollo")
+          else:
+              resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
+              logger.info("PRODUCCION: Fragmento guardado en Supabase")
+    verify:
+      - type: "file_contains"
+        path: "src/module_pipeline/src/controller.py"
+        text: "DEVELOPMENT_MODE"
+      - type: "syntax_valid"
+        language: "python"
+        path: "src/module_pipeline/src/controller.py"
+
+  # ========================================
+  # PASO 8: Añadir import os
+  # ========================================
+  - id: "STEP-008"
+    description: "Añadir import os en controller.py"
+    action: "modify_file"
+    path: "src/module_pipeline/src/controller.py"
+    changes:
+      - find: |
+          import uuid
+          import asyncio
+          from datetime import datetime
+        replace: |
+          import os
+          import uuid
+          import asyncio
+          from datetime import datetime
+    verify:
+      - type: "file_contains"
+        path: "src/module_pipeline/src/controller.py"
+        text: "import os"
+
+rollback:
+  enabled: true
+  steps:
+    - action: "restore_from_backup"
+      pattern: "*.py"
+
+final_validation:
+  - type: "goal_achieved"
+    checks:
+      - "Variables de entorno añadidas"
+      - "Estructura /data/development_outputs/ creada"
+      - "development_storage.py funcional creado"
+      - "Controller.py con dual output"
+      - "Import os añadido"
+      - "Sintaxis Python válida"

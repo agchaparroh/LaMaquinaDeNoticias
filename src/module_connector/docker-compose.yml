@@ -6,16 +6,16 @@ services:
     container_name: module-connector
     restart: unless-stopped
     volumes:
-      # Mount data directories
-      - ./data:/data
+      # Mount pruebas_pipeline directories
+      - ./pruebas_pipeline:/pruebas_pipeline
       # Mount logs directory
       - ./logs:/app/logs
     environment:
       # Directory paths
-      - SCRAPER_OUTPUT_DIR=/data/scrapy_output/pending
-      - PIPELINE_PENDING_DIR=/data/pipeline_input/pending
-      - PIPELINE_COMPLETED_DIR=/data/pipeline_input/completed
-      - PIPELINE_ERROR_DIR=/data/pipeline_input/error
+      - SCRAPER_OUTPUT_DIR=/pruebas_pipeline/scrapy_output/pending
+      - PIPELINE_PENDING_DIR=/pruebas_pipeline/pipeline_input/pending
+      - PIPELINE_COMPLETED_DIR=/pruebas_pipeline/pipeline_input/completed
+      - PIPELINE_ERROR_DIR=/pruebas_pipeline/pipeline_input/error
       
       # Pipeline API configuration
       - PIPELINE_API_URL=http://module-pipeline:8001

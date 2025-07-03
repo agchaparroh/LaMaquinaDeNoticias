@@ -1,0 +1,578 @@
+# CPMS3 Execution Plan - Pipeline Automático con Modo de Desarrollo
+# Un archivo. Un plan. Cero ambigüedad.
+
+meta:
+  id: "PIPELINE-AUTO-DEV-001"
+  name: "Pipeline Automático con Modo de Desarrollo"
+  goal: "Implementar sistema dual de salida para artículos procesados: Supabase (producción) o archivos locales organizados (desarrollo)"
+  version: "3.0"
+  created: "2025-01-02"
+
+config:
+  # Ruta base donde está el código
+  base_path: "/home/alvaro/proyectos/claude/LaMaquinaDeNoticias"
+  
+  # Directorio para staging (cambios peligrosos)
+  staging_dir: ".cpms3_staging"
+  
+  # Reintentos máximos por paso
+  max_retries: 3
+  
+  # Timeout por comando (segundos)
+  command_timeout: 300
+  
+  # Modo de ejecución
+  mode: "strict"  # strict = falla si algo no es exacto
+
+# Definir constantes/variables para reutilizar
+constants:
+  python_cmd: "python3"
+  pipeline_dir: "src/module_pipeline/src"
+  env_file: ".env.example"
+
+# Pasos de ejecución - Se ejecutan en orden
+steps:
+  # ========================================
+  # PASO 1: Crear servicio development_storage.py
+  # ========================================
+  - id: "STEP-001"
+    description: "Crear servicio development_storage.py para manejo de archivos en modo desarrollo"
+    action: "create_file"
+    path: "src/module_pipeline/src/services/development_storage.py"
+    content: |
+      """
+      Servicio de almacenamiento para modo de desarrollo
+      
+      Este servicio gestiona la escritura de artículos procesados a archivos
+      locales organizados cuando el sistema está en modo de desarrollo.
+      La estructura de archivos replica la organización de la base de datos
+      para facilitar la inspección y análisis durante el desarrollo.
+      """
+      
+      import os
+      import json
+      import uuid
+      from datetime import datetime
+      from pathlib import Path
+      from typing import Dict, Any, Optional
+      
+      from ..core.logging_config import logger
+      
+      
+      class DevelopmentStorageService:
+          """
+          Servicio para almacenar datos en modo desarrollo usando archivos locales
+          """
+          
+          def __init__(self, output_dir: str = "./development_output"):
+              """
+              Inicializar el servicio de almacenamiento de desarrollo
+              
+              Args:
+                  output_dir: Directorio base para almacenar archivos de desarrollo
+              """
+              self.output_dir = Path(output_dir)
+              self._ensure_directory_structure()
+              logger.info(f"DevelopmentStorageService inicializado en: {self.output_dir.absolute()}")
+          
+          def _ensure_directory_structure(self):
+              """Crear estructura de directorios necesaria"""
+              directories = [
+                  "articulos",
+                  "fragmentos", 
+                  "entidades",
+                  "hechos",
+                  "citas",
+                  "relaciones",
+                  "embeddings",
+                  "metricas",
+                  "logs"
+              ]
+              
+              for directory in directories:
+                  dir_path = self.output_dir / directory
+                  dir_path.mkdir(parents=True, exist_ok=True)
+                  logger.debug(f"Directorio creado/verificado: {dir_path}")
+          
+          def insertar_fragmento_completo(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+              """
+              Almacenar un fragmento completo procesado en archivos de desarrollo
+              
+              Args:
+                  payload: Datos completos del fragmento procesado
+                  
+              Returns:
+                  Dict con información del resultado de almacenamiento
+              """
+              try:
+                  timestamp = datetime.now().isoformat()
+                  fragmento_id = str(uuid.uuid4())
+                  
+                  # Estructura base del resultado
+                  resultado = {
+                      "fragmento_id": fragmento_id,
+                      "timestamp": timestamp,
+                      "modo": "desarrollo",
+                      "archivos_creados": [],
+                      "exito": True,
+                      "errores": []
+                  }
+                  
+                  # 1. Guardar fragmento principal
+                  fragmento_file = self._save_fragmento(payload, fragmento_id, timestamp)
+                  resultado["archivos_creados"].append(fragmento_file)
+                  
+                  # 2. Guardar entidades extraídas
+                  if "entidades" in payload and payload["entidades"]:
+                      entidades_file = self._save_entidades(payload["entidades"], fragmento_id, timestamp)
+                      resultado["archivos_creados"].append(entidades_file)
+                  
+                  # 3. Guardar hechos extraídos
+                  if "hechos" in payload and payload["hechos"]:
+                      hechos_file = self._save_hechos(payload["hechos"], fragmento_id, timestamp)
+                      resultado["archivos_creados"].append(hechos_file)
+                  
+                  # 4. Guardar citas extraídas
+                  if "citas" in payload and payload["citas"]:
+                      citas_file = self._save_citas(payload["citas"], fragmento_id, timestamp)
+                      resultado["archivos_creados"].append(citas_file)
+                  
+                  # 5. Guardar embeddings si están presentes
+                  if "embedding" in payload:
+                      embedding_file = self._save_embedding(payload["embedding"], fragmento_id, timestamp)
+                      resultado["archivos_creados"].append(embedding_file)
+                  
+                  # 6. Crear resumen de métricas
+                  metricas_file = self._save_metricas(payload, fragmento_id, timestamp)
+                  resultado["archivos_creados"].append(metricas_file)
+                  
+                  logger.info(f"Fragmento almacenado en desarrollo: {fragmento_id}")
+                  logger.debug(f"Archivos creados: {len(resultado['archivos_creados'])}")
+                  
+                  return resultado
+                  
+              except Exception as e:
+                  logger.error(f"Error al almacenar fragmento en desarrollo: {str(e)}")
+                  return {
+                      "fragmento_id": None,
+                      "timestamp": timestamp,
+                      "modo": "desarrollo",
+                      "archivos_creados": [],
+                      "exito": False,
+                      "errores": [str(e)]
+                  }
+          
+          def _save_fragmento(self, payload: Dict[str, Any], fragmento_id: str, timestamp: str) -> str:
+              """Guardar datos del fragmento principal"""
+              fragmento_data = {
+                  "id": fragmento_id,
+                  "timestamp": timestamp,
+                  "contenido_original": payload.get("contenido_original", ""),
+                  "titulo": payload.get("titulo", ""),
+                  "url": payload.get("url", ""),
+                  "fecha_publicacion": payload.get("fecha_publicacion"),
+                  "importancia": payload.get("importancia", 5),
+                  "contenido_procesado": payload.get("contenido_procesado", ""),
+                  "metadatos": payload.get("metadatos", {})
+              }
+              
+              filename = f"fragmento_{fragmento_id}_{timestamp.replace(':', '-')}.json"
+              file_path = self.output_dir / "fragmentos" / filename
+              
+              with open(file_path, 'w', encoding='utf-8') as f:
+                  json.dump(fragmento_data, f, ensure_ascii=False, indent=2)
+              
+              return str(file_path.relative_to(self.output_dir))
+          
+          def _save_entidades(self, entidades: list, fragmento_id: str, timestamp: str) -> str:
+              """Guardar entidades extraídas"""
+              entidades_data = {
+                  "fragmento_id": fragmento_id,
+                  "timestamp": timestamp,
+                  "entidades": entidades,
+                  "total": len(entidades)
+              }
+              
+              filename = f"entidades_{fragmento_id}_{timestamp.replace(':', '-')}.json"
+              file_path = self.output_dir / "entidades" / filename
+              
+              with open(file_path, 'w', encoding='utf-8') as f:
+                  json.dump(entidades_data, f, ensure_ascii=False, indent=2)
+              
+              return str(file_path.relative_to(self.output_dir))
+          
+          def _save_hechos(self, hechos: list, fragmento_id: str, timestamp: str) -> str:
+              """Guardar hechos extraídos"""
+              hechos_data = {
+                  "fragmento_id": fragmento_id,
+                  "timestamp": timestamp,
+                  "hechos": hechos,
+                  "total": len(hechos)
+              }
+              
+              filename = f"hechos_{fragmento_id}_{timestamp.replace(':', '-')}.json"
+              file_path = self.output_dir / "hechos" / filename
+              
+              with open(file_path, 'w', encoding='utf-8') as f:
+                  json.dump(hechos_data, f, ensure_ascii=False, indent=2)
+              
+              return str(file_path.relative_to(self.output_dir))
+          
+          def _save_citas(self, citas: list, fragmento_id: str, timestamp: str) -> str:
+              """Guardar citas extraídas"""
+              citas_data = {
+                  "fragmento_id": fragmento_id,
+                  "timestamp": timestamp,
+                  "citas": citas,
+                  "total": len(citas)
+              }
+              
+              filename = f"citas_{fragmento_id}_{timestamp.replace(':', '-')}.json"
+              file_path = self.output_dir / "citas" / filename
+              
+              with open(file_path, 'w', encoding='utf-8') as f:
+                  json.dump(citas_data, f, ensure_ascii=False, indent=2)
+              
+              return str(file_path.relative_to(self.output_dir))
+          
+          def _save_embedding(self, embedding: list, fragmento_id: str, timestamp: str) -> str:
+              """Guardar embedding del fragmento"""
+              embedding_data = {
+                  "fragmento_id": fragmento_id,
+                  "timestamp": timestamp,
+                  "embedding": embedding,
+                  "dimension": len(embedding) if embedding else 0
+              }
+              
+              filename = f"embedding_{fragmento_id}_{timestamp.replace(':', '-')}.json"
+              file_path = self.output_dir / "embeddings" / filename
+              
+              with open(file_path, 'w', encoding='utf-8') as f:
+                  json.dump(embedding_data, f, ensure_ascii=False, indent=2)
+              
+              return str(file_path.relative_to(self.output_dir))
+          
+          def _save_metricas(self, payload: Dict[str, Any], fragmento_id: str, timestamp: str) -> str:
+              """Guardar métricas del procesamiento"""
+              metricas = {
+                  "fragmento_id": fragmento_id,
+                  "timestamp": timestamp,
+                  "longitud_contenido": len(payload.get("contenido_original", "")),
+                  "entidades_encontradas": len(payload.get("entidades", [])),
+                  "hechos_extraidos": len(payload.get("hechos", [])),
+                  "citas_extraidas": len(payload.get("citas", [])),
+                  "tiene_embedding": "embedding" in payload,
+                  "importancia": payload.get("importancia", 5),
+                  "metadata_keys": list(payload.get("metadatos", {}).keys())
+              }
+              
+              filename = f"metricas_{fragmento_id}_{timestamp.replace(':', '-')}.json"
+              file_path = self.output_dir / "metricas" / filename
+              
+              with open(file_path, 'w', encoding='utf-8') as f:
+                  json.dump(metricas, f, ensure_ascii=False, indent=2)
+              
+              return str(file_path.relative_to(self.output_dir))
+          
+          def get_statistics(self) -> Dict[str, Any]:
+              """Obtener estadísticas de archivos almacenados"""
+              stats = {}
+              
+              for directory in ["fragmentos", "entidades", "hechos", "citas", "embeddings", "metricas"]:
+                  dir_path = self.output_dir / directory
+                  if dir_path.exists():
+                      files = list(dir_path.glob("*.json"))
+                      stats[directory] = len(files)
+                  else:
+                      stats[directory] = 0
+              
+              return {
+                  "directorio_base": str(self.output_dir.absolute()),
+                  "estadisticas": stats,
+                  "total_archivos": sum(stats.values()),
+                  "timestamp": datetime.now().isoformat()
+              }
+    verify:
+      - type: "file_exists"
+        path: "src/module_pipeline/src/services/development_storage.py"
+      - type: "file_contains"
+        path: "src/module_pipeline/src/services/development_storage.py"
+        text: "class DevelopmentStorageService:"
+      - type: "file_contains"
+        path: "src/module_pipeline/src/services/development_storage.py"
+        text: "def insertar_fragmento_completo"
+      - type: "syntax_valid"
+        language: "python"
+        path: "src/module_pipeline/src/services/development_storage.py"
+    on_fail: "abort"
+
+  # ========================================
+  # PASO 2: Modificar controller.py para dual output
+  # ========================================
+  - id: "STEP-002"
+    description: "Modificar controller.py líneas 835-837 para implementar lógica dual de salida"
+    action: "modify_file"
+    path: "src/module_pipeline/src/controller.py"
+    backup: true
+    changes:
+      - find: |
+          resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
+        replace: |
+          # Lógica dual de salida según modo de operación
+          if os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true':
+              # Modo desarrollo: guardar en archivos locales
+              from .services.development_storage import DevelopmentStorageService
+              
+              development_output_dir = os.getenv('DEVELOPMENT_OUTPUT_DIR', './development_output')
+              dev_storage = DevelopmentStorageService(development_output_dir)
+              resultado_persistencia = dev_storage.insertar_fragmento_completo(payload_dict)
+              
+              logger.info(f"Fragmento guardado en modo desarrollo: {development_output_dir}")
+          else:
+              # Modo producción: guardar en Supabase
+              resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
+              logger.info("Fragmento guardado en modo producción (Supabase)")
+    verify:
+      - type: "file_contains"
+        path: "src/module_pipeline/src/controller.py"
+        text: "DEVELOPMENT_MODE"
+      - type: "file_contains"
+        path: "src/module_pipeline/src/controller.py"
+        text: "DevelopmentStorageService"
+      - type: "file_contains"
+        path: "src/module_pipeline/src/controller.py"
+        text: "desarrollo"
+      - type: "syntax_valid"
+        language: "python"
+        path: "src/module_pipeline/src/controller.py"
+
+  # ========================================
+  # PASO 3: Añadir import de os en controller.py
+  # ========================================
+  - id: "STEP-003"
+    description: "Añadir import de os en controller.py si no está presente"
+    action: "modify_file"
+    path: "src/module_pipeline/src/controller.py"
+    changes:
+      - find: |
+          import uuid
+          import asyncio
+          from datetime import datetime
+        replace: |
+          import os
+          import uuid
+          import asyncio
+          from datetime import datetime
+    verify:
+      - type: "file_contains"
+        path: "src/module_pipeline/src/controller.py"
+        text: "import os"
+      - type: "syntax_valid"
+        language: "python"
+        path: "src/module_pipeline/src/controller.py"
+
+  # ========================================
+  # PASO 4: Actualizar .env.example con nuevas variables
+  # ========================================
+  - id: "STEP-004"
+    description: "Añadir variables DEVELOPMENT_MODE y DEVELOPMENT_OUTPUT_DIR al archivo .env.example"
+    action: "modify_file"
+    path: ".env.example"
+    changes:
+      - find: |
+          # =============================================================================
+          # CONFIGURACIÓN ESPECÍFICA POR MÓDULO
+          # =============================================================================
+        replace: |
+          # =============================================================================
+          # MODO DE DESARROLLO - PIPELINE AUTOMÁTICO
+          # =============================================================================
+          # Configuración para modo de desarrollo/testing del pipeline
+          DEVELOPMENT_MODE="false"                          # true = archivos locales, false = Supabase
+          DEVELOPMENT_OUTPUT_DIR="./development_output"     # Directorio para archivos en modo desarrollo
+
+          # =============================================================================
+          # CONFIGURACIÓN ESPECÍFICA POR MÓDULO
+          # =============================================================================
+    verify:
+      - type: "file_contains"
+        path: ".env.example"
+        text: "DEVELOPMENT_MODE"
+      - type: "file_contains"
+        path: ".env.example"
+        text: "DEVELOPMENT_OUTPUT_DIR"
+      - type: "file_contains"
+        path: ".env.example"
+        text: "Pipeline automático"
+
+  # ========================================
+  # PASO 5: Crear directorio de ejemplo para desarrollo
+  # ========================================
+  - id: "STEP-005"
+    description: "Crear estructura de directorio de ejemplo para modo desarrollo"
+    action: "run_command"
+    command: "mkdir -p development_output/{articulos,fragmentos,entidades,hechos,citas,relaciones,embeddings,metricas,logs}"
+    working_dir: "{base_path}"
+    verify:
+      - type: "command_succeeds"
+        command: "test -d development_output/fragmentos"
+      - type: "command_succeeds"
+        command: "test -d development_output/entidades"
+      - type: "command_succeeds"
+        command: "test -d development_output/hechos"
+
+  # ========================================
+  # PASO 6: Crear archivo README para modo desarrollo
+  # ========================================
+  - id: "STEP-006"
+    description: "Crear README explicativo para el modo de desarrollo"
+    action: "create_file"
+    path: "development_output/README.md"
+    content: |
+      # Modo de Desarrollo - Pipeline Automático
+
+      ## 📁 Estructura de Directorios
+
+      Este directorio contiene la salida del pipeline cuando está configurado en modo de desarrollo (`DEVELOPMENT_MODE=true`).
+
+      ### Organización de Archivos
+
+      ```
+      development_output/
+      ├── fragmentos/     # Fragmentos de artículos procesados
+      ├── entidades/      # Entidades extraídas (personas, organizaciones, lugares)
+      ├── hechos/         # Hechos y afirmaciones identificadas
+      ├── citas/          # Citas y declaraciones extraídas
+      ├── relaciones/     # Relaciones entre entidades
+      ├── embeddings/     # Vectores de embedding para búsqueda semántica
+      ├── metricas/       # Métricas de procesamiento
+      └── logs/           # Logs específicos del modo desarrollo
+      ```
+
+      ## 🚀 Uso
+
+      ### Activar Modo Desarrollo
+
+      1. En tu archivo `.env`, configura:
+         ```env
+         DEVELOPMENT_MODE=true
+         DEVELOPMENT_OUTPUT_DIR=./development_output
+         ```
+
+      2. Reinicia el pipeline:
+         ```bash
+         docker-compose restart module_pipeline
+         ```
+
+      3. Los artículos procesados se guardarán como archivos JSON en lugar de enviarse a Supabase.
+
+      ### Analizar Resultados
+
+      Los archivos JSON contienen la misma estructura que se enviaría a la base de datos, permitiendo:
+
+      - ✅ **Inspección manual** de resultados de procesamiento
+      - ✅ **Debugging** de la extracción de entidades y hechos  
+      - ✅ **Análisis de calidad** sin impactar la base de datos de producción
+      - ✅ **Testing de cambios** en el pipeline de forma segura
+
+      ## 📊 Formato de Archivos
+
+      ### Fragmentos (`fragmentos/`)
+      ```json
+      {
+        "id": "uuid-del-fragmento",
+        "timestamp": "2025-01-02T...",
+        "contenido_original": "Texto del artículo...",
+        "titulo": "Título del artículo",
+        "url": "https://...",
+        "importancia": 5,
+        "metadatos": {...}
+      }
+      ```
+
+      ### Entidades (`entidades/`)
+      ```json
+      {
+        "fragmento_id": "uuid-del-fragmento",
+        "entidades": [
+          {
+            "texto": "María García",
+            "tipo": "PERSON",
+            "confianza": 0.95
+          }
+        ],
+        "total": 1
+      }
+      ```
+
+      ### Hechos (`hechos/`)
+      ```json
+      {
+        "fragmento_id": "uuid-del-fragmento", 
+        "hechos": [
+          {
+            "afirmacion": "La inflación subió al 3.2%",
+            "confianza": 0.88,
+            "tipo": "económico"
+          }
+        ],
+        "total": 1
+      }
+      ```
+
+      ## 🔄 Volver a Modo Producción
+
+      Para volver a usar Supabase:
+
+      1. Configura en `.env`:
+         ```env
+         DEVELOPMENT_MODE=false
+         ```
+
+      2. Reinicia el pipeline:
+         ```bash
+         docker-compose restart module_pipeline
+         ```
+
+      ## ⚠️ Notas Importantes
+
+      - ✅ Los archivos en este directorio son **solo para desarrollo/testing**
+      - ✅ No se sincronizan con la base de datos automáticamente
+      - ✅ Puedes eliminar el contenido de este directorio sin afectar el sistema
+      - ✅ El modo desarrollo **NO afecta** el scraping ni otros módulos
+    verify:
+      - type: "file_exists"
+        path: "development_output/README.md"
+      - type: "file_contains"
+        path: "development_output/README.md"
+        text: "Modo de Desarrollo"
+      - type: "file_contains"
+        path: "development_output/README.md"
+        text: "DEVELOPMENT_MODE=true"
+
+# Rollback automático si algo falla
+rollback:
+  enabled: true
+  steps:
+    - action: "restore_from_backup"
+      pattern: "*.py"
+    - action: "restore_staging"
+      from: ".cpms3_staging"
+
+# Acciones post-ejecución (solo si todo OK)
+post_execution:
+  - action: "create_summary"
+    path: "PIPELINE_AUTOMATICO_EXECUTION_SUMMARY.md"
+  - action: "clean_staging"
+    path: ".cpms3_staging"
+
+# Validación final del objetivo
+final_validation:
+  - type: "goal_achieved"
+    checks:
+      - "Servicio development_storage.py creado con funcionalidad completa"
+      - "Controller.py modificado con lógica dual de salida"
+      - "Variables de entorno añadidas a .env.example"
+      - "Estructura de directorios de desarrollo creada"
+      - "Documentación README creada"
+      - "Sintaxis Python válida en todos los archivos modificados"

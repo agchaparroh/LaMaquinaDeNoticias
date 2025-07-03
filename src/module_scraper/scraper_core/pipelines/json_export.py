@@ -55,7 +55,7 @@ class JsonGzExportPipeline:
         # Export directory configuration
         instance.export_directory = crawler.settings.get(
             'EXPORT_DIRECTORY', 
-            os.getenv('SCRAPER_OUTPUT_DIR', '/data/scrapy_output/pending')
+            os.getenv('SCRAPER_OUTPUT_DIR', '/pruebas_pipeline/scrapy_output/pending')
         )
         
         # Compression settings
