@@ -27,7 +27,7 @@ jobs:
         lfs: false  # Skip LFS para linting - no necesarios para código fuente
     
     - name: Configurar Python 3.10
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
     
@@ -167,7 +167,7 @@ jobs:
         lfs: false  # Skip LFS para tests - no necesarios para código fuente
     
     - name: Configurar Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     
@@ -225,7 +225,7 @@ jobs:
         lfs: false  # Skip LFS para tests - no necesarios para código fuente
     
     - name: Configurar Python 3.10
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
     
@@ -281,7 +281,7 @@ jobs:
         lfs: false  # Skip LFS para tests - no necesarios para código fuente
     
     - name: Configurar Python 3.9
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
     
