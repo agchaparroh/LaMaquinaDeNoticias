@@ -137,7 +137,7 @@ jobs:
       run: npm run test:coverage -- --run
     
     - name: Subir cobertura a Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         directory: ./src/${{ matrix.module }}/coverage
         flags: ${{ matrix.module }}
@@ -204,7 +204,7 @@ jobs:
         fi
     
     - name: Subir cobertura a Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         directory: ./src/${{ matrix.module }}
         flags: ${{ matrix.module }}
