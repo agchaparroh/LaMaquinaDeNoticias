@@ -138,9 +138,7 @@ docker-data/
 volumes/
 
 # Docker override files
-docker-compose.override.yml
-docker-compose.prod.yml
-docker-compose.dev.yml
+
 
 # =============================================================================
 # LOGS AND TEMPORARY FILES

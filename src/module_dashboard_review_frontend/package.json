@@ -8,6 +8,10 @@
     "build": "tsc && vite build",
     "preview": "vite preview --port 3001",
     "type-check": "tsc --noEmit",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext ts,tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
@@ -15,7 +19,7 @@
     "clean": "rm -rf dist node_modules/.vite coverage",
     "docker:build": "./build.sh",
     "docker:deploy": "./deploy.sh",
-    "validate": "npm run type-check && npm run test"
+    "validate": "npm run format:check && npm run lint && npm run type-check && npm run test"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -43,6 +47,12 @@
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/user-event": "^14.5.1",
     "jsdom": "^23.0.0",
-    "msw": "^2.0.0"
+    "msw": "^2.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.2",
+    "@typescript-eslint/parser": "^7.0.2",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "prettier": "^3.0.0"
   }
 }

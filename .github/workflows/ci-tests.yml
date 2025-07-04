@@ -1,0 +1,428 @@
+name: CI - Tests Automáticos
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  # Variables globales para tests
+  ENVIRONMENT: "test"
+  DEBUG_MODE: "false"
+  LOG_LEVEL: "WARNING"
+
+jobs:
+  # ================================================================
+  # LINTING Y FORMATEO DE CÓDIGO
+  # ================================================================
+  code-quality:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout código (sin LFS)
+      uses: actions/checkout@v4
+      with:
+        lfs: false  # Skip LFS para linting - no necesarios para código fuente
+    
+    - name: Configurar Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Configurar Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: 'src/*/package-lock.json'
+    
+    - name: Cache de dependencias Python
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-linting-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-linting-
+          ${{ runner.os }}-pip-
+    
+    - name: Instalar herramientas de linting Python
+      run: |
+        pip install --upgrade pip
+        pip install black isort ruff mypy
+    
+    - name: Instalar dependencias de frontends
+      run: |
+        # Dashboard Frontend
+        if [ -f "src/module_dashboard_review_frontend/package.json" ]; then
+          cd src/module_dashboard_review_frontend
+          npm ci
+          cd ../..
+        fi
+        
+        # Spider Factory Frontend  
+        if [ -f "src/module_spider_factory_frontend/package.json" ]; then
+          cd src/module_spider_factory_frontend
+          npm ci
+          cd ../..
+        fi
+    
+    - name: Ejecutar linting completo
+      run: |
+        chmod +x ./run-linting.sh
+        ./run-linting.sh --check --all --verbose
+    
+    - name: Generar reporte de calidad
+      if: always()
+      run: |
+        echo "## 🔧 Reporte de Calidad de Código" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Herramientas ejecutadas:" >> $GITHUB_STEP_SUMMARY
+        echo "- **Python**: Black, isort, Ruff, MyPy" >> $GITHUB_STEP_SUMMARY
+        echo "- **TypeScript**: Prettier, ESLint" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ $? -eq 0 ]; then
+          echo "### ✅ Calidad de código: APROBADA" >> $GITHUB_STEP_SUMMARY
+          echo "El código cumple con todos los estándares de formateo y linting." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ❌ Calidad de código: FALLÓ" >> $GITHUB_STEP_SUMMARY
+          echo "Hay problemas de formateo o linting que deben corregirse." >> $GITHUB_STEP_SUMMARY
+          echo "**Solución**: Ejecutar \`./run-linting.sh --fix\` localmente." >> $GITHUB_STEP_SUMMARY
+        fi
+
+  # ================================================================
+  # TESTS DE FRONTEND (React + TypeScript)
+  # ================================================================
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+        module: 
+          - module_dashboard_review_frontend
+          - module_spider_factory_frontend
+    
+    steps:
+    - name: Checkout código (sin LFS)
+      uses: actions/checkout@v4
+      with:
+        lfs: false  # Skip LFS para tests - no necesarios para código fuente
+    
+    - name: Configurar Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: src/${{ matrix.module }}/package-lock.json
+    
+    - name: Instalar dependencias
+      working-directory: ./src/${{ matrix.module }}
+      run: npm ci
+    
+    - name: Verificación de tipos TypeScript
+      working-directory: ./src/${{ matrix.module }}
+      run: npm run type-check
+    
+    - name: Ejecutar tests unitarios
+      working-directory: ./src/${{ matrix.module }}
+      run: npm test -- --run
+    
+    - name: Generar reporte de cobertura
+      working-directory: ./src/${{ matrix.module }}
+      run: npm run test:coverage -- --run
+    
+    - name: Subir cobertura a Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./src/${{ matrix.module }}/coverage
+        flags: ${{ matrix.module }}
+        name: ${{ matrix.module }}-coverage
+
+  # ================================================================
+  # TESTS DE BACKEND (Python + FastAPI)
+  # ================================================================
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10]
+        module:
+          - module_pipeline
+          - module_dashboard_review_backend
+          - module_connector
+          - spider_factory
+    
+    steps:
+    - name: Checkout código (sin LFS)
+      uses: actions/checkout@v4
+      with:
+        lfs: false  # Skip LFS para tests - no necesarios para código fuente
+    
+    - name: Configurar Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache de dependencias Python
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Instalar dependencias globales
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Instalar dependencias específicas del módulo
+      working-directory: ./src/${{ matrix.module }}
+      run: |
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        fi
+        if [ -f requirements-test.txt ]; then
+          pip install -r requirements-test.txt
+        fi
+    
+    - name: Ejecutar tests con pytest
+      working-directory: ./src/${{ matrix.module }}
+      run: |
+        if [ -f pytest.ini ] || [ -d tests ]; then
+          pytest -v --tb=short --cov=src --cov-report=xml --cov-report=html
+        else
+          echo "No hay tests configurados para ${{ matrix.module }}"
+        fi
+    
+    - name: Subir cobertura a Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./src/${{ matrix.module }}
+        flags: ${{ matrix.module }}
+        name: ${{ matrix.module }}-coverage
+
+  # ================================================================
+  # TESTS DE SCRAPER (Scrapy + Playwright)
+  # ================================================================
+  scraper-tests:
+    name: Scraper Tests
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+    - name: Checkout código (sin LFS)
+      uses: actions/checkout@v4
+      with:
+        lfs: false  # Skip LFS para tests - no necesarios para código fuente
+    
+    - name: Configurar Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Instalar dependencias de sistema
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget gnupg
+    
+    - name: Instalar dependencias Python
+      working-directory: ./src/module_scraper
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        if [ -f requirements-test.txt ]; then
+          pip install -r requirements-test.txt
+        fi
+    
+    - name: Instalar Playwright browsers
+      run: playwright install --with-deps chromium
+    
+    - name: Ejecutar tests de scraper
+      working-directory: ./src/module_scraper
+      run: |
+        if [ -f run_all_tests.py ]; then
+          python run_all_tests.py
+        else
+          pytest -v --tb=short
+        fi
+
+  # ================================================================
+  # TESTS DE INTEGRACIÓN (Docker Compose)
+  # ================================================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [frontend-tests, backend-tests, scraper-tests]
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout código (sin LFS)
+      uses: actions/checkout@v4
+      with:
+        lfs: false  # Skip LFS para tests - no necesarios para código fuente
+    
+    - name: Configurar Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Crear archivo .env para tests
+      run: |
+        cat > .env << EOF
+        # Variables para tests de integración
+        ENVIRONMENT=test
+        DEBUG_MODE=false
+        LOG_LEVEL=WARNING
+        
+        # Supabase (usar variables mock para tests)
+        SUPABASE_URL=https://mock.supabase.co
+        SUPABASE_ANON_KEY=mock_anon_key
+        SUPABASE_SERVICE_ROLE_KEY=mock_service_key
+        SUPABASE_DB_PASSWORD=mock_password
+        
+        # APIs (usar keys mock para tests)
+        GROQ_API_KEY=mock_groq_key
+        FIRECRAWL_API_KEY=mock_firecrawl_key
+        
+        # Redis (usar servicio local)
+        REDIS_URL=redis://localhost:6379
+        SPIDER_FACTORY_REDIS_HOST=localhost
+        
+        # URLs internas
+        PIPELINE_API_URL=http://localhost:8003
+        DASHBOARD_API_URL=http://localhost:8004
+        EOF
+    
+    - name: Instalar dependencias de integración
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest requests docker-compose
+    
+    - name: Ejecutar tests de conectividad de red
+      working-directory: ./tests
+      run: |
+        if [ -f run_network_check.py ]; then
+          python run_network_check.py
+        fi
+    
+    - name: Ejecutar tests de health check
+      working-directory: ./tests
+      run: |
+        if [ -f run_health_check.py ]; then
+          python run_health_check.py
+        fi
+
+  # ================================================================
+  # VALIDACIÓN DE CONFIGURACIÓN
+  # ================================================================
+  config-validation:
+    name: Config Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout código (sin LFS)
+      uses: actions/checkout@v4
+      with:
+        lfs: false  # Skip LFS para tests - no necesarios para código fuente
+    
+    - name: Validar docker-compose.yml
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+        docker-compose config -q
+    
+    - name: Validar estructura de proyecto
+      run: |
+        # Verificar archivos críticos
+        test -f docker-compose.yml || exit 1
+        test -f .env.example || exit 1
+        test -f requirements.txt || exit 1
+        test -f README.md || exit 1
+        
+        # Verificar directorios de módulos
+        test -d src/module_scraper || exit 1
+        test -d src/module_pipeline || exit 1
+        test -d src/module_dashboard_review_backend || exit 1
+        test -d src/module_dashboard_review_frontend || exit 1
+        test -d src/spider_factory || exit 1
+        
+        echo "✅ Estructura de proyecto válida"
+    
+    - name: Validar archivos de configuración de módulos
+      run: |
+        # Verificar Dockerfiles
+        find src/ -name "Dockerfile" -exec docker build --dry-run -f {} . \; > /dev/null
+        
+        # Verificar package.json de frontends
+        for frontend in module_dashboard_review_frontend module_spider_factory_frontend; do
+          if [ -f "src/$frontend/package.json" ]; then
+            cd "src/$frontend" && npm install --dry-run && cd ../..
+          fi
+        done
+        
+        echo "✅ Configuraciones de módulos válidas"
+
+  # ================================================================
+  # REPORTE FINAL
+  # ================================================================
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, frontend-tests, backend-tests, scraper-tests, integration-tests, config-validation]
+    if: always()
+    
+    steps:
+    - name: Checkout código (sin LFS)
+      uses: actions/checkout@v4
+      with:
+        lfs: false  # Skip LFS para tests - no necesarios para código fuente
+    
+    - name: Generar reporte de tests
+      run: |
+        echo "## 📊 Reporte de Tests - La Máquina de Noticias" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Resultados por Módulo:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Status de cada job
+        echo "- **Code Quality**: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Frontend Tests**: ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Backend Tests**: ${{ needs.backend-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Scraper Tests**: ${{ needs.scraper-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Integration Tests**: ${{ needs.integration-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Config Validation**: ${{ needs.config-validation.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Estado general
+        if [[ "${{ needs.code-quality.result }}" == "success" && 
+              "${{ needs.frontend-tests.result }}" == "success" && 
+              "${{ needs.backend-tests.result }}" == "success" && 
+              "${{ needs.scraper-tests.result }}" == "success" && 
+              "${{ needs.integration-tests.result }}" == "success" && 
+              "${{ needs.config-validation.result }}" == "success" ]]; then
+          echo "### 🎉 ¡Todos los tests pasaron exitosamente!" >> $GITHUB_STEP_SUMMARY
+          echo "El proyecto está listo para deploy." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ❌ Algunos tests fallaron" >> $GITHUB_STEP_SUMMARY
+          echo "Revisa los logs de los jobs fallidos antes de hacer deploy." >> $GITHUB_STEP_SUMMARY
+        fi

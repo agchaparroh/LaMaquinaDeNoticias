@@ -1,0 +1,270 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "la-maquina-de-noticias"
+version = "2.0.0"
+description = "Sistema automatizado de scraping y procesamiento de noticias"
+authors = [
+    {name = "La Máquina de Noticias Team"},
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+# =============================================================================
+# BLACK - FORMATEO DE CÓDIGO PYTHON
+# =============================================================================
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    # Directorios a excluir
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | node_modules
+  | venv
+  | \.venv
+  | migrations
+  | __pycache__
+  | \.pytest_cache
+  # Archivos específicos a excluir
+  | setup\.py
+  | scrapy\.cfg
+  | \.egg-info
+)/
+'''
+
+# =============================================================================
+# ISORT - ORGANIZACIÓN DE IMPORTS
+# =============================================================================
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+src_paths = ["src", "tests"]
+skip_glob = [
+    "*/migrations/*",
+    "*/node_modules/*",
+    "*/venv/*", 
+    "*/.venv/*",
+    "*/build/*",
+    "*/dist/*"
+]
+known_first_party = [
+    "scraper_core",
+    "module_connector", 
+    "module_pipeline",
+    "module_dashboard_review_backend",
+    "spider_factory"
+]
+known_third_party = [
+    "scrapy",
+    "fastapi", 
+    "pydantic",
+    "supabase",
+    "loguru",
+    "tenacity",
+    "groq",
+    "spacy",
+    "playwright"
+]
+sections = [
+    "FUTURE",
+    "STDLIB", 
+    "THIRDPARTY",
+    "FIRSTPARTY",
+    "LOCALFOLDER"
+]
+
+# =============================================================================
+# FLAKE8 - LINTING Y CALIDAD DE CÓDIGO
+# =============================================================================
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",  # whitespace before ':' (conflicto con black)
+    "E501",  # line too long (maneja black)
+    "W503",  # line break before binary operator
+    "E402",  # module level import not at top (común en scrapy)
+    "F401",  # imported but unused (común en __init__.py)
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".venv",
+    "venv",
+    "node_modules",
+    "migrations",
+    ".pytest_cache",
+    ".tox"
+]
+per-file-ignores = [
+    "__init__.py:F401,F403",
+    "settings.py:E501,F401",
+    "test_*.py:F401,F403",
+    "conftest.py:F401,F403"
+]
+
+# =============================================================================
+# MYPY - TYPE CHECKING (OPCIONAL)
+# =============================================================================
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Gradual typing
+ignore_missing_imports = true
+exclude = [
+    "build/",
+    "dist/", 
+    "venv/",
+    ".venv/",
+    "node_modules/",
+    "migrations/"
+]
+
+# =============================================================================
+# PYTEST - CONFIGURACIÓN DE TESTS
+# =============================================================================
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml",
+]
+testpaths = [
+    "tests",
+    "src/*/tests",
+]
+pythonpath = [
+    "src",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "api: marks tests that require API access",
+    "scraper: marks tests related to scraping functionality",
+    "pipeline: marks tests related to pipeline functionality",
+    "connector: marks tests related to connector functionality",
+]
+
+# =============================================================================
+# COVERAGE - MEDICIÓN DE COBERTURA
+# =============================================================================
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*", 
+    "*/.venv/*",
+    "*/build/*",
+    "*/dist/*",
+    "*/migrations/*",
+    "*/node_modules/*",
+    "setup.py",
+    "*/settings.py",
+    "*/.pytest_cache/*"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# =============================================================================
+# RUFF - LINTER MODERNO Y RÁPIDO (ALTERNATIVA A FLAKE8)
+# =============================================================================
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+src = ["src", "tests"]
+exclude = [
+    ".git",
+    "__pycache__", 
+    "build",
+    "dist",
+    "*.egg-info",
+    ".venv",
+    "venv",
+    "node_modules",
+    "migrations"
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+]
+ignore = [
+    "E203",  # whitespace before ':' (conflicto con black)
+    "E501",  # line too long (maneja black)
+    "B008",  # function calls in argument defaults
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+"settings.py" = ["E501", "F401"]
+"test_*.py" = ["F401", "F403"]
+"conftest.py" = ["F401", "F403"]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "scraper_core",
+    "module_connector", 
+    "module_pipeline",
+    "module_dashboard_review_backend",
+    "spider_factory"
+]

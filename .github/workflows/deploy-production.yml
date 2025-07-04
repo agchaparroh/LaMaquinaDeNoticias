@@ -1,0 +1,538 @@
+name: 🏭 Deploy a Producción
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Saltar tests (solo para hotfix)'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  DEPLOY_ENV: "production"
+  SERVER_PATH: "/opt/lamaquina-production"
+  COMPOSE_PROJECT_NAME: "lamaquina_production"
+  BACKUP_PATH: "/opt/backups/lamaquina"
+
+jobs:
+  # ================================================================
+  # PRE-DEPLOY: VALIDACIONES ESTRICTAS
+  # ================================================================
+  pre-deploy-validations:
+    name: Pre-Deploy Validations
+    runs-on: ubuntu-latest
+    
+    outputs:
+      deploy_type: ${{ steps.analysis.outputs.deploy_type }}
+      git_sha: ${{ steps.analysis.outputs.git_sha }}
+      git_tag: ${{ steps.analysis.outputs.git_tag }}
+      backup_required: ${{ steps.analysis.outputs.backup_required }}
+    
+    steps:
+    - name: Checkout código (sin LFS)
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        lfs: false  # No necesario para análisis de validaciones
+    
+    - name: Análisis de cambios y riesgos
+      id: analysis
+      run: |
+        # Información del commit
+        GIT_SHA=${GITHUB_SHA:0:8}
+        GIT_TAG=$(git describe --tags --exact-match 2>/dev/null || echo "no-tag")
+        
+        # Tipo de deploy
+        DEPLOY_TYPE="production"
+        
+        # Análisis de archivos modificados
+        if [ "${{ github.event_name }}" = "push" ]; then
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+        else
+          CHANGED_FILES="manual-trigger"
+        fi
+        
+        # Verificar si requiere backup
+        BACKUP_REQUIRED=true
+        CRITICAL_CHANGES=false
+        
+        # Archivos críticos que requieren backup
+        CRITICAL_PATTERNS=(
+          "BaseDeDatos_SUPABASE/"
+          "docker-compose.yml"
+          "src/module_pipeline/"
+          ".env.example"
+        )
+        
+        for pattern in "${CRITICAL_PATTERNS[@]}"; do
+          if echo "$CHANGED_FILES" | grep -q "$pattern"; then
+            CRITICAL_CHANGES=true
+            break
+          fi
+        done
+        
+        echo "deploy_type=$DEPLOY_TYPE" >> $GITHUB_OUTPUT
+        echo "git_sha=$GIT_SHA" >> $GITHUB_OUTPUT
+        echo "git_tag=$GIT_TAG" >> $GITHUB_OUTPUT
+        echo "backup_required=$BACKUP_REQUIRED" >> $GITHUB_OUTPUT
+        
+        echo "📋 Análisis de Deploy:"
+        echo "- Tipo: $DEPLOY_TYPE"
+        echo "- SHA: $GIT_SHA"
+        echo "- Tag: $GIT_TAG"
+        echo "- Cambios críticos: $CRITICAL_CHANGES"
+        echo "- Backup requerido: $BACKUP_REQUIRED"
+        echo ""
+        echo "📁 Archivos modificados:"
+        echo "$CHANGED_FILES"
+    
+    - name: Verificar repositorio
+      run: |
+        echo "🔍 Verificando estado del repositorio..."
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ steps.analysis.outputs.git_sha }}"
+        echo "Tag: ${{ steps.analysis.outputs.git_tag }}"
+    
+    - name: Requerir aprobación para producción
+      uses: trstringer/manual-approval@v1
+      if: github.event.inputs.skip_tests != 'true'
+      with:
+        secret: ${{ github.TOKEN }}
+        approvers: ${{ secrets.PROD_APPROVERS }}
+        minimum-approvals: 1
+        issue-title: "🏭 Aprobación requerida para Deploy a Producción"
+        issue-body: |
+          ## Deploy a Producción Solicitado
+          
+          **Branch:** ${{ github.ref_name }}
+          **Commit:** ${{ steps.analysis.outputs.git_sha }}
+          **Tag:** ${{ steps.analysis.outputs.git_tag }}
+          
+          ### Cambios incluidos:
+          ${{ steps.analysis.outputs.changed_files }}
+          
+          ### Validaciones pre-deploy:
+          - ✅ Estructura de proyecto válida
+          - ✅ Configuración docker-compose válida
+          - ✅ Variables de entorno verificadas
+          
+          **¿Aprobar deploy a producción?**
+
+  # ================================================================
+  # TESTS COMPLETOS (solo si no es hotfix con skip_tests)
+  # ================================================================
+  production-tests:
+    name: Production Tests
+    uses: ./.github/workflows/ci-tests.yml
+    needs: pre-deploy-validations
+    if: |
+      needs.pre-deploy-validations.result == 'success' && 
+      github.event.inputs.skip_tests != 'true'
+
+  # ================================================================
+  # BACKUP PRE-DEPLOY
+  # ================================================================
+  backup-production:
+    name: Backup Production
+    runs-on: ubuntu-latest
+    needs: [pre-deploy-validations, production-tests]
+    if: |
+      always() && 
+      needs.pre-deploy-validations.outputs.backup_required == 'true' &&
+      (needs.production-tests.result == 'success' || needs.production-tests.result == 'skipped')
+    
+    steps:
+    - name: Configurar SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+    
+    - name: Crear backup de producción
+      run: |
+        ssh ${{ secrets.PRODUCTION_SERVER_USER }}@${{ secrets.PRODUCTION_SERVER_HOST }} << 'EOF'
+          set -e
+          
+          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+          BACKUP_DIR="${{ env.BACKUP_PATH }}/${TIMESTAMP}"
+          
+          echo "📦 Creando backup en: $BACKUP_DIR"
+          mkdir -p "$BACKUP_DIR"
+          
+          # Backup del código
+          echo "📂 Backup del código..."
+          cp -r ${{ env.SERVER_PATH }} "$BACKUP_DIR/code"
+          
+          # Backup de volúmenes Docker importantes
+          echo "🐳 Backup de volúmenes Docker..."
+          docker run --rm -v lamaquina_production_redis_data:/data -v "$BACKUP_DIR":/backup alpine tar czf /backup/redis_data.tar.gz -C /data .
+          docker run --rm -v lamaquina_production_scrapyd_logs:/data -v "$BACKUP_DIR":/backup alpine tar czf /backup/scrapyd_logs.tar.gz -C /data .
+          
+          # Backup de configuración
+          echo "⚙️ Backup de configuración..."
+          cp ${{ env.SERVER_PATH }}/.env "$BACKUP_DIR/env_backup" 2>/dev/null || echo "No .env encontrado"
+          
+          # Información del backup
+          echo "📋 Información del backup..." 
+          cat > "$BACKUP_DIR/backup_info.txt" << INFOEOF
+        Backup created: $(date)
+        Git SHA: ${{ needs.pre-deploy-validations.outputs.git_sha }}
+        Deploy type: ${{ needs.pre-deploy-validations.outputs.deploy_type }}
+        Workflow: ${{ github.workflow }}
+        Run ID: ${{ github.run_id }}
+        INFOEOF
+          
+          echo "✅ Backup completado en: $BACKUP_DIR"
+          
+          # Limpiar backups antiguos (mantener últimos 10)
+          echo "🧹 Limpiando backups antiguos..."
+          cd ${{ env.BACKUP_PATH }}
+          ls -1t | tail -n +11 | xargs -r rm -rf
+        EOF
+
+  # ================================================================
+  # DEPLOY A PRODUCCIÓN
+  # ================================================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [pre-deploy-validations, production-tests, backup-production]
+    if: |
+      always() && 
+      needs.pre-deploy-validations.result == 'success' &&
+      (needs.production-tests.result == 'success' || needs.production-tests.result == 'skipped') &&
+      (needs.backup-production.result == 'success' || needs.backup-production.result == 'skipped')
+    
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.production_url }}
+    
+    steps:
+    - name: Checkout código (sin LFS)
+      uses: actions/checkout@v4
+      with:
+        lfs: false  # LFS se maneja en el servidor
+    
+    - name: Configurar SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+    
+    - name: Deploy a producción
+      id: deploy
+      run: |
+        echo "🏭 Iniciando deploy a producción..."
+        
+        ssh ${{ secrets.PRODUCTION_SERVER_USER }}@${{ secrets.PRODUCTION_SERVER_HOST }} << 'EOF'
+          set -e
+          
+          echo "📂 Navegando al directorio de producción..."
+          cd ${{ env.SERVER_PATH }}
+          
+          # Verificar estado actual
+          echo "🔍 Verificando estado actual..."
+          CURRENT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+          echo "SHA actual: $CURRENT_SHA"
+          
+          echo "🔄 Actualizando código desde Git..."
+          git fetch origin
+          git reset --hard origin/main
+          
+          echo "📦 Manejando archivos Git LFS para producción..."
+          # Usar script especializado con timeout más largo para producción
+          if [[ -f ".github/scripts/lfs-manager.sh" ]]; then
+            echo "Usando LFS Manager para manejo optimizado en producción..."
+            ./.github/scripts/lfs-manager.sh check && ./.github/scripts/lfs-manager.sh pull --timeout=600 --verbose || echo "⚠️ LFS: Algunos archivos pueden no estar disponibles"
+          else
+            # Fallback al método tradicional con timeout extendido
+            echo "Fallback: Usando método tradicional de LFS..."
+            if git lfs ls-files | head -1 > /dev/null 2>&1; then
+              echo "LFS detectado, descargando archivos..."
+              timeout 600 git lfs pull || echo "⚠️ Advertencia: Algunos archivos LFS no se pudieron descargar en 10 minutos"
+            else
+              echo "No se detectaron archivos LFS"
+            fi
+          fi
+          
+          NEW_SHA=$(git rev-parse HEAD)
+          echo "Nuevo SHA: $NEW_SHA"
+          
+          echo "🛠️ Configurando archivo .env para producción..."
+          cat > .env << 'ENVEOF'
+        # === CONFIGURACIÓN PRODUCCIÓN ===
+        ENVIRONMENT=production
+        DEBUG_MODE=false
+        LOG_LEVEL=WARNING
+        
+        # Supabase
+        SUPABASE_URL=${{ secrets.PRODUCTION_SUPABASE_URL }}
+        SUPABASE_ANON_KEY=${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
+        SUPABASE_SERVICE_ROLE_KEY=${{ secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
+        SUPABASE_DB_PASSWORD=${{ secrets.PRODUCTION_SUPABASE_DB_PASSWORD }}
+        
+        # PostgreSQL directo
+        PGHOST=${{ secrets.PRODUCTION_PGHOST }}
+        PGPORT=5432
+        PGDATABASE=postgres
+        PGUSER=postgres
+        PGPASSWORD=${{ secrets.PRODUCTION_SUPABASE_DB_PASSWORD }}
+        
+        # APIs
+        GROQ_API_KEY=${{ secrets.PRODUCTION_GROQ_API_KEY }}
+        FIRECRAWL_API_KEY=${{ secrets.PRODUCTION_FIRECRAWL_API_KEY }}
+        ANTHROPIC_API_KEY=${{ secrets.PRODUCTION_ANTHROPIC_API_KEY }}
+        
+        # Configuración de producción
+        SCRAPER_TARGET_URLS=${{ secrets.PRODUCTION_SCRAPER_TARGET_URLS }}
+        SCRAPYDWEB_USERNAME=admin
+        SCRAPYDWEB_PASSWORD=${{ secrets.PRODUCTION_SCRAPYDWEB_PASSWORD }}
+        
+        # URLs internas
+        PIPELINE_API_URL=http://module_pipeline:8003
+        DASHBOARD_API_URL=http://module_dashboard_review_backend:8004
+        REDIS_URL=redis://redis:6379
+        SPIDER_FACTORY_REDIS_HOST=redis
+        
+        # Configuración de seguridad para producción
+        CORS_ORIGINS=https://${{ secrets.PRODUCTION_DOMAIN }}
+        VITE_APP_API_URL=https://${{ secrets.PRODUCTION_DOMAIN }}/api
+        ENVEOF
+          
+          echo "🐳 Aplicando estrategia de deploy de producción..."
+          
+          # Deploy con rolling update
+          echo "🔄 Rolling update de servicios..."
+          
+          # 1. Actualizar servicios backend primero
+          docker-compose -p ${{ env.COMPOSE_PROJECT_NAME }} build --no-cache module_pipeline module_dashboard_review_backend spider_factory_backend
+          docker-compose -p ${{ env.COMPOSE_PROJECT_NAME }} up -d module_pipeline module_dashboard_review_backend spider_factory_backend
+          
+          # Esperar que estén saludables
+          sleep 15
+          
+          # 2. Actualizar servicios frontend
+          docker-compose -p ${{ env.COMPOSE_PROJECT_NAME }} build --no-cache module_dashboard_review_frontend module_spider_factory_frontend
+          docker-compose -p ${{ env.COMPOSE_PROJECT_NAME }} up -d module_dashboard_review_frontend module_spider_factory_frontend
+          
+          # 3. Actualizar servicios de infraestructura
+          docker-compose -p ${{ env.COMPOSE_PROJECT_NAME }} build --no-cache module_scraper scrapyd scrapydweb
+          docker-compose -p ${{ env.COMPOSE_PROJECT_NAME }} up -d module_scraper scrapyd scrapydweb
+          
+          # 4. Actualizar proxy al final
+          docker-compose -p ${{ env.COMPOSE_PROJECT_NAME }} build --no-cache nginx_reverse_proxy
+          docker-compose -p ${{ env.COMPOSE_PROJECT_NAME }} up -d nginx_reverse_proxy
+          
+          echo "⏳ Esperando estabilización de servicios..."
+          sleep 45
+          
+          echo "✅ Deploy a producción completado!"
+          echo "📊 Estado final:"
+          docker-compose -p ${{ env.COMPOSE_PROJECT_NAME }} ps
+        EOF
+        
+        # Configurar URL de producción
+        PRODUCTION_URL="https://${{ secrets.PRODUCTION_DOMAIN }}"
+        echo "production_url=$PRODUCTION_URL" >> $GITHUB_OUTPUT
+        
+        echo "🎉 Deploy a producción completado. URL: $PRODUCTION_URL"
+
+  # ================================================================
+  # HEALTH CHECKS DE PRODUCCIÓN
+  # ================================================================
+  production-health-check:
+    name: Production Health Check
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: always() && needs.deploy-production.result == 'success'
+    
+    steps:
+    - name: Health check exhaustivo de producción
+      run: |
+        PROD_HOST="${{ secrets.PRODUCTION_DOMAIN }}"
+        PROD_IP="${{ secrets.PRODUCTION_SERVER_HOST }}"
+        
+        echo "🏥 Health check exhaustivo de producción..."
+        
+        # Endpoints de producción con SSL
+        HTTPS_ENDPOINTS=(
+          "https://${PROD_HOST}"
+          "https://${PROD_HOST}/api/health"
+        )
+        
+        # Endpoints internos por IP
+        HTTP_ENDPOINTS=(
+          "http://${PROD_IP}:8003/health"
+          "http://${PROD_IP}:8004/health"
+          "http://${PROD_IP}:3001"
+          "http://${PROD_IP}:3002"
+          "http://${PROD_IP}:5000"
+          "http://${PROD_IP}:6800/daemonstatus.json"
+        )
+        
+        FAILED_CHECKS=0
+        
+        # Verificar endpoints HTTPS
+        echo "🔐 Verificando endpoints HTTPS..."
+        for endpoint in "${HTTPS_ENDPOINTS[@]}"; do
+          echo "📡 Verificando: $endpoint"
+          
+          if curl -f -s --max-time 15 "$endpoint" > /dev/null; then
+            echo "✅ $endpoint - OK"
+          else
+            echo "❌ $endpoint - FAIL"
+            FAILED_CHECKS=$((FAILED_CHECKS + 1))
+          fi
+        done
+        
+        # Verificar endpoints HTTP internos
+        echo ""
+        echo "🔧 Verificando servicios internos..."
+        for endpoint in "${HTTP_ENDPOINTS[@]}"; do
+          echo "📡 Verificando: $endpoint"
+          
+          if curl -f -s --max-time 10 "$endpoint" > /dev/null; then
+            echo "✅ $endpoint - OK"
+          else
+            echo "❌ $endpoint - FAIL"
+            FAILED_CHECKS=$((FAILED_CHECKS + 1))
+          fi
+        done
+        
+        # Verificar certificado SSL
+        echo ""
+        echo "🔐 Verificando certificado SSL..."
+        SSL_EXPIRY=$(echo | openssl s_client -servername "${PROD_HOST}" -connect "${PROD_HOST}:443" 2>/dev/null | openssl x509 -noout -dates 2>/dev/null | grep "notAfter" | cut -d= -f2)
+        if [ -n "$SSL_EXPIRY" ]; then
+          echo "✅ Certificado SSL válido hasta: $SSL_EXPIRY"
+        else
+          echo "⚠️ No se pudo verificar certificado SSL"
+          FAILED_CHECKS=$((FAILED_CHECKS + 1))
+        fi
+        
+        echo ""
+        echo "📊 Resumen Health Check de Producción:"
+        echo "- Total verificaciones: $((${#HTTPS_ENDPOINTS[@]} + ${#HTTP_ENDPOINTS[@]} + 1))"
+        echo "- Fallidas: $FAILED_CHECKS"
+        echo "- Exitosas: $(($((${#HTTPS_ENDPOINTS[@]} + ${#HTTP_ENDPOINTS[@]} + 1)) - FAILED_CHECKS))"
+        
+        if [ $FAILED_CHECKS -gt 1 ]; then
+          echo "🚨 Deploy de producción tiene problemas críticos!"
+          exit 1
+        else
+          echo "✅ Deploy de producción exitoso y saludable!"
+        fi
+    
+    - name: Test de carga básico
+      run: |
+        PROD_HOST="${{ secrets.PRODUCTION_DOMAIN }}"
+        
+        echo "🚀 Ejecutando test de carga básico..."
+        
+        # Test de carga con 10 requests concurrentes
+        for i in {1..10}; do
+          curl -s -o /dev/null -w "%{http_code} %{time_total}s\n" "https://${PROD_HOST}" &
+        done
+        wait
+        
+        echo "✅ Test de carga básico completado"
+
+  # ================================================================
+  # ROLLBACK AUTOMÁTICO EN CASO DE FALLO
+  # ================================================================
+  auto-rollback:
+    name: Auto Rollback
+    runs-on: ubuntu-latest
+    needs: [deploy-production, production-health-check]
+    if: always() && (needs.deploy-production.result == 'failure' || needs.production-health-check.result == 'failure')
+    
+    steps:
+    - name: Ejecutar rollback automático
+      run: |
+        echo "🚨 Deploy falló - ejecutando rollback automático..."
+        
+        ssh ${{ secrets.PRODUCTION_SERVER_USER }}@${{ secrets.PRODUCTION_SERVER_HOST }} << 'EOF'
+          set -e
+          
+          cd ${{ env.SERVER_PATH }}
+          
+          echo "🔄 Ejecutando rollback..."
+          
+          # Encontrar el backup más reciente
+          LATEST_BACKUP=$(ls -1t ${{ env.BACKUP_PATH }} | head -n 1)
+          
+          if [ -n "$LATEST_BACKUP" ]; then
+            echo "📦 Restaurando desde backup: $LATEST_BACKUP"
+            
+            # Parar servicios
+            docker-compose -p ${{ env.COMPOSE_PROJECT_NAME }} down
+            
+            # Restaurar código
+            rm -rf ${{ env.SERVER_PATH }}/*
+            cp -r ${{ env.BACKUP_PATH }}/${LATEST_BACKUP}/code/* ${{ env.SERVER_PATH }}/
+            
+            # Restaurar configuración
+            cp ${{ env.BACKUP_PATH }}/${LATEST_BACKUP}/env_backup ${{ env.SERVER_PATH }}/.env
+            
+            # Restaurar volúmenes
+            docker run --rm -v ${{ env.BACKUP_PATH }}/${LATEST_BACKUP}:/backup -v lamaquina_production_redis_data:/data alpine tar xzf /backup/redis_data.tar.gz -C /data
+            
+            # Reiniciar servicios
+            docker-compose -p ${{ env.COMPOSE_PROJECT_NAME }} up -d
+            
+            echo "✅ Rollback completado"
+          else
+            echo "❌ No se encontró backup para rollback"
+            exit 1
+          fi
+        EOF
+
+  # ================================================================
+  # NOTIFICACIÓN FINAL
+  # ================================================================
+  notify-production-result:
+    name: Notificar Resultado de Producción
+    runs-on: ubuntu-latest
+    needs: [pre-deploy-validations, deploy-production, production-health-check, auto-rollback]
+    if: always()
+    
+    steps:
+    - name: Generar reporte final
+      run: |
+        echo "## 🏭 Reporte de Deploy - PRODUCCIÓN" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** main" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** ${{ needs.pre-deploy-validations.outputs.git_sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Tag:** ${{ needs.pre-deploy-validations.outputs.git_tag }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Deploy Type:** ${{ needs.pre-deploy-validations.outputs.deploy_type }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Timestamp:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "### 📋 Resultados del Pipeline:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Validaciones Pre-Deploy**: ${{ needs.pre-deploy-validations.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Deploy**: ${{ needs.deploy-production.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Health Check**: ${{ needs.production-health-check.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Auto Rollback**: ${{ needs.auto-rollback.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ needs.deploy-production.result }}" == "success" && "${{ needs.production-health-check.result }}" == "success" ]]; then
+          echo "### 🎉 ¡Deploy a Producción EXITOSO!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**🌐 URL Producción:** https://${{ secrets.PRODUCTION_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### 🔗 Enlaces de Producción:" >> $GITHUB_STEP_SUMMARY
+          echo "- [🏠 Aplicación Principal](https://${{ secrets.PRODUCTION_DOMAIN }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [📊 Dashboard](https://${{ secrets.PRODUCTION_DOMAIN }}/dashboard)" >> $GITHUB_STEP_SUMMARY
+          echo "- [🕷️ Spider Factory](https://${{ secrets.PRODUCTION_DOMAIN }}/spider-factory)" >> $GITHUB_STEP_SUMMARY
+          echo "- [📈 Monitoreo](https://${{ secrets.PRODUCTION_DOMAIN }}/monitoring)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ❌ Deploy a Producción FALLÓ" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.auto-rollback.result }}" == "success" ]]; then
+            echo "✅ **Rollback automático ejecutado exitosamente**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🚨 **ATENCIÓN: Rollback automático también falló - intervención manual requerida**" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi

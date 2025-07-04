@@ -1,0 +1,311 @@
+# =============================================================================
+# DEPENDABOT CONFIGURATION - LA MÁQUINA DE NOTICIAS
+# =============================================================================
+# Configuración para actualizaciones automáticas de dependencias
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  # ===================================================================
+  # PYTHON DEPENDENCIES - BACKEND MODULES
+  # ===================================================================
+  
+  # Module Pipeline (FastAPI + ML/AI dependencies)
+  - package-ecosystem: "pip"
+    directory: "/src/module_pipeline"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "admin"  # Cambiar por el usuario GitHub del admin
+    labels:
+      - "dependencies"
+      - "module_pipeline"
+      - "python"
+    commit-message:
+      prefix: "deps(pipeline)"
+      include: "scope"
+    # Agrupar actualizaciones menores
+    groups:
+      fastapi-group:
+        patterns:
+          - "fastapi*"
+          - "uvicorn*"
+          - "pydantic*"
+      ai-ml-group:
+        patterns:
+          - "spacy*"
+          - "sentence-transformers*"
+          - "numpy*"
+          - "pandas*"
+      testing-group:
+        patterns:
+          - "pytest*"
+          - "httpx*"
+          - "coverage*"
+
+  # Module Dashboard Review Backend
+  - package-ecosystem: "pip"
+    directory: "/src/module_dashboard_review_backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:30"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "admin"
+    labels:
+      - "dependencies"
+      - "dashboard_backend"
+      - "python"
+    commit-message:
+      prefix: "deps(dashboard-be)"
+
+  # Module Scraper (Scrapy + Playwright)
+  - package-ecosystem: "pip"
+    directory: "/src/module_scraper"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "admin"
+    labels:
+      - "dependencies"
+      - "scraper"
+      - "python"
+    commit-message:
+      prefix: "deps(scraper)"
+    groups:
+      scrapy-group:
+        patterns:
+          - "scrapy*"
+          - "twisted*"
+          - "w3lib*"
+      playwright-group:
+        patterns:
+          - "playwright*"
+          - "beautifulsoup4*"
+
+  # Module Connector
+  - package-ecosystem: "pip"
+    directory: "/src/module_connector"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:30"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "admin"
+    labels:
+      - "dependencies"
+      - "connector"
+      - "python"
+    commit-message:
+      prefix: "deps(connector)"
+
+  # Spider Factory
+  - package-ecosystem: "pip"
+    directory: "/src/spider_factory"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "admin"
+    labels:
+      - "dependencies"
+      - "spider_factory"
+      - "python"
+    commit-message:
+      prefix: "deps(spider-factory)"
+
+  # Global Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "10:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "admin"
+    labels:
+      - "dependencies"
+      - "global"
+      - "python"
+    commit-message:
+      prefix: "deps(global)"
+
+  # ===================================================================
+  # JAVASCRIPT/NODE.js DEPENDENCIES - FRONTEND MODULES
+  # ===================================================================
+
+  # Dashboard Review Frontend (React + TypeScript)
+  - package-ecosystem: "npm"
+    directory: "/src/module_dashboard_review_frontend"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "admin"
+    labels:
+      - "dependencies"
+      - "dashboard_frontend"
+      - "javascript"
+      - "react"
+    commit-message:
+      prefix: "deps(dashboard-fe)"
+    # Configuración específica para Node.js
+    versioning-strategy: "increase"
+    groups:
+      react-group:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      vite-group:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+      testing-group:
+        patterns:
+          - "vitest*"
+          - "@testing-library/*"
+          - "jsdom*"
+      eslint-group:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+          - "@typescript-eslint/*"
+
+  # Spider Factory Frontend (React + TypeScript)
+  - package-ecosystem: "npm"
+    directory: "/src/module_spider_factory_frontend"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "09:30"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "admin"
+    labels:
+      - "dependencies"
+      - "spider_factory_frontend"
+      - "javascript"
+      - "react"
+    commit-message:
+      prefix: "deps(spider-fe)"
+    versioning-strategy: "increase"
+    groups:
+      react-group:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      ui-components:
+        patterns:
+          - "@mui/*"
+          - "@emotion/*"
+          - "react-syntax-highlighter*"
+
+  # ===================================================================
+  # DOCKER DEPENDENCIES
+  # ===================================================================
+
+  # Main Docker Compose
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "admin"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "infrastructure"
+    commit-message:
+      prefix: "deps(docker)"
+
+  # Module-specific Dockerfiles
+  - package-ecosystem: "docker"
+    directory: "/src/module_pipeline"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      time: "09:15"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "docker"
+      - "module_pipeline"
+
+  - package-ecosystem: "docker"
+    directory: "/src/module_dashboard_review_backend"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      time: "09:30"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "docker"
+      - "dashboard_backend"
+
+  - package-ecosystem: "docker"
+    directory: "/src/module_scraper"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      time: "09:45"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "docker"
+      - "scraper"
+
+  # ===================================================================
+  # GITHUB ACTIONS DEPENDENCIES
+  # ===================================================================
+
+  # GitHub Actions workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "admin"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci-cd"
+    commit-message:
+      prefix: "deps(gh-actions)"
+
+# =============================================================================
+# CONFIGURACIÓN GLOBAL DE DEPENDABOT
+# =============================================================================
+
+# Registries privados (si se usan)
+# registries:
+#   private-registry:
+#     type: npm-registry
+#     url: https://npm.pkg.github.com
+#     token: ${{ secrets.GITHUB_TOKEN }}
+
+# NOTAS IMPORTANTES:
+# 1. Cambiar "admin" por el usuario GitHub real del administrador
+# 2. Los horarios están en UTC
+# 3. Las actualizaciones se crean como PRs que requieren revisión manual
+# 4. Se recomienda probar en staging antes de hacer merge a main
+# 5. Los grupos ayudan a reducir el número de PRs agrupando dependencias relacionadas
