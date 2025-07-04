@@ -68,7 +68,7 @@ dateparser==1.2.0                   # Parser de fechas avanzado
 arrow==1.3.0                        # Manipulación de fechas
 python-slugify==8.0.4               # Generación de slugs URL
 text-unidecode==1.3                 # Transliteración Unicode
-json-repair==0.27.1                 # Reparación de JSON malformado
+json-repair==0.44.1                 # Reparación de JSON malformado
 requests==2.31.0                    # Cliente HTTP clásico
 urllib3==2.4.0                      # Utilidades HTTP de bajo nivel
 
