@@ -148,7 +148,7 @@ coverage==7.4.0                     # Medición de cobertura
 black==25.7.0                       # Formateo automático de código Python
 isort==5.13.2                       # Organización de imports
 flake8==8.0.1                       # Linting de código
-ruff==0.9.15                        # Linter moderno y rápido (alternativa a flake8)
+ruff==0.12.2                        # Linter moderno y rápido (alternativa a flake8)
 mypy==1.14.2                        # Type checking estático
 pre-commit==4.0.1                   # Git hooks para calidad de código
 
