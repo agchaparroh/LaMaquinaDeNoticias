@@ -2,6 +2,8 @@
 
 Este directorio contiene toda la configuración de **CI/CD (Integración Continua y Despliegue Continuo)** para el proyecto La Máquina de Noticias usando GitHub Actions.
 
+> ⚡ **Estado**: Sistema CI/CD listo para pruebas - Configuración SSH verificada y funcional.
+
 ## 📁 Estructura
 
 ```
