@@ -283,3 +283,7 @@ Modificar la sección de deploy en los workflows para usar diferentes estrategia
 5. **Hacer primer push** para probar el pipeline
 
 ¡Con esta configuración tendrás un sistema de CI/CD robusto y automatizado para La Máquina de Noticias! 🚀
+
+
+
+[![CI - Tests Automáticos](https://github.com/agchaparroh/LaMaquinaDeNoticias/actions/workflows/ci-tests.yml/badge.svg?branch=main)](https://github.com/agchaparroh/LaMaquinaDeNoticias/actions/workflows/ci-tests.yml)

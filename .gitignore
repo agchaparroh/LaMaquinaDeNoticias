@@ -247,13 +247,6 @@ $RECYCLE.BIN/
 *.cache
 cache/
 
-# Data directories that might contain sensitive information
-data/scraped/
-data/processed/
-data/raw/
-downloads/
-uploads/
-
 # Session files
 sessions/
 *.session

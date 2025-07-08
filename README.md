@@ -6,8 +6,6 @@
 
 **La Máquina de Noticias** ha alcanzado un **Producto Mínimo Viable (MVP)** completamente funcional con **8 módulos implementados** que cubren el flujo completo desde recopilación hasta presentación, incluyendo **Spider Factory** para generación inteligente de spiders.
 
-> 🚀 **CI/CD Configurado**: Sistema de integración continua y despliegue automatizado a producción completamente operativo.
-
 > 📋 **Ver [GOALS.md](docs/GOALS.md)** para objetivos detallados, roadmap y lecciones aprendidas del MVP.
 
 ---
