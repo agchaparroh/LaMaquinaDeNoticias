@@ -734,11 +734,11 @@ def retry_supabase_rpc(
             last_exception = None
             
             while attempts <= connection_retries:
+                attempts += 1
                 try:
                     return func(*args, **kwargs)
                 except (ConnectionError, TimeoutError) as e:
                     # Error de conexión - reintentar si no hemos alcanzado el límite
-                    attempts += 1
                     last_exception = e
                     
                     if attempts <= connection_retries:
@@ -788,10 +788,10 @@ def retry_supabase_rpc(
             last_exception = None
             
             while attempts <= connection_retries:
+                attempts += 1
                 try:
                     return await func(*args, **kwargs)
                 except (ConnectionError, TimeoutError) as e:
-                    attempts += 1
                     last_exception = e
                     
                     if attempts <= connection_retries:

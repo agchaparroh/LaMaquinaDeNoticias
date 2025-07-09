@@ -29,7 +29,7 @@ from .monitoring import setup_alert_endpoints, get_alert_manager
 
 # --- Configuración de Procesamiento Asíncrono ---
 # Threshold para determinar cuándo usar procesamiento en background
-ASYNC_PROCESSING_THRESHOLD = 10_000  # caracteres
+ASYNC_PROCESSING_THRESHOLD = 1_000  # caracteres (reducido para activar procesamiento asíncrono)
 
 # --- Configuración del Logger ---
 # El sistema de logging ya está configurado por logging_config.py
@@ -74,6 +74,7 @@ from .utils.error_handling import (
     ProcessingError,
     ErrorPhase,
     create_error_response,
+    create_validation_error_response,
     extract_validation_errors,
     format_error_for_logging,
     generate_request_id
@@ -241,8 +242,24 @@ async def request_validation_exception_handler(request: Request, exc: RequestVal
         **log_data
     )
     
-    # Crear respuesta de error
-    return create_error_response(exc, request_id=request_id)
+    # Crear respuesta de error - convertir RequestValidationError a formato esperado
+    try:
+        # Extraer errores de validación en formato legible
+        validation_errors = extract_validation_errors(exc)
+        return create_validation_error_response(validation_errors, request_id=request_id)
+    except Exception as e:
+        # Fallback si falla la creación de respuesta
+        logger.error(f"Error creating validation response: {e}")
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "error": "validation_error",
+                "mensaje": "Error en la validación del artículo",
+                "detalles": ["Error procesando detalles de validación"],
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "request_id": request_id
+            }
+        )
 
 
 @app.exception_handler(PydanticValidationError)
@@ -645,6 +662,14 @@ async def procesar_articulo(
             threshold=ASYNC_PROCESSING_THRESHOLD,
             procesamiento="asíncrono (background task)"
         )
+        
+        # Log adicional si el artículo es extremadamente largo
+        if longitud_contenido > 5_000:
+            endpoint_logger.warning(
+                f"Artículo muy largo ({longitud_contenido} chars), considerar optimización del pipeline",
+                longitud_caracteres=longitud_contenido,
+                tiempo_estimado_segundos=longitud_contenido / 100
+            )
         
         # Para artículos largos, usar background task
         background_tasks.add_task(

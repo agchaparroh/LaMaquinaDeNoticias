@@ -51,13 +51,13 @@ def main():
     
     # Configurar variables de entorno si no están establecidas
     if 'SCRAPYDWEB_SETTINGS_PY' not in os.environ:
-        os.environ['SCRAPYDWEB_SETTINGS_PY'] = '/app/config/scrapydweb_settings_v10.py'
+        os.environ['SCRAPYDWEB_SETTINGS_PY'] = '/app/config/scrapydweb_settings_v11.py'
     
     # IMPORTANTE: Cambiar al directorio /app para que ScrapydWeb encuentre el archivo de configuración
     os.chdir('/app')
     
     # Verificar si existe nuestro archivo de configuración
-    config_file = os.environ.get('SCRAPYDWEB_SETTINGS_PY', '/app/config/scrapydweb_settings_v10.py')
+    config_file = os.environ.get('SCRAPYDWEB_SETTINGS_PY', '/app/config/scrapydweb_settings_v11.py')
     if os.path.exists(config_file):
         print(f"Archivo de configuración encontrado: {config_file}")
     else:

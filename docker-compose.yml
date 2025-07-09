@@ -44,6 +44,8 @@ services:
       - "8003:8003"
     env_file:
       - .env
+    environment:
+      - GROQ_MODEL_ID=llama-3.1-8b-instant
     networks:
       - lamacquina_network
     restart: unless-stopped

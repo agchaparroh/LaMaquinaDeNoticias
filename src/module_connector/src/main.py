@@ -275,6 +275,25 @@ async def process_file(file_path: str) -> Tuple[List[ArticuloInItem], List[Dict[
 retryable_exceptions = (aiohttp.ClientError, aiohttp.ServerTimeoutError, aiohttp.ClientConnectorError)
 
 
+def convert_datetime_to_iso(obj):
+    """Recursively convert all datetime objects to ISO format strings."""
+    if hasattr(obj, 'isoformat'):
+        # It's a datetime object
+        return obj.isoformat()
+    elif isinstance(obj, dict):
+        # Recursively process dictionary
+        return {k: convert_datetime_to_iso(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        # Recursively process list
+        return [convert_datetime_to_iso(item) for item in obj]
+    elif isinstance(obj, tuple):
+        # Convert tuples to lists for JSON compatibility
+        return [convert_datetime_to_iso(item) for item in obj]
+    else:
+        # Return as-is for other types
+        return obj
+
+
 @retry(
     stop=stop_after_attempt(MAX_RETRIES),
     wait=wait_exponential(multiplier=RETRY_BACKOFF, min=1, max=60),
@@ -297,7 +316,33 @@ async def send_to_pipeline(session: aiohttp.ClientSession, article: ArticuloInIt
     try:
         # Convert Pydantic model to dict
         article_dict = article.model_dump()
-        payload = {"articulo": article_dict}
+        # Convert all datetime objects to ISO strings for JSON serialization
+        article_dict = convert_datetime_to_iso(article_dict)
+        
+        # DEVELOPMENT MODE: Filter only required fields for pipeline
+        # This ONLY affects development mode and is completely reversible
+        if os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true':
+            # Keep only fields that the pipeline expects
+            allowed_fields = {
+                'medio', 'area_geografica', 'tipo_medio', 'titular',
+                'fecha_publicacion', 'contenido_texto', 'idioma',
+                'autor', 'url', 'seccion', 'es_opinion', 'es_oficial',
+                'fecha_recopilacion', 'estado_procesamiento', 'etiquetas_fuente'
+            }
+            filtered_dict = {k: v for k, v in article_dict.items() if k in allowed_fields}
+            logger.info(f"🔧 DEV MODE: Filtered from {len(article_dict)} to {len(filtered_dict)} fields for pipeline")
+            article_dict = filtered_dict
+        
+        # El pipeline espera directamente el ArticuloInItem, no envuelto en un objeto
+        payload = article_dict
+        
+        # DEBUG: Log the exact payload being sent (only in dev mode)
+        if os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true':
+            logger.info(f"🔍 DEV MODE: Payload keys being sent: {list(article_dict.keys())}")
+            # Check for any datetime objects that might not be serialized
+            for key, value in article_dict.items():
+                if hasattr(value, 'isoformat'):
+                    logger.warning(f"⚠️  DEV MODE: Field '{key}' still has datetime object!")
         
         # Log with article identifier
         article_id = getattr(article, 'id', 'unknown')
@@ -309,12 +354,12 @@ async def send_to_pipeline(session: aiohttp.ClientSession, article: ArticuloInIt
             endpoint, 
             json=payload,
             headers={'Content-Type': 'application/json'},
-            timeout=aiohttp.ClientTimeout(total=30)
+            timeout=aiohttp.ClientTimeout(total=90)
         ) as response:
             status = response.status
             
-            if status == 202:
-                # Success - article accepted by pipeline
+            if status in [200, 202]:
+                # Success - article processed (200) or accepted (202) by pipeline
                 logger.info(f"✅ Article successfully sent to pipeline (ID: {article_id})")
                 return True
                 
@@ -384,7 +429,7 @@ async def send_articles_to_pipeline(articles: List[ArticuloInItem]) -> Tuple[int
     
     # Create a shared session for all requests
     connector = aiohttp.TCPConnector(limit=10, limit_per_host=5)
-    timeout = aiohttp.ClientTimeout(total=30, connect=10)
+    timeout = aiohttp.ClientTimeout(total=90, connect=10)
     
     async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
         for i, article in enumerate(articles, 1):

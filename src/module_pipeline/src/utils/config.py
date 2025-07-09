@@ -70,7 +70,7 @@ def _get_list_env(var_name: str, default: List[str], separator: str = ',') -> Li
 # API Keys obligatorias
 GROQ_API_KEY = _get_required_env('GROQ_API_KEY')
 SUPABASE_URL = _get_required_env('SUPABASE_URL')  
-SUPABASE_KEY = _get_required_env('SUPABASE_KEY')
+SUPABASE_KEY = _get_required_env('SUPABASE_ANON_KEY')  # Usar SUPABASE_ANON_KEY del .env
 
 # Clave de servicio opcional (para operaciones avanzadas)
 SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')

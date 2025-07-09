@@ -1,77 +1,77 @@
 {
   "alerts": [
     {
-      "id": "c84eb867-23ea-4c86-b492-144ad771b32a",
+      "id": "cd433940-c204-49a8-9838-d11d5fbfade3",
       "alert_type": "groq_api_failure",
       "severity": "critical",
       "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: Test: Groq API connection failed",
-      "timestamp": "2025-06-10T06:02:43.996948",
+      "description": "Error en Groq API: Error inesperado durante extracción para 83921bea-016a-4df8-9edb-243fc70a0129: Error code: 400 - {'error': {'message': 'The model `mixtral-8x7b-32768` has been decommissioned and is no longer supporte",
+      "timestamp": "2025-07-09T04:38:32.190907",
       "labels": {
         "service": "groq_api",
         "error_type": "unknown"
       },
       "annotations": {
-        "message": "Test: Groq API connection failed",
-        "timestamp": "2025-06-10T06:02:43.994949+08:00"
+        "message": "Error inesperado durante extracción para 83921bea-016a-4df8-9edb-243fc70a0129: Error code: 400 - {'error': {'message': 'The model `mixtral-8x7b-32768` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.', 'type': 'invalid_request_error', 'code': 'model_decommissioned'}}",
+        "timestamp": "2025-07-09T04:38:32.187739+00:00"
       },
       "resolved": false,
       "resolved_at": null
     },
     {
-      "id": "3db71992-d39b-452c-8780-9e7345fa5b96",
+      "id": "ff31d42b-431e-4fc3-aa96-ad61dcd738e4",
       "alert_type": "supabase_failure",
       "severity": "critical",
       "title": "Supabase Service Failure Detected",
-      "description": "Error en Supabase: Test: Supabase RPC call failed",
-      "timestamp": "2025-06-10T06:02:44.001946",
+      "description": "Error en Supabase: Error inesperado en Supabase RPC: {'code': 'PGRST203', 'details': None, 'hint': 'Try renaming the parameters or the function itself in the database so function overloading can be resolved', 'message':",
+      "timestamp": "2025-07-09T07:39:31.203025",
       "labels": {
         "service": "supabase",
         "error_type": "unknown"
       },
       "annotations": {
-        "message": "Test: Supabase RPC call failed",
+        "message": "Error inesperado en Supabase RPC: {'code': 'PGRST203', 'details': None, 'hint': 'Try renaming the parameters or the function itself in the database so function overloading can be resolved', 'message': 'Could not choose the best candidate function between: public.buscar_entidad_similar(nombre_busqueda => text, tipo_entidad => text, umbral_similitud => double precision, limite_resultados => integer), public.buscar_entidad_similar(nombre_busqueda => text, tipo_entidad => text, umbral_similitud => r",
         "rpc_name": "unknown"
       },
       "resolved": false,
       "resolved_at": null
     },
     {
-      "id": "b9aa9ebd-d2ee-4b6f-936e-bffa780c37f5",
-      "alert_type": "groq_api_failure",
-      "severity": "critical",
-      "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: Test: Groq API connection failed",
-      "timestamp": "2025-06-10T06:05:56.358046",
-      "labels": {
-        "service": "groq_api",
-        "error_type": "unknown"
-      },
-      "annotations": {
-        "message": "Test: Groq API connection failed",
-        "timestamp": "2025-06-10T06:05:56.357045+08:00"
-      },
-      "resolved": false,
-      "resolved_at": null
-    },
-    {
-      "id": "39dd0d42-123d-410f-96ec-04c0974fbdb2",
+      "id": "5b031c1a-bbd6-4476-970a-94f9db09e909",
       "alert_type": "supabase_failure",
       "severity": "critical",
       "title": "Supabase Service Failure Detected",
-      "description": "Error en Supabase: Test: Supabase RPC call failed",
-      "timestamp": "2025-06-10T06:05:56.361048",
+      "description": "Error en Supabase: Error inesperado en Supabase RPC: {'code': 'PGRST203', 'details': None, 'hint': 'Try renaming the parameters or the function itself in the database so function overloading can be resolved', 'message':",
+      "timestamp": "2025-07-09T08:20:22.394598",
       "labels": {
         "service": "supabase",
         "error_type": "unknown"
       },
       "annotations": {
-        "message": "Test: Supabase RPC call failed",
+        "message": "Error inesperado en Supabase RPC: {'code': 'PGRST203', 'details': None, 'hint': 'Try renaming the parameters or the function itself in the database so function overloading can be resolved', 'message': 'Could not choose the best candidate function between: public.buscar_entidad_similar(nombre_busqueda => text, tipo_entidad => text, umbral_similitud => double precision, limite_resultados => integer), public.buscar_entidad_similar(nombre_busqueda => text, tipo_entidad => text, umbral_similitud => r",
+        "rpc_name": "unknown"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "b94855de-35c1-4725-8edb-7e4c03b017ae",
+      "alert_type": "supabase_failure",
+      "severity": "critical",
+      "title": "Supabase Service Failure Detected",
+      "description": "Error en Supabase: Error inesperado en Supabase RPC: {'code': 'PGRST203', 'details': None, 'hint': 'Try renaming the parameters or the function itself in the database so function overloading can be resolved', 'message':",
+      "timestamp": "2025-07-09T10:51:32.164695",
+      "labels": {
+        "service": "supabase",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "Error inesperado en Supabase RPC: {'code': 'PGRST203', 'details': None, 'hint': 'Try renaming the parameters or the function itself in the database so function overloading can be resolved', 'message': 'Could not choose the best candidate function between: public.buscar_entidad_similar(nombre_busqueda => text, tipo_entidad => text, umbral_similitud => double precision, limite_resultados => integer), public.buscar_entidad_similar(nombre_busqueda => text, tipo_entidad => text, umbral_similitud => r",
         "rpc_name": "unknown"
       },
       "resolved": false,
       "resolved_at": null
     }
   ],
-  "last_updated": "2025-06-10T06:05:56.361048"
+  "last_updated": "2025-07-09T10:51:32.165355"
 }

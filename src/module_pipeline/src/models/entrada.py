@@ -2,6 +2,7 @@ from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, Field, constr, conint, model_validator, field_validator
 from datetime import datetime
 from src.utils.validation import clean_text, validate_url
+import os
 
 # --- MODELO TEMPORAL PARA TESTING ---
 class ArticuloInItem(BaseModel):
@@ -33,6 +34,11 @@ class ArticuloInItem(BaseModel):
             if not value or (isinstance(value, str) and not value.strip()):
                 return False
         return True
+    
+    class Config:
+        # En modo desarrollo, permitir campos extra para facilitar debugging
+        # En producción, ser estricto con los campos
+        extra = "allow" if os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true' else "ignore"
 
 class FragmentoProcesableItem(BaseModel):
     """

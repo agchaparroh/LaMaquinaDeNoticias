@@ -129,8 +129,8 @@ ITEM_PIPELINES = {
     # 3. Validación de Datos Post-Limpieza
     'scraper_core.pipelines.validation.DataValidationPipeline': 300,
 
-    # 4. Almacenamiento en Supabase (Descomentar para activar)
-    'scraper_core.pipelines.SupabaseStoragePipeline': 400, # Asumiendo que está en scraper_core/pipelines.py
+    # 4. Almacenamiento en Supabase (solo si NO estamos en modo desarrollo)
+    # 'scraper_core.pipelines.SupabaseStoragePipeline': 400, # Comentado - se activa condicionalmente abajo
     # 'scraper_core.pipelines.supabase_pipeline.SupabaseStoragePipeline': 400, # Si se movió a un sub-módulo
 
     # Otros pipelines (ej. exportación a archivos, etc.)
@@ -144,6 +144,14 @@ if ENABLE_PIPELINE_EXPORT:
     print(f"✅ JsonGzExportPipeline HABILITADO - ENABLE_PIPELINE_EXPORT={os.getenv('ENABLE_PIPELINE_EXPORT')}")
 else:
     print(f"❌ JsonGzExportPipeline DESHABILITADO - ENABLE_PIPELINE_EXPORT={os.getenv('ENABLE_PIPELINE_EXPORT')}")
+
+# Pipeline de Supabase (solo si NO estamos en modo desarrollo)
+DEVELOPMENT_MODE = os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true'
+if not DEVELOPMENT_MODE:
+    ITEM_PIPELINES['scraper_core.pipelines.SupabaseStoragePipeline'] = 400
+    print(f"✅ SupabaseStoragePipeline HABILITADO - Modo producción")
+else:
+    print(f"❌ SupabaseStoragePipeline DESHABILITADO - DEVELOPMENT_MODE={os.getenv('DEVELOPMENT_MODE')}")
 # =============================================================================
 # PLAYWRIGHT CONFIGURATION (TWISTED_REACTOR)
 # =============================================================================

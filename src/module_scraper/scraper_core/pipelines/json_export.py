@@ -112,9 +112,14 @@ class JsonGzExportPipeline:
         if not self.enabled:
             return item
             
-        if not isinstance(item, ArticuloInItem):
-            logger.debug(f"Item is not ArticuloInItem, skipping export: {type(item)}")
+        # Aceptar tanto ArticuloInItem como diccionarios (para compatibilidad con Spider Factory)
+        if not isinstance(item, (ArticuloInItem, dict)):
+            logger.debug(f"Item is not ArticuloInItem or dict, skipping export: {type(item)}")
             return item
+        
+        # Log tipo de item para debugging
+        if isinstance(item, dict):
+            logger.debug(f"Processing dictionary item from spider: {spider.name}")
         
         adapter = ItemAdapter(item)
         item_url = adapter.get('url', 'Unknown URL')
@@ -137,7 +142,7 @@ class JsonGzExportPipeline:
                 if self.development_mode:
                     logger.info(f"🧪 DEV: Exported {item_url} to {filename}")
                 else:
-                    logger.debug(f"Exported article to {filename}")
+                    logger.info(f"✅ Exported article to {filename}")
             else:
                 self.export_stats['failed_exports'] += 1
                 
@@ -170,13 +175,8 @@ class JsonGzExportPipeline:
         # Set estado_procesamiento for connector tracking
         export_data['estado_procesamiento'] = 'pendiente_connector'
         
-        # Ensure datetime fields are ISO strings
-        date_fields = ['fecha_publicacion', 'fecha_recopilacion', 'fecha_procesamiento']
-        for field in date_fields:
-            if field in export_data and export_data[field]:
-                value = export_data[field]
-                if hasattr(value, 'isoformat'):
-                    export_data[field] = value.isoformat()
+        # Ensure ALL datetime objects are converted to ISO strings (recursive)
+        export_data = self._convert_datetime_to_iso(export_data)
         
         # Handle HTML content based on settings
         if not self.include_html and 'contenido_html' in export_data:
@@ -187,6 +187,24 @@ class JsonGzExportPipeline:
         export_data = {k: v for k, v in export_data.items() if v is not None}
         
         return export_data
+    
+    def _convert_datetime_to_iso(self, obj: Any) -> Any:
+        """Recursively convert all datetime objects to ISO format strings."""
+        if hasattr(obj, 'isoformat'):
+            # It's a datetime object
+            return obj.isoformat()
+        elif isinstance(obj, dict):
+            # Recursively process dictionary
+            return {k: self._convert_datetime_to_iso(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            # Recursively process list
+            return [self._convert_datetime_to_iso(item) for item in obj]
+        elif isinstance(obj, tuple):
+            # Convert tuples to lists for JSON compatibility
+            return [self._convert_datetime_to_iso(item) for item in obj]
+        else:
+            # Return as-is for other types
+            return obj
     
     def _generate_filename(self, adapter: ItemAdapter, spider: Spider) -> str:
         """Generate unique filename for exported article."""
