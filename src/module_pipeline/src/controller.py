@@ -372,7 +372,7 @@ class PipelineController:
                 from .models.procesamiento import ResultadoFase1Triaje
                 fallback_data = handle_spacy_load_error_fase1(
                     article_id=str(fragment_uuid),
-                    model_name="es_core_news_sm",
+                    model_name="es_core_news_lg",
                     exception=e
                 )
                 # Usar el texto original como texto para siguiente fase

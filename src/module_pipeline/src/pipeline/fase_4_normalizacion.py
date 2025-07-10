@@ -9,6 +9,9 @@ import time
 # ✅ IMPORTAR FRAGMENT PROCESSOR (SUBTAREA 6 - paso 1)
 from ..utils.fragment_processor import FragmentProcessor
 
+# ✅ IMPORTAR PARSER JSON ROBUSTO
+from ..utils.json_parser import parse_llm_json_response, analyze_llm_response_format
+
 # Importar modelos de resultado de la fase 4 desde el módulo de modelos
 from ..models.procesamiento import (
     ResultadoFase4Normalizacion,
@@ -206,7 +209,7 @@ def _get_groq_config() -> Dict[str, Any]:
         "model_id": os.getenv("GROQ_MODEL_ID", "mixtral-8x7b-32768"),
         "timeout": float(os.getenv("GROQ_API_TIMEOUT", "30.0")),
         "temperature": float(os.getenv("GROQ_API_TEMPERATURE", "0.1")),
-        "max_tokens": int(os.getenv("GROQ_API_MAX_TOKENS", "4000")),  # Más tokens para análisis de relaciones
+        "max_tokens": int(os.getenv("GROQ_API_MAX_TOKENS", "10000")),  # Aumentado a 10000 para evitar truncamiento
         "max_retries": int(os.getenv("GROQ_MAX_RETRIES", "3")),
         "max_wait_seconds": int(os.getenv("GROQ_MAX_WAIT_SECONDS", "60")),
     }
@@ -460,8 +463,7 @@ def _llamar_groq_api_relaciones(
         ],
         model=config["model_id"],
         temperature=config["temperature"],
-        max_tokens=config["max_tokens"],
-        response_format={"type": "json_object"}  # Forzar respuesta JSON
+        max_tokens=config["max_tokens"]
     )
     
     respuesta_contenido = chat_completion.choices[0].message.content
@@ -886,19 +888,41 @@ def ejecutar_fase_4(
                 
                 logger.trace(f"Respuesta LLM (cruda) para relaciones de {id_fragmento}:\n{respuesta_llm_cruda}")
                 
-                # Parsear respuesta JSON
+                # Parsear respuesta JSON con parser robusto
                 try:
-                    respuesta_json = json.loads(respuesta_llm_cruda)
-                    
-                    # Procesar relaciones
-                    relaciones_procesadas = _procesar_relaciones_desde_json(
-                        respuesta_json,
-                        resultado_fase_2
+                    # Analizar formato de la respuesta para métricas
+                    format_metrics = analyze_llm_response_format(respuesta_llm_cruda)
+                    logger.debug(
+                        f"Formato de respuesta LLM - Longitud: {format_metrics['length']}, "
+                        f"Tiene markdown: {format_metrics['has_markdown']}, "
+                        f"Truncado: {format_metrics['is_truncated']}"
                     )
                     
-                    estado_normalizacion = "Completo"
+                    # Parsear con manejo robusto
+                    respuesta_json = parse_llm_json_response(respuesta_llm_cruda, attempt_repair=True, strict=False)
                     
-                except json.JSONDecodeError as e:
+                    # Si el parseo devolvió un dict vacío, es un error parcial
+                    if not respuesta_json:
+                        logger.error("Parser devolvió diccionario vacío, no se pudieron extraer relaciones")
+                        advertencias.append("No se pudo extraer JSON válido de la respuesta LLM para relaciones")
+                        estado_normalizacion = "Parcial"
+                    else:
+                        # Log de éxito con información adicional
+                        if format_metrics['has_markdown']:
+                            logger.info("JSON parseado exitosamente después de limpiar markdown")
+                        if format_metrics['is_truncated']:
+                            logger.warning(f"JSON estaba truncado: {format_metrics['truncation_reason']}")
+                            advertencias.append(f"Respuesta LLM truncada: {format_metrics['truncation_reason']}")
+                        
+                        # Procesar relaciones
+                        relaciones_procesadas = _procesar_relaciones_desde_json(
+                            respuesta_json,
+                            resultado_fase_2
+                        )
+                        
+                        estado_normalizacion = "Completo"
+                    
+                except Exception as e:
                     logger.error(f"Error al parsear JSON de respuesta LLM: {e}")
                     advertencias.append(f"Error parseando respuesta de relaciones: {e}")
                     estado_normalizacion = "Parcial"

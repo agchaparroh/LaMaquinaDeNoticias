@@ -61,7 +61,7 @@ class PipelineCoordinator:
     def ejecutar_pipeline_completo(
         self, 
         fragmento: FragmentoProcesableItem,
-        modelo_spacy: str = "es_core_news_sm",
+        modelo_spacy: str = "es_core_news_lg",
         request_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """

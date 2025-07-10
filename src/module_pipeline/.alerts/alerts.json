@@ -1,24 +1,6 @@
 {
   "alerts": [
     {
-      "id": "cd433940-c204-49a8-9838-d11d5fbfade3",
-      "alert_type": "groq_api_failure",
-      "severity": "critical",
-      "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: Error inesperado durante extracción para 83921bea-016a-4df8-9edb-243fc70a0129: Error code: 400 - {'error': {'message': 'The model `mixtral-8x7b-32768` has been decommissioned and is no longer supporte",
-      "timestamp": "2025-07-09T04:38:32.190907",
-      "labels": {
-        "service": "groq_api",
-        "error_type": "unknown"
-      },
-      "annotations": {
-        "message": "Error inesperado durante extracción para 83921bea-016a-4df8-9edb-243fc70a0129: Error code: 400 - {'error': {'message': 'The model `mixtral-8x7b-32768` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.', 'type': 'invalid_request_error', 'code': 'model_decommissioned'}}",
-        "timestamp": "2025-07-09T04:38:32.187739+00:00"
-      },
-      "resolved": false,
-      "resolved_at": null
-    },
-    {
       "id": "ff31d42b-431e-4fc3-aa96-ad61dcd738e4",
       "alert_type": "supabase_failure",
       "severity": "critical",
@@ -71,7 +53,79 @@
       },
       "resolved": false,
       "resolved_at": null
+    },
+    {
+      "id": "55b37c9f-98a8-486f-890c-2381e84f3208",
+      "alert_type": "groq_api_failure",
+      "severity": "critical",
+      "title": "Groq API Failure Detected",
+      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para ***REDACTED_CARD***-b245-d486c3ad1285: Fallo al cargar plantilla de prompt para triaje: Archivo de prompt de triaje no encontrado: /app/src/prompts/P",
+      "timestamp": "2025-07-10T04:10:30.901399",
+      "labels": {
+        "service": "groq_api",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "GroqAPIError durante evaluación de relevancia para ***REDACTED_CARD***-b245-d486c3ad1285: Fallo al cargar plantilla de prompt para triaje: Archivo de prompt de triaje no encontrado: /app/src/prompts/Prompt_1_filtrado.md",
+        "timestamp": "2025-07-10T04:10:30.899155+00:00"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "aa797a2f-3f2d-4ec1-a760-bb4bc7871cb6",
+      "alert_type": "groq_api_failure",
+      "severity": "critical",
+      "title": "Groq API Failure Detected",
+      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para edfeb196-3a82-4a43-817f-e10cb94c23ee: Fallo al cargar plantilla de prompt para triaje: Archivo de prompt de triaje no encontrado: /app/src/prompts/Pr",
+      "timestamp": "2025-07-10T04:18:10.668745",
+      "labels": {
+        "service": "groq_api",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "GroqAPIError durante evaluación de relevancia para edfeb196-3a82-4a43-817f-e10cb94c23ee: Fallo al cargar plantilla de prompt para triaje: Archivo de prompt de triaje no encontrado: /app/src/prompts/Prompt_1_filtrado.md",
+        "timestamp": "2025-07-10T04:18:10.667508+00:00"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "06910859-29f6-479b-b565-ae17e32ff581",
+      "alert_type": "groq_api_failure",
+      "severity": "critical",
+      "title": "Groq API Failure Detected",
+      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 480db41c-de1d-4ada-afd6-5afe8988dfdb: Error al parsear respuesta LLM: ** El artículo analiza críticamente la política del gobierno español, destacand",
+      "timestamp": "2025-07-10T05:09:42.283610",
+      "labels": {
+        "service": "groq_api",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "GroqAPIError durante evaluación de relevancia para 480db41c-de1d-4ada-afd6-5afe8988dfdb: Error al parsear respuesta LLM: ** El artículo analiza críticamente la política del gobierno español, destacando la falta de avances en la lucha contra la corrupción y la deteriorada imagen internacional de España. Aporta información detallada sobre temas de trascendencia política y social.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS CLAVE:**\n\n- El líder del Partido Popular, Alberto Núñez Feijóo, ha alertado sobre la ",
+        "timestamp": "2025-07-10T05:09:42.274674+00:00"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "30f782d9-248b-4647-9ee7-c4f080813010",
+      "alert_type": "groq_api_failure",
+      "severity": "critical",
+      "title": "Groq API Failure Detected",
+      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para c5ac8a29-16d6-472e-8c9f-e6e5baeed7fa: Error al parsear respuesta LLM: ** El artículo reporta sobre la reforma al Poder Judicial en México, un tema de",
+      "timestamp": "2025-07-10T06:32:21.199932",
+      "labels": {
+        "service": "groq_api",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "GroqAPIError durante evaluación de relevancia para c5ac8a29-16d6-472e-8c9f-e6e5baeed7fa: Error al parsear respuesta LLM: ** El artículo reporta sobre la reforma al Poder Judicial en México, un tema de gran relevancia política y social. Aunque algunos detalles están ausentes, el contenido es sustancial y proporciona información valiosa sobre la situación actual.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS CLAVE:**\n\n- La reforma al Poder Judicial en México se llevará a cabo con la participación de los minis",
+        "timestamp": "2025-07-10T06:32:21.195151+00:00"
+      },
+      "resolved": false,
+      "resolved_at": null
     }
   ],
-  "last_updated": "2025-07-09T10:51:32.165355"
+  "last_updated": "2025-07-10T06:32:21.201033"
 }

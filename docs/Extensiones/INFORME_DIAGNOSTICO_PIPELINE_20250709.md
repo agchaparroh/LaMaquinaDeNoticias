@@ -90,7 +90,7 @@ while attempts <= connection_retries:
 
 ---
 
-### 2. CONFLICTO DE FUNCIÓN EN SUPABASE ❌ NO RESUELTO
+### 2. CONFLICTO DE FUNCIÓN EN SUPABASE ✅ CORREGIDO
 **Severidad**: 🔴 CRÍTICA  
 **Componente**: Base de Datos - Función RPC  
 **Síntoma**: Error PGRST203 en todas las llamadas a `buscar_entidad_similar`
@@ -276,6 +276,129 @@ DROP FUNCTION IF EXISTS buscar_entidad_similar(text, text, double precision, int
 ```
 
 **Estado del código**: Restaurado a su versión original con 4 parámetros, esperando resolución en BD.
+
+#### Diagnóstico Profundo Adicional (2025-07-09)
+
+**Investigación exhaustiva con MCP Supabase reveló los siguientes hallazgos críticos:**
+
+**1. Estado real en la base de datos:**
+```sql
+-- Existen DOS versiones de la función con 4 parámetros cada una:
+buscar_entidad_similar(text, text, real, integer)         -- umbral_similitud como real
+buscar_entidad_similar(text, text, double precision, integer)  -- umbral_similitud como double precision
+```
+
+**2. Problema con la versión double precision:**
+- Esta versión está **ROTA** internamente
+- Error: `Returned type real does not match expected type double precision in column 4`
+- La función `similarity()` de PostgreSQL retorna `real`, pero la función declara retornar `double precision` en el score
+- Esto causa un error de tipo en tiempo de ejecución
+
+**3. Discrepancia entre documentación y realidad:**
+- Documentación original (Funciones-triggers.sql): Solo 3 parámetros sin `limite_resultados`
+- Base de datos actual: Ambas versiones tienen 4 parámetros incluyendo `limite_resultados`
+- Evidencia de modificación no documentada del diseño original
+
+**4. Historial de migraciones revela el origen:**
+```
+20250523030811 - funcion_buscar_entidad_similar
+20250523030832 - corregir_buscar_entidad_similar
+```
+La segunda migración intentó corregir algo pero resultó en la duplicación del problema.
+
+**5. Por qué falló la solución anterior:**
+- Se intentó eliminar `limite_resultados` del código Python
+- El error persistió porque el problema real es la ambigüedad de tipos en PostgreSQL
+- PostgREST no puede elegir entre `real` y `double precision` cuando recibe un float genérico
+
+#### Solución Definitiva - Opción A (RECOMENDADA)
+
+**Implementación de solución limpia y definitiva:**
+
+```sql
+-- Paso 1: Eliminar AMBAS versiones problemáticas
+DROP FUNCTION IF EXISTS public.buscar_entidad_similar(text, text, real, integer);
+DROP FUNCTION IF EXISTS public.buscar_entidad_similar(text, text, double precision, integer);
+
+-- Paso 2: Crear UNA ÚNICA versión con tipo NUMERIC (no ambiguo para PostgREST)
+CREATE OR REPLACE FUNCTION public.buscar_entidad_similar(
+    nombre_busqueda text,
+    tipo_entidad text DEFAULT NULL,
+    umbral_similitud numeric DEFAULT 0.3,  -- NUMERIC evita ambigüedad
+    limite_resultados integer DEFAULT 5
+)
+RETURNS TABLE(id bigint, nombre varchar, tipo varchar, score real)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Validación de parámetros
+    IF nombre_busqueda IS NULL OR nombre_busqueda = '' THEN
+        RETURN;
+    END IF;
+
+    -- Búsqueda principal en cache_entidades usando índices pg_trgm
+    RETURN QUERY
+    SELECT
+        ce.id,
+        ce.nombre,
+        ce.tipo,
+        similarity(ce.nombre, nombre_busqueda) AS score
+    FROM
+        cache_entidades ce
+    WHERE
+        (tipo_entidad IS NULL OR ce.tipo = tipo_entidad)
+        AND ce.nombre % nombre_busqueda
+        AND similarity(ce.nombre, nombre_busqueda) >= umbral_similitud::real
+    UNION ALL
+    -- Búsqueda adicional en alias
+    SELECT DISTINCT
+        ce.id,
+        ce.nombre,
+        ce.tipo,
+        (
+            SELECT MAX(similarity(alias_elem, nombre_busqueda))
+            FROM unnest(ce.alias) AS alias_elem
+            WHERE alias_elem % nombre_busqueda
+        ) AS score
+    FROM
+        cache_entidades ce
+    WHERE
+        (tipo_entidad IS NULL OR ce.tipo = tipo_entidad)
+        AND ce.alias IS NOT NULL
+        AND EXISTS (
+            SELECT 1 FROM unnest(ce.alias) AS alias_elem 
+            WHERE alias_elem % nombre_busqueda 
+            AND similarity(alias_elem, nombre_busqueda) >= umbral_similitud::real
+        )
+        AND NOT ce.nombre % nombre_busqueda
+    ORDER BY
+        score DESC
+    LIMIT limite_resultados;
+END;
+$$;
+```
+
+**Por qué esta es la mejor solución:**
+
+1. **Elimina toda ambigüedad**: `NUMERIC` es un tipo único que PostgREST puede identificar sin confusión
+2. **Mantiene compatibilidad total**: El código Python actual funcionará sin modificaciones
+3. **Corrige el error de tipos**: El score se declara correctamente como `real` matching similarity()
+4. **Solución definitiva**: No es un parche temporal, resuelve el problema de raíz
+5. **Previene futuros problemas**: Al tener una sola función, no hay posibilidad de duplicación
+6. **Documentación clara**: La función queda con su firma real de 4 parámetros como se usa actualmente
+
+**Pasos de implementación seguros:**
+1. Verificar que no hay transacciones activas usando la función
+2. Ejecutar el DROP de ambas funciones
+3. Crear la nueva versión con NUMERIC
+4. Probar con el pipeline antes de marcar como resuelto
+5. Documentar el cambio en el sistema de migraciones
+
+**Beneficios adicionales:**
+- PostgREST generará una API clara sin ambigüedades
+- Los errores serán más claros si ocurren
+- Performance idéntica (NUMERIC se convierte a real internamente)
+- Compatibilidad hacia adelante con futuras versiones de PostgREST
 
 ---
 

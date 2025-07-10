@@ -1841,7 +1841,7 @@ async def pipeline_status():
                 "name": "Triaje y Preprocesamiento",
                 "description": "Análisis de relevancia y preprocesamiento con SpaCy",
                 "status": "operational",
-                "dependencies": ["spacy_es_core_news_sm"],
+                "dependencies": ["spacy_es_core_news_lg"],
                 "key_functions": ["relevance_analysis", "text_preprocessing", "language_detection"],
                 "typical_duration_ms": 150,
                 "success_rate": 0.98,

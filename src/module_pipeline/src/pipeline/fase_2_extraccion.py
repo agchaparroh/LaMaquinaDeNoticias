@@ -15,6 +15,9 @@ from ..utils.validation import (
     validate_offset_range
 )
 
+# ✅ IMPORTAR PARSER JSON ROBUSTO
+from ..utils.json_parser import parse_llm_json_response, analyze_llm_response_format
+
 # Importar modelos de resultado de la fase 2 desde el módulo de modelos
 from ..models.procesamiento import (
     ResultadoFase2Extraccion, 
@@ -73,7 +76,7 @@ def _get_groq_config() -> Dict[str, Any]:
         "model_id": os.getenv("GROQ_MODEL_ID", "mixtral-8x7b-32768"),
         "timeout": float(os.getenv("GROQ_API_TIMEOUT", "30.0")),
         "temperature": float(os.getenv("GROQ_API_TEMPERATURE", "0.1")),
-        "max_tokens": int(os.getenv("GROQ_API_MAX_TOKENS", "2000")),  # Más tokens para extracción
+        "max_tokens": int(os.getenv("GROQ_API_MAX_TOKENS", "10000")),  # Aumentado a 10000 para evitar truncamiento
         "max_retries": int(os.getenv("GROQ_MAX_RETRIES", "3")),
         "max_wait_seconds": int(os.getenv("GROQ_MAX_WAIT_SECONDS", "60")),
     }
@@ -112,13 +115,26 @@ def _llamar_groq_api_extraccion(
                                      .replace("{{PAIS_ORIGEN}}", pais_origen)\
                                      .replace("{{FECHA_FUENTE}}", fecha_fuente)\
                                      .replace("{{CONTENIDO}}", texto_contenido)
+    
+    # Logging detallado del prompt
+    logger.debug(f"Prompt template length: {len(prompt_template)} chars")
+    logger.debug(f"Texto contenido length: {len(texto_contenido)} chars")
+    logger.debug(f"Prompt formateado length: {len(prompt_formateado)} chars")
+    logger.debug(f"Variables del prompt - Título: '{titulo_documento[:50]}...', Fuente: '{fuente_tipo}', País: '{pais_origen}'")
 
     client = Groq(api_key=config["api_key"], timeout=config["timeout"])
 
-    logger.info(f"Enviando solicitud a Groq API para extracción (modelo: {config['model_id']}). Artículo: {article_id_log}")
-    
     # Agregar instrucción para obtener solo JSON
     system_prompt = "Eres un asistente que extrae información estructurada de textos. Responde ÚNICAMENTE con el JSON solicitado, sin texto adicional, sin markdown, sin explicaciones."
+
+    logger.info(f"Enviando solicitud a Groq API para extracción (modelo: {config['model_id']}). Artículo: {article_id_log}")
+    logger.debug(f"Configuración Groq - Timeout: {config['timeout']}s, Temperature: {config['temperature']}, Max tokens: {config['max_tokens']}")
+    logger.debug(f"System prompt length: {len(system_prompt)} chars")
+    logger.debug(f"User prompt length: {len(prompt_formateado)} chars")
+    
+    # Registrar tiempo de inicio
+    import time
+    start_time = time.time()
     
     chat_completion = client.chat.completions.create(
         messages=[
@@ -133,9 +149,18 @@ def _llamar_groq_api_extraccion(
         ],
         model=config["model_id"],
         temperature=config["temperature"],
-        max_tokens=config["max_tokens"],
-        response_format={"type": "json_object"}  # Forzar respuesta JSON
+        max_tokens=config["max_tokens"]
     )
+    
+    # Métricas de respuesta
+    elapsed_time = time.time() - start_time
+    logger.info(f"Groq API respondió en {elapsed_time:.2f} segundos")
+    
+    # Logging detallado de la respuesta
+    logger.debug(f"Chat completion object type: {type(chat_completion)}")
+    logger.debug(f"Number of choices: {len(chat_completion.choices)}")
+    if hasattr(chat_completion, 'usage'):
+        logger.debug(f"Token usage - Prompt: {chat_completion.usage.prompt_tokens}, Completion: {chat_completion.usage.completion_tokens}, Total: {chat_completion.usage.total_tokens}")
     
     respuesta_contenido = chat_completion.choices[0].message.content
     if not respuesta_contenido or not respuesta_contenido.strip():
@@ -143,6 +168,10 @@ def _llamar_groq_api_extraccion(
         raise GroqAPIError("Respuesta vacía de Groq API para extracción.", phase=ErrorPhase.FASE_2_EXTRACCION, article_id=config.get("article_id"))
     
     logger.info(f"Respuesta recibida de Groq API para extracción. Artículo: {article_id_log}")
+    # Logging temporal para debugging
+    logger.debug(f"Tipo de respuesta: {type(respuesta_contenido)}")
+    logger.debug(f"Longitud de respuesta: {len(respuesta_contenido)}")
+    logger.debug(f"Primeros 200 caracteres: {respuesta_contenido[:200]}")
     return prompt_formateado, respuesta_contenido
 
 def _parsear_hechos_from_json(
@@ -448,6 +477,13 @@ def ejecutar_fase_2(
         # ✅ SANITIZAR TEXTO ANTES DE ENVIAR A GROQ
         texto_sanitizado_para_llm = escape_html(resultado_fase_1.texto_para_siguiente_fase)
         
+        # Logging pre-llamada
+        logger.debug(f"=== FASE 2 DEBUG - Pre-Groq API ===")
+        logger.debug(f"Fragmento ID: {resultado_fase_1.id_fragmento}")
+        logger.debug(f"Texto original length: {len(resultado_fase_1.texto_para_siguiente_fase)}")
+        logger.debug(f"Texto sanitizado length: {len(texto_sanitizado_para_llm)}")
+        logger.debug(f"Primeros 100 chars del texto: {texto_sanitizado_para_llm[:100]}...")
+        
         # Llamar a Groq API para extracción
         prompt_formateado, respuesta_llm_cruda = _llamar_groq_api_extraccion(
             config=groq_config_with_id,
@@ -460,11 +496,60 @@ def ejecutar_fase_2(
         
         logger.trace(f"Respuesta LLM (cruda) para extracción de {resultado_fase_1.id_fragmento}:\n{respuesta_llm_cruda}")
         
-        # Parsear respuesta JSON
+        # Logging post-respuesta detallado
+        logger.debug(f"=== FASE 2 DEBUG - Post-Groq API ===")
+        logger.debug(f"Respuesta recibida - Tipo: {type(respuesta_llm_cruda)}, Length: {len(respuesta_llm_cruda) if respuesta_llm_cruda else 'None'}")
+        if respuesta_llm_cruda:
+            logger.debug(f"Primeros 500 chars: {respuesta_llm_cruda[:500]}")
+            logger.debug(f"Últimos 200 chars: {respuesta_llm_cruda[-200:] if len(respuesta_llm_cruda) > 200 else respuesta_llm_cruda}")
+            # Verificar si parece JSON
+            stripped = respuesta_llm_cruda.strip()
+            if stripped:
+                first_char = stripped[0]
+                last_char = stripped[-1]
+                logger.debug(f"Primer carácter: '{first_char}', Último carácter: '{last_char}'")
+                logger.debug(f"¿Empieza con {{?: {first_char == '{'}, ¿Termina con }}?: {last_char == '}'}")
+                # Buscar posibles problemas comunes
+                if "```" in respuesta_llm_cruda:
+                    logger.warning("La respuesta contiene markdown code blocks (```)")
+                if respuesta_llm_cruda.startswith("Here") or respuesta_llm_cruda.startswith("Aquí"):
+                    logger.warning("La respuesta parece tener texto explicativo al inicio")
+        
+        # Parsear respuesta JSON con parser robusto
         try:
-            respuesta_json = json.loads(respuesta_llm_cruda)
-        except json.JSONDecodeError as e:
+            # Analizar formato de la respuesta para métricas
+            format_metrics = analyze_llm_response_format(respuesta_llm_cruda)
+            logger.debug(
+                f"Formato de respuesta LLM - Longitud: {format_metrics['length']}, "
+                f"Tiene markdown: {format_metrics['has_markdown']}, "
+                f"Truncado: {format_metrics['is_truncated']}"
+            )
+            
+            # Parsear con manejo robusto
+            respuesta_json = parse_llm_json_response(respuesta_llm_cruda, attempt_repair=True, strict=False)
+            
+            # Si el parseo devolvió un dict vacío, es un error
+            if not respuesta_json:
+                logger.error("Parser devolvió diccionario vacío, respuesta no válida")
+                raise ProcessingError(
+                    message="No se pudo extraer JSON válido de la respuesta LLM",
+                    phase=ErrorPhase.FASE_2_EXTRACCION,
+                    processing_step="Parseo JSON",
+                    article_id=str(resultado_fase_1.id_fragmento)
+                )
+                
+            # Log de éxito con información adicional
+            if format_metrics['has_markdown']:
+                logger.info("JSON parseado exitosamente después de limpiar markdown")
+            if format_metrics['is_truncated']:
+                logger.warning(f"JSON estaba truncado: {format_metrics['truncation_reason']}")
+                advertencias.append(f"Respuesta LLM truncada: {format_metrics['truncation_reason']}")
+                
+        except Exception as e:
             logger.error(f"Error al parsear JSON de respuesta LLM: {e}")
+            # Logging adicional para debugging
+            logger.error(f"Contenido que falló al parsear: '{respuesta_llm_cruda[:100]}...'")
+            logger.error(f"Tipo de contenido: {type(respuesta_llm_cruda)}, Longitud: {len(respuesta_llm_cruda) if respuesta_llm_cruda else 0}")
             raise ProcessingError(
                 message=f"Respuesta LLM no es JSON válido: {str(e)}",
                 phase=ErrorPhase.FASE_2_EXTRACCION,

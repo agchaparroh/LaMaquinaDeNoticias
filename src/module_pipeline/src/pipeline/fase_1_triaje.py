@@ -46,7 +46,7 @@ class ErrorFase1(Exception):
     """Excepción base para errores específicos de la Fase 1."""
     pass
 
-def _cargar_modelo_spacy(modelo: str = "es_core_news_sm") -> Optional[Language]:
+def _cargar_modelo_spacy(modelo: str = "es_core_news_lg") -> Optional[Language]:
     """Carga un modelo de spaCy. Cachea el modelo cargado."""
     if not spacy:
         logger.warning("spaCy no está instalado. No se puede cargar ningún modelo.") # Changed to warning
@@ -65,9 +65,9 @@ def _cargar_modelo_spacy(modelo: str = "es_core_news_sm") -> Optional[Language]:
             logger.warning(f"Error inesperado al cargar el modelo spaCy '{modelo}': {e}") # Changed to warning
             _NLP_MODELS_CACHE[modelo] = None
     
-    if _NLP_MODELS_CACHE.get(modelo) is None and modelo != "es_core_news_sm": # Evitar recursión infinita si el default falla
-        logger.warning(f"Fallback: Intentando cargar modelo por defecto 'es_core_news_sm' en lugar de '{modelo}'.")
-        return _cargar_modelo_spacy("es_core_news_sm")
+    if _NLP_MODELS_CACHE.get(modelo) is None and modelo != "es_core_news_lg": # Evitar recursión infinita si el default falla
+        logger.warning(f"Fallback: Intentando cargar modelo por defecto 'es_core_news_lg' en lugar de '{modelo}'.")
+        return _cargar_modelo_spacy("es_core_news_lg")
         
     return _NLP_MODELS_CACHE.get(modelo)
 
@@ -137,7 +137,7 @@ def _detectar_idioma(texto_para_detectar: str, nlp_model: Optional[Language]) ->
 def ejecutar_fase_1(
     id_fragmento_original: UUID,
     texto_original_fragmento: str,
-    modelo_spacy_nombre: str = "es_core_news_sm" # Permitir especificar modelo
+    modelo_spacy_nombre: str = "es_core_news_lg" # Permitir especificar modelo
 ) -> ResultadoFase1Triaje:
     """
     Ejecuta la Fase 1: Preprocesamiento y Triaje.
@@ -436,7 +436,7 @@ def ejecutar_fase_1(
 
 # --- Funciones para Subtarea 15.3: Integración Groq API ---
 
-_PROMPT_TRIAGE_PATH = Path(__file__).resolve().parent.parent / "prompts" / "Prompt_1_filtrado.md"
+_PROMPT_TRIAGE_PATH = Path(__file__).resolve().parent.parent.parent / "prompts" / "Prompt_1_filtrado.md"
 _PROMPT_TRIAGE_TEMPLATE: Optional[str] = None
 
 def _load_prompt_template() -> str:

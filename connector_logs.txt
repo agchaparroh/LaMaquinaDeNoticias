@@ -1,0 +1,73 @@
+2025-07-10 02:52:47 | WARNING | ⚠️  Connection error for article art_400568 (will retry): Cannot connect to host module_pipeline:8003 ssl:default [Name or service not known]
+2025-07-10 02:52:47 | ERROR | ❌ Final failure sending article 1: Cannot connect to host module_pipeline:8003 ssl:default [Name or service not known]
+2025-07-10 02:52:47 | WARNING | ❌ 1/1 articles failed to send (100.0%)
+2025-07-10 02:52:47 | WARNING | ❌ Moving file to error directory: article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json.gz
+2025-07-10 02:52:47 | INFO | ✅ File moved successfully: article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json.gz -> article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json.gz
+2025-07-10 02:52:47 | WARNING | Failed to send 1 articles to Pipeline API
+2025-07-10 03:02:08 | INFO | Found 1 .json.gz file(s): ['article_infobae_america_latina_20250709_073951_joséortegacanovisiblementeafec_dc6b494d.json.gz']
+2025-07-10 03:02:08 | INFO | Moving file article_infobae_america_latina_20250709_073951_joséortegacanovisiblementeafec_dc6b494d.json.gz to pending directory
+2025-07-10 03:02:08 | INFO | File moved successfully: article_infobae_america_latina_20250709_073951_joséortegacanovisiblementeafec_dc6b494d.json.gz
+2025-07-10 03:02:08 | INFO | Processing file: article_infobae_america_latina_20250709_073951_joséortegacanovisiblementeafec_dc6b494d.json.gz
+2025-07-10 03:02:08 | INFO | Processing file: article_infobae_america_latina_20250709_073951_joséortegacanovisiblementeafec_dc6b494d.json.gz
+2025-07-10 03:02:08 | INFO | Found single article object in file
+2025-07-10 03:02:08 | INFO | Processing complete: 1/1 articles valid, 0 invalid
+2025-07-10 03:02:08 | INFO | File article_infobae_america_latina_20250709_073951_joséortegacanovisiblementeafec_dc6b494d.json.gz processed successfully with 1 valid articles
+2025-07-10 03:02:08 | INFO | Sending 1 articles to Pipeline API at http://module_pipeline:8003
+2025-07-10 03:02:08 | INFO | 🔧 DEV MODE: Filtered from 29 to 15 fields for pipeline
+2025-07-10 03:02:08 | INFO | 🔍 DEV MODE: Payload keys being sent: ['url', 'medio', 'area_geografica', 'tipo_medio', 'titular', 'fecha_publicacion', 'autor', 'idioma', 'seccion', 'etiquetas_fuente', 'es_opinion', 'es_oficial', 'fecha_recopilacion', 'estado_procesamiento', 'contenido_texto']
+2025-07-10 03:02:08 | INFO | Sending article to pipeline: 'José Ortega Cano, visiblemente...' (ID: art_547979)
+2025-07-10 03:02:08 | WARNING | ⚠️  Connection error for article art_547979 (will retry): Cannot connect to host module_pipeline:8003 ssl:default [Name or service not known]
+2025-07-10 03:02:10 | INFO | 🔧 DEV MODE: Filtered from 29 to 15 fields for pipeline
+2025-07-10 03:02:10 | INFO | 🔍 DEV MODE: Payload keys being sent: ['url', 'medio', 'area_geografica', 'tipo_medio', 'titular', 'fecha_publicacion', 'autor', 'idioma', 'seccion', 'etiquetas_fuente', 'es_opinion', 'es_oficial', 'fecha_recopilacion', 'estado_procesamiento', 'contenido_texto']
+2025-07-10 03:02:10 | INFO | Sending article to pipeline: 'José Ortega Cano, visiblemente...' (ID: art_547979)
+2025-07-10 03:02:10 | WARNING | ⚠️  Connection error for article art_547979 (will retry): Cannot connect to host module_pipeline:8003 ssl:default [Name or service not known]
+2025-07-10 03:02:10 | ERROR | ❌ Final failure sending article 1: Cannot connect to host module_pipeline:8003 ssl:default [Name or service not known]
+2025-07-10 03:02:10 | WARNING | ❌ 1/1 articles failed to send (100.0%)
+2025-07-10 03:02:10 | WARNING | ❌ Moving file to error directory: article_infobae_america_latina_20250709_073951_joséortegacanovisiblementeafec_dc6b494d.json.gz
+2025-07-10 03:02:10 | INFO | ✅ File moved successfully: article_infobae_america_latina_20250709_073951_joséortegacanovisiblementeafec_dc6b494d.json.gz -> article_infobae_america_latina_20250709_073951_joséortegacanovisiblementeafec_dc6b494d.json.gz
+2025-07-10 03:02:10 | WARNING | Failed to send 1 articles to Pipeline API
+2025-07-10 03:14:06 | INFO | Found 1 .json.gz file(s): ['test_article_20250710_031405.json.gz']
+2025-07-10 03:14:06 | INFO | Moving file test_article_20250710_031405.json.gz to pending directory
+2025-07-10 03:14:06 | INFO | File moved successfully: test_article_20250710_031405.json.gz
+2025-07-10 03:14:06 | INFO | Processing file: test_article_20250710_031405.json.gz
+2025-07-10 03:14:06 | INFO | Processing file: test_article_20250710_031405.json.gz
+2025-07-10 03:14:06 | INFO | Found single article object in file
+2025-07-10 03:14:06 | INFO | Processing complete: 1/1 articles valid, 0 invalid
+2025-07-10 03:14:06 | INFO | File test_article_20250710_031405.json.gz processed successfully with 1 valid articles
+2025-07-10 03:14:06 | INFO | Sending 1 articles to Pipeline API at http://module_pipeline:8003
+2025-07-10 03:14:06 | INFO | 🔧 DEV MODE: Filtered from 29 to 15 fields for pipeline
+2025-07-10 03:14:06 | INFO | 🔍 DEV MODE: Payload keys being sent: ['url', 'medio', 'area_geografica', 'tipo_medio', 'titular', 'fecha_publicacion', 'autor', 'idioma', 'seccion', 'etiquetas_fuente', 'es_opinion', 'es_oficial', 'fecha_recopilacion', 'estado_procesamiento', 'contenido_texto']
+2025-07-10 03:14:06 | INFO | Sending article to pipeline: 'José Ortega Cano, visiblemente...' (ID: art_547979)
+2025-07-10 03:14:06 | WARNING | ⚠️  Connection error for article art_547979 (will retry): Cannot connect to host module_pipeline:8003 ssl:default [Name or service not known]
+2025-07-10 03:14:08 | INFO | 🔧 DEV MODE: Filtered from 29 to 15 fields for pipeline
+2025-07-10 03:14:08 | INFO | 🔍 DEV MODE: Payload keys being sent: ['url', 'medio', 'area_geografica', 'tipo_medio', 'titular', 'fecha_publicacion', 'autor', 'idioma', 'seccion', 'etiquetas_fuente', 'es_opinion', 'es_oficial', 'fecha_recopilacion', 'estado_procesamiento', 'contenido_texto']
+2025-07-10 03:14:08 | INFO | Sending article to pipeline: 'José Ortega Cano, visiblemente...' (ID: art_547979)
+2025-07-10 03:14:08 | WARNING | ⚠️  Connection error for article art_547979 (will retry): Cannot connect to host module_pipeline:8003 ssl:default [Name or service not known]
+2025-07-10 03:14:08 | ERROR | ❌ Final failure sending article 1: Cannot connect to host module_pipeline:8003 ssl:default [Name or service not known]
+2025-07-10 03:14:08 | WARNING | ❌ 1/1 articles failed to send (100.0%)
+2025-07-10 03:14:08 | WARNING | ❌ Moving file to error directory: test_article_20250710_031405.json.gz
+2025-07-10 03:14:08 | INFO | ✅ File moved successfully: test_article_20250710_031405.json.gz -> test_article_20250710_031405.json.gz
+2025-07-10 03:14:08 | WARNING | Failed to send 1 articles to Pipeline API
+2025-07-10 03:17:38 | INFO | Found 1 .json.gz file(s): ['article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json.gz']
+2025-07-10 03:17:38 | INFO | Moving file article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json.gz to pending directory
+2025-07-10 03:17:38 | INFO | File moved successfully: article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json.gz
+2025-07-10 03:17:38 | INFO | Processing file: article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json.gz
+2025-07-10 03:17:38 | INFO | Processing file: article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json.gz
+2025-07-10 03:17:38 | INFO | Found single article object in file
+2025-07-10 03:17:38 | INFO | Processing complete: 1/1 articles valid, 0 invalid
+2025-07-10 03:17:38 | INFO | File article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json.gz processed successfully with 1 valid articles
+2025-07-10 03:17:38 | INFO | Sending 1 articles to Pipeline API at http://module_pipeline:8003
+2025-07-10 03:17:38 | INFO | 🔧 DEV MODE: Filtered from 29 to 15 fields for pipeline
+2025-07-10 03:17:38 | INFO | 🔍 DEV MODE: Payload keys being sent: ['url', 'medio', 'area_geografica', 'tipo_medio', 'titular', 'fecha_publicacion', 'autor', 'idioma', 'seccion', 'etiquetas_fuente', 'es_opinion', 'es_oficial', 'fecha_recopilacion', 'estado_procesamiento', 'contenido_texto']
+2025-07-10 03:17:38 | INFO | Sending article to pipeline: 'Perú se despide de las Elimina...' (ID: art_400568)
+2025-07-10 03:17:38 | WARNING | ⚠️  Connection error for article art_400568 (will retry): Cannot connect to host module_pipeline:8003 ssl:default [Name or service not known]
+2025-07-10 03:17:40 | INFO | 🔧 DEV MODE: Filtered from 29 to 15 fields for pipeline
+2025-07-10 03:17:40 | INFO | 🔍 DEV MODE: Payload keys being sent: ['url', 'medio', 'area_geografica', 'tipo_medio', 'titular', 'fecha_publicacion', 'autor', 'idioma', 'seccion', 'etiquetas_fuente', 'es_opinion', 'es_oficial', 'fecha_recopilacion', 'estado_procesamiento', 'contenido_texto']
+2025-07-10 03:17:40 | INFO | Sending article to pipeline: 'Perú se despide de las Elimina...' (ID: art_400568)
+2025-07-10 03:17:40 | WARNING | ⚠️  Connection error for article art_400568 (will retry): Cannot connect to host module_pipeline:8003 ssl:default [Name or service not known]
+2025-07-10 03:17:40 | ERROR | ❌ Final failure sending article 1: Cannot connect to host module_pipeline:8003 ssl:default [Name or service not known]
+2025-07-10 03:17:40 | WARNING | ❌ 1/1 articles failed to send (100.0%)
+2025-07-10 03:17:40 | WARNING | ❌ Moving file to error directory: article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json.gz
+2025-07-10 03:17:40 | INFO | 🔄 File exists, using unique name: article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json_1752117460.gz
+2025-07-10 03:17:40 | INFO | ✅ File moved successfully: article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json.gz -> article_infobae_america_latina_20250709_073952_perúsedespidedelaseliminatoria_a96f460d.json_1752117460.gz
+2025-07-10 03:17:40 | WARNING | Failed to send 1 articles to Pipeline API
