@@ -319,30 +319,8 @@ async def send_to_pipeline(session: aiohttp.ClientSession, article: ArticuloInIt
         # Convert all datetime objects to ISO strings for JSON serialization
         article_dict = convert_datetime_to_iso(article_dict)
         
-        # DEVELOPMENT MODE: Filter only required fields for pipeline
-        # This ONLY affects development mode and is completely reversible
-        if os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true':
-            # Keep only fields that the pipeline expects
-            allowed_fields = {
-                'medio', 'area_geografica', 'tipo_medio', 'titular',
-                'fecha_publicacion', 'contenido_texto', 'idioma',
-                'autor', 'url', 'seccion', 'es_opinion', 'es_oficial',
-                'fecha_recopilacion', 'estado_procesamiento', 'etiquetas_fuente'
-            }
-            filtered_dict = {k: v for k, v in article_dict.items() if k in allowed_fields}
-            logger.info(f"🔧 DEV MODE: Filtered from {len(article_dict)} to {len(filtered_dict)} fields for pipeline")
-            article_dict = filtered_dict
-        
         # El pipeline espera directamente el ArticuloInItem, no envuelto en un objeto
         payload = article_dict
-        
-        # DEBUG: Log the exact payload being sent (only in dev mode)
-        if os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true':
-            logger.info(f"🔍 DEV MODE: Payload keys being sent: {list(article_dict.keys())}")
-            # Check for any datetime objects that might not be serialized
-            for key, value in article_dict.items():
-                if hasattr(value, 'isoformat'):
-                    logger.warning(f"⚠️  DEV MODE: Field '{key}' still has datetime object!")
         
         # Log with article identifier
         article_id = getattr(article, 'id', 'unknown')

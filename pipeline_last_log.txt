@@ -1,1 +1,0 @@
-2025-07-10 03:28:28.619 | DEBUG    | NO_REQUEST_ID | MetricsCollector | src.monitoring.metrics_collector:record_request_metric:158 | Request metric recorded

@@ -498,7 +498,6 @@ class PipelineController:
                     exception=e
                 )
                 
-                from datetime import datetime
                 resultado_fase3 = ResultadoFase3CitasDatos(
                     id_fragmento=fragment_uuid,
                     citas_textuales_extraidas=[],  # Sin citas
@@ -559,7 +558,6 @@ class PipelineController:
                 
                 fase4_logger.error(f"Error en Fase 4: {str(e)}", tiempo_segundos=tiempo_fase4)
                 # Usar fallback - tratar todas las entidades como nuevas
-                from datetime import datetime
                 
                 # Copiar entidades de fase 2 sin normalización
                 entidades_sin_normalizar = []
@@ -694,65 +692,76 @@ class PipelineController:
                 "num_pagina_fin_fragmento": fragmento.metadata_adicional.get("pagina_fin")
             }
             
-            # Resumen y estado - usar resumen más completo
+            # Resumen y estado
             resumen_fragmento = f"{resultado_fase2.resumen_extraccion}. {resultado_fase4.resumen_normalizacion}"
-            estado_final = "completado_ok" if resultado_fase1.es_relevante else "completado_no_relevante"
+            
+            estado_final = "completado_ok" if resultado_fase1 and resultado_fase1.es_relevante else "completado_no_relevante"
             fecha_procesamiento = datetime.utcnow().isoformat() + "Z"
             
-            # Preparar datos de hechos extraídos
-            hechos_extraidos_data = [
-                {
-                    "id_hecho": hecho.id_hecho,
-                    "texto_original_del_hecho": hecho.texto_original_del_hecho,
-                    "confianza_extraccion": hecho.confianza_extraccion,
-                    "metadata_hecho": hecho.metadata_hecho.model_dump() if hecho.metadata_hecho else {}
-                }
-                for hecho in resultado_fase2.hechos_extraidos
-            ]
+            # Preparar datos de hechos extraídos - manejar datos vacíos en desarrollo
+            hechos_extraidos_data = []
+            if resultado_fase2 and hasattr(resultado_fase2, 'hechos_extraidos'):
+                hechos_extraidos_data = [
+                    {
+                        "id_hecho": hecho.id_hecho,
+                        "texto_original_del_hecho": hecho.texto_original_del_hecho,
+                        "confianza_extraccion": hecho.confianza_extraccion,
+                        "metadata_hecho": hecho.metadata_hecho.model_dump() if hecho.metadata_hecho else {}
+                    }
+                    for hecho in resultado_fase2.hechos_extraidos
+                ]
             
-            # Preparar datos de entidades
-            entidades_autonomas_data = [
-                {
-                    "id_entidad": entidad.id_entidad,
-                    "texto_entidad": entidad.texto_entidad,
-                    "tipo_entidad": entidad.tipo_entidad,
-                    "relevancia_entidad": entidad.relevancia_entidad,
-                    "metadata_entidad": entidad.metadata_entidad.model_dump() if entidad.metadata_entidad else {},
-                    "id_entidad_normalizada": str(entidad.id_entidad_normalizada) if entidad.id_entidad_normalizada else None,
-                    "nombre_entidad_normalizada": entidad.nombre_entidad_normalizada,
-                    "similitud_normalizacion": entidad.similitud_normalizacion
-                }
-                for entidad in resultado_fase4.entidades_normalizadas  # Usar las normalizadas de fase 4
-            ]
+            # Preparar datos de entidades - manejar datos vacíos en desarrollo
+            entidades_autonomas_data = []
+            if resultado_fase4 and hasattr(resultado_fase4, 'entidades_normalizadas'):
+                entidades_autonomas_data = [
+                    {
+                        "id_entidad": entidad.id_entidad,
+                        "texto_entidad": entidad.texto_entidad,
+                        "tipo_entidad": entidad.tipo_entidad,
+                        "relevancia_entidad": entidad.relevancia_entidad,
+                        "metadata_entidad": entidad.metadata_entidad.model_dump() if entidad.metadata_entidad else {},
+                        "id_entidad_normalizada": str(entidad.id_entidad_normalizada) if entidad.id_entidad_normalizada else None,
+                        "nombre_entidad_normalizada": entidad.nombre_entidad_normalizada,
+                        "similitud_normalizacion": entidad.similitud_normalizacion
+                    }
+                    for entidad in resultado_fase4.entidades_normalizadas
+                ]
             
-            # Preparar datos de citas
-            citas_textuales_data = [
-                {
-                    "id_cita": cita.id_cita,
-                    "texto_cita": cita.texto_cita,
-                    "persona_citada": cita.persona_citada,
-                    "id_entidad_citada": cita.id_entidad_citada,
-                    "contexto_cita": cita.contexto_cita,
-                    "metadata_cita": cita.metadata_cita.model_dump() if cita.metadata_cita else {}
-                }
-                for cita in resultado_fase3.citas_textuales_extraidas
-            ]
+            # Preparar datos de citas - manejar datos vacíos en desarrollo
+            citas_textuales_data = []
+            if resultado_fase3 and hasattr(resultado_fase3, 'citas_textuales_extraidas'):
+                citas_textuales_data = [
+                    {
+                        "id_cita": cita.id_cita,
+                        "texto_cita": cita.texto_cita,
+                        "persona_citada": cita.persona_citada,
+                        "id_entidad_citada": cita.id_entidad_citada,
+                        "contexto_cita": cita.contexto_cita,
+                        "metadata_cita": cita.metadata_cita.model_dump() if cita.metadata_cita else {}
+                    }
+                    for cita in resultado_fase3.citas_textuales_extraidas
+                ]
             
-            # Preparar datos cuantitativos
-            datos_cuantitativos_data = [
-                {
-                    "id_dato_cuantitativo": dato.id_dato_cuantitativo,
-                    "descripcion_dato": dato.descripcion_dato,
-                    "valor_dato": dato.valor_dato,
-                    "unidad_dato": dato.unidad_dato,
-                    "fecha_dato": dato.fecha_dato,
-                    "metadata_dato": dato.metadata_dato.model_dump() if dato.metadata_dato else {}
-                }
-                for dato in resultado_fase3.datos_cuantitativos_extraidos
-            ]
+            # Preparar datos cuantitativos - manejar datos vacíos en desarrollo
+            datos_cuantitativos_data = []
+            if resultado_fase3 and hasattr(resultado_fase3, 'datos_cuantitativos_extraidos'):
+                datos_cuantitativos_data = [
+                    {
+                        "id_dato_cuantitativo": dato.id_dato_cuantitativo,
+                        "descripcion_dato": dato.descripcion_dato,
+                        "valor_dato": dato.valor_dato,
+                        "unidad_dato": dato.unidad_dato,
+                        "fecha_dato": dato.fecha_dato,
+                        "metadata_dato": dato.metadata_dato.model_dump() if dato.metadata_dato else {}
+                    }
+                    for dato in resultado_fase3.datos_cuantitativos_extraidos
+                ]
             
-            # Extraer relaciones del metadata de fase 4 (si existen)
-            relaciones_metadata = resultado_fase4.metadata_normalizacion.get("relaciones", {})
+            # Extraer relaciones del metadata de fase 4 (si existen) - manejar datos vacíos en desarrollo
+            relaciones_metadata = {}
+            if resultado_fase4 and hasattr(resultado_fase4, 'metadata_normalizacion'):
+                relaciones_metadata = resultado_fase4.metadata_normalizacion.get("relaciones", {})
             
             # NOTA: Las relaciones hecho-entidad no se persisten en la tabla de relaciones
             # porque ya están embebidas en cada hecho con el campo "entidades_del_hecho"
@@ -835,15 +844,8 @@ class PipelineController:
             
             # Llamar a insertar_fragmento_completo
             fragment_logger.info("Llamando RPC insertar_fragmento_completo")
-            # DUAL OUTPUT según Pipeline_Automatico_Modo_Desarrollo.md
-            if os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true':
-                from .services.development_storage import DevelopmentStorageService
-                dev_storage = DevelopmentStorageService(os.getenv('DEVELOPMENT_OUTPUT_DIR', '/pruebas_pipeline/development_outputs'))
-                resultado_persistencia = dev_storage.insertar_fragmento_completo(payload_dict)
-                fragment_logger.info("DESARROLLO: Fragmento guardado en estructura exacta")
-            else:
-                resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
-                fragment_logger.info("PRODUCCION: Fragmento guardado en Supabase")
+            resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
+            fragment_logger.info("Fragmento guardado en Supabase")
             
             if resultado_persistencia:
                 tiempo_persistencia = time.time() - tiempo_inicio_persistencia

@@ -11,6 +11,7 @@ services:
     container_name: lamacquina_scraper
     volumes:
       - ./src/module_scraper:/app
+      - shared_data:/data
     env_file:
       - .env
     networks:
@@ -24,6 +25,7 @@ services:
     container_name: lamacquina_connector
     volumes:
       - ./src/module_connector:/app
+      - shared_data:/data
     env_file:
       - .env
     networks:
@@ -37,7 +39,7 @@ services:
       context: ./src/module_pipeline
       dockerfile: Dockerfile
     container_name: lamacquina_pipeline
-    command: /bin/sh -c "cd /app && python -m uvicorn src.main:app --host 0.0.0.0 --port 8003 --reload"
+    command: /bin/sh -c "cd /app && python -m uvicorn src.main:app --host 0.0.0.0 --port 8003"
     volumes:
       - ./src/module_pipeline:/app
     ports:
@@ -267,4 +269,6 @@ volumes:
   scrapydweb_data:
     driver: local
   redis_data:
+    driver: local
+  shared_data:
     driver: local

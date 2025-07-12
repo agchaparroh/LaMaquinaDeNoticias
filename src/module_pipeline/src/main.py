@@ -29,7 +29,7 @@ from .monitoring import setup_alert_endpoints, get_alert_manager
 
 # --- Configuración de Procesamiento Asíncrono ---
 # Threshold para determinar cuándo usar procesamiento en background
-ASYNC_PROCESSING_THRESHOLD = 1_000  # caracteres (reducido para activar procesamiento asíncrono)
+ASYNC_PROCESSING_THRESHOLD = 50  # caracteres (forzar procesamiento asíncrono para prácticamente todos los artículos)
 
 # --- Configuración del Logger ---
 # El sistema de logging ya está configurado por logging_config.py

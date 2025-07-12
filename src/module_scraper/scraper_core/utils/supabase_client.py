@@ -4,6 +4,7 @@ from supabase import create_client, Client
 from supabase.lib.client_options import ClientOptions
 from typing import Optional, Dict, Any, List, Union
 from datetime import datetime
+from .estado_mapper import map_estado_to_domain, get_error_detail_for_estado, map_tipo_medio_to_domain
 
 class SupabaseClient:
     """
@@ -34,11 +35,11 @@ class SupabaseClient:
                 self.logger.addHandler(handler)
 
             self.supabase_url: Optional[str] = os.getenv('SUPABASE_URL')
-            self.supabase_key: Optional[str] = os.getenv('SUPABASE_KEY')
+            self.supabase_key: Optional[str] = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
 
             if not self.supabase_url or not self.supabase_key:
-                self.logger.error("SUPABASE_URL and SUPABASE_KEY environment variables must be set.")
-                raise ValueError("Supabase URL and Key not found in environment variables.")
+                self.logger.error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables must be set.")
+                raise ValueError("Supabase URL and Service Role Key not found in environment variables.")
 
             try:
                 self.client: Client = create_client(self.supabase_url, self.supabase_key)
@@ -173,7 +174,7 @@ class SupabaseClient:
             "storage_path": articulo_item_data.get('storage_path'),
             "medio": articulo_item_data.get('medio'),
             "area_geografica": articulo_item_data.get('area_geografica', 'España'),
-            "tipo_medio": articulo_item_data.get('tipo_medio', 'digital'),
+            "tipo_medio": map_tipo_medio_to_domain(articulo_item_data.get('tipo_medio', 'digital')),
             "titular": articulo_item_data.get('titular'),
             "fecha_publicacion": fecha_pub,
             "autor": articulo_item_data.get('autor'),
@@ -186,11 +187,23 @@ class SupabaseClient:
             "categorias_asignadas": articulo_item_data.get('categorias_asignadas'),
             "puntuacion_relevancia": articulo_item_data.get('puntuacion_relevancia'),
             "fecha_recopilacion": fecha_recop,
-            "estado_procesamiento": articulo_item_data.get('estado_procesamiento', 'completado'),
+            "estado_procesamiento": map_estado_to_domain(
+                articulo_item_data.get('estado_procesamiento', 'completado'),
+                context='scraper'
+            ),
         }
         
         # Remove None values to avoid database issues
         db_articulo_data_cleaned = {k: v for k, v in db_articulo_data.items() if v is not None}
+        
+        # Log detallado de diagnóstico
+        self.logger.info(f"=== UPSERT DIAGNÓSTICO ===")
+        self.logger.info(f"URL: {db_articulo_data_cleaned.get('url')}")
+        self.logger.info(f"Estado procesamiento: {db_articulo_data_cleaned.get('estado_procesamiento')}")
+        self.logger.info(f"Tipo medio: {db_articulo_data_cleaned.get('tipo_medio')}")
+        self.logger.info(f"Fecha publicación: {db_articulo_data_cleaned.get('fecha_publicacion')}")
+        self.logger.info(f"Campos enviados: {list(db_articulo_data_cleaned.keys())}")
+        self.logger.info(f"Tabla destino: {self.articulos_table_name}")
 
         try:
             response = self.client.table(self.articulos_table_name).upsert(
@@ -198,11 +211,20 @@ class SupabaseClient:
                 on_conflict='url'
             ).execute()
             
+            # Log detallado de la respuesta
+            self.logger.info(f"=== RESPUESTA SUPABASE ===")
+            self.logger.info(f"Response data existe: {response.data is not None}")
+            self.logger.info(f"Response data length: {len(response.data) if response.data else 0}")
+            if hasattr(response, 'status_code'):
+                self.logger.info(f"Status code: {response.status_code}")
+            
             if response.data:
-                self.logger.info(f"Article upserted successfully for URL: {db_articulo_data_cleaned['url']}")
+                self.logger.info(f"✅ Article upserted successfully for URL: {db_articulo_data_cleaned['url']}")
+                self.logger.info(f"ID del artículo guardado: {response.data[0].get('id', 'ID no disponible')}")
                 return response.data[0]
             else:
-                self.logger.warning(f"Upsert returned no data for URL: {db_articulo_data_cleaned.get('url')}")
+                self.logger.warning(f"❌ Upsert returned no data for URL: {db_articulo_data_cleaned.get('url')}")
+                self.logger.warning(f"Response completa: {response}")
                 return None
                 
         except Exception as e:
@@ -241,8 +263,15 @@ class SupabaseClient:
             True if update was successful, False otherwise.
         """
         try:
-            update_data = {'estado_procesamiento': status}
-            if error_detail:
+            # Mapear el estado al DOMAIN antes de actualizar
+            mapped_status = map_estado_to_domain(status, context='scraper')
+            update_data = {'estado_procesamiento': mapped_status}
+            
+            # Si el estado cambió al mapearse, agregar información al error_detail
+            if mapped_status != status:
+                original_detail = get_error_detail_for_estado(status, error_detail)
+                update_data['error_detalle'] = original_detail
+            elif error_detail:
                 update_data['error_detalle'] = error_detail
             
             response = self.client.table(self.articulos_table_name).update(update_data).eq('url', url).execute()

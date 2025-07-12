@@ -332,7 +332,7 @@ class CubanetInternacionalSpider(scrapy.Spider):
             "contenido_texto": contenido,
             "contenido_html": contenido,  # RSS normalmente no tiene HTML separado
             "fuente": self.name,
-            "fecha_extraccion": datetime.now().isoformat(),
+            "fecha_recopilacion": datetime.now().isoformat(),
             # Metadata adicional
             "metadata": {
                 "spider_type": "rss",

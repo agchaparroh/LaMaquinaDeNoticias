@@ -8,6 +8,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
+import re
 
 from itemadapter import ItemAdapter
 from scrapy import Spider
@@ -89,7 +90,10 @@ class DataValidationPipeline:
     ]
     
     VALID_ESTADOS_PROCESAMIENTO = [
-        'pendiente', 'procesando', 'completado', 'error', 'descartado'
+        'pendiente', 'procesando', 'completado', 'error', 'descartado',
+        # Estados del DOMAIN de la base de datos
+        'error_prefiltrado', 'error_relevancia', 'error_extraccion', 
+        'error_normalizacion', 'error_bd'
     ]
     
     def __init__(self):
@@ -172,7 +176,7 @@ class DataValidationPipeline:
             
             # Add error details to item for tracking
             adapter['error_detalle'] = str(e)
-            adapter['estado_procesamiento'] = 'error'
+            adapter['estado_procesamiento'] = 'error_prefiltrado'
             
             if self.drop_invalid_items:
                 logger.warning(f"Validation failed for {item_url} and VALIDATION_DROP_INVALID_ITEMS is True. Dropping item: {e}")
@@ -297,10 +301,18 @@ class DataValidationPipeline:
                     '%Y-%m-%dT%H:%M:%S',
                     '%Y-%m-%dT%H:%M:%SZ',
                     '%Y-%m-%dT%H:%M:%S.%f',
-                    '%Y-%m-%dT%H:%M:%S.%fZ'
+                    '%Y-%m-%dT%H:%M:%S.%fZ',
+                    # Formatos con timezone offset
+                    '%Y-%m-%dT%H:%M:%S%z',
+                    '%Y-%m-%dT%H:%M:%S.%f%z',
+                    # Formato específico para +00:00
+                    '%Y-%m-%dT%H:%M:%S+00:00',
+                    '%Y-%m-%dT%H:%M:%S.%f+00:00'
                 ]
                 
                 parsed = False
+                
+                # Primero intentar parsear con formatos conocidos
                 for fmt in date_formats:
                     try:
                         dt = datetime.strptime(value, fmt)
@@ -309,6 +321,30 @@ class DataValidationPipeline:
                         break
                     except ValueError:
                         continue
+                
+                # Si no funciona, intentar con regex para manejar timezone con :
+                if not parsed:
+                    # Patrón para fechas ISO con timezone +HH:MM
+                    iso_pattern = r'(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?)([\+\-]\d{2}:\d{2})'
+                    match = re.match(iso_pattern, value)
+                    if match:
+                        # Remover el : del timezone para que Python lo pueda parsear
+                        datetime_part = match.group(1)
+                        timezone_part = match.group(2).replace(':', '')
+                        normalized_value = datetime_part + timezone_part
+                        try:
+                            # Intentar con formato sin microsegundos
+                            dt = datetime.strptime(normalized_value, '%Y-%m-%dT%H:%M:%S%z')
+                            adapter[field] = dt.isoformat()
+                            parsed = True
+                        except ValueError:
+                            try:
+                                # Intentar con formato con microsegundos
+                                dt = datetime.strptime(normalized_value, '%Y-%m-%dT%H:%M:%S.%f%z')
+                                adapter[field] = dt.isoformat()
+                                parsed = True
+                            except ValueError:
+                                pass
                 
                 if not parsed:
                     raise DateFormatError(

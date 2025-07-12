@@ -1,0 +1,3 @@
+## Cambios pendientes en la base de datos:
+ - El campo pais_publicacion en la tabla Artículos se ha marcado como nullable, pero lo suyo sería eliminarlo. Aunque eso supone un problema, porque existen derivaciones a considerar, como las afectaciones a las vistas materializadas. 
+ - Añadir una tabla medios_comunicacion. Esto supone hacer un proceso más complejo, porque implicaría también generar otra tabla de relacioens.

@@ -6,11 +6,13 @@ This package contains all the pipeline components for processing scraped items.
 from .cleaning import DataCleaningPipeline
 from .validation import DataValidationPipeline
 from .storage import SupabaseStoragePipeline
-from .json_export import JsonGzExportPipeline
+from .converter import ItemConverterPipeline
+from .json_writer import JsonWriterPipeline
 
 __all__ = [
+    'ItemConverterPipeline',
     'DataCleaningPipeline',
     'DataValidationPipeline',
     'SupabaseStoragePipeline',
-    'JsonGzExportPipeline',
+    'JsonWriterPipeline',
 ]

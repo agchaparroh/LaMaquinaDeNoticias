@@ -1,131 +1,59 @@
 {
   "alerts": [
     {
-      "id": "ff31d42b-431e-4fc3-aa96-ad61dcd738e4",
-      "alert_type": "supabase_failure",
-      "severity": "critical",
-      "title": "Supabase Service Failure Detected",
-      "description": "Error en Supabase: Error inesperado en Supabase RPC: {'code': 'PGRST203', 'details': None, 'hint': 'Try renaming the parameters or the function itself in the database so function overloading can be resolved', 'message':",
-      "timestamp": "2025-07-09T07:39:31.203025",
-      "labels": {
-        "service": "supabase",
-        "error_type": "unknown"
-      },
-      "annotations": {
-        "message": "Error inesperado en Supabase RPC: {'code': 'PGRST203', 'details': None, 'hint': 'Try renaming the parameters or the function itself in the database so function overloading can be resolved', 'message': 'Could not choose the best candidate function between: public.buscar_entidad_similar(nombre_busqueda => text, tipo_entidad => text, umbral_similitud => double precision, limite_resultados => integer), public.buscar_entidad_similar(nombre_busqueda => text, tipo_entidad => text, umbral_similitud => r",
-        "rpc_name": "unknown"
-      },
-      "resolved": false,
-      "resolved_at": null
-    },
-    {
-      "id": "5b031c1a-bbd6-4476-970a-94f9db09e909",
-      "alert_type": "supabase_failure",
-      "severity": "critical",
-      "title": "Supabase Service Failure Detected",
-      "description": "Error en Supabase: Error inesperado en Supabase RPC: {'code': 'PGRST203', 'details': None, 'hint': 'Try renaming the parameters or the function itself in the database so function overloading can be resolved', 'message':",
-      "timestamp": "2025-07-09T08:20:22.394598",
-      "labels": {
-        "service": "supabase",
-        "error_type": "unknown"
-      },
-      "annotations": {
-        "message": "Error inesperado en Supabase RPC: {'code': 'PGRST203', 'details': None, 'hint': 'Try renaming the parameters or the function itself in the database so function overloading can be resolved', 'message': 'Could not choose the best candidate function between: public.buscar_entidad_similar(nombre_busqueda => text, tipo_entidad => text, umbral_similitud => double precision, limite_resultados => integer), public.buscar_entidad_similar(nombre_busqueda => text, tipo_entidad => text, umbral_similitud => r",
-        "rpc_name": "unknown"
-      },
-      "resolved": false,
-      "resolved_at": null
-    },
-    {
-      "id": "b94855de-35c1-4725-8edb-7e4c03b017ae",
-      "alert_type": "supabase_failure",
-      "severity": "critical",
-      "title": "Supabase Service Failure Detected",
-      "description": "Error en Supabase: Error inesperado en Supabase RPC: {'code': 'PGRST203', 'details': None, 'hint': 'Try renaming the parameters or the function itself in the database so function overloading can be resolved', 'message':",
-      "timestamp": "2025-07-09T10:51:32.164695",
-      "labels": {
-        "service": "supabase",
-        "error_type": "unknown"
-      },
-      "annotations": {
-        "message": "Error inesperado en Supabase RPC: {'code': 'PGRST203', 'details': None, 'hint': 'Try renaming the parameters or the function itself in the database so function overloading can be resolved', 'message': 'Could not choose the best candidate function between: public.buscar_entidad_similar(nombre_busqueda => text, tipo_entidad => text, umbral_similitud => double precision, limite_resultados => integer), public.buscar_entidad_similar(nombre_busqueda => text, tipo_entidad => text, umbral_similitud => r",
-        "rpc_name": "unknown"
-      },
-      "resolved": false,
-      "resolved_at": null
-    },
-    {
-      "id": "55b37c9f-98a8-486f-890c-2381e84f3208",
+      "id": "87d7e126-859a-4c09-8b67-cbd8216458b5",
       "alert_type": "groq_api_failure",
       "severity": "critical",
       "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para ***REDACTED_CARD***-b245-d486c3ad1285: Fallo al cargar plantilla de prompt para triaje: Archivo de prompt de triaje no encontrado: /app/src/prompts/P",
-      "timestamp": "2025-07-10T04:10:30.901399",
+      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 8d3a285e-2416-4631-b186-5c08412b0a7c: Error al parsear respuesta LLM: ** El artículo ofrece una visión detallada y actualizada sobre la implementació",
+      "timestamp": "2025-07-11T02:42:57.906504",
       "labels": {
         "service": "groq_api",
         "error_type": "unknown"
       },
       "annotations": {
-        "message": "GroqAPIError durante evaluación de relevancia para ***REDACTED_CARD***-b245-d486c3ad1285: Fallo al cargar plantilla de prompt para triaje: Archivo de prompt de triaje no encontrado: /app/src/prompts/Prompt_1_filtrado.md",
-        "timestamp": "2025-07-10T04:10:30.899155+00:00"
+        "message": "GroqAPIError durante evaluación de relevancia para 8d3a285e-2416-4631-b186-5c08412b0a7c: Error al parsear respuesta LLM: ** El artículo ofrece una visión detallada y actualizada sobre la implementación del Sarlaft, su objetivo de combatir el crimen organizado en el sector del transporte y sus implicaciones para las empresas reguladas por la Superintendencia de Transporte. La información proporcionada es relevante, precisa y de gran valor para entender las medidas adoptadas por el gobierno colomb",
+        "timestamp": "2025-07-11T02:42:57.901168+00:00"
       },
       "resolved": false,
       "resolved_at": null
     },
     {
-      "id": "aa797a2f-3f2d-4ec1-a760-bb4bc7871cb6",
+      "id": "dd4c3d35-2f56-4c3f-abcf-10f209f96b83",
       "alert_type": "groq_api_failure",
       "severity": "critical",
       "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para edfeb196-3a82-4a43-817f-e10cb94c23ee: Fallo al cargar plantilla de prompt para triaje: Archivo de prompt de triaje no encontrado: /app/src/prompts/Pr",
-      "timestamp": "2025-07-10T04:18:10.668745",
+      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 3c9c7d4c-cf0f-47e4-a9cd-bd878f618337: Error al parsear respuesta LLM: ** El artículo reporta el fallecimiento de Suso Díaz, un líder político español",
+      "timestamp": "2025-07-11T03:00:02.540585",
       "labels": {
         "service": "groq_api",
         "error_type": "unknown"
       },
       "annotations": {
-        "message": "GroqAPIError durante evaluación de relevancia para edfeb196-3a82-4a43-817f-e10cb94c23ee: Fallo al cargar plantilla de prompt para triaje: Archivo de prompt de triaje no encontrado: /app/src/prompts/Prompt_1_filtrado.md",
-        "timestamp": "2025-07-10T04:18:10.667508+00:00"
+        "message": "GroqAPIError durante evaluación de relevancia para 3c9c7d4c-cf0f-47e4-a9cd-bd878f618337: Error al parsear respuesta LLM: ** El artículo reporta el fallecimiento de Suso Díaz, un líder político español, y proporciona información sobre su trayectoria y legado. Aunque no es un artículo de análisis profundo, ofrece hechos concretos y una relevancia temática alta en el ámbito político español.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS CLAVE:**\n\n- Fallecimiento de Suso Díaz, líder político español.\n- Suso Día",
+        "timestamp": "2025-07-11T03:00:02.537136+00:00"
       },
       "resolved": false,
       "resolved_at": null
     },
     {
-      "id": "06910859-29f6-479b-b565-ae17e32ff581",
+      "id": "a7b5761f-364f-4ce3-87dc-249a6894b8e6",
       "alert_type": "groq_api_failure",
       "severity": "critical",
       "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 480db41c-de1d-4ada-afd6-5afe8988dfdb: Error al parsear respuesta LLM: ** El artículo analiza críticamente la política del gobierno español, destacand",
-      "timestamp": "2025-07-10T05:09:42.283610",
+      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 7135a242-57a2-43fc-a89a-3710759448cf: Error al parsear respuesta LLM: ** El artículo reporta hechos recientes sobre la crisis en Gaza, incluyendo la ",
+      "timestamp": "2025-07-12T02:01:59.840185",
       "labels": {
         "service": "groq_api",
         "error_type": "unknown"
       },
       "annotations": {
-        "message": "GroqAPIError durante evaluación de relevancia para 480db41c-de1d-4ada-afd6-5afe8988dfdb: Error al parsear respuesta LLM: ** El artículo analiza críticamente la política del gobierno español, destacando la falta de avances en la lucha contra la corrupción y la deteriorada imagen internacional de España. Aporta información detallada sobre temas de trascendencia política y social.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS CLAVE:**\n\n- El líder del Partido Popular, Alberto Núñez Feijóo, ha alertado sobre la ",
-        "timestamp": "2025-07-10T05:09:42.274674+00:00"
-      },
-      "resolved": false,
-      "resolved_at": null
-    },
-    {
-      "id": "30f782d9-248b-4647-9ee7-c4f080813010",
-      "alert_type": "groq_api_failure",
-      "severity": "critical",
-      "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para c5ac8a29-16d6-472e-8c9f-e6e5baeed7fa: Error al parsear respuesta LLM: ** El artículo reporta sobre la reforma al Poder Judicial en México, un tema de",
-      "timestamp": "2025-07-10T06:32:21.199932",
-      "labels": {
-        "service": "groq_api",
-        "error_type": "unknown"
-      },
-      "annotations": {
-        "message": "GroqAPIError durante evaluación de relevancia para c5ac8a29-16d6-472e-8c9f-e6e5baeed7fa: Error al parsear respuesta LLM: ** El artículo reporta sobre la reforma al Poder Judicial en México, un tema de gran relevancia política y social. Aunque algunos detalles están ausentes, el contenido es sustancial y proporciona información valiosa sobre la situación actual.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS CLAVE:**\n\n- La reforma al Poder Judicial en México se llevará a cabo con la participación de los minis",
-        "timestamp": "2025-07-10T06:32:21.195151+00:00"
+        "message": "GroqAPIError durante evaluación de relevancia para 7135a242-57a2-43fc-a89a-3710759448cf: Error al parsear respuesta LLM: ** El artículo reporta hechos recientes sobre la crisis en Gaza, incluyendo la firma de un acuerdo provisional entre Israel y Hamás, y la reacción de los líderes políticos involucrados. La densidad factual es alta, con múltiples hechos concretos y fechas precisas. La complejidad relacional es también alta, ya que se presentan conexiones significativas entre los actores y event",
+        "timestamp": "2025-07-12T02:01:59.836670+00:00"
       },
       "resolved": false,
       "resolved_at": null
     }
   ],
-  "last_updated": "2025-07-10T06:32:21.201033"
+  "last_updated": "2025-07-12T02:01:59.840926"
 }

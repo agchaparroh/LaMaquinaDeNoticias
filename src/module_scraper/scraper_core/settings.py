@@ -119,39 +119,25 @@ LOG_ROTATION_PER_SPIDER = False  # Create separate rotating logs per spider
 # ITEM_PIPELINES defines the order in which pipelines will be processed.
 # Lower numbers mean higher priority.
 ITEM_PIPELINES = {
-    # 1. Extracción y Validación Inicial (si se implementa como pipeline)
-    # 'scraper_core.pipelines.ExtractAndValidatePipeline': 100,
+    # 1. Conversión de tipos (DEBE ser primero)
+    'scraper_core.pipelines.converter.ItemConverterPipeline': 100,
 
     # 2. Limpieza de Datos
     'scraper_core.pipelines.cleaning.DataCleaningPipeline': 200,
-    # 'scraper_core.pipelines.CleanArticleItemsPipeline': 200, # Alternativa o complemento
 
     # 3. Validación de Datos Post-Limpieza
     'scraper_core.pipelines.validation.DataValidationPipeline': 300,
 
-    # 4. Almacenamiento en Supabase (solo si NO estamos en modo desarrollo)
-    # 'scraper_core.pipelines.SupabaseStoragePipeline': 400, # Comentado - se activa condicionalmente abajo
-    # 'scraper_core.pipelines.supabase_pipeline.SupabaseStoragePipeline': 400, # Si se movió a un sub-módulo
+    # 4. Almacenamiento en Supabase
+    'scraper_core.pipelines.SupabaseStoragePipeline': 400,
 
-    # Otros pipelines (ej. exportación a archivos, etc.)
-    # 'scraper_core.pipelines.JsonWriterPipeline': 900,
+    # 5. Exportación a JSON para el connector
+    'scraper_core.pipelines.json_writer.JsonWriterPipeline': 900,
 }
 
-# Pipeline de exportación (solo si está habilitado)
-ENABLE_PIPELINE_EXPORT = os.getenv('ENABLE_PIPELINE_EXPORT', 'false').lower() == 'true'
-if ENABLE_PIPELINE_EXPORT:
-    ITEM_PIPELINES['scraper_core.pipelines.json_export.JsonGzExportPipeline'] = 450
-    print(f"✅ JsonGzExportPipeline HABILITADO - ENABLE_PIPELINE_EXPORT={os.getenv('ENABLE_PIPELINE_EXPORT')}")
-else:
-    print(f"❌ JsonGzExportPipeline DESHABILITADO - ENABLE_PIPELINE_EXPORT={os.getenv('ENABLE_PIPELINE_EXPORT')}")
-
-# Pipeline de Supabase (solo si NO estamos en modo desarrollo)
-DEVELOPMENT_MODE = os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true'
-if not DEVELOPMENT_MODE:
-    ITEM_PIPELINES['scraper_core.pipelines.SupabaseStoragePipeline'] = 400
-    print(f"✅ SupabaseStoragePipeline HABILITADO - Modo producción")
-else:
-    print(f"❌ SupabaseStoragePipeline DESHABILITADO - DEVELOPMENT_MODE={os.getenv('DEVELOPMENT_MODE')}")
+print("✅ Pipelines configurados:")
+for pipeline, priority in ITEM_PIPELINES.items():
+    print(f"  - {priority}: {pipeline.split('.')[-1]}")
 # =============================================================================
 # PLAYWRIGHT CONFIGURATION (TWISTED_REACTOR)
 # =============================================================================
@@ -259,21 +245,27 @@ TENACITY_WAIT_MIN = float(os.getenv('TENACITY_WAIT_MIN', 2)) # seconds
 TENACITY_WAIT_MAX = float(os.getenv('TENACITY_WAIT_MAX', 10)) # seconds
 
 # =============================================================================
+# JSON EXPORT CONFIGURATION
+# =============================================================================
+# Directory where JSON files are exported for the connector
+SCRAPY_OUTPUT_DIR = os.getenv('SCRAPY_OUTPUT_DIR', '/data/scrapy_output/pending')
+
+# =============================================================================
 # VALIDATION PIPELINE CONFIGURATION
 # =============================================================================
 # Fields required for an item to be considered valid
-VALIDATION_REQUIRED_FIELDS = ['url', 'titulo', 'medio_nombre', 'fecha_extraccion']
+VALIDATION_REQUIRED_FIELDS = ['url', 'titular', 'medio', 'fecha_recopilacion']
 
 # Fields that must not be empty if present
-VALIDATION_NON_EMPTY_FIELDS = ['url', 'titulo', 'medio_nombre']
+VALIDATION_NON_EMPTY_FIELDS = ['url', 'titular', 'medio']
 
 # Max length for certain text fields (0 means no limit)
 VALIDATION_MAX_LENGTHS = {
     'url': 2048,
-    'titulo': 512,
+    'titular': 512,
     'subtitulo': 1024,
     'autor': 256,
-    'medio_nombre': 256,
+    'medio': 256,
     'categoria': 128,
 }
 
@@ -294,7 +286,7 @@ VALIDATION_LIST_FIELDS = ['etiquetas']
 VALIDATION_DROP_INVALID_ITEMS = False
 
 # Fields to include in the validation summary (for logging or item field)
-VALIDATION_SUMMARY_FIELDS = ['url', 'titulo', 'medio', 'contenido_texto']
+VALIDATION_SUMMARY_FIELDS = ['url', 'titular', 'medio', 'contenido_texto']
 
 # =============================================================================
 # CLEANING PIPELINE CONFIGURATION
@@ -470,7 +462,7 @@ SPIDERMON_MAX_RESPONSE_TIME = float(os.getenv('SPIDERMON_MAX_RESPONSE_TIME', 500
 SPIDERMON_ADD_FIELD_COVERAGE = True
 SPIDERMON_FIELD_COVERAGE_RULES = {
     'url': 1.0,  # 100% coverage required
-    'titulo': 0.95,  # 95% coverage required
+    'titular': 0.95,  # 95% coverage required
     'contenido_texto': 0.95,
     'medio': 1.0,
     'fecha_publicacion': 0.8,  # 80% coverage acceptable

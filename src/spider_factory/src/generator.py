@@ -344,7 +344,7 @@ class SpiderGenerator:
             {"name": "medio_url_principal", "type": "str", "required": True},
             {"name": "seccion", "type": "str", "required": False},
             {"name": "fecha_publicacion", "type": "str", "required": False},
-            {"name": "fecha_extraccion", "type": "str", "required": True},
+            {"name": "fecha_recopilacion", "type": "str", "required": True},
             {"name": "contenido", "type": "str", "required": False},
             {"name": "autor", "type": "str", "required": False},
             {"name": "url_imagen_principal", "type": "str", "required": False},

@@ -65,7 +65,7 @@ class SupabaseStoragePipeline:
         supabase_client = SupabaseClient()
         html_bucket_name = crawler.settings.get(
             'SUPABASE_STORAGE_BUCKET',
-            'articulos_html_beta'
+            'articulos-html-beta'
         )
         
         # Leer configuración de Tenacity desde settings.py si se desea, o usar defaults
@@ -209,6 +209,10 @@ class SupabaseStoragePipeline:
                 medio_slug = adapter.get('medio', 'unknown_medio').lower().replace(' ', '_')
                 fecha_pub_str = str(adapter.get('fecha_publicacion', 'unknown_date'))
                 fecha_pub_path_part = fecha_pub_str.split('T')[0]
+                # Convertir formato de fecha de YYYY-MM-DD a YYYY/MM/DD para cumplir con el constraint
+                if '-' in fecha_pub_path_part:
+                    year, month, day = fecha_pub_path_part.split('-')
+                    fecha_pub_path_part = f"{year}/{month}/{day}"
                 file_name = f"{uuid.uuid4()}.html.gz"
                 storage_file_path = f"{medio_slug}/{fecha_pub_path_part}/{file_name}"
 

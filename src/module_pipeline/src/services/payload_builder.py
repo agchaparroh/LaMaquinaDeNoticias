@@ -5,7 +5,7 @@ import hashlib
 import json
 
 # Importar utilidades de validación
-from utils.validation import (
+from ..utils.validation import (
     escape_html,
     validate_wikidata_uri,
     validate_numeric_value,
@@ -13,7 +13,7 @@ from utils.validation import (
 )
 
 # Importar los modelos Pydantic desde persistencia.py
-from models.persistencia import (
+from ..models.persistencia import (
     ArticuloPersistenciaPayload as PayloadCompletoArticulo,
     HechoExtraidoItem,
     EntidadAutonomaItem,
