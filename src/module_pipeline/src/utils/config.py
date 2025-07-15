@@ -97,7 +97,7 @@ QUEUE_MAX_SIZE = _get_int_env('QUEUE_MAX_SIZE', 100)
 MODEL_ID = os.getenv('MODEL_ID', 'llama-3.1-8b-instant')
 API_TIMEOUT = _get_int_env('API_TIMEOUT', 60)
 API_TEMPERATURE = _get_float_env('API_TEMPERATURE', 0.1)
-API_MAX_TOKENS = _get_int_env('API_MAX_TOKENS', 10000)  # Aumentado de 6000 a 10000 para evitar truncamiento
+API_MAX_TOKENS = _get_int_env('API_MAX_TOKENS', 6000)  # Límite ajustado para LLAMA 3.1 8B Instant
 MAX_RETRIES = _get_int_env('MAX_RETRIES', 2)
 MAX_WAIT_SECONDS = _get_int_env('MAX_WAIT_SECONDS', 60)
 

@@ -703,7 +703,8 @@ class PipelineController:
             if resultado_fase2 and hasattr(resultado_fase2, 'hechos_extraidos'):
                 hechos_extraidos_data = [
                     {
-                        "id_hecho": hecho.id_hecho,
+                        "id_temporal_hecho": str(hecho.id_hecho),
+                        "descripcion_hecho": hecho.texto_original_del_hecho,
                         "texto_original_del_hecho": hecho.texto_original_del_hecho,
                         "confianza_extraccion": hecho.confianza_extraccion,
                         "metadata_hecho": hecho.metadata_hecho.model_dump() if hecho.metadata_hecho else {}
@@ -716,7 +717,7 @@ class PipelineController:
             if resultado_fase4 and hasattr(resultado_fase4, 'entidades_normalizadas'):
                 entidades_autonomas_data = [
                     {
-                        "id_entidad": entidad.id_entidad,
+                        "id_temporal_entidad": str(entidad.id_entidad),
                         "texto_entidad": entidad.texto_entidad,
                         "tipo_entidad": entidad.tipo_entidad,
                         "relevancia_entidad": entidad.relevancia_entidad,

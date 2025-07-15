@@ -18,42 +18,8 @@ RUN apk add --no-cache \
 COPY config/nginx.conf /etc/nginx/nginx.conf
 
 # Create health check script
-RUN cat > /usr/local/bin/health-check.sh << 'EOF'
-#!/bin/bash
-set -e
-
-# Check nginx is running
-if ! pgrep nginx > /dev/null; then
-    echo "❌ Nginx process not running"
-    exit 1
-fi
-
-# Check nginx internal health endpoint
-if ! curl -f -s -o /dev/null http://localhost/nginx-health; then
-    echo "❌ Nginx health endpoint failed"
-    exit 1
-fi
-
-# Check if we can reach backend (optional - don't fail if backend is down)
-if curl -f -s -o /dev/null --max-time 5 http://module_dashboard_review_backend:8004/health; then
-    echo "✅ Backend reachable"
-else
-    echo "⚠️ Backend not reachable (may be starting up)"
-fi
-
-# Check if we can reach frontend (optional - don't fail if frontend is down)
-if curl -f -s -o /dev/null --max-time 5 http://module_dashboard_review_frontend:80; then
-    echo "✅ Frontend reachable"
-else
-    echo "⚠️ Frontend not reachable (may be starting up)"
-fi
-
-echo "✅ Nginx proxy is healthy"
-exit 0
-EOF
-
-# Make health check script executable
-RUN chmod +x /usr/local/bin/health-check.sh
+RUN printf '#!/bin/bash\nset -e\n\n# Check nginx is running\nif ! pgrep nginx > /dev/null; then\n    echo "❌ Nginx process not running"\n    exit 1\nfi\n\n# Check nginx internal health endpoint\nif ! curl -f -s -o /dev/null http://localhost/nginx-health; then\n    echo "❌ Nginx health endpoint failed"\n    exit 1\nfi\n\n# Check if we can reach backend (optional - don'"'"'t fail if backend is down)\nif curl -f -s -o /dev/null --max-time 5 http://module_dashboard_review_backend:8004/health; then\n    echo "✅ Backend reachable"\nelse\n    echo "⚠️ Backend not reachable (may be starting up)"\nfi\n\n# Check if we can reach frontend (optional - don'"'"'t fail if frontend is down)\nif curl -f -s -o /dev/null --max-time 5 http://module_dashboard_review_frontend:80; then\n    echo "✅ Frontend reachable"\nelse\n    echo "⚠️ Frontend not reachable (may be starting up)"\nfi\n\necho "✅ Nginx proxy is healthy"\nexit 0\n' > /usr/local/bin/health-check.sh && \
+    chmod +x /usr/local/bin/health-check.sh
 
 # Create nginx user and set permissions
 RUN addgroup -g 101 nginx || true \
@@ -70,22 +36,7 @@ RUN rm -f /etc/nginx/conf.d/default.conf \
     && rm -rf /usr/share/nginx/html/*
 
 # Create minimal error page
-RUN cat > /usr/share/nginx/html/50x.html << 'EOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Error</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-        h1 { color: #d32f2f; }
-    </style>
-</head>
-<body>
-    <h1>Service Temporarily Unavailable</h1>
-    <p>The dashboard is currently experiencing issues. Please try again in a few moments.</p>
-</body>
-</html>
-EOF
+RUN printf '<!DOCTYPE html>\n<html>\n<head>\n    <title>Error</title>\n    <style>\n        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }\n        h1 { color: #d32f2f; }\n    </style>\n</head>\n<body>\n    <h1>Service Temporarily Unavailable</h1>\n    <p>The dashboard is currently experiencing issues. Please try again in a few moments.</p>\n</body>\n</html>\n' > /usr/share/nginx/html/50x.html
 
 # Set correct permissions for error page
 RUN chown nginx:nginx /usr/share/nginx/html/50x.html

@@ -483,18 +483,54 @@ def validate_numeric_value(value: Any, min_value: Optional[float] = None, max_va
 def validate_date_optional(date_str: Optional[str], format: str = "%Y-%m-%d") -> Optional[str]:
     """
     Valida una fecha opcional (puede ser None o string vacío).
+    Acepta múltiples formatos de fecha incluyendo timestamps ISO con microsegundos.
     
     Args:
         date_str: String de fecha a validar (puede ser None)
-        format: Formato esperado (default: YYYY-MM-DD)
+        format: Formato esperado (default: YYYY-MM-DD, pero se intenta múltiples formatos)
         
     Returns:
         String de fecha validada o None
         
     Raises:
-        ValueError: Si el formato es inválido cuando hay fecha
+        ValueError: Si ningún formato es válido cuando hay fecha
     """
     if not date_str or date_str.strip() == "":
         return None
     
-    return validate_date_format(date_str.strip(), format)
+    from datetime import datetime
+    import re
+    
+    cleaned_date = date_str.strip()
+    
+    # Lista de formatos compatibles, similar al scraper
+    date_formats = [
+        "%Y-%m-%dT%H:%M:%S.%fZ",    # ISO con microsegundos y Z
+        "%Y-%m-%dT%H:%M:%S.%f",     # ISO con microsegundos sin Z
+        "%Y-%m-%dT%H:%M:%SZ",       # ISO sin microsegundos con Z
+        "%Y-%m-%dT%H:%M:%S",        # ISO sin microsegundos sin Z
+        "%Y-%m-%d %H:%M:%S",        # Formato con espacio
+        "%Y-%m-%d",                 # Solo fecha (formato original)
+        format                      # Formato especificado por parámetro
+    ]
+    
+    # Manejar fechas con timezone offset (ej: +02:00)
+    iso_pattern = r'(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?)([\+\-]\d{2}:\d{2})'
+    match = re.match(iso_pattern, cleaned_date)
+    if match:
+        # Extraer solo la parte de fecha/hora sin timezone
+        cleaned_date = match.group(1)
+        # Agregar Z si no lo tiene para intentar parsing ISO
+        if not cleaned_date.endswith('Z'):
+            cleaned_date += 'Z'
+    
+    # Intentar cada formato
+    for fmt in date_formats:
+        try:
+            datetime.strptime(cleaned_date, fmt)
+            return date_str.strip()  # Retornar la fecha original si es válida
+        except ValueError:
+            continue
+    
+    # Si ningún formato funcionó, lanzar error descriptivo
+    raise ValueError(f"Formato de fecha inválido: {date_str}. Formatos soportados: ISO timestamps, YYYY-MM-DD, etc.")

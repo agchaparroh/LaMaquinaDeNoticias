@@ -633,3 +633,331 @@ async def test_get_filter_options_with_special_characters(hechos_service, mock_s
     # Verify special characters are preserved
     assert "El País (España)" in result["medios_disponibles"]
     assert "São Paulo" in result["paises_disponibles"]
+
+
+# Tests for get_relaciones_para_hechos method
+
+@pytest.fixture
+def sample_relaciones_data():
+    """Sample relaciones data for testing."""
+    return [
+        {
+            "hecho_origen_id": 1,
+            "fecha_ocurrencia_origen": "[2024-01-01 10:00:00,2024-01-01 12:00:00)",
+            "hecho_destino_id": 2,
+            "fecha_ocurrencia_destino": "[2024-01-01 14:00:00,2024-01-01 16:00:00)",
+            "tipo_relacion": "consecuencia",
+            "fuerza_relacion": 8,
+            "descripcion_relacion": "El evento A causó el evento B",
+            "fecha_deteccion": "2024-01-15T10:30:00"
+        },
+        {
+            "hecho_origen_id": 3,
+            "fecha_ocurrencia_origen": "[2024-01-02 10:00:00,2024-01-02 12:00:00)",
+            "hecho_destino_id": 1,
+            "fecha_ocurrencia_destino": "[2024-01-01 10:00:00,2024-01-01 12:00:00)",
+            "tipo_relacion": "contradictorio",
+            "fuerza_relacion": 6,
+            "descripcion_relacion": "Versiones conflictivas del mismo evento",
+            "fecha_deteccion": "2024-01-15T11:00:00"
+        },
+        {
+            "hecho_origen_id": 4,
+            "fecha_ocurrencia_origen": "[2024-01-03 09:00:00,2024-01-03 11:00:00)",
+            "hecho_destino_id": 5,
+            "fecha_ocurrencia_destino": "[2024-01-03 15:00:00,2024-01-03 17:00:00)",
+            "tipo_relacion": "complementario",
+            "fuerza_relacion": 7,
+            "descripcion_relacion": None,
+            "fecha_deteccion": "2024-01-15T12:00:00"
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_get_relaciones_para_hechos_success(hechos_service, mock_supabase_client, sample_relaciones_data):
+    """Test successful retrieval of relationships for multiple hechos."""
+    # Setup mock query
+    mock_query = MagicMock()
+    mock_result = MagicMock()
+    mock_result.data = sample_relaciones_data
+    mock_query.execute.return_value = mock_result
+    
+    # Setup mock chains
+    mock_supabase_client.table.return_value.select.return_value = mock_query
+    mock_query.or_.return_value = mock_query
+    
+    # Test with multiple hecho IDs
+    hecho_ids = [1, 2, 3]
+    result = await hechos_service.get_relaciones_para_hechos(hecho_ids)
+    
+    # Verify query was called correctly
+    mock_supabase_client.table.assert_called_once_with('hecho_relacionado')
+    expected_or_filter = (
+        "hecho_origen_id.in.(1,2,3), "
+        "hecho_destino_id.in.(1,2,3)"
+    )
+    mock_query.or_.assert_called_once_with(expected_or_filter)
+    
+    # Verify results are grouped correctly
+    assert isinstance(result, dict)
+    assert 1 in result  # hecho 1 has relationships
+    assert 2 in result  # hecho 2 has relationships  
+    assert 3 in result  # hecho 3 has relationships
+    
+    # Check hecho 1 relationships (appears as origen and destino)
+    hecho_1_relaciones = result[1]
+    assert len(hecho_1_relaciones) == 2  # origen in one, destino in another
+    
+    # Check relationship details
+    relacion_ids = [r.hecho_relacionado_id for r in hecho_1_relaciones]
+    assert 2 in relacion_ids  # related to hecho 2
+    assert 3 in relacion_ids  # related to hecho 3
+
+
+@pytest.mark.asyncio
+async def test_get_relaciones_para_hechos_empty_list(hechos_service, mock_supabase_client):
+    """Test behavior with empty hecho_ids list."""
+    result = await hechos_service.get_relaciones_para_hechos([])
+    
+    # Should return empty dict without making database call
+    assert result == {}
+    mock_supabase_client.table.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_get_relaciones_para_hechos_no_relationships(hechos_service, mock_supabase_client):
+    """Test when no relationships exist for given hechos."""
+    # Setup mock to return empty results
+    mock_query = MagicMock()
+    mock_result = MagicMock()
+    mock_result.data = []  # No relationships found
+    mock_query.execute.return_value = mock_result
+    
+    # Setup mock chains
+    mock_supabase_client.table.return_value.select.return_value = mock_query
+    mock_query.or_.return_value = mock_query
+    
+    # Test
+    hecho_ids = [1, 2, 3]
+    result = await hechos_service.get_relaciones_para_hechos(hecho_ids)
+    
+    # Should return empty dict
+    assert result == {}
+    
+    # Verify query was made
+    mock_supabase_client.table.assert_called_once_with('hecho_relacionado')
+
+
+@pytest.mark.asyncio
+async def test_get_relaciones_para_hechos_single_hecho(hechos_service, mock_supabase_client):
+    """Test relationships for a single hecho."""
+    # Setup mock with one relationship
+    relacion_data = [{
+        "hecho_origen_id": 1,
+        "fecha_ocurrencia_origen": "[2024-01-01 10:00:00,2024-01-01 12:00:00)",
+        "hecho_destino_id": 2,
+        "fecha_ocurrencia_destino": "[2024-01-01 14:00:00,2024-01-01 16:00:00)",
+        "tipo_relacion": "causa",
+        "fuerza_relacion": 9,
+        "descripcion_relacion": "Causa directa",
+        "fecha_deteccion": "2024-01-15T10:30:00"
+    }]
+    
+    mock_query = MagicMock()
+    mock_result = MagicMock()
+    mock_result.data = relacion_data
+    mock_query.execute.return_value = mock_result
+    
+    # Setup mock chains
+    mock_supabase_client.table.return_value.select.return_value = mock_query
+    mock_query.or_.return_value = mock_query
+    
+    # Test with single hecho
+    result = await hechos_service.get_relaciones_para_hechos([1])
+    
+    # Verify result
+    assert 1 in result
+    assert len(result[1]) == 1
+    
+    relacion = result[1][0]
+    assert relacion.hecho_relacionado_id == 2
+    assert relacion.tipo_relacion == "causa"
+    assert relacion.fuerza_relacion == 9
+    assert relacion.direccion == "origen"
+
+
+@pytest.mark.asyncio
+async def test_get_relaciones_para_hechos_bidirectional(hechos_service, mock_supabase_client):
+    """Test bidirectional relationships."""
+    # Setup mock with bidirectional relationship
+    relacion_data = [{
+        "hecho_origen_id": 1,
+        "fecha_ocurrencia_origen": "[2024-01-01 10:00:00,2024-01-01 12:00:00)",
+        "hecho_destino_id": 2,
+        "fecha_ocurrencia_destino": "[2024-01-01 14:00:00,2024-01-01 16:00:00)",
+        "tipo_relacion": "contradictorio",  # Bidirectional type
+        "fuerza_relacion": 7,
+        "descripcion_relacion": "Versiones contradictorias",
+        "fecha_deteccion": "2024-01-15T10:30:00"
+    }]
+    
+    mock_query = MagicMock()
+    mock_result = MagicMock()
+    mock_result.data = relacion_data
+    mock_query.execute.return_value = mock_result
+    
+    # Setup mock chains
+    mock_supabase_client.table.return_value.select.return_value = mock_query
+    mock_query.or_.return_value = mock_query
+    
+    # Test with both hechos involved
+    result = await hechos_service.get_relaciones_para_hechos([1, 2])
+    
+    # Both hechos should have the relationship listed
+    assert 1 in result
+    assert 2 in result
+    
+    # Hecho 1 should see hecho 2 as related (as origen)
+    hecho_1_rel = result[1][0]
+    assert hecho_1_rel.hecho_relacionado_id == 2
+    assert hecho_1_rel.direccion == "origen"
+    
+    # Hecho 2 should see hecho 1 as related (as destino)
+    hecho_2_rel = result[2][0]
+    assert hecho_2_rel.hecho_relacionado_id == 1
+    assert hecho_2_rel.direccion == "destino"
+
+
+@pytest.mark.asyncio
+async def test_get_relaciones_para_hechos_multiple_relations_per_hecho(hechos_service, mock_supabase_client):
+    """Test hecho with multiple relationships."""
+    # Setup mock where hecho 1 has multiple relationships
+    relaciones_data = [
+        {
+            "hecho_origen_id": 1,
+            "fecha_ocurrencia_origen": "[2024-01-01 10:00:00,2024-01-01 12:00:00)",
+            "hecho_destino_id": 2,
+            "fecha_ocurrencia_destino": "[2024-01-01 14:00:00,2024-01-01 16:00:00)",
+            "tipo_relacion": "consecuencia",
+            "fuerza_relacion": 8,
+            "descripcion_relacion": None,
+            "fecha_deteccion": "2024-01-15T10:30:00"
+        },
+        {
+            "hecho_origen_id": 1,
+            "fecha_ocurrencia_origen": "[2024-01-01 10:00:00,2024-01-01 12:00:00)",
+            "hecho_destino_id": 3,
+            "fecha_ocurrencia_destino": "[2024-01-01 16:00:00,2024-01-01 18:00:00)",
+            "tipo_relacion": "consecuencia",
+            "fuerza_relacion": 6,
+            "descripcion_relacion": "Otra consecuencia",
+            "fecha_deteccion": "2024-01-15T11:00:00"
+        },
+        {
+            "hecho_origen_id": 4,
+            "fecha_ocurrencia_origen": "[2024-01-01 08:00:00,2024-01-01 09:00:00)",
+            "hecho_destino_id": 1,
+            "fecha_ocurrencia_destino": "[2024-01-01 10:00:00,2024-01-01 12:00:00)",
+            "tipo_relacion": "causa",
+            "fuerza_relacion": 9,
+            "descripcion_relacion": "Causa del evento principal",
+            "fecha_deteccion": "2024-01-15T09:00:00"
+        }
+    ]
+    
+    mock_query = MagicMock()
+    mock_result = MagicMock()
+    mock_result.data = relaciones_data
+    mock_query.execute.return_value = mock_result
+    
+    # Setup mock chains
+    mock_supabase_client.table.return_value.select.return_value = mock_query
+    mock_query.or_.return_value = mock_query
+    
+    # Test
+    result = await hechos_service.get_relaciones_para_hechos([1])
+    
+    # Hecho 1 should have 3 relationships
+    assert 1 in result
+    assert len(result[1]) == 3
+    
+    # Verify relationship details
+    relaciones = result[1]
+    related_ids = [r.hecho_relacionado_id for r in relaciones]
+    direcciones = [r.direccion for r in relaciones]
+    
+    assert 2 in related_ids  # consecuencia (origen)
+    assert 3 in related_ids  # consecuencia (origen)
+    assert 4 in related_ids  # causa (destino)
+    
+    assert "origen" in direcciones  # For consecuencias
+    assert "destino" in direcciones  # For causa
+
+
+@pytest.mark.asyncio
+async def test_get_relaciones_para_hechos_database_error(hechos_service, mock_supabase_client):
+    """Test handling of database errors."""
+    # Setup mock to raise exception
+    mock_supabase_client.table.side_effect = Exception("Database connection failed")
+    
+    # Test
+    hecho_ids = [1, 2, 3]
+    
+    with pytest.raises(Exception) as exc_info:
+        await hechos_service.get_relaciones_para_hechos(hecho_ids)
+    
+    assert "Failed to retrieve fact relationships" in str(exc_info.value)
+    assert "Database connection failed" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_get_relaciones_para_hechos_invalid_relationship_data(hechos_service, mock_supabase_client):
+    """Test handling of invalid relationship data from database."""
+    # Setup mock with invalid data (missing required fields)
+    invalid_data = [{
+        "hecho_origen_id": 1,
+        # Missing required fields
+        "tipo_relacion": "consecuencia"
+    }]
+    
+    mock_query = MagicMock()
+    mock_result = MagicMock()
+    mock_result.data = invalid_data
+    mock_query.execute.return_value = mock_result
+    
+    # Setup mock chains
+    mock_supabase_client.table.return_value.select.return_value = mock_query
+    mock_query.or_.return_value = mock_query
+    
+    # Test - should handle validation errors gracefully
+    with pytest.raises(Exception):
+        await hechos_service.get_relaciones_para_hechos([1])
+
+
+@pytest.mark.asyncio
+async def test_get_relaciones_para_hechos_large_list(hechos_service, mock_supabase_client):
+    """Test with large list of hecho IDs."""
+    # Setup mock
+    mock_query = MagicMock()
+    mock_result = MagicMock()
+    mock_result.data = []
+    mock_query.execute.return_value = mock_result
+    
+    # Setup mock chains
+    mock_supabase_client.table.return_value.select.return_value = mock_query
+    mock_query.or_.return_value = mock_query
+    
+    # Test with large list
+    large_list = list(range(1, 101))  # 100 hecho IDs
+    result = await hechos_service.get_relaciones_para_hechos(large_list)
+    
+    # Should handle large lists without issues
+    assert result == {}
+    
+    # Verify query construction with large ID list
+    expected_or_filter = (
+        f"hecho_origen_id.in.({','.join(map(str, large_list))}), "
+        f"hecho_destino_id.in.({','.join(map(str, large_list))})"
+    )
+    mock_query.or_.assert_called_once_with(expected_or_filter)

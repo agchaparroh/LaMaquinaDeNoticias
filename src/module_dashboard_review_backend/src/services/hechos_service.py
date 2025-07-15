@@ -10,6 +10,8 @@ from loguru import logger
 
 from .supabase_client import SupabaseClient
 from ..utils.exceptions import DatabaseConnectionError
+from ..models.responses import HechoResponse, ArticuloMetadata, HechoRelacionInfo
+from ..models.domain import HechoRelacionado
 
 
 class HechosService:
@@ -28,7 +30,7 @@ class HechosService:
     async def get_hechos_for_revision(
         self, 
         filter_params: Dict[str, Any]
-    ) -> Tuple[List[Dict], int]:
+    ) -> Tuple[List[HechoResponse], int]:
         """
         Get hechos for editorial revision with filters and pagination.
         
@@ -48,7 +50,7 @@ class HechosService:
                 
         Returns:
             Tuple containing:
-                - List of hechos with article metadata
+                - List of HechoResponse objects with article metadata and relationships
                 - Total count of matching records
                 
         Raises:
@@ -178,32 +180,124 @@ class HechosService:
             # Extract and format data
             hechos_data = result.data or []
             
-            # Format response: separate articulo metadata
-            formatted_hechos = []
-            for hecho in hechos_data:
-                # Extract articulos data (it comes as a dict from the join)
-                articulo = hecho.pop('articulos', None)
-                
-                # Build formatted hecho with articulo_metadata
-                formatted_hecho = {
-                    **hecho,
-                    'articulo_metadata': articulo if articulo else {}
-                }
-                formatted_hechos.append(formatted_hecho)
+            # Si no hay datos, retornar listas vacías
+            if not hechos_data:
+                logger.info("No se encontraron hechos que coincidan con los filtros")
+                return [], total_count
             
-            # If medio filter was applied, we need to adjust the total count
-            # This is because the count query couldn't filter by joined table
+            # Extraer IDs de hechos para buscar relaciones
+            hecho_ids = [hecho['id'] for hecho in hechos_data]
+            
+            # Obtener relaciones para todos los hechos de la página
+            relaciones_por_hecho = await self.get_relaciones_para_hechos(hecho_ids)
+            
+            # Crear objetos HechoResponse
+            hechos_response = []
+            for hecho_raw in hechos_data:
+                # Extraer datos del artículo (viene como dict del JOIN)
+                articulo_data = hecho_raw.pop('articulos', None) or {}
+                
+                # Crear ArticuloMetadata - manejar campos faltantes con valores por defecto
+                try:
+                    articulo_metadata = ArticuloMetadata(
+                        medio=articulo_data.get('medio', 'Unknown'),
+                        titular=articulo_data.get('titular', 'Sin titular'),
+                        fecha_publicacion=articulo_data.get('fecha_publicacion', hecho_raw['fecha_ingreso']),
+                        url=articulo_data.get('url'),
+                        area_geografica=articulo_data.get('area_geografica', 'Unknown'),
+                        tipo_medio=articulo_data.get('tipo_medio', 'Unknown'),
+                        autor=articulo_data.get('autor'),
+                        seccion=articulo_data.get('seccion'),
+                        es_opinion=articulo_data.get('es_opinion', False),
+                        es_oficial=articulo_data.get('es_oficial', False),
+                        resumen=articulo_data.get('resumen'),
+                        categorias_asignadas=articulo_data.get('categorias_asignadas', []),
+                        puntuacion_relevancia=articulo_data.get('puntuacion_relevancia'),
+                        estado_procesamiento=articulo_data.get('estado_procesamiento')
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Error creando ArticuloMetadata para hecho {hecho_raw['id']}: {str(e)}. "
+                        f"Usando valores por defecto."
+                    )
+                    # Crear metadata mínima en caso de error
+                    articulo_metadata = ArticuloMetadata(
+                        medio='Unknown',
+                        titular='Sin titular',
+                        fecha_publicacion=hecho_raw['fecha_ingreso'],
+                        area_geografica='Unknown',
+                        tipo_medio='Unknown',
+                        es_opinion=False,
+                        es_oficial=False
+                    )
+                
+                # Obtener relaciones para este hecho
+                relaciones = relaciones_por_hecho.get(hecho_raw['id'], [])
+                
+                # Crear objeto HechoResponse
+                try:
+                    hecho_response = HechoResponse(
+                        # Campos básicos
+                        id=hecho_raw['id'],
+                        contenido=hecho_raw['contenido'],
+                        fecha_ocurrencia=hecho_raw['fecha_ocurrencia'],
+                        precision_temporal=hecho_raw['precision_temporal'],
+                        importancia=hecho_raw['importancia'],
+                        tipo_hecho=hecho_raw['tipo_hecho'],
+                        
+                        # Arrays de ubicación - manejar si vienen como strings o arrays
+                        pais=hecho_raw.get('pais', []) if isinstance(hecho_raw.get('pais'), list) else [hecho_raw.get('pais')] if hecho_raw.get('pais') else [],
+                        region=hecho_raw.get('region', []) if isinstance(hecho_raw.get('region'), list) else [hecho_raw.get('region')] if hecho_raw.get('region') else [],
+                        ciudad=hecho_raw.get('ciudad', []) if isinstance(hecho_raw.get('ciudad'), list) else [hecho_raw.get('ciudad')] if hecho_raw.get('ciudad') else [],
+                        
+                        # Metadata
+                        etiquetas=hecho_raw.get('etiquetas', []),
+                        frecuencia_citacion=hecho_raw.get('frecuencia_citacion', 0),
+                        total_menciones=hecho_raw.get('total_menciones', 0),
+                        menciones_confirmatorias=hecho_raw.get('menciones_confirmatorias', 0),
+                        
+                        # Timestamps
+                        fecha_ingreso=hecho_raw['fecha_ingreso'],
+                        
+                        # Evaluación editorial
+                        evaluacion_editorial=hecho_raw.get('evaluacion_editorial'),
+                        editor_evaluador=hecho_raw.get('editor_evaluador'),
+                        fecha_evaluacion_editorial=hecho_raw.get('fecha_evaluacion_editorial'),
+                        justificacion_evaluacion_editorial=hecho_raw.get('justificacion_evaluacion_editorial'),
+                        consenso_fuentes=hecho_raw.get('consenso_fuentes'),
+                        
+                        # Eventos futuros
+                        es_evento_futuro=hecho_raw.get('es_evento_futuro', False),
+                        estado_programacion=hecho_raw.get('estado_programacion'),
+                        
+                        # Metadata adicional
+                        metadata=hecho_raw.get('metadata', {}),
+                        
+                        # Datos relacionados
+                        articulo_metadata=articulo_metadata,
+                        relaciones=relaciones
+                    )
+                    hechos_response.append(hecho_response)
+                    
+                except Exception as e:
+                    logger.error(
+                        f"Error creando HechoResponse para hecho {hecho_raw['id']}: {str(e)}",
+                        exc_info=True
+                    )
+                    # Continuar con el siguiente hecho en lugar de fallar completamente
+                    continue
+            
+            # Si medio filter fue aplicado, ajustar el conteo total
+            # Esto es debido a una limitación de Supabase count con joins
             if filter_params.get('medio') is not None:
-                # The actual total is what we got from the paginated query
-                # This is a limitation of Supabase count with joins
-                total_count = result.count or len(hechos_data)
+                total_count = result.count or len(hechos_response)
             
             logger.info(
-                f"Retrieved {len(formatted_hechos)} hechos "
+                f"Retrieved {len(hechos_response)} hechos with relationships "
                 f"(page: offset={offset}, limit={limit}, total={total_count})"
             )
             
-            return formatted_hechos, total_count
+            return hechos_response, total_count
             
         except DatabaseConnectionError:
             # Re-raise database connection errors as-is
@@ -317,3 +411,92 @@ class HechosService:
                 "max": max_importancia
             }
         }
+    
+    async def get_relaciones_para_hechos(self, hecho_ids: List[int]) -> Dict[int, List[HechoRelacionInfo]]:
+        """
+        Obtiene las relaciones de primer grado para una lista de hechos.
+        
+        Busca en la tabla hecho_relacionado todas las relaciones donde los hechos
+        aparezcan como origen o destino, y retorna un diccionario agrupado por hecho_id.
+        
+        Args:
+            hecho_ids: Lista de IDs de hechos para buscar relaciones
+            
+        Returns:
+            Diccionario donde las claves son hecho_ids y los valores son listas
+            de HechoRelacionInfo con las relaciones encontradas
+            
+        Raises:
+            Exception: Si la consulta a la base de datos falla
+        """
+        if not hecho_ids:
+            logger.debug("No se proporcionaron hecho_ids, retornando diccionario vacío")
+            return {}
+            
+        try:
+            logger.info(f"Buscando relaciones para {len(hecho_ids)} hechos")
+            
+            # Consulta con filtro OR: buscar donde el hecho sea origen O destino
+            # Usamos .or_ con .in_ para consultar arrays de manera eficiente
+            relaciones_query = self.supabase_client.table('hecho_relacionado').select(
+                "hecho_origen_id, fecha_ocurrencia_origen, "
+                "hecho_destino_id, fecha_ocurrencia_destino, "
+                "tipo_relacion, fuerza_relacion, descripcion_relacion, fecha_deteccion"
+            ).or_(
+                f"hecho_origen_id.in.({','.join(map(str, hecho_ids))}), "
+                f"hecho_destino_id.in.({','.join(map(str, hecho_ids))})"
+            )
+            
+            # Ejecutar consulta
+            resultado = relaciones_query.execute()
+            relaciones_raw = resultado.data or []
+            
+            logger.debug(f"Encontradas {len(relaciones_raw)} relaciones en total")
+            
+            # Procesar y agrupar relaciones por hecho_id
+            relaciones_por_hecho: Dict[int, List[HechoRelacionInfo]] = {}
+            
+            for relacion_raw in relaciones_raw:
+                # Crear objeto HechoRelacionado para usar sus métodos
+                relacion = HechoRelacionado(**relacion_raw)
+                
+                # Para cada hecho en nuestra lista, verificar si está involucrado
+                for hecho_id in hecho_ids:
+                    if relacion.involves_hecho(hecho_id):
+                        # Obtener el ID del hecho relacionado
+                        hecho_relacionado_id = relacion.get_related_id(hecho_id)
+                        direccion = relacion.get_direction_for_hecho(hecho_id)
+                        
+                        if hecho_relacionado_id and direccion:
+                            # Crear HechoRelacionInfo para la respuesta
+                            relacion_info = HechoRelacionInfo(
+                                hecho_relacionado_id=hecho_relacionado_id,
+                                tipo_relacion=relacion.tipo_relacion,
+                                fuerza_relacion=relacion.fuerza_relacion,
+                                descripcion_relacion=relacion.descripcion_relacion,
+                                direccion=direccion
+                            )
+                            
+                            # Agregar al diccionario
+                            if hecho_id not in relaciones_por_hecho:
+                                relaciones_por_hecho[hecho_id] = []
+                            relaciones_por_hecho[hecho_id].append(relacion_info)
+            
+            # Log de resultados
+            for hecho_id, relaciones in relaciones_por_hecho.items():
+                logger.debug(f"Hecho {hecho_id}: {len(relaciones)} relaciones")
+            
+            logger.info(
+                f"Procesadas relaciones para {len(relaciones_por_hecho)} hechos "
+                f"de {len(hecho_ids)} solicitados"
+            )
+            
+            return relaciones_por_hecho
+            
+        except Exception as e:
+            logger.error(
+                f"Error obteniendo relaciones para hechos: {str(e)}",
+                extra={"hecho_ids": hecho_ids[:10]},  # Solo primeros 10 para evitar log extenso
+                exc_info=True
+            )
+            raise Exception(f"Failed to retrieve fact relationships: {str(e)}") from e

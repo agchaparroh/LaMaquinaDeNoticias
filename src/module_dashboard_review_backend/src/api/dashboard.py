@@ -25,13 +25,17 @@ router = APIRouter()
 @router.get(
     "/hechos_revision", 
     response_model=PaginatedResponse[HechoResponse],
-    summary="Get facts for editorial revision",
+    summary="Get facts for editorial revision with relationships",
     description="""
-    Retrieve a paginated list of facts (hechos) for editorial review.
+    Retrieve a paginated list of facts (hechos) for editorial review with their relationships.
     
     This endpoint supports various filters including date ranges, media sources,
-    countries, and importance levels. Results are paginated and include 
-    associated article metadata through joins.
+    countries, and importance levels. Results are paginated and include:
+    - Associated article metadata through joins
+    - First-degree relationships between facts (causal, temporal, contradictory, etc.)
+    - Relationship strength and direction information
+    
+    Each fact includes a 'relaciones' field containing related facts for better context.
     """
 )
 async def get_hechos_for_revision(
@@ -77,7 +81,10 @@ async def get_hechos_for_revision(
     hechos_service: HechosService = Depends(get_hechos_service)
 ) -> PaginatedResponse[HechoResponse]:
     """
-    Get paginated list of facts for editorial review.
+    Get paginated list of facts for editorial review with their relationships.
+    
+    This endpoint retrieves facts along with their first-degree relationships,
+    providing contextual information for better editorial comprehension.
     
     Args:
         fecha_inicio: Filter facts occurring on or after this date
@@ -91,7 +98,11 @@ async def get_hechos_for_revision(
         hechos_service: Injected service for database operations
         
     Returns:
-        PaginatedResponse containing list of facts and pagination metadata
+        PaginatedResponse containing list of HechoResponse objects with:
+        - Fact content and metadata
+        - Associated article information
+        - First-degree relationships (causa, consecuencia, contradictorio, etc.)
+        - Pagination metadata
         
     Raises:
         HTTPException: If validation fails or database error occurs
@@ -118,11 +129,11 @@ async def get_hechos_for_revision(
         }
         
         logger.info(
-            "Fetching hechos for revision", 
+            "Fetching hechos for revision with relationships", 
             extra={"filter_params": filter_params}
         )
         
-        # Call service to get facts
+        # Call service to get facts with relationships
         hechos, total_count = await hechos_service.get_hechos_for_revision(filter_params)
         
         # Calculate pagination metadata
@@ -143,7 +154,7 @@ async def get_hechos_for_revision(
         )
         
         logger.info(
-            f"Successfully retrieved {len(hechos)} hechos "
+            f"Successfully retrieved {len(hechos)} hechos with relationships "
             f"(page {page} of {total_pages})"
         )
         
@@ -159,7 +170,7 @@ async def get_hechos_for_revision(
         )
         raise HTTPException(
             status_code=500,
-            detail="Internal server error while retrieving facts"
+            detail="Internal server error while retrieving facts and relationships"
         )
 
 

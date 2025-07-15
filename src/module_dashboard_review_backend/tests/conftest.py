@@ -118,6 +118,22 @@ def mock_environment():
         yield env_vars
 
 
+@pytest.fixture(autouse=True)
+def auto_mock_environment():
+    """Automatically mock environment variables for all tests."""
+    env_vars = {
+        "SUPABASE_URL": "https://test.supabase.co",
+        "SUPABASE_KEY": "test-key",
+        "API_HOST": "0.0.0.0",
+        "API_PORT": "8004",
+        "CORS_ORIGINS": "http://localhost:3001",
+        "LOG_LEVEL": "INFO",
+        "ENVIRONMENT": "testing"
+    }
+    with patch.dict("os.environ", env_vars, clear=False):
+        yield env_vars
+
+
 # Async fixtures for async tests
 @pytest.fixture
 async def async_mock_supabase():

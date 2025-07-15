@@ -1,0 +1,278 @@
+# Arquitectura Final del Pipeline de Procesamiento Inteligente 🚀
+
+## Lo que existe VS. Lo que queremos contruir.
+
+El **Module Pipeline** es el núcleo de procesamiento inteligente de La Máquina de Noticias (más información de contexto en README.md). El pipeline recibe artículos periodísticos y los procesa a través de 4 fases secuenciales, extrayendo información estructurada mediante LLMs y persistiéndola en Supabase. Con la configuración actual, hemos encontrado muchos problemas para completar la tarea de forma consistente, eficaz y con la calidad que le exigimos al sistema. Es por eso que replanteamos el pipeline de procesamiento actual para incorporar nuevas funcionalidades y capacidades, sobre todo el chunking de artículos extensos y la división de las 4 fases anteriores para generar las 7 fases de procesamiento actuales.
+
+## Construimos sobre los cimientos:
+
+La ampliación se va a construir sobre lo implementado. Lo que se describe a continuación son ampliaciones o modificaciones, pero siempre aprovechando lo que ya existe en el module_pipeline.
+
+- ✅ **Validación estricta** con Pydantic en entrada/salida
+- ✅ **Funciones spaCy** originales
+- ✅ **Persistencia**: Almacenamiento atómico en Supabase
+- ✅ Sistema robusto de **manejo de errores** -  @retry_groq_api
+- ✅ **Procesamiento asíncrono** automático
+- ✅ **Logging** estructurado con contexto en cada operación
+- ✅ Gestión de **IDs Secuenciales** (ahora contempla chunking)
+
+### Nuevas funcionalidades:
+
+- ✅ **Procesamiento Adaptativo**: Flujo dinámico basado en análisis spaCy. El sistema toma decisiones dinámicas sobre qué fases ejecutar basándose en las características del contenido.
+- ✅ **7 Fases Optimizadas**: Secuencia lógica para extracción y vinculación precisa
+- ✅ **Chunking Inteligente**: División contextual para contenido complejo
+- ✅ **Simplificación Lingüística**: Optimización de texto para comprensión del LLM
+- ✅ **Consolidación Cross-Chunk**: Unificación inteligente de elementos fragmentados
+- ✅ **Vinculaciones Directas**: Referencias establecidas durante extracción
+
+---
+
+## Arquitectura del Sistema
+
+```mermaid
+graph TB
+    subgraph "Entrada"
+        A[Artículo Original<br/>JSON + Texto]
+    end
+    
+    subgraph "Fase 1: Triaje + Análisis spaCy"
+        B[Evaluación Relevancia<br/>Groq LLM]
+        C[Análisis de contenido<br/>spaCy]
+        D[Controlador de Flujo<br/>Decisiones Adaptativas]
+    end
+    
+    subgraph "Procesamiento Core"
+        E[Fase 2: Simplificación<br/>Groq LLM]
+        F[Fase 3: Extracción Entidades<br/> LLM + ¿Chunking?]
+        G[Fase 4: Extracción Hechos<br/> LLM + ¿Chunking?]
+        H[Fase 5: Extracción Datos<br/> LLM + ¿Chunking?]
+        I[Fase 6: Extracción Citas<br/> LLM + ¿Chunking?]
+    end
+    
+    subgraph "Consolidación"
+        J[Unificación Cross-Chunk<br/>Algoritmos + Groq]
+    end
+    
+    subgraph "Finalización"
+        K[Fase 7A: Normalización<br/>Supabase RPG]
+        L[Fase 7B: Relaciones<br/>Groq LLM]
+        M[Construcción Grafo<br/>Persistencia]
+    end
+    
+    subgraph "Persistencia"
+        N[(Supabase<br/>PostgreSQL + pgvector)]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    
+    D --> E
+    E --> F
+    F --> G
+    G -->|Si datos_count > 0| H
+    G --> I
+    H --> I
+    
+    I -->|Si chunking| J
+    I -->|Sin chunking| K
+    J --> K
+    K --> L
+    L --> M
+    M --> N
+```
+
+## FASE 1: Triaje + Análisis spaCy 🔍
+
+### Componente 1A: Evaluación de Relevancia (Groq)
+
+**Herramienta**: Groq API (Llama 3.1 8B Instant)  
+**Prompt**: [[Importancia.md]]
+
+**Proceso**:
+- Bloqueos por tema, tipo y país
+- Evalúa varios criterios de relevancia (1-5 puntos cada uno)
+- Decisión: PROCESAR (15-20) / CONSIDERAR (10-15) / DESCARTAR (<10)
+- Filtro temprano para optimizar recursos
+
+**Salida**:
+```python
+ResultadoTriaje(
+    es_relevante=True,
+    decision_triaje="PROCESAR",
+    país= "España",
+    tipo= "Noticia",
+    puntuacion_triaje=22.0,
+    justificacion="Alta relevancia política y densidad factual"
+)
+```
+----
+    == PRECAUCIÓN ==
+    Si existen más funcionalidades spaCy implementadas actualmente, debemos incorporarlas al pipeline actualizado
+----
+
+### Componente 1B: Análisis de Contenido (spaCy)
+
+**Herramienta**: spaCy `es_core_news_lg`
+
+**Métricas Calculadas**:
+```python
+Analisis_Componentes(
+    conteo_datos=5,           # Números + unidades detectados
+    conteo_citas=3,           # Comillas + atribución detectadas  
+    conteo_entidades=12,      # NER básico
+    longitud_caracteres=4850,
+    es_entrevista=False,      # Patrones P/R detectados
+)
+```
+
+### Componente 1C: Controlador de Flujo
+
+**Herramienta**: Lógica Interna
+**Decisiones Adaptativas**:
+Tomar decisiónes en función de los resultados del "Analisis_Componentes": 
+    - `conteo_entidades > 30` ==> Chunking para entidades
+    - `longitud_caracteres > 6000` ==> Chunking para hechos
+    - `entrevista = true` or `citas > 30` ==> Chunking para citas
+    - `datos > 30` ==> Chunking para datos
+
+## FASE 2: Simplificación de Texto 🎯
+
+**Herramienta**: Groq API (Llama 3.1 8B Instant)
+    - En caso de contexto insuficiente (casos excepcionales) == Utilizar "llama-3.1-70b-versatile"
+**Prompt**: [[Simplificación.md]]
+**Objetivo**: Optimizar texto para mejorar su comprensión del LLM en fases posteriores
+**OUTPUT**: {{TEXTO_PROCESADO}}
+
+---
+
+## CHUNKING
+
+División de {{TEXTO_PROCESADO}} en chunks de un tamaño procesable para el pipeline
+
+---
+
+## FASE 3: Extracción de Entidades
+
+**INPUT**: {{TEXTO_PROCESADO}}
+**Herramienta**: Groq API (Llama 3.1 8B Instant)  
+**Prompt**: [[Entidades.md]]  
+
+---
+
+## FASE 4: Extracción de Hechos
+
+**INPUT**: {{TEXTO_PROCESADO}}
+**Herramienta**: Groq API (Llama 3.1 8B Instant)  
+**Prompt**: [[Hechos.md]]  
+
+---
+
+## FASE 5: Extracción de Datos (Condicional)
+
+**Condición**: `conteo_datos > 0`  
+**INPUT**: {{TEXTO_PROCESADO}} + Contexto de hechos/entidades
+```python
+contexto_datos = {
+    "hechos_referencia": [{"id": 5, "contenido": "Pedro Sánchez anunció medidas económicas"}],
+    "entidades_referencia": [{"id": 1, "nombre": "Pedro Sánchez"}],
+}
+```
+**Herramienta**: Groq API (Llama 3.1 8B Instant)  
+**Prompt**: [[Datos.md]]  
+
+---
+
+## FASE 6: Extracción de Citas (Condicional)
+
+**Condición**: `conteo_citas > 0`  
+**INPUT**: {{TEXTO_PROCESADO}} + Contexto de hechos/entidades
+```python
+contexto_datos = {
+    "hechos_referencia": [{"id": 5, "contenido": "Pedro Sánchez anunció medidas económicas"}],
+    "entidades_referencia": [{"id": 1, "nombre": "Pedro Sánchez"}],
+}
+```
+**Herramienta**: Groq API (Llama 3.1 8B Instant)  
+**Prompt**: [[Citas.md]]  
+
+---
+
+## CONSOLIDACIÓN CROSS-CHUNK
+
+**Activación**: Solo cuando hay chunking previamente
+**Herramienta**: Algoritmos de similitud + Groq API
+
+### Algoritmo de Consolidación
+
+Consolidar todos los elementos extraídos durante el análisis de los distintos chunks, unificando aquellos que sean duplicados o equivalentes, para generar una única lista final de hechos, entidades, datos y citas sin repeticiones. Este proceso implica comparar los items por similitud semántica y atributos clave (por ejemplo, nombre, tipo, contexto), fusionando los que representen la misma información y asegurando que la lista resultante sea coherente, completa y libre de redundancias antes de pasar a la fase de normalización y vinculación.
+
+---
+
+## FASE 7: Normalización, Vinculación y Relaciones 🔗
+
+**Entrada**: Todos los elementos consolidados
+
+### Subproceso 7A: Normalización de Entidades (Supabase)
+
+**INPUT**: OUTPUT FASE 3: Extracción de Entidades
+**Herramienta**: Supabase RPCs
+
+{{Proceso existente en el pipeline actual}}
+
+### Subproceso 7B: Detección de Relaciones
+
+├── Paralelización: 7B.A y 7B.B se ejecutan simultáneamente
+├── Evaluación independiente: Cada subtarea elige su modelo
+└── Consolidación posterior: Merge de ambos resultados
+
+#### 7B.1: RELACIONES ESTRUCTURALES (OBLIGATORIA)
+
+**Herramienta**: Groq API
+└── Evaluación modelo: tokens > 8000 → llama-3.1-70b-versatile
+                       tokens ≤ 8000 → llama-3.1-8b-instant
+**PROMPT**: [[7B.1_Relaciones-Estructurales.md]]
+**INPUT**: JSON recortado (hechos + entidades: ID, contenido, tipo)
+**Detecta Relaciones**: 
+  ├── Hecho-Entidad (protagonista, afectado, declarante, ubicacion)
+  └── Entidad-Entidad (miembro_de, aliado_con, empleado_de)
+
+#### 7B.2: RELACIONES TEMPORALES (OBLIGATORIA)
+
+**Herramienta**: Groq API
+└── Evaluación modelo: tokens > 8000 → llama-3.1-70b-versatile
+                       tokens ≤ 8000 → llama-3.1-8b-instant
+**PROMPT**: [[7B.2_Relaciones-Temporales.md]]
+**INPUT**: JSON recortado (hechos + entidades: ID, contenido, tipo) + {{TEXTO_PROCESADO}}
+**Detecta Relaciones**: 
+└── Hecho-Hecho (causa, consecuencia, contexto_historico, respuesta_a)
+
+---
+
+## Construcción del Grafo Final y Persistencia Atómica
+
+**Proceso Similar al pipeline actual**:
+
+- ✅ *Transformación de IDs*: IDs temporales durante procesamiento → UUIDs persistentes. 
+- ✅ *Payload Final Estructurado*
+- ✅ *Persistencia Atómica* mediante RPCs SUPABASE.
+- ✅ Etc.
+
+**Resultado Final**: Un grafo de conocimiento estructurado, normalizado y enriquecido que transforma texto no estructurado en información consultable, analizable y conectada, optimizado para diferentes tipos de contenido periodístico mediante procesamiento adaptativo e inteligente.
+
+---
+
+# PRECAUCIONES:
+
+- Si existen más funcionalidades spaCy implementadas actualmente, debemos incorporarlas al plan de actualización del pipeline.
+
+- Revisar las tablas JSON que organizan la información en la base de datos de Supabase para adaptar los modelos pydantic previos y posteriores a cada fase, así como los campos que le pedimos rellenar a cada uno de los prompts
+    - En ocasiones debemos utilizar items en formato JSON como contexto para algunos prompts del pipeline de procesamiento. En estos casos, optimizar los campos entregados para optimizar el contexto.
+
+- Buscamos una implementación que cumpla las siguientes características:
+    - Solución **integral**: No buscamos una implementación por fases. El sistema todavía no está en producción, así que no es necesario planificar migraciones paulatinas e incrementales, (...). 
+    - NO ROTUNDO A LA **SOBREINGENIERÍA**: Buscamos una implementación robusta y "a prueba de balas", sin piezas móviles innecesarias que añadan complejidad para conseguir mejoras marginales y que tengan facilidad para romperse. Lo sencillo es mejor. 
+    - No debe ser una solución **destructiva**: Construimos sobre los cimientos que ya están implementado. No buscamos sustituir o destruir, sino mejorar.
+    - Debe ser **sostenible a largo plazo**, evitando soluciones temporales o parches.
+
+- La ampliación consiste **ÚNICA Y EXCLUSIVAMENTE** en lo que está aquí descrito.

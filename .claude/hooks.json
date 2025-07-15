@@ -1,0 +1,6 @@
+{
+  "hooks": {
+    "after-edit": "(black ${file} || prettier --write ${file}) 2>/dev/null || true",
+    "after-write": "(black ${file} || prettier --write ${file}) 2>/dev/null || true"
+  }
+}

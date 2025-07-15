@@ -1,0 +1,241 @@
+# NORMALIZACIÓN DE LENGUAJE PERIODÍSTICO
+
+Tu tarea es simplificar este texto periodístico manteniendo TODA la información factual. Convierte el lenguaje figurado y complejo a lenguaje directo y claro.
+
+## TRANSFORMACIONES OBLIGATORIAS
+
+### 1. EXPRESIONES IDIOMÁTICAS → LENGUAJE DIRECTO
+**Ejemplos:**
+- "Dar en el clavo" → "Acertar"
+- "Estar en las nubes" → "Estar distraído" 
+- "Tirar la toalla" → "Rendirse"
+- "Poner las cartas sobre la mesa" → "Ser transparente"
+- "Coger el toro por los cuernos" → "Afrontar directamente"
+- "Ir al grano" → "Ser directo"
+
+### 2. METÁFORAS ECONÓMICAS/POLÍTICAS → DESCRIPCIÓN LITERAL
+**Ejemplos:**
+- "La economía se disparó" → "La economía mejoró rápidamente"
+- "El gobierno navegó en aguas turbulentas" → "El gobierno enfrentó dificultades"
+- "Una lluvia de críticas" → "Muchas críticas"
+- "El mercado se hundió" → "El mercado bajó significativamente"
+- "Sembrar la discordia" → "Crear conflictos"
+- "Tender puentes" → "Buscar acuerdos"
+
+### 3. EUFEMISMOS → LENGUAJE DIRECTO
+**Ejemplos:**
+- "Daños colaterales" → "Muertes de civiles"
+- "Ajustes estructurales" → "Recortes"
+- "Crecimiento negativo" → "Disminución"
+- "Conflicto armado" → "Guerra"
+
+### 4. FIGURAS RETÓRICAS → CONSTRUCCIONES SIMPLES
+**Ejemplos:**
+- "¿Acaso no es evidente que...?" → "Es evidente que..."
+- "No solo... sino también..." → "Además..."
+- "Tanto... como..." → "Y también..."
+
+### 5. FRASES COMPLEJAS → FRASES SIMPLES
+**Transformar:**
+- Subordinadas anidadas → Frases independientes
+- Construcciones pasivas → Voz activa cuando sea más clara
+- Perífrasis verbales complejas → Verbos simples
+
+### 6. RESOLUCIÓN DE REFERENCIAS → CLARIFICACIÓN EXPLÍCITA
+**Añadir entre paréntesis las referencias implícitas:**
+- "El presidente" → "El presidente (Pedro Sánchez)" [si se mencionó antes]
+- "La ministra" → "La ministra (María López)" [si se identificó previamente]
+- "El organismo" → "El organismo (Banco Central Europeo)" [si se especificó antes]
+- "La empresa" → "La empresa (Telefónica)" [si se nombró anteriormente]
+- "El partido" → "El partido (PSOE)" [si se mencionó en contexto]
+
+**IMPORTANTE**: Solo añadir si la referencia es inequívoca en el texto.
+
+### 8. UNIFICACIÓN TEMPORAL → FECHAS ABSOLUTAS
+**Convertir referencias temporales relativas a fechas específicas:**
+- "ayer" → "{{FECHA_AYER}}" [calculado desde fecha del artículo]
+- "la semana pasada" → "del {{FECHA_INICIO_SEMANA_PASADA}} al {{FECHA_FIN_SEMANA_PASADA}}"
+- "el mes próximo" → "{{MES_SIGUIENTE}} de {{AÑO}}"
+- "hace tres días" → "{{FECHA_HACE_TRES_DIAS}}"
+- "mañana" → "{{FECHA_MAÑANA}}"
+- "el martes" → "el martes {{FECHA_MARTES_ESPECÍFICO}}"
+
+**IMPORTANTE**: Solo aplicar si la fecha del artículo es conocida.
+
+### 9. EXPANSIÓN DE ACRÓNIMOS Y SIGLAS → NOMBRES COMPLETOS
+**Expandir la primera mención, mantener sigla en menciones posteriores:**
+
+**Organizaciones:**
+- "El BCE decidió" → "El Banco Central Europeo (BCE) decidió"
+- "La UE anunció" → "La Unión Europea (UE) anunció"
+- "El FMI advirtió" → "El Fondo Monetario Internacional (FMI) advirtió"
+- "La OTAN confirmó" → "La Organización del Tratado del Atlántico Norte (OTAN) confirmó"
+
+**Partidos políticos:**
+- "El PP criticó" → "El Partido Popular (PP) criticó"
+- "Podemos propuso" → "Podemos propuso" [ya es nombre completo]
+- "ERC rechazó" → "Esquerra Republicana de Catalunya (ERC) rechazó"
+
+**Instituciones:**
+- "El CGPJ aprobó" → "El Consejo General del Poder Judicial (CGPJ) aprobó"
+- "Hacienda informó" → "El Ministerio de Hacienda informó"
+- "Interior confirmó" → "El Ministerio del Interior confirmó"
+
+### 10. ESTANDARIZACIÓN DE CANTIDADES → FORMATO NUMÉRICO CONSISTENTE
+**Convertir cantidades escritas a números:**
+- "quince mil millones" → "15.000 millones"
+- "tres millones y medio" → "3,5 millones"
+- "un billón" → "1.000 millones" [sistema español]
+- "cinco por ciento" → "5%"
+- "medio millón" → "500.000"
+- "una decena" → "10"
+- "centenares" → "cientos"
+
+**Clarificar sistemas numéricos:**
+- "un billón americano" → "1.000 millones"
+- "un billón europeo" → "1.000.000 millones"
+
+### 11. CLARIFICACIÓN GEOGRÁFICA → CONTEXTO TERRITORIAL EXPLÍCITO
+**Añadir contexto geográfico cuando sea inequívoco:**
+- "el gobierno" → "el gobierno español" [si el artículo es sobre España]
+- "el parlamento" → "el parlamento británico" [si contexto UK establecido]
+- "la capital" → "Madrid" [si se especificó España antes]
+- "el ministro" → "el ministro español" [según contexto del artículo]
+- "las autoridades" → "las autoridades francesas" [si contexto Francia]
+
+**IMPORTANTE**: Solo añadir si el contexto geográfico es inequívoco en el artículo.
+
+### 12. NORMALIZACIÓN DE CARGOS Y TÍTULOS → DENOMINACIONES ESTÁNDAR
+**Unificar títulos equivalentes:**
+
+**Cargos ejecutivos:**
+- "jefe del Ejecutivo" → "presidente del Gobierno"
+- "inquilino de La Moncloa" → "presidente del Gobierno español"
+- "primer ministro" → "presidente del Gobierno" [en España]
+- "jefe de Estado" → "rey" [en España]
+
+**Cargos ministeriales:**
+- "titular de Economía" → "ministro de Economía"
+- "responsable de Hacienda" → "ministro de Hacienda"
+- "máximo responsable de Interior" → "ministro del Interior"
+
+**Cargos judiciales:**
+- "alto tribunal" → "Tribunal Supremo" [si es específico]
+- "la Audiencia" → "Audiencia Nacional" [si es específica]
+
+### 13. DESAMBIGUACIÓN DE HOMÓNIMOS → IDENTIFICACIÓN ESPECÍFICA
+**Distinguir personas con nombres similares:**
+- "López anunció" → "María López (ministra de Economía) anunció" [primera mención]
+- "García criticó" → "Juan García (alcalde de Madrid) criticó" [si hay varios García]
+- "Pérez confirmó" → "Ana Pérez (portavoz del PP) confirmó" [si hay varios Pérez]
+
+**IMPORTANTE**: Solo aplicar si hay ambigüedad real en el texto.
+
+### 14. NORMALIZACIÓN MONETARIA → FORMATO FINANCIERO ESTÁNDAR
+**Estandarizar formato de cantidades monetarias:**
+- "5 mil euros" → "5.000 euros"
+- "$100M" → "100 millones de dólares"
+- "€2.5B" → "2.500 millones de euros"
+- "USD 50K" → "50.000 dólares"
+- "5 millones €" → "5 millones de euros"
+- "100 mill. $" → "100 millones de dólares"
+
+### 15. SIMPLIFICACIÓN LEGAL Y TÉCNICA → CONTEXTO CLARIFICATORIO
+**Añadir contexto a referencias legales complejas:**
+- "Real Decreto-ley 1/2024" → "Real Decreto-ley 1/2024 (medidas económicas urgentes)" [si se menciona propósito]
+- "artículo 155" → "artículo 155 de la Constitución (intervención de autonomías)" [si se menciona propósito]
+- "Ley Orgánica 2/2006" → "Ley Orgánica 2/2006 (LOE - Ley de Educación)" [si se menciona propósito]
+- "procedimiento 1/2024" → "procedimiento judicial 1/2024"
+
+**IMPORTANTE**: Solo añadir contexto si está claro en el texto original.
+
+### 7. ELIMINACIÓN DE PARCIALIDAD → LENGUAJE OBJETIVO
+**Remover expresiones de opinión o sesgo del periodista:**
+
+**Adjetivos valorativos:**
+- "El polémico presidente" → "El presidente"
+- "La exitosa medida" → "La medida"
+- "El controvertido plan" → "El plan"
+- "La popular ministra" → "La ministra"
+
+**Expresiones de juicio:**
+- "Como era de esperar" → [eliminar]
+- "Sorprendentemente" → [eliminar]
+- "Lamentablemente" → [eliminar]
+- "Afortunadamente" → [eliminar]
+
+**Calificativos implícitos:**
+- "Tan solo 15 millones" → "15 millones"
+- "Nada menos que 50%" → "50%"
+- "Un mero 3%" → "3%"
+
+**Ironía o sarcasmo:**
+- "El 'brillante' plan económico" → "El plan económico"
+- "La 'gran' reforma" → "La reforma"
+
+## PRESERVAR ABSOLUTAMENTE
+
+### ✅ MANTENER SIN CAMBIOS:
+1. **Nombres propios**: Pedro Sánchez, Ministerio de Hacienda, etc.
+2. **Fechas exactas**: "15 de enero de 2024"
+3. **Cifras y unidades**: "15 millones de euros", "23%", "2.5 puntos"
+4. **Citas textuales**: Mantener entre comillas exactamente como aparecen
+5. **Datos verificables**: Direcciones, URLs, códigos, referencias
+6. **Terminología técnica específica**: Cuando sea la única forma precisa
+7. **Relaciones causa-efecto**: Mantener la lógica original
+
+## INSTRUCCIONES ESPECÍFICAS
+
+1. **Lee todo el texto** antes de comenzar la normalización
+2. **Identifica elementos a preservar** (nombres, fechas, cifras, citas exactas)
+3. **Mapea todas las entidades mencionadas** para resolver referencias posteriores
+4. **Identifica acrónimos y siglas** para expandir en primera mención
+5. **Detecta referencias temporales relativas** para convertir a fechas absolutas
+6. **Localiza cantidades en formato texto** para convertir a números
+7. **Identifica contexto geográfico** para clarificaciones territoriales
+8. **Detecta cargos y títulos** para normalizar denominaciones
+9. **Busca posibles homónimos** que requieran desambiguación
+10. **Localiza expresiones figuradas** y metáforas
+11. **Identifica expresiones de parcialidad** del periodista
+12. **Reescribe aplicando todas las transformaciones** manteniendo estructura lógica
+13. **Revisa coherencia** del texto normalizado y completitud de todas las normalizaciones
+
+## EJEMPLO DE TRANSFORMACIÓN COMPLETA
+
+**TEXTO ORIGINAL:**
+"Ayer, el polémico jefe del Ejecutivo, Pedro Sánchez, puso las cartas sobre la mesa durante la tensa reunión con el BCE. La economía había tocado fondo tras el batacazo bursátil de la semana pasada, perdiendo cinco mil millones de euros. Según las palabras del líder: 'Estamos navegando hacia aguas más tranquilas'. Los analistas del FMI, sin embargo, creen que el presidente aún tiene un largo camino por recorrer. Sorprendentemente, la controvertida ministra López apoyó la posición, mientras que García criticó las medidas."
+
+**FECHA DEL ARTÍCULO**: 15 de enero de 2025
+
+**TEXTO NORMALIZADO:**
+"El 14 de enero de 2025, el presidente del Gobierno Pedro Sánchez fue transparente durante la tensa reunión con el Banco Central Europeo (BCE). La economía había llegado a su punto más bajo tras la caída bursátil significativa del 6 al 12 de enero de 2025, perdiendo 5.000 millones de euros. Según las palabras del líder (Pedro Sánchez): 'Estamos navegando hacia aguas más tranquilas'. Los analistas del Fondo Monetario Internacional (FMI), sin embargo, creen que el presidente (Pedro Sánchez) aún tiene un largo proceso por recorrer. La ministra López (María López, ministra de Economía) apoyó la posición, mientras que García (Juan García, portavoz del PP) criticó las medidas."
+
+**TRANSFORMACIONES APLICADAS:**
+- ✅ **Temporal**: "ayer" → "14 de enero de 2025"
+- ✅ **Temporal**: "la semana pasada" → "del 6 al 12 de enero de 2025"  
+- ✅ **Parcialidad**: "polémico jefe del Ejecutivo" → "presidente del Gobierno"
+- ✅ **Cargo**: "jefe del Ejecutivo" → "presidente del Gobierno"
+- ✅ **Idiomatismo**: "puso las cartas sobre la mesa" → "fue transparente"
+- ✅ **Acrónimo**: "BCE" → "Banco Central Europeo (BCE)"
+- ✅ **Acrónimo**: "FMI" → "Fondo Monetario Internacional (FMI)"
+- ✅ **Metáfora**: "tocado fondo" → "llegado a su punto más bajo"
+- ✅ **Metáfora**: "batacazo bursátil" → "caída bursátil significativa"
+- ✅ **Cantidad**: "cinco mil millones" → "5.000 millones"
+- ✅ **Referencia**: "el líder" → "el líder (Pedro Sánchez)"
+- ✅ **Referencia**: "el presidente" → "el presidente (Pedro Sánchez)"
+- ✅ **Idiomatismo**: "largo camino por recorrer" → "largo proceso por recorrer"
+- ✅ **Parcialidad**: "Sorprendentemente" → [eliminado]
+- ✅ **Parcialidad**: "controvertida ministra" → "ministra"
+- ✅ **Desambiguación**: "López" → "López (María López, ministra de Economía)"
+- ✅ **Desambiguación**: "García" → "García (Juan García, portavoz del PP)"
+
+---
+
+## TEXTO A NORMALIZAR:
+
+{{CONTENIDO_ORIGINAL}}
+
+---
+
+## TEXTO NORMALIZADO:
+[Proporciona aquí el texto simplificado manteniendo toda la información factual]

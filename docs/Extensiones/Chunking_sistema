@@ -1,0 +1,162 @@
+# Ampliación del Pipeline de Procesamiento 🚀
+
+{{La ampliación se va a construir sobre lo implementado. Lo que se describe a continuación son ampliaciones o modificaciones, pero siempre aprovechando lo que existe en el module_pipeline}}
+
+## Características generales:
+
++ Groq API ==> Modelo Llama 3.1 8B Instant
++ Sistema robusto de manejo de errores -  @retry_groq_api 
++ Procesamiento asíncrono automático 
++ Persistencia integrada con Supabase
++ Logging estructurado con contexto en cada operación
++ Validación estricta con Pydantic en entrada/salida
++ Gestión de IDs Secuenciales
+
+## Flujo de información:
+
+1. Triaje y Análisis spaCy
+2. Extracción Datos  
+3. Extracción Citas
+4. Simplificación del estilo del texto
+5. Extracción de Entidades
+- Chunking
+6. Extracción de Hechos
+7. Normalización, Vinculación y Relaciones
+
+
+## División de tareas
+
+## 1. Triaje + Análisis spaCy
+
++ **Prompt:** Prompt_1_filtrado.md
+
+### Análisis spaCy
+
+{{+ Características Spacy actuales}}
+
+**Objetivos:**
++ Contar elementos objetivos para tomar decisiones sobre el flujo de procesamiento. Contar número de:
+    + Datos
+    + Citas
+    + Entidades
+    + Caracteres / tokens
++ ¿Es entrevista?
++ Complejidad del texto:
+
+    ```
+    def analyze_linguistic_complexity(text):
+    doc = nlp(text)
+    
+    return ComplexityMetrics(
+        avg_sentence_length=calculate_avg_sentence_length(doc),
+        subordinate_clauses=count_subordinate_patterns(doc),
+        descriptive_density=calculate_descriptive_density(doc),
+        syntactic_depth=calculate_max_dependency_depth(doc),
+        idiom_density=estimate_idiom_presence(doc),
+        complexity_score=weighted_complexity_calculation(doc)
+    )
+    ```
+
+#### ¿Qué fases ejecutar?
++ Si Datos != 0 ==> Extracción Datos
++ Si Citas != 0 ==> Extracción Citas
++ Si es formato entrevista ==> Chunking en citas / No extraer hechos
++ Si Caracteres > 6.000 ==> Chunking en Hechos
++ Si Entidades > 30 ==> Chunking en entidades
++ Artículos Data-Intensive: Chunking
+
+### 2. Extracción de Datos
+
++ Análisis sobre el texto original
++ **Prompt:** Dividir Prompt_3_citas_datos
+
+### 3. Extracción de Citas
+
++ Análisis sobre el texto original
++ **Prompt:** Dividir Prompt_3_citas_datos
+
+### 4. Simplificación de texto
+
+**Objetivo**
+
+Convertir texto complejo a lenguaje directo una sola vez para optimizar comprensión del LLM en fases posteriores.
+
+**Prompt:** src/module_pipeline/Prompt simplificación bruto
+
+### 5. Extracción de Entidades
++ **Prompt:** Dividir Prompt_2_elementos_basicos.md
++ Sobre el Texto Simplificado:  
+    + Referencias resueltas: "el presidente (Pedro Sánchez)"
+    + Acrónimos expandidos: "Banco Central Europeo (BCE)"
+    + Sin ambigüedades por metáforas
+
+### Chunking 
+
++ El chunking para la extracción de hechos es normal y frecuente, pero para la extracción de datos, citas y entidades es excepcional.
++ Chunking inteligente + Overlap Contextual Inteligente 
+    *¿Es posible saber dónde contar?*
+
+Hasta ahora, este ha sido el sistema para la gestión de IDs secuenciales:
+  - FragmentProcessor: Mantiene coherencia de IDs (1,2,3...) a través de todas las fases
+  - Optimizado para LLMs vs UUIDs tradicionales
+  - Conversión a UUIDs solo en persistencia
+*... pero, ¿cómo manejamos los ID's de los chunks?*
+
+### 6. Extracción de Hechos:
+
++ **Prompt:** Dividir Prompt_2_elementos_basicos.md
+
+
+---
+
+**Consolidación** (Solo si hay Chunking)
++ Detección de hechos duplicados entre chunks
++ Unificación de hechos fragmentados
++ Mantenimiento de coherencia temporal
+
+### 7. Normalización, Vinculación y Relaciones 
+
+**Objetivo**: Normalizar entidades y Detectar y estructurar relaciones entre todos los elementos extraídos en las fases anteriores, aprovechando el contexto completo del documento.
+
+```python
+# Entrada: Resultados de fases anteriores
+# Salida
+ResultadoFase4Normalizacion(
+    entidades_normalizadas=[
+        EntidadProcesada(
+            # ... campos anteriores ...
+            entidad_id_normalizada=UUID("..."),
+            nombre_canonico="Sánchez Pérez-Castejón, Pedro",
+            uri_wikidata="Q6083139",
+            score_similitud=0.95
+        )
+    ],
+    metadata_normalizacion={
+        "relaciones": {
+            "hecho_entidad": [...],
+            "hecho_hecho": [...],
+            "entidad_entidad": [...],
+            "contradicciones": [...]
+        }
+    }
+)
+```
+
+**Prompt:** Prompt_4_relaciones
+
+**Procesos de Normalización**:
+1. **Búsqueda de Similares**: Compara con entidades en BD
+2. **Deduplicación**: Agrupa variantes del mismo elemento
+3. **Enriquecimiento**: Añade URIs de Wikidata
+4. **Canonización**: Establece nombre estándar
+
+**Tipos de Relaciones**:
++ *Hecho-Entidad*:
+    - `protagonista`, `afectado`, `declarante`, `ubicacion`
++ *Hecho-Hecho*:
+    - `causa`, `consecuencia`, `contexto_historico`, `respuesta_a`
++ *Entidad-Entidad*:
+    - `miembro_de`, `aliado_con`, `empleado_de`, `familiar_de`
+
+**Precauciones:**
+    Existen muchos tipos de relaciones... ¿es necesario dividirlos en fases para que el LLM tenga suficiente contexto?

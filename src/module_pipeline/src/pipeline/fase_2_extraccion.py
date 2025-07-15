@@ -76,7 +76,7 @@ def _get_groq_config() -> Dict[str, Any]:
         "model_id": os.getenv("GROQ_MODEL_ID", "mixtral-8x7b-32768"),
         "timeout": float(os.getenv("GROQ_API_TIMEOUT", "30.0")),
         "temperature": float(os.getenv("GROQ_API_TEMPERATURE", "0.1")),
-        "max_tokens": int(os.getenv("GROQ_API_MAX_TOKENS", "10000")),  # Aumentado a 10000 para evitar truncamiento
+        "max_tokens": int(os.getenv("GROQ_API_MAX_TOKENS", "6000")),  # Límite ajustado para LLAMA 3.1 8B Instant
         "max_retries": int(os.getenv("GROQ_MAX_RETRIES", "3")),
         "max_wait_seconds": int(os.getenv("GROQ_MAX_WAIT_SECONDS", "60")),
     }

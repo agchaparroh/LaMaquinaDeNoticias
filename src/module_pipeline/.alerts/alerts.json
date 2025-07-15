@@ -1,42 +1,6 @@
 {
   "alerts": [
     {
-      "id": "87d7e126-859a-4c09-8b67-cbd8216458b5",
-      "alert_type": "groq_api_failure",
-      "severity": "critical",
-      "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 8d3a285e-2416-4631-b186-5c08412b0a7c: Error al parsear respuesta LLM: ** El artículo ofrece una visión detallada y actualizada sobre la implementació",
-      "timestamp": "2025-07-11T02:42:57.906504",
-      "labels": {
-        "service": "groq_api",
-        "error_type": "unknown"
-      },
-      "annotations": {
-        "message": "GroqAPIError durante evaluación de relevancia para 8d3a285e-2416-4631-b186-5c08412b0a7c: Error al parsear respuesta LLM: ** El artículo ofrece una visión detallada y actualizada sobre la implementación del Sarlaft, su objetivo de combatir el crimen organizado en el sector del transporte y sus implicaciones para las empresas reguladas por la Superintendencia de Transporte. La información proporcionada es relevante, precisa y de gran valor para entender las medidas adoptadas por el gobierno colomb",
-        "timestamp": "2025-07-11T02:42:57.901168+00:00"
-      },
-      "resolved": false,
-      "resolved_at": null
-    },
-    {
-      "id": "dd4c3d35-2f56-4c3f-abcf-10f209f96b83",
-      "alert_type": "groq_api_failure",
-      "severity": "critical",
-      "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 3c9c7d4c-cf0f-47e4-a9cd-bd878f618337: Error al parsear respuesta LLM: ** El artículo reporta el fallecimiento de Suso Díaz, un líder político español",
-      "timestamp": "2025-07-11T03:00:02.540585",
-      "labels": {
-        "service": "groq_api",
-        "error_type": "unknown"
-      },
-      "annotations": {
-        "message": "GroqAPIError durante evaluación de relevancia para 3c9c7d4c-cf0f-47e4-a9cd-bd878f618337: Error al parsear respuesta LLM: ** El artículo reporta el fallecimiento de Suso Díaz, un líder político español, y proporciona información sobre su trayectoria y legado. Aunque no es un artículo de análisis profundo, ofrece hechos concretos y una relevancia temática alta en el ámbito político español.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS CLAVE:**\n\n- Fallecimiento de Suso Díaz, líder político español.\n- Suso Día",
-        "timestamp": "2025-07-11T03:00:02.537136+00:00"
-      },
-      "resolved": false,
-      "resolved_at": null
-    },
-    {
       "id": "a7b5761f-364f-4ce3-87dc-249a6894b8e6",
       "alert_type": "groq_api_failure",
       "severity": "critical",
@@ -53,7 +17,79 @@
       },
       "resolved": false,
       "resolved_at": null
+    },
+    {
+      "id": "9c0bafb8-038b-41e3-980a-9ef2d7c662e1",
+      "alert_type": "groq_api_failure",
+      "severity": "critical",
+      "title": "Groq API Failure Detected",
+      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 3061713d-3a9b-4beb-be5f-d67f22d93aa5: Error al parsear respuesta LLM: ** El artículo tiene un valor informativo moderado, ya que se centra en un tema",
+      "timestamp": "2025-07-12T04:22:21.655732",
+      "labels": {
+        "service": "groq_api",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "GroqAPIError durante evaluación de relevancia para 3061713d-3a9b-4beb-be5f-d67f22d93aa5: Error al parsear respuesta LLM: ** El artículo tiene un valor informativo moderado, ya que se centra en un tema de interés público y se mencionan hechos concretos. Sin embargo, la relevancia geográfica es media y la complejidad relacional es baja.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS CLAVE:**\n\n- La muerte de Michu y la respuesta de José Ortega Cano\n- La relación de José Ortega Cano con su familia y su decisión ",
+        "timestamp": "2025-07-12T04:22:21.647518+00:00"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "07347762-bec7-4b67-ada4-864ec2b94d96",
+      "alert_type": "groq_api_failure",
+      "severity": "critical",
+      "title": "Groq API Failure Detected",
+      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para bde07aba-01a4-425e-beb1-cccde8a341c0: Error al parsear respuesta LLM: ** El artículo reporta de manera detallada las medidas económicas anunciadas po",
+      "timestamp": "2025-07-12T11:26:17.761461",
+      "labels": {
+        "service": "groq_api",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "GroqAPIError durante evaluación de relevancia para bde07aba-01a4-425e-beb1-cccde8a341c0: Error al parsear respuesta LLM: ** El artículo reporta de manera detallada las medidas económicas anunciadas por el presidente de España, incluyendo la reducción del IVA en productos básicos y el aumento del salario mínimo. Además, se mencionan las reacciones de la oposición y los sindicatos, lo que muestra una compleja red de relaciones entre actores políticos y sociales.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS C",
+        "timestamp": "2025-07-12T11:26:17.758531+00:00"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "cb3c9a90-0851-49cb-a139-e0933d16d239",
+      "alert_type": "groq_api_failure",
+      "severity": "critical",
+      "title": "Groq API Failure Detected",
+      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para ab81fe89-106f-4f55-9e5a-e42caa43f633: Error al parsear respuesta LLM: ** El artículo presenta un análisis detallado sobre las semillas de cacao, sus ",
+      "timestamp": "2025-07-12T12:02:07.721523",
+      "labels": {
+        "service": "groq_api",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "GroqAPIError durante evaluación de relevancia para ab81fe89-106f-4f55-9e5a-e42caa43f633: Error al parsear respuesta LLM: ** El artículo presenta un análisis detallado sobre las semillas de cacao, sus beneficios para la salud y cómo consumirlas de manera saludable. La información es precisa y verificable, lo que la convierte en un contenido valioso para nuestro sistema.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS CLAVE:**\n\n- Las semillas de cacao son ricas en flavonoides, que ayudan a proteger las células ",
+        "timestamp": "2025-07-12T12:02:07.718728+00:00"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "ece40ccd-e17d-4cc3-9ea4-5d8327b104cb",
+      "alert_type": "groq_api_failure",
+      "severity": "critical",
+      "title": "Groq API Failure Detected",
+      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 9379a97f-5799-4177-925b-e925f6b35ac6: Error al parsear respuesta LLM: ** Aunque el artículo no se centra en temas prioritarios como la política o la ",
+      "timestamp": "2025-07-12T12:14:19.914616",
+      "labels": {
+        "service": "groq_api",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "GroqAPIError durante evaluación de relevancia para 9379a97f-5799-4177-925b-e925f6b35ac6: Error al parsear respuesta LLM: ** Aunque el artículo no se centra en temas prioritarios como la política o la economía, ofrece información interesante sobre la vida personal de celebridades y las decisiones que toman en su carrera. Sin embargo, su valor informativo podría ser mayor si se analizaran en profundidad las conexiones entre los eventos y las personas involucradas.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS",
+        "timestamp": "2025-07-12T12:14:19.903077+00:00"
+      },
+      "resolved": false,
+      "resolved_at": null
     }
   ],
-  "last_updated": "2025-07-12T02:01:59.840926"
+  "last_updated": "2025-07-12T12:14:19.915447"
 }

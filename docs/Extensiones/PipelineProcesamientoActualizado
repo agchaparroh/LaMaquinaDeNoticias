@@ -1,0 +1,733 @@
+# Arquitectura Final del Pipeline de Procesamiento Inteligente 🚀
+
+{{La ampliación se va a construir sobre lo implementado. Lo que se describe a continuación son ampliaciones o modificaciones, pero siempre aprovechando lo que existe en el module_pipeline}}
+
+## Visión General del Sistema
+
+El **Pipeline de Procesamiento Inteligente** es un sistema adaptativo de 7 fases que transforma artículos periodísticos en conocimiento estructurado mediante análisis lingüístico y procesamiento con LLMs. El sistema toma decisiones dinámicas sobre qué fases ejecutar basándose en las características del contenido.
+
+### Características Fundamentales
+
+- ✅ **Procesamiento Adaptativo**: Flujo dinámico basado en análisis spaCy
+- ✅ Groq API ==> Modelo Llama 3.1 8B Instant
+- ✅ Sistema robusto de manejo de errores -  @retry_groq_api 
+- ✅ Procesamiento asíncrono automático 
+- ✅ Persistencia integrada con Supabase
+- ✅ Logging estructurado con contexto en cada operación
+- ✅ Validación estricta con Pydantic en entrada/salida
+- ✅ **7 Fases Especializadas**: Cada una optimizada para tipos específicos de extracción
+- ✅ **Chunking Inteligente**: División contextual para contenido complejo
+- ✅ **Simplificación Lingüística**: Optimización de texto para comprensión del LLM
+- ✅ **Consolidación Cross-Chunk**: Unificación inteligente de elementos fragmentados
+- ✅ **Gestión de IDs Escalable**: Sistema robusto para chunks múltiples
+
+---
+
+## Arquitectura del Sistema
+
+```mermaid
+graph TB
+    subgraph "Entrada"
+        A[Artículo Original<br/>JSON + Texto]
+    end
+    
+    subgraph "Fase 1: Triaje + Análisis spaCy"
+        B[Evaluación Relevancia<br/>Groq LLM]
+        C[Análisis Lingüístico<br/>spaCy]
+        D[Controlador de Flujo<br/>Decisiones Adaptativas]
+    end
+    
+    subgraph "Fases Condicionales"
+        E[Fase 2: Extracción Datos<br/>Groq LLM]
+        F[Fase 3: Extracción Citas<br/>Groq LLM]
+    end
+    
+    subgraph "Procesamiento Core"
+        G[Fase 4: Simplificación<br/>Groq LLM]
+        H[Fase 5: Extracción Entidades<br/>Groq LLM + Chunking]
+        I[Fase 6: Extracción Hechos<br/>Groq LLM + Chunking]
+    end
+    
+    subgraph "Consolidación"
+        J[Unificación Cross-Chunk<br/>Algoritmos + Groq]
+    end
+    
+    subgraph "Finalización"
+        K[Fase 7: Normalización<br/>Supabase + Groq]
+        L[Construcción Grafo<br/>Relaciones + Persistencia]
+    end
+    
+    subgraph "Persistencia"
+        M[(Supabase<br/>PostgreSQL + pgvector)]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    
+    D -->|Si datos_count > 0| E
+    D -->|Si citas_count > 0| F
+    D --> G
+    
+    E --> G
+    F --> G
+    G --> H
+    H --> I
+    
+    I -->|Si chunking| J
+    I -->|Sin chunking| K
+    J --> K
+    K --> L
+    L --> M
+```
+
+---
+
+## Flujo de Información Detallado
+
+### Entrada del Sistema
+```json
+{
+  "medio": "El País",
+  "titular": "Gobierno anuncia paquete económico ante crisis inflacionaria",
+  "contenido_texto": "Madrid - El presidente Pedro Sánchez anunció ayer...",
+  "fecha_publicacion": "2024-01-15T10:30:00Z",
+  "metadata": {...}
+}
+```
+
+---
+
+## FASE 1: Triaje + Análisis spaCy 🔍
+
+### Componente 1A: Evaluación de Relevancia (Groq)
+**Herramienta**: Groq API (LLAMA 3.1 8B)  
+**Prompt**: `Componente_1A.md`
+
+**Proceso**:
+- Bloqueos por tema, tipo y país
+- Evalúa criterios de relevancia (1-5 puntos cada uno)
+- Decisión: PROCESAR (15-20) / CONSIDERAR (10-15) / DESCARTAR (<10)
+- Filtro temprano para optimizar recursos
+
+**Salida**:
+```python
+ResultadoTriaje(
+    es_relevante=True,
+    decision_triaje="PROCESAR",
+    puntuacion_triaje=22.0,
+    justificacion="Alta relevancia política y densidad factual"
+)
+```
+
+### Componente 1B: Análisis Lingüístico (spaCy)
+**Herramienta**: spaCy `es_core_news_lg`
+
+**Métricas Calculadas**:
+```python
+AnalisisLinguistico(
+    conteo_datos=5,           # Números + unidades detectados
+    conteo_citas=3,           # Comillas + atribución detectadas  
+    conteo_entidades=12,      # NER básico
+    longitud_caracteres=4850,
+    es_entrevista=False,      # Se analiza en el Componente 1A
+    complejidad_sintactica=0.7,  # Subordinadas, dependencias
+    densidad_descriptiva=0.4,    # Adjetivos/total tokens
+    profundidad_sintactica=6     # Max depth árbol dependencias
+)
+```
+
+### Componente 1C: Controlador de Flujo
+**Herramienta**: Lógica Interna
+
+**Decisiones Adaptativas**:
+```python
+flujo_config = FlowController.decide(analisis_linguistico)
+
+# Ejemplos de decisiones:
+if analisis.conteo_datos > 0:
+    flujo_config.ejecutar_fase_datos = True
+    
+if analisis.conteo_citas > 0:
+    flujo_config.ejecutar_fase_citas = True
+    
+if analisis.es_entrevista:
+    flujo_config.chunking_mode = "citas_mode"
+    flujo_config.extraer_hechos = False
+    
+if analisis.longitud_caracteres > 6000:
+    flujo_config.chunking_mode = "hechos_mode"
+    
+if analisis.conteo_entidades > 30:
+    flujo_config.chunking_mode = "entidades_mode"
+```
+
+---
+
+## FASE 2: Extracción de Datos (Condicional) 📊
+
+**Condición**: `conteo_datos > 0`  
+**Herramienta**: Groq API  
+**Prompt**: Derivado de `Prompt_3_citas_datos.md` (solo sección datos)
+
+**Objetivo**: Extraer información cuantitativa del texto original antes de modificaciones
+
+**Proceso**:
+- Análisis sobre texto sin procesar para máxima precisión
+- Detección de valores numéricos + unidades + contexto
+- Categorización automática (económico, demográfico, electoral, etc.)
+
+**Transformación**:
+```
+ENTRADA: "El PIB creció un 3,5% en 2023, frente al 5,1% del año anterior"
+
+SALIDA:
+{
+  "datos_cuantitativos": [
+    {
+      "id": 1,
+      "indicador": "Crecimiento del PIB",
+      "valor": 3.5,
+      "unidad": "porcentaje",
+      "periodo": {"inicio": "2023-01-01", "fin": "2023-12-31"},
+      "valor_anterior": 5.1,
+      "tendencia": "disminución"
+    }
+  ]
+}
+```
+
+---
+
+## FASE 3: Extracción de Citas (Condicional) 💬
+
+**Condición**: `conteo_citas > 0`  
+**Herramienta**: Groq API  
+**Prompt**: Derivado de `Prompt_3_citas_datos.md` (solo sección citas)
+
+**Objetivo**: Capturar declaraciones textuales exactas y su atribución
+
+**Proceso**:
+- Extracción de texto entre comillas
+- Identificación del emisor
+- Contextualización temporal y situacional
+
+**Transformación**:
+```
+ENTRADA: "'No permitiremos que las familias pierdan poder adquisitivo', declaró Sánchez"
+
+SALIDA:
+{
+  "citas_textuales": [
+    {
+      "id": 1,
+      "texto_cita": "No permitiremos que las familias pierdan poder adquisitivo",
+      "emisor_preliminar": "Sánchez",
+      "contexto": "Declaración presidencial",
+      "relevancia": 5
+    }
+  ]
+}
+```
+
+---
+
+## FASE 4: Simplificación de Texto 🎯
+
+**Herramienta**: Groq API  
+**Prompt**: `docs/Extensiones/Prompt simplificación bruto.md` (Optimizar)
+
+**Objetivo**: Optimizar texto para comprensión del LLM en fases posteriores
+
+### Transformaciones Aplicadas:
+
+**1. Resolución de Referencias**:
+```
+ANTES: "El mandatario se reunió con su homólogo francés"
+DESPUÉS: "Pedro Sánchez (presidente de España) se reunió con Emmanuel Macron (presidente de Francia)"
+```
+
+**2. Expansión de Acrónimos**:
+```
+ANTES: "El BCE anunció nuevas medidas"
+DESPUÉS: "El Banco Central Europeo (BCE) anunció nuevas medidas"
+```
+
+**3. Clarificación de Ambigüedades**:
+```
+ANTES: "La reunión de ayer entre los líderes"
+DESPUÉS: "La reunión del 14 de enero de 2024 entre Pedro Sánchez y Emmanuel Macron"
+```
+
+**4. Simplificación Sintáctica**:
+```
+ANTES: "El presidente, quien había declarado anteriormente su compromiso con las reformas, anunció que..."
+DESPUÉS: "Pedro Sánchez anunció que... El presidente había declarado anteriormente su compromiso con las reformas."
+```
+
+**Salida**:
+```python
+TextoSimplificado(
+    texto_original="El mandatario se reunió...",
+    texto_simplificado="Pedro Sánchez (presidente de España) se reunió...",
+    transformaciones_aplicadas=[
+        "resolucion_referencias", 
+        "expansion_acronimos",
+        "clarificacion_temporal"
+    ],
+    mejora_claridad_score=0.85
+)
+```
+
+---
+
+## FASE 5: Extracción de Entidades 👥
+
+**Herramienta**: Groq API + Sistema de Chunking  
+**Prompt**: [[Fase5_Entidades.md]]  
+**Entrada**: Texto simplificado
+
+### Sistema de Chunking Inteligente
+
+**Activación**: 
+- `conteo_entidades > 30` OR `longitud_caracteres > 6000`
+
+**Algoritmo de División**:
+```python
+def create_entity_chunks(texto_simplificado):
+    # Análisis de densidad de entidades por párrafo
+    paragraphs = split_by_paragraph(texto_simplificado)
+    
+    chunks = []
+    current_chunk = []
+    entity_count = 0
+    
+    for paragraph in paragraphs:
+        paragraph_entities = estimate_entities(paragraph)
+        
+        if entity_count + paragraph_entities > MAX_ENTITIES_PER_CHUNK:
+            # Crear chunk con overlap contextual
+            chunks.append(create_chunk_with_context(current_chunk))
+            current_chunk = [get_context_overlap(chunks[-1]), paragraph]
+            entity_count = paragraph_entities
+        else:
+            current_chunk.append(paragraph)
+            entity_count += paragraph_entities
+    
+    return chunks
+```
+
+**Overlap Contextual Inteligente**:
+- Últimas 2 oraciones del chunk anterior
+- Primeras 2 oraciones del chunk siguiente
+- Preserva coherencia de referencias cruzadas
+
+### Gestión de IDs Cross-Chunk
+
+```python
+class GlobalEntityProcessor:
+    def __init__(self, base_fragment_id: UUID):
+        self.base_id = base_fragment_id
+        self.global_entity_counter = 0
+        self.chunk_processors = {}
+    
+    def create_chunk_processor(self, chunk_index: int):
+        chunk_id = f"{self.base_id}_chunk_{chunk_index}"
+        processor = ChunkFragmentProcessor(
+            chunk_id=chunk_id,
+            global_counter=self.global_entity_counter
+        )
+        return processor
+    
+    def assign_global_entity_id(self, chunk_processor, local_id):
+        self.global_entity_counter += 1
+        global_id = f"entity_{self.global_entity_counter}"
+        chunk_processor.map_local_to_global(local_id, global_id)
+        return global_id
+```
+
+**Transformación**:
+```
+ENTRADA: Texto simplificado con referencias resueltas
+
+CHUNK 1: "Pedro Sánchez (presidente de España) anunció..."
+CHUNK 2: "Emmanuel Macron (presidente de Francia) respondió..."
+
+SALIDA:
+{
+  "entidades_chunk_1": [
+    {"id": "entity_1", "nombre": "Pedro Sánchez", "tipo": "PERSONA"},
+    {"id": "entity_2", "nombre": "España", "tipo": "LUGAR"}
+  ],
+  "entidades_chunk_2": [
+    {"id": "entity_3", "nombre": "Emmanuel Macron", "tipo": "PERSONA"},
+    {"id": "entity_4", "nombre": "Francia", "tipo": "LUGAR"}
+  ]
+}
+```
+
+---
+
+## FASE 6: Extracción de Hechos 📰
+
+**Herramienta**: Groq API + Sistema de Chunking  
+**Prompt**: [[Fase6_Hechos.md]]  
+**Entrada**: Texto simplificado + Contexto de entidades extraídas
+
+### Contexto de Entidades
+```python
+contexto_entidades = {
+    "entidades_disponibles": [
+        {"id": "entity_1", "nombre": "Pedro Sánchez", "tipo": "PERSONA"},
+        {"id": "entity_2", "nombre": "España", "tipo": "LUGAR"}
+    ]
+}
+
+prompt_hechos = prompt_template.replace(
+    "{{ENTIDADES_CONTEXTO}}", 
+    json.dumps(contexto_entidades)
+)
+```
+
+### Chunking para Hechos
+
+**Activación**: `longitud_caracteres > 6000`
+
+**Estrategia de División**:
+- División por eventos temporales
+- Preservación de secuencias causales
+- Overlap semántico (no solo textual)
+
+**Transformación**:
+```
+ENTRADA: Texto simplificado + Contexto de entidades
+
+SALIDA:
+{
+  "hechos_extraidos": [
+    {
+      "id": "fact_1",
+      "contenido": "Pedro Sánchez anunció medidas económicas",
+      "tipo_hecho": "ANUNCIO",
+      "entidades_vinculadas": ["entity_1", "entity_2"],
+      "fecha": {"inicio": "2024-01-15", "fin": "2024-01-15"}
+    }
+  ]
+}
+```
+
+---
+
+## CONSOLIDACIÓN CROSS-CHUNK 🔄
+
+**Activación**: Solo cuando hay chunking en Fases 5 o 6  
+**Herramienta**: Algoritmos de similitud + Groq API
+
+### Algoritmo de Consolidación
+
+**1. Detección de Duplicados**:
+```python
+def detect_duplicate_entities(all_entities):
+    embeddings = generate_embeddings([e.nombre for e in all_entities])
+    similarity_matrix = cosine_similarity(embeddings)
+    
+    duplicates = []
+    for i, j in combinations(range(len(all_entities)), 2):
+        if similarity_matrix[i][j] > SIMILARITY_THRESHOLD:
+            duplicates.append((all_entities[i], all_entities[j]))
+    
+    return duplicates
+```
+
+**2. Unificación Inteligente**:
+```python
+def merge_duplicate_entities(entity_a, entity_b):
+    # Preservar información más completa
+    merged = EntidadConsolidada(
+        id_final=select_primary_id(entity_a, entity_b),
+        nombre=select_most_complete_name(entity_a, entity_b),
+        tipo=resolve_type_conflict(entity_a, entity_b),
+        descripciones=merge_descriptions([entity_a, entity_b]),
+        fuentes_chunks=[entity_a.chunk_id, entity_b.chunk_id]
+    )
+    
+    return merged
+```
+
+**3. Reasignación de Referencias**:
+```python
+def remap_fact_references(facts, entity_mappings):
+    for fact in facts:
+        for old_id, new_id in entity_mappings.items():
+            fact.entidades_vinculadas = [
+                new_id if e_id == old_id else e_id 
+                for e_id in fact.entidades_vinculadas
+            ]
+```
+
+---
+
+## FASE 7: Normalización, Vinculación y Relaciones 🔗
+
+**Herramienta**: Supabase RPCs + Groq API  
+**Prompt**: `Prompt_4_relaciones.md`  
+**Entrada**: Todos los elementos consolidados
+
+### Subproceso 7A: Normalización de Entidades (Supabase)
+
+**Proceso**:
+```python
+for entidad in entidades_consolidadas:
+    # 1. Generar embedding semántico
+    embedding = generate_embedding(f"{entidad.nombre} {entidad.descripcion}")
+    
+    # 2. Búsqueda de similares en BD
+    similares = supabase.rpc("buscar_entidad_similar", {
+        "p_tipo_entidad": entidad.tipo,
+        "p_embedding_busqueda": embedding,
+        "p_umbral_similitud": 0.85
+    })
+    
+    # 3. Normalización y enriquecimiento
+    if similares:
+        entidad.id_normalizada = similares[0]["entidad_id"]
+        entidad.nombre_canonico = similares[0]["nombre_canonico"]
+        entidad.uri_wikidata = similares[0]["uri_wikidata"]
+    else:
+        # Nueva entidad - crear entrada canónica
+        entidad.id_normalizada = crear_nueva_entidad_canonica(entidad)
+```
+
+### Subproceso 7B: Detección de Relaciones (Groq)
+
+**Contexto Completo**:
+```python
+contexto_relaciones = {
+    "hechos": [todos_los_hechos_consolidados],
+    "entidades": [todas_las_entidades_normalizadas],
+    "citas": [todas_las_citas_extraidas],
+    "datos": [todos_los_datos_extraidos],
+    "metadatos_documento": {
+        "titulo": articulo.titular,
+        "fecha": articulo.fecha_publicacion,
+        "pais": articulo.area_geografica
+    }
+}
+```
+
+**Tipos de Relaciones Detectadas**:
+
+**1. Hecho-Entidad**:
+```python
+RelacionHechoEntidad(
+    hecho_id="fact_1",
+    entidad_id="entity_1_normalized",
+    tipo_relacion="protagonista",  # protagonista, afectado, declarante, ubicacion
+    relevancia_en_hecho=9,
+    confianza_relacion=0.95
+)
+```
+
+**2. Hecho-Hecho**:
+```python
+RelacionHechoHecho(
+    hecho_origen_id="fact_1",
+    hecho_destino_id="fact_2", 
+    tipo_relacion="causa",  # causa, consecuencia, contexto_historico, respuesta_a
+    descripcion="El anuncio económico motivó la respuesta sindical",
+    fuerza_relacion=8,
+    temporalidad="secuencial"
+)
+```
+
+**3. Entidad-Entidad**:
+```python
+RelacionEntidadEntidad(
+    entidad_origen_id="entity_1",
+    entidad_destino_id="entity_2",
+    tipo_relacion="empleado_de",  # miembro_de, aliado_con, empleado_de, familiar_de
+    descripcion="Pedro Sánchez es presidente del Gobierno de España",
+    vigente=True,
+    fecha_inicio="2018-06-02",
+    confianza_relacion=0.98
+)
+```
+
+**4. Detección de Contradicciones**:
+```python
+Contradiccion(
+    hecho_principal_id="fact_1",
+    hecho_contradictorio_id="fact_3",
+    tipo_contradiccion="fecha",  # fecha, contenido, entidades, valor
+    descripcion="Fechas inconsistentes para el mismo evento",
+    grado_contradiccion=4
+)
+```
+
+---
+
+## Construcción del Grafo Final 🕸️
+
+### PayloadBuilder Avanzado
+
+**Transformación de IDs**:
+```python
+# IDs temporales durante procesamiento → UUIDs persistentes
+id_mappings = {
+    "entity_1": UUID("550e8400-e29b-41d4-a716-446655440000"),
+    "fact_1": UUID("7f8a9b0c-1d2e-3f4g-5h6i-7j8k9l0m1n2o"),
+    "cita_1": UUID("a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6")
+}
+```
+
+**Payload Final Estructurado**:
+```python
+GrafoConocimiento(
+    articulo_metadata={
+        "id": UUID("..."),
+        "titulo": "Gobierno anuncia paquete económico...",
+        "fecha_procesamiento": "2024-01-15T10:35:42Z",
+        "estado_procesamiento": "completado_ok",
+        "fases_ejecutadas": ["triaje", "datos", "citas", "simplificacion", "entidades", "hechos", "relaciones"],
+        "chunking_aplicado": True,
+        "chunks_procesados": 3
+    },
+    
+    elementos_extraidos={
+        "hechos": 8,
+        "entidades": 15,
+        "citas": 4,
+        "datos_cuantitativos": 6,
+        "relaciones_hecho_entidad": 24,
+        "relaciones_hecho_hecho": 7,
+        "relaciones_entidad_entidad": 12,
+        "contradicciones": 0
+    },
+    
+    metricas_procesamiento={
+        "tiempo_total_segundos": 45.7,
+        "tokens_totales_consumidos": 15420,
+        "llamadas_groq_realizadas": 8,
+        "entidades_normalizadas": 11,
+        "entidades_nuevas_creadas": 4
+    }
+)
+```
+
+---
+
+## Persistencia Atómica (Supabase)
+
+### RPC de Inserción Completa
+```sql
+SELECT insertar_articulo_completo_v2(
+    p_articulo_data := payload_json,
+    p_include_chunks_metadata := true,
+    p_validate_cross_references := true
+);
+```
+
+**Funcionalidades de la RPC**:
+- Inserción transaccional de todos los elementos
+- Validación de integridad referencial
+- Generación automática de embeddings para búsqueda
+- Indexación de relaciones para consultas eficientes
+- Metadata de chunks para trazabilidad
+
+---
+
+## Arquitectura de Herramientas
+
+| Herramienta | Fases | Propósito Específico | Configuración |
+|-------------|-------|---------------------|---------------|
+| **spaCy** | 1 | Análisis lingüístico, métricas, decisiones de flujo | `es_core_news_lg` + cache singleton |
+| **Groq API** | 1,2,3,4,5,6,7 | Procesamiento LLM, extracción, simplificación, relaciones | LLAMA 3.1 8B, temp=0.1, max_tokens=6000 |
+| **Algoritmos Internos** | Consolidación | Deduplicación, unificación cross-chunk, gestión IDs | Cosine similarity, clustering |
+| **Supabase** | 7 | Normalización entidades, persistencia, embeddings | PostgreSQL + pgvector + RPCs |
+
+---
+
+## Optimizaciones del Sistema
+
+### 1. **Procesamiento Adaptativo**
+- Fases condicionales reducen procesamiento innecesario
+- Análisis spaCy optimiza flujo según contenido
+- Chunking solo cuando es necesario
+
+### 2. **Gestión Inteligente de Memoria**
+- Cache de modelos spaCy
+- Reutilización de embeddings
+- Liberación progresiva de chunks procesados
+
+### 3. **Calidad de Extracción**
+- Simplificación mejora comprensión del LLM
+- Contexto de entidades enriquece extracción de hechos
+- Consolidación elimina duplicados cross-chunk
+
+### 4. **Trazabilidad Completa**
+- Metadata de chunks preserva origen
+- IDs temporales mantienen coherencia
+- Métricas por fase para análisis de rendimiento
+
+---
+
+## Casos de Uso Optimizados
+
+### Artículo Estándar (< 3000 chars, pocas entidades)
+```
+Flujo: Triaje → Simplificación → Entidades → Hechos → Relaciones
+Tiempo estimado: 15-25 segundos
+Chunks: 0
+```
+
+### Entrevista Compleja
+```
+Flujo: Triaje → Citas → Simplificación → Entidades → Relaciones (sin hechos)
+Tiempo estimado: 20-30 segundos
+Chunks: Por citas extensas
+```
+
+### Reportaje Investigativo (> 8000 chars, > 40 entidades)
+```
+Flujo: Triaje → Datos → Citas → Simplificación → Entidades (chunked) → Hechos (chunked) → Consolidación → Relaciones
+Tiempo estimado: 60-90 segundos
+Chunks: 4-6 chunks con overlap
+```
+
+### Artículo Data-Intensive
+```
+Flujo: Triaje → Datos → Simplificación → Entidades → Hechos → Relaciones
+Tiempo estimado: 25-40 segundos
+Chunks: Por alta densidad de datos cuantitativos
+```
+
+---
+
+## Métricas de Calidad del Sistema
+
+### Indicadores de Rendimiento
+- **Precisión de Extracción**: >90% elementos correctos
+- **Recall de Relaciones**: >85% relaciones detectadas
+- **Consistencia Cross-Chunk**: >95% coherencia en consolidación
+- **Tiempo de Procesamiento**: <60s para artículos complejos
+
+### Indicadores de Calidad
+- **Deduplicación Efectiva**: <5% entidades duplicadas post-consolidación
+- **Normalización Exitosa**: >80% entidades vinculadas a BD
+- **Integridad Referencial**: 100% referencias válidas
+- **Completitud de Relaciones**: >70% relaciones principales detectadas
+
+---
+
+**Resultado Final**: Un grafo de conocimiento estructurado, normalizado y enriquecido que transforma texto no estructurado en información consultable, analizable y conectada, optimizado para diferentes tipos de contenido periodístico mediante procesamiento adaptativo e inteligente.
+
+
+---
+# Dudas:
+
+1. ¿Cómo sabemos de qué país o países trata el artículo?
+    - En el prompt 1 se incluye el campo a rellenar {{País}} 
+
+2. En el INPUT del prompt 2 (hechos y entidades) ¿Cómo se determina "fuente"?
+
+ARREGLAR INPUTS Y OUTPUTS EN LOS PROMPTS

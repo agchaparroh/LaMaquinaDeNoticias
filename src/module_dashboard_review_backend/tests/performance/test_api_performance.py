@@ -521,3 +521,361 @@ class TestDatabaseQueryPerformance:
                 
             finally:
                 loop.close()
+
+
+class TestRelationshipsPerformance:
+    """Performance tests specific to the relationships functionality."""
+    
+    @pytest.fixture
+    def client(self):
+        """Create test client."""
+        return TestClient(app)
+    
+    @pytest.fixture
+    def mock_hechos_service_with_relationships(self):
+        """Mock HechosService with realistic relationship data for performance testing."""
+        with patch('src.api.dashboard.get_hechos_service') as mock:
+            service = MagicMock()
+            
+            # Generate sample data with varying relationship patterns
+            def generate_sample_hechos(count=100, with_relationships=True):
+                hechos = []
+                for i in range(count):
+                    # Create varying relationship patterns
+                    relaciones = []
+                    if with_relationships:
+                        # Some hechos have many relationships, some have few
+                        if i % 10 == 0:  # 10% have many relationships
+                            relation_count = 5
+                        elif i % 3 == 0:  # 33% have moderate relationships
+                            relation_count = 2
+                        else:  # Others have 0-1 relationships
+                            relation_count = i % 2
+                        
+                        for j in range(relation_count):
+                            relaciones.append({
+                                "hecho_relacionado_id": (i + j + 1) % count + 1,
+                                "tipo_relacion": ["consecuencia", "causa", "contradictorio", "complementario"][j % 4],
+                                "fuerza_relacion": (j % 10) + 1,
+                                "descripcion_relacion": f"Relationship {j}" if j % 2 == 0 else None,
+                                "direccion": "origen" if j % 2 == 0 else "destino"
+                            })
+                    
+                    hecho = {
+                        "id": i + 1,
+                        "contenido": f"Performance test hecho {i}",
+                        "fecha_ocurrencia": "2024-01-15T10:30:00",
+                        "importancia": (i % 10) + 1,
+                        "tipo_hecho": "test",
+                        "pais": ["Argentina", "Chile", "Mexico"][i % 3],
+                        "evaluacion_editorial": None,
+                        "consenso_fuentes": 5,
+                        "articulo_metadata": {
+                            "medio": f"Test Medio {i % 5}",
+                            "titular": f"Performance test headline {i}",
+                            "fecha_publicacion": "2024-01-15T12:00:00",
+                            "url": f"https://test.com/{i}",
+                            "area_geografica": "Argentina",
+                            "tipo_medio": "digital",
+                            "autor": f"Author {i}",
+                            "seccion": "Test",
+                            "es_opinion": False,
+                            "es_oficial": False
+                        },
+                        "relaciones": relaciones
+                    }
+                    hechos.append(hecho)
+                
+                return hechos
+            
+            # Configure different datasets for different test scenarios
+            self.sample_datasets = {
+                'small_with_relations': generate_sample_hechos(20, True),
+                'small_without_relations': generate_sample_hechos(20, False),
+                'medium_with_relations': generate_sample_hechos(100, True),
+                'large_with_relations': generate_sample_hechos(500, True),
+                'complex_relationships': generate_sample_hechos(50, True)
+            }
+            
+            # Default to medium dataset
+            service.get_hechos_for_revision = AsyncMock(
+                return_value=(self.sample_datasets['medium_with_relations'][:20], 100)
+            )
+            
+            mock.return_value = service
+            yield service, self.sample_datasets
+    
+    def measure_response_time_with_relationships(self, client, endpoint, params=None, iterations=50):
+        """Measure response time specifically for endpoints with relationships."""
+        times = []
+        relationship_counts = []
+        
+        for _ in range(iterations):
+            start = time.perf_counter()
+            response = client.get(endpoint, params=params or {})
+            duration = (time.perf_counter() - start) * 1000
+            
+            assert response.status_code == 200
+            times.append(duration)
+            
+            # Count relationships in response
+            data = response.json()
+            total_relations = sum(
+                len(item.get('relaciones', [])) 
+                for item in data.get('items', [])
+            )
+            relationship_counts.append(total_relations)
+        
+        return {
+            'min': min(times),
+            'max': max(times),
+            'mean': statistics.mean(times),
+            'median': statistics.median(times),
+            'p95': sorted(times)[int(0.95 * len(times))],
+            'p99': sorted(times)[int(0.99 * len(times))],
+            'std_dev': statistics.stdev(times),
+            'avg_relations': statistics.mean(relationship_counts),
+            'max_relations': max(relationship_counts) if relationship_counts else 0
+        }
+    
+    @pytest.mark.performance
+    def test_endpoint_performance_with_relationships(self, client, mock_hechos_service_with_relationships):
+        """Test that relationships don't significantly impact response time."""
+        service, datasets = mock_hechos_service_with_relationships
+        
+        print("\n=== Relationships Performance Impact ===")
+        
+        # Test scenarios with different relationship densities
+        test_scenarios = [
+            ("No relationships", 'small_without_relations'),
+            ("Light relationships", 'small_with_relations'),
+            ("Medium relationships", 'medium_with_relations'),
+            ("Complex relationships", 'complex_relationships')
+        ]
+        
+        baseline_time = None
+        
+        for scenario_name, dataset_key in test_scenarios:
+            # Configure mock for this scenario
+            dataset = datasets[dataset_key]
+            service.get_hechos_for_revision = AsyncMock(
+                return_value=(dataset[:20], len(dataset))
+            )
+            
+            stats = self.measure_response_time_with_relationships(
+                client, 
+                "/dashboard/hechos_revision",
+                iterations=30
+            )
+            
+            print(f"\n{scenario_name}:")
+            print(f"  Mean response time: {stats['mean']:.2f}ms")
+            print(f"  P95 response time: {stats['p95']:.2f}ms")
+            print(f"  Average relationships per response: {stats['avg_relations']:.1f}")
+            print(f"  Max relationships in single response: {stats['max_relations']}")
+            
+            # Performance assertions
+            assert stats['mean'] < 200, f"Mean response time for {scenario_name} should be under 200ms"
+            assert stats['p95'] < 500, f"P95 response time for {scenario_name} should be under 500ms"
+            
+            # Track baseline (no relationships)
+            if scenario_name == "No relationships":
+                baseline_time = stats['mean']
+            elif baseline_time:
+                # Relationships should not add more than 500ms according to PRD
+                overhead = stats['mean'] - baseline_time
+                print(f"  Overhead vs baseline: {overhead:.2f}ms")
+                assert overhead < 500, f"Relationship overhead should be under 500ms (PRD requirement)"
+    
+    @pytest.mark.performance
+    def test_relationship_query_performance(self, mock_hechos_service_with_relationships):
+        """Test performance of the get_relaciones_para_hechos method directly."""
+        from src.services.hechos_service import HechosService
+        
+        # Mock Supabase client for direct service testing
+        with patch('src.services.hechos_service.SupabaseClient.get_client') as mock_client:
+            # Setup mock to return realistic relationship data
+            mock_table = MagicMock()
+            mock_client.return_value.table.return_value = mock_table
+            
+            # Chain methods
+            mock_table.select.return_value = mock_table
+            mock_table.or_.return_value = mock_table
+            
+            # Simulate varying relationship data sizes
+            def mock_execute_with_timing(relation_count=50):
+                # Simulate database query time
+                time.sleep(0.001 * relation_count)  # 1ms per 50 relationships
+                
+                # Generate mock relationships
+                relations = []
+                for i in range(relation_count):
+                    relations.append({
+                        "hecho_origen_id": i + 1,
+                        "fecha_ocurrencia_origen": "[2024-01-01 10:00:00,2024-01-01 12:00:00)",
+                        "hecho_destino_id": (i + 10) % 100 + 1,
+                        "fecha_ocurrencia_destino": "[2024-01-01 14:00:00,2024-01-01 16:00:00)",
+                        "tipo_relacion": ["consecuencia", "causa", "contradictorio"][i % 3],
+                        "fuerza_relacion": (i % 10) + 1,
+                        "descripcion_relacion": f"Test relation {i}",
+                        "fecha_deteccion": "2024-01-15T10:30:00"
+                    })
+                
+                result = MagicMock()
+                result.data = relations
+                return result
+            
+            service = HechosService()
+            
+            print("\n=== Direct Relationship Query Performance ===")
+            
+            test_cases = [
+                ("Small query (5 hechos)", list(range(1, 6)), 10),
+                ("Medium query (20 hechos)", list(range(1, 21)), 40),
+                ("Large query (100 hechos)", list(range(1, 101)), 200),
+                ("Very large query (500 hechos)", list(range(1, 501)), 1000)
+            ]
+            
+            for test_name, hecho_ids, expected_relations in test_cases:
+                mock_table.execute = lambda: mock_execute_with_timing(expected_relations)
+                
+                # Measure performance
+                times = []
+                for _ in range(10):
+                    start = time.perf_counter()
+                    
+                    # Run async method
+                    import asyncio
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    
+                    try:
+                        result = loop.run_until_complete(
+                            service.get_relaciones_para_hechos(hecho_ids)
+                        )
+                        duration = (time.perf_counter() - start) * 1000
+                        times.append(duration)
+                    finally:
+                        loop.close()
+                
+                avg_time = statistics.mean(times)
+                relations_per_hecho = expected_relations / len(hecho_ids)
+                
+                print(f"\n{test_name}:")
+                print(f"  Hecho IDs count: {len(hecho_ids)}")
+                print(f"  Expected relations: {expected_relations}")
+                print(f"  Relations per hecho: {relations_per_hecho:.1f}")
+                print(f"  Average query time: {avg_time:.2f}ms")
+                print(f"  Time per relation: {avg_time/expected_relations:.3f}ms")
+                
+                # Performance assertions
+                assert avg_time < 1000, f"Relationship query should complete in under 1000ms"
+                
+                # Efficiency check - should scale reasonably
+                if len(hecho_ids) <= 100:
+                    assert avg_time < 100, f"Small to medium queries should be under 100ms"
+    
+    @pytest.mark.performance
+    def test_pagination_performance_with_relationships(self, client, mock_hechos_service_with_relationships):
+        """Test pagination performance when relationships are included."""
+        service, datasets = mock_hechos_service_with_relationships
+        
+        print("\n=== Pagination Performance with Relationships ===")
+        
+        # Use large dataset
+        large_dataset = datasets['large_with_relations']
+        
+        pagination_scenarios = [
+            ("First page", {"limit": 20, "offset": 0}),
+            ("Middle page", {"limit": 20, "offset": 100}),
+            ("Deep page", {"limit": 20, "offset": 400}),
+            ("Large page", {"limit": 100, "offset": 0}),
+            ("Small page", {"limit": 5, "offset": 0})
+        ]
+        
+        for scenario_name, params in pagination_scenarios:
+            # Configure mock for this page
+            start_idx = params['offset']
+            end_idx = start_idx + params['limit']
+            page_data = large_dataset[start_idx:end_idx]
+            
+            service.get_hechos_for_revision = AsyncMock(
+                return_value=(page_data, len(large_dataset))
+            )
+            
+            stats = self.measure_response_time_with_relationships(
+                client,
+                "/dashboard/hechos_revision",
+                params=params,
+                iterations=20
+            )
+            
+            print(f"\n{scenario_name} (limit={params['limit']}, offset={params['offset']}):")
+            print(f"  Mean response time: {stats['mean']:.2f}ms")
+            print(f"  P95 response time: {stats['p95']:.2f}ms")
+            print(f"  Items in response: {len(page_data)}")
+            print(f"  Average relationships: {stats['avg_relations']:.1f}")
+            
+            # Performance assertions
+            assert stats['mean'] < 300, f"Pagination {scenario_name} should be under 300ms"
+            assert stats['p95'] < 600, f"Pagination P95 {scenario_name} should be under 600ms"
+    
+    @pytest.mark.performance
+    def test_memory_usage_with_relationships(self, client, mock_hechos_service_with_relationships):
+        """Test memory usage impact of including relationships."""
+        service, datasets = mock_hechos_service_with_relationships
+        
+        print("\n=== Memory Usage with Relationships ===")
+        
+        # Force garbage collection
+        gc.collect()
+        
+        # Measure baseline memory
+        process = psutil.Process()
+        baseline_memory = process.memory_info().rss / 1024 / 1024  # MB
+        
+        print(f"Baseline memory usage: {baseline_memory:.2f} MB")
+        
+        # Test with different dataset sizes
+        memory_tests = [
+            ("Small dataset (20 items)", datasets['small_with_relations'][:20]),
+            ("Medium dataset (100 items)", datasets['medium_with_relations'][:100]),
+            ("Large dataset (500 items)", datasets['large_with_relations'][:500])
+        ]
+        
+        for test_name, dataset in memory_tests:
+            # Configure mock
+            service.get_hechos_for_revision = AsyncMock(
+                return_value=(dataset, len(dataset))
+            )
+            
+            # Force garbage collection before test
+            gc.collect()
+            memory_before = process.memory_info().rss / 1024 / 1024  # MB
+            
+            # Make multiple requests to accumulate any memory leaks
+            for _ in range(20):
+                response = client.get("/dashboard/hechos_revision")
+                assert response.status_code == 200
+            
+            # Force garbage collection after test
+            gc.collect()
+            memory_after = process.memory_info().rss / 1024 / 1024  # MB
+            
+            memory_increase = memory_after - memory_before
+            total_relations = sum(len(item.get('relaciones', [])) for item in dataset)
+            
+            print(f"\n{test_name}:")
+            print(f"  Dataset size: {len(dataset)} items")
+            print(f"  Total relationships: {total_relations}")
+            print(f"  Memory before: {memory_before:.2f} MB")
+            print(f"  Memory after: {memory_after:.2f} MB")
+            print(f"  Memory increase: {memory_increase:.2f} MB")
+            print(f"  Memory per item: {memory_increase/len(dataset):.3f} MB")
+            
+            # Memory assertions - should not have significant memory leaks
+            assert memory_increase < 50, f"Memory increase should be under 50MB for {test_name}"
+            
+            # Reset for next test
+            del dataset
+            gc.collect()

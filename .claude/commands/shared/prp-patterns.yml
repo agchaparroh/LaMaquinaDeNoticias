@@ -1,0 +1,437 @@
+# PRP Patterns - Context Engineering Integration Standards
+# Defines patterns, standards, and integration mappings for PRP Mode
+
+## PRP_Standards
+Core_Principles:
+  Context_First: "Include ALL necessary documentation, examples, caveats"
+  Validation_Loops: "Provide executable tests the AI can run and fix"
+  Information_Dense: "Use keywords and patterns from the codebase"
+  Progressive_Success: "Start simple, validate, then enhance"
+  Selective_Activation: "Only use when complexity warrants"
+
+Quality_Metrics:
+  Minimum_Context: "Must reference ≥3 relevant files/docs"
+  Validation_Coverage: "Must include ≥1 validation per component"
+  Pattern_References: "Must cite existing codebase patterns"
+  Success_Criteria: "Must have measurable checkpoints"
+  Confidence_Score: "Target 8+/10 for one-pass success"
+
+## Complexity_Triggers
+Auto_Activation:
+  File_Count: 
+    Threshold: 3
+    Message: "≥3 files suggests PRP mode"
+  Time_Estimate:
+    Threshold: 30  # minutes
+    Message: ">30min suggests comprehensive planning"
+  System_Integration:
+    Indicators: ["API", "database", "auth", "payment", "third-party"]
+    Message: "Multi-system integration benefits from PRP"
+  Pattern_Unknown:
+    Indicators: ["new framework", "unfamiliar library", "novel architecture"]
+    Message: "Unknown patterns require research phase"
+  Business_Critical:
+    Indicators: ["security", "payment", "user data", "compliance"]
+    Message: "Critical features need validation loops"
+
+Manual_Override:
+  Force_PRP: "--prp-required flag forces PRP mode"
+  Skip_PRP: "--no-prp flag bypasses suggestions"
+
+## PRP_Task_Integration
+Hierarchy_Extension:
+  Level_0_PRPs:
+    Purpose: "Comprehensive feature specifications"
+    Location: "PRPs/"
+    Format: "YAML frontmatter + Markdown"
+    Lifecycle: "Research → Generate → Execute → Validate → Complete"
+    
+  Level_1_Tasks:
+    Connection: "PRPs decompose into multiple tasks"
+    Reference: "task.prp_file links to source PRP"
+    Sync: "Task progress updates PRP status"
+    
+  Level_2_Todos:
+    Generation: "Automatic from PRP task list"
+    Tracking: "Real-time via TodoWrite"
+    Validation: "Links to PRP validation loops"
+
+Flow_Patterns:
+  PRP_Creation:
+    Steps:
+      - "Evaluate complexity triggers"
+      - "Research existing patterns"
+      - "Generate comprehensive spec"
+      - "Create linked task"
+      - "Decompose to todos"
+  
+  PRP_Execution:
+    Steps:
+      - "Load PRP context"
+      - "Generate todo sequence"
+      - "Execute with checkpoints"
+      - "Run validation loops"
+      - "Update progress state"
+      
+  PRP_Completion:
+    Steps:
+      - "Verify all validations pass"
+      - "Generate completion report"
+      - "Update task status"
+      - "Archive PRP state"
+
+## Persona_Integration
+PRP_Persona_Mappings:
+  architect:
+    Focus: "System design, patterns, scalability"
+    PRP_Sections: ["architecture", "integration", "data flow"]
+    Templates: ["fullstack", "api", "microservice"]
+    
+  qa:
+    Focus: "Validation, testing, edge cases"
+    PRP_Sections: ["validation loops", "test cases", "error handling"]
+    Templates: ["testing", "validation"]
+    
+  senior-dev:
+    Focus: "Best practices, maintainability, performance"
+    PRP_Sections: ["implementation", "optimization", "documentation"]
+    Templates: ["all"]
+    
+  lead-dev:
+    Focus: "Team coordination, interfaces, deployment"
+    PRP_Sections: ["integration points", "deployment", "team docs"]
+    Templates: ["fullstack", "deployment"]
+    
+  devops:
+    Focus: "Infrastructure, deployment, monitoring"
+    PRP_Sections: ["deployment", "monitoring", "infrastructure"]
+    Templates: ["infrastructure", "deployment"]
+
+Default_Persona: "senior-dev"  # When no persona specified
+
+## Template_Selection
+Template_Rules:
+  api:
+    Indicators: ["REST", "GraphQL", "endpoint", "route", "controller"]
+    Sections: ["endpoints", "validation", "error handling", "auth"]
+    
+  frontend:
+    Indicators: ["React", "Vue", "UI", "component", "style"]
+    Sections: ["components", "state", "styling", "user flow"]
+    
+  fullstack:
+    Indicators: ["end-to-end", "full feature", "frontend + backend"]
+    Sections: ["architecture", "API", "UI", "database", "deployment"]
+    
+  infrastructure:
+    Indicators: ["Docker", "K8s", "deployment", "CI/CD"]
+    Sections: ["config", "deployment", "monitoring", "scaling"]
+
+Default_Template: "fullstack"  # Most comprehensive
+
+## Validation_Patterns
+Standard_Validations:
+  Syntax:
+    Commands: ["lint", "format", "type-check"]
+    Required: true
+    Auto_Fix: true
+    
+  Unit_Tests:
+    Commands: ["test unit", "test component"]
+    Required: true
+    Coverage_Target: 80
+    
+  Integration_Tests:
+    Commands: ["test integration", "test e2e"]
+    Required: "when multi-system"
+    
+  Manual_Verification:
+    Commands: ["curl", "browser check", "UI test"]
+    Required: "for user-facing features"
+
+Validation_Levels:
+  strict: "All validations required"
+  standard: "Syntax + unit tests required"
+  minimal: "Syntax only"
+
+Default_Level: "standard"
+
+## Token_Optimization
+PRP_Compression:
+  When_Triggered:
+    Token_Count: ">5000"
+    Flag: "--uc or --ultracompressed"
+    
+  Compression_Strategies:
+    - "Use symbol notation from Universal Legend"
+    - "Reference files instead of inline code"
+    - "Compress verbose descriptions"
+    - "Use tabular formats"
+    - "Remove redundant examples"
+    
+  Preserve_Always:
+    - "Validation commands"
+    - "File paths"
+    - "Critical gotchas"
+    - "Integration points"
+
+## Integration_Commands
+Task_Operations:
+  prp_conversion:
+    Command: "/task:prp [task-id]"
+    Checks:
+      - "Task complexity evaluation"
+      - "Existing task content preservation"
+      - "PRP template selection"
+    Output: "PRPs/task-[id].md"
+    
+  prp_status:
+    Command: "/task:status --prp"
+    Shows:
+      - "Linked PRP file"
+      - "Validation progress"
+      - "Completion percentage"
+
+## Report_Formats
+PRP_Reports:
+  Completion_Report:
+    Location: ".claudedocs/reports/prp-complete-[timestamp].md"
+    Sections:
+      - "Feature summary"
+      - "Files modified"
+      - "Validations passed"
+      - "Todos completed"
+      - "Time taken"
+      
+  Progress_Report:
+    Location: ".claudedocs/reports/prp-progress-[timestamp].md"
+    Sections:
+      - "Current status"
+      - "Completed tasks"
+      - "Pending items"
+      - "Blockers"
+
+## Error_Recovery
+PRP_Failure_Modes:
+  Validation_Failure:
+    Recovery: "Fix → Re-run → Continue"
+    Max_Retries: 3
+    
+  Context_Overflow:
+    Recovery: "Compress → Checkpoint → Resume"
+    
+  Missing_Dependencies:
+    Recovery: "Document → Request → Pause"
+    
+  Complexity_Underestimated:
+    Recovery: "Re-evaluate → Expand PRP → Continue"
+
+## Best_Practices
+PRP_Guidelines:
+  Do:
+    - "Always validate complexity first"
+    - "Select appropriate persona"
+    - "Include all context upfront"
+    - "Define clear success criteria"
+    - "Run all validations"
+    
+  Avoid:
+    - "Using PRP for simple changes"
+    - "Skipping research phase"
+    - "Ignoring validation failures"
+    - "Incomplete context gathering"
+    - "Manual-only validations"
+
+## Success_Metrics
+PRP_Performance:
+  Target_Metrics:
+    One_Pass_Success: ">80%"
+    Validation_Pass_Rate: ">95%"
+    Context_Completeness: ">90%"
+    Time_Saved: ">30% vs manual"
+    
+  Tracking:
+    Location: ".claudedocs/metrics/prp-metrics.jsonl"
+    Fields: ["prp_id", "success", "validations", "time", "complexity"]
+
+## Task_Command_Mapping
+# Maps task types to specific SuperClaude commands for deterministic execution
+Task_Categories:
+  Analysis:
+    Keywords: ["analyze", "understand", "investigate", "examine", "review", "assess", "evaluate"]
+    Primary_Command: "/analyze"
+    Default_Flags: ["--architecture", "--code"]
+    Context_Flags:
+      system_wide: ["--architecture", "--dependencies", "--seq"]
+      debugging: ["--code", "--dependencies", "--think-hard"]
+      performance: ["--profile", "--metrics"]
+    Default_Persona: "analyzer"
+    Context_Personas:
+      architecture: "architect"
+      debugging: "analyzer"
+      
+  Design:
+    Keywords: ["design", "architect", "plan", "structure", "blueprint", "model", "schema"]
+    Primary_Command: "/design"
+    Default_Flags: ["--patterns", "--system"]
+    Context_Flags:
+      api: ["--api", "--patterns", "--think-hard"]
+      frontend: ["--ui", "--components", "--patterns"]
+      database: ["--ddd", "--patterns", "--system"]
+    Default_Persona: "architect"
+    Context_Personas:
+      api: "backend"
+      ui: "frontend"
+      
+  Implementation:
+    Keywords: ["implement", "build", "create", "develop", "code", "write", "add"]
+    Primary_Command: "/build"
+    Default_Flags: ["--feature", "--tdd"]
+    Context_Flags:
+      api: ["--feature", "--tdd", "--uc"]
+      frontend: ["--react", "--feature", "--magic"]
+      configuration: ["--config", "--yaml", "--uc"]
+      initialization: ["--init", "--setup"]
+    Default_Persona: "senior-dev"
+    Context_Personas:
+      api: "backend"
+      ui: "frontend"
+      fullstack: "senior-dev"
+      
+  Testing:
+    Keywords: ["test", "verify", "validate", "check", "ensure", "confirm", "prove"]
+    Primary_Command: "/test"
+    Default_Flags: ["--unit", "--coverage"]
+    Context_Flags:
+      unit: ["--unit", "--coverage", "--strict"]
+      integration: ["--integration", "--e2e"]
+      performance: ["--performance", "--metrics"]
+      security: ["--security", "--owasp"]
+    Default_Persona: "qa"
+    Context_Personas:
+      performance: "performance"
+      security: "security"
+      
+  Security:
+    Keywords: ["secure", "audit", "scan", "vulnerability", "protect", "harden", "pentest"]
+    Primary_Command: "/scan"
+    Default_Flags: ["--security", "--owasp"]
+    Context_Flags:
+      audit: ["--security", "--owasp", "--strict"]
+      dependencies: ["--dependencies", "--vulnerabilities"]
+      validation: ["--validate", "--strict"]
+    Default_Persona: "security"
+    
+  Optimization:
+    Keywords: ["optimize", "improve", "refactor", "enhance", "performance", "speed", "efficiency"]
+    Primary_Command: "/improve"
+    Default_Flags: ["--performance", "--quality"]
+    Context_Flags:
+      performance: ["--performance", "--metrics", "--iterate"]
+      quality: ["--quality", "--refactor", "--patterns"]
+      architecture: ["--architecture", "--patterns", "--think-hard"]
+    Default_Persona: "performance"
+    Context_Personas:
+      code_quality: "refactorer"
+      performance: "performance"
+      
+  Documentation:
+    Keywords: ["document", "describe", "explain", "guide", "readme", "tutorial", "reference"]
+    Primary_Command: "/document"
+    Default_Flags: ["--comprehensive", "--examples"]
+    Context_Flags:
+      api: ["--api", "--examples", "--comprehensive"]
+      user: ["--user", "--guide", "--examples"]
+      technical: ["--technical", "--architecture", "--uc"]
+    Default_Persona: "mentor"
+    
+  Review:
+    Keywords: ["review", "inspect", "examine", "assess", "evaluate", "critique"]
+    Primary_Command: "/review"
+    Default_Flags: ["--quality", "--evidence"]
+    Context_Flags:
+      code: ["--files", "--quality", "--evidence"]
+      pr: ["--pr", "--quality", "--tests"]
+      security: ["--security", "--owasp", "--strict"]
+    Default_Persona: "senior-dev"
+    Context_Personas:
+      security: "security"
+      architecture: "architect"
+
+Command_Selection_Algorithm:
+  Priority_Order:
+    1: "Exact keyword match in task description"
+    2: "Context analysis from dependencies"
+    3: "File type and location hints"
+    4: "Previous task commands in PRP"
+    5: "Default fallback to /analyze"
+    
+  Flag_Combination_Rules:
+    Always_Include: ["--uc", "--think-hard"]  # When specified in PRP
+    Context_Based:
+      - "If 'production': add --prod"
+      - "If 'urgent': add --seq"
+      - "If 'complex': add --plan"
+      - "If 'validation': add --strict"
+    Persona_Specific:
+      - "If qa persona: add --coverage"
+      - "If security persona: add --owasp"
+      - "If performance persona: add --metrics"
+      
+  Persona_Selection_Matrix:
+    Override_Priority:
+      1: "Explicit in task description"
+      2: "Context-based rules"
+      3: "Category default"
+      4: "senior-dev fallback"
+
+Validation_Command_Mapping:
+  Syntax_Check:
+    Commands: ["/test --lint", "/cleanup --code"]
+    Auto_Fix: true
+    
+  Type_Check:
+    Commands: ["/test --type-check", "/analyze --types"]
+    Auto_Fix: false
+    
+  Unit_Tests:
+    Commands: ["/test --unit --coverage"]
+    Coverage_Target: 80
+    
+  Integration_Tests:
+    Commands: ["/test --integration", "/test --e2e"]
+    Required_When: "multi_system"
+    
+  Security_Scan:
+    Commands: ["/scan --security --owasp"]
+    Required_When: "critical_features"
+    
+  Performance_Test:
+    Commands: ["/test --performance", "/analyze --profile"]
+    Required_When: "performance_critical"
+
+Task_Format_With_Commands:
+  Required_Fields:
+    - "Task_Number"
+    - "Description"
+    - "Priority"
+    - "Dependencies"
+    - "SuperClaude_Command"
+    - "Persona"
+  Optional_Fields:
+    - "Files"
+    - "Validation"
+    - "Expected_Output"
+    - "Context"
+    
+  Example_Format: |
+    Task 1: Analyze current authentication system
+      Priority: high
+      Dependencies: []
+      SuperClaude Command: /analyze --architecture --code --dependencies
+      Persona: --persona-architect
+      Files: ["src/auth/*", "src/middleware/auth.js"]
+      Validation: /test --unit --coverage src/auth
+      Expected_Output: Architecture analysis report with recommendations
+
+# PRP Patterns v1.0 - Selective Context Engineering for SuperClaude
