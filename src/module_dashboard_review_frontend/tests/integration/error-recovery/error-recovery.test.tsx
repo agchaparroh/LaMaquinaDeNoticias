@@ -104,7 +104,7 @@ describe('Error Recovery Tests', () => {
 
     it('should handle timeout errors with exponential backoff', async () => {
       vi.useFakeTimers();
-      let attemptTimes: number[] = [];
+      const attemptTimes: number[] = [];
       
       server.use(
         rest.get(`${API_BASE_URL}/api/hechos`, async (req, res, ctx) => {

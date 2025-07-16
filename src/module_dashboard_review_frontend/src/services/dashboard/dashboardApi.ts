@@ -202,7 +202,7 @@ async function getMockHechosResponse(
       hechos: frontendResponse.hechos.length,
       total: frontendResponse.pagination.totalItems,
       page: frontendResponse.pagination.page,
-      filters: filters
+      filters
     });
   }
 

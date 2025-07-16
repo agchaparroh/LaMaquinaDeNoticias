@@ -1,0 +1,69 @@
+# DECISIONES DEFINITIVAS
+
+  ✅ EC2 
+  ✅ Terraform 
+  ✅ Savings Plan (1yr) 
+  ✅ t3a.large
+  ✅ 20 GB
+  ✅ Conexión remota con sesión manager. 
+	- Mantener SSH tradicional, pero deshabilitado por defecto.
+  ✅Encriptación
+	- AWS MANAGED
+	- EBS DEFAULT ENCRYPTION
+	- ROOT BLOCK DEVICE ENCRIPTADO
+	- DATA SOURCE PARA VALIDACIÓN
+  ✅ Enhanced Networking (ya activado por defecto)
+  ✅ IAM Roles & Policies
+	- IAM Role personalizado con política AmazonSSMManagedInstanceCore
+	- Instance Profile para EC2       
+	- Principio de menor privilegio
+  ✅ DOCKER OPTIMIZATION
+	- User Data Script: Instalación mínima (Docker + herramientas básicas)
+	- No automatización: Sin clonar repos ni levantar servicios automáticamente
+	- Configuración development: Logs locales, sin límites estrictos
+	- Deploy manual: Docker Compose modular para iteración rápida
+	- Storage simple: Todo en root volume, bind mounts para código fuente
+  ✅ Singapore, Zone A (ap-southeast-1a)
+  ✅ ESTRATEGIA DE BACKUP DE TRIPLE CAPA
+  ✅ Terraform con constraints hard-coded
+
+---
+
+## ESTRATEGIA DE BACKUP DE TRIPLE CAPA
+
+  🧠 ANÁLISIS DE REQUISITOS:
+
+  - Solo sistema: Código, configs, setup - NO datos de aplicación
+  - Experimentos seguros: Poder probar sin miedo a romper
+  - Volver atrás: Deshacer cambios fácilmente
+  - Recuperación rápida: Nuevo servidor en minutos
+  - Robustez + Economía + Comodidad: Triple optimización
+
+  🎯 ESTRATEGIA TRIPLE CAPA (ULTRAOPTIMIZADA):
+
+  CAPA 1: CÓDIGO FUENTE (Git + GitHub)
+
+  - ✅ Repositorio privado gratuito en GitHub
+  - ✅ Branches para experimentos (feature branches)
+  - ✅ Commits frecuentes automáticos con Git hooks
+  - ✅ Acceso desde cualquier lugar
+
+  CAPA 2: TERRAFORM STATE (S3 Backend)
+
+  - ✅ Backend automático con versionado
+  - ✅ Locking para evitar conflictos
+  - ✅ Historial completo de cambios infraestructura
+
+  CAPA 3: SISTEMA COMPLETO (EBS Snapshots)
+
+  - ✅ Snapshots automáticos daily del root volume
+  - ✅ Retención 7 días (rolling window)
+  - ✅ Restauración completa en 5 minutos
+
+  🎮 MÁXIMA COMODIDAD:
+
+  - Cero gestión manual de backups
+  - Experimentos sin riesgo (branches + snapshots)
+  - Recuperación en minutos automática
+
+---

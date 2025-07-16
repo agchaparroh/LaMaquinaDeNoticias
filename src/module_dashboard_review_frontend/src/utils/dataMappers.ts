@@ -5,7 +5,7 @@
  * and data type transformations as needed.
  */
 
-import type { Hecho, ArticuloMetadata } from '@/types/domain';
+import type { Hecho, ArticuloMetadata, HechoRelacion } from '@/types/domain';
 
 /**
  * Maps backend hecho response to frontend Hecho interface
@@ -64,10 +64,28 @@ export function mapHechoFromBackend(backendHecho: any): Hecho {
     metadata: backendHecho.metadata,
 
     // Article source information
-    articuloMetadata
+    articuloMetadata,
+
+    // Related facts (map relaciones if present)
+    relaciones: backendHecho.relaciones ? 
+      backendHecho.relaciones.map(mapRelacionFromBackend) : 
+      undefined
   };
 
   return mapped;
+}
+
+/**
+ * Maps backend relacion to frontend HechoRelacion interface
+ */
+export function mapRelacionFromBackend(backendRelacion: any): HechoRelacion {
+  return {
+    hecho_relacionado_id: backendRelacion.hecho_relacionado_id,
+    tipo_relacion: backendRelacion.tipo_relacion,
+    fuerza_relacion: backendRelacion.fuerza_relacion,
+    descripcion_relacion: backendRelacion.descripcion_relacion,
+    direccion: backendRelacion.direccion
+  };
 }
 
 /**

@@ -20,8 +20,8 @@ describe('Concurrency and Race Condition Tests', () => {
 
   describe('Concurrent API Requests', () => {
     it('should handle multiple simultaneous filter changes correctly', async () => {
-      let requestOrder: string[] = [];
-      let resolveCallbacks: Record<string, () => void> = {};
+      const requestOrder: string[] = [];
+      const resolveCallbacks: Record<string, () => void> = {};
       
       server.use(
         rest.get(`${API_BASE_URL}/api/hechos`, async (req, res, ctx) => {
@@ -434,7 +434,7 @@ describe('Concurrency and Race Condition Tests', () => {
                 fechaOcurrencia: new Date().toISOString(),
                 importancia: 5,
                 tipoHecho: 'SUCESO',
-                version: version,
+                version,
                 articuloMetadata: {
                   titulo: 'Test Article',
                   medio: 'Test Media',

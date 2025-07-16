@@ -30,7 +30,7 @@ export const feedbackApi = {
       const mockResponse: ImportanciaFeedbackResponse = {
         success: true,
         message: 'Importancia actualizada exitosamente',
-        hechoId: hechoId,
+        hechoId,
         importancia: request.importancia,
         updatedAt: new Date().toISOString()
       };
@@ -59,7 +59,7 @@ export const feedbackApi = {
       const mockResponse: EvaluacionEditorialResponse = {
         success: true,
         message: 'Evaluación editorial registrada correctamente',
-        hechoId: hechoId,
+        hechoId,
         evaluacion: request.evaluacion,
         evaluadoPor: request.evaluadoPor || 'Usuario Mock',
         fechaEvaluacion: new Date().toISOString()
@@ -93,7 +93,7 @@ export const feedbackApi = {
           historialItems.push({
             id: Math.floor(Math.random() * 1000),
             tipo: 'importancia_feedback',
-            hechoId: hechoId,
+            hechoId,
             nuevaImportancia: Math.floor(Math.random() * 10) + 1,
             importanciaAnterior: Math.floor(Math.random() * 10) + 1,
             comentario: `Ajuste de importancia ${i + 1}`,
@@ -108,8 +108,8 @@ export const feedbackApi = {
           historialItems.push({
             id: Math.floor(Math.random() * 1000),
             tipo: 'evaluacion_editorial', 
-            hechoId: hechoId,
-            evaluacion: evaluacion,
+            hechoId,
+            evaluacion,
             comentario: `Evaluación editorial ${i + 1}`,
             evaluadoPor: `Editor ${i + 1}`,
             fechaEvaluacion: fechaBase.toISOString(),

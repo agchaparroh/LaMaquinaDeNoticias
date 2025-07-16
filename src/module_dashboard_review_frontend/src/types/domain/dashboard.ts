@@ -27,6 +27,15 @@ export interface ArticuloMetadata {
   estadoProcesamiento?: string;
 }
 
+// Tipo para las relaciones entre hechos
+export interface HechoRelacion {
+  hecho_relacionado_id: number;
+  tipo_relacion: 'causa' | 'consecuencia' | 'contradictorio' | 'relacionado' | 'ampliacion';
+  fuerza_relacion: number; // 1-10
+  descripcion_relacion?: string;
+  direccion: 'origen' | 'destino';
+}
+
 export interface Hecho {
   // Core fact identification
   id: number;
@@ -74,6 +83,9 @@ export interface Hecho {
   
   // Article source information
   articuloMetadata: ArticuloMetadata;
+  
+  // Related facts
+  relaciones?: HechoRelacion[];
   
   // UI-specific fields
   isLoading?: boolean;
@@ -158,6 +170,14 @@ export const EVALUACION_OPTIONS = [
 ] as const;
 
 export type EvaluacionEditorial = typeof EVALUACION_OPTIONS[number];
+
+// Cluster type for grouped hechos
+export interface HechoCluster {
+  id: string;
+  protagonista: Hecho;
+  hechos: Hecho[];
+  totalRelaciones: number;
+}
 
 // Additional type constants
 export const PRECISION_TEMPORAL_OPTIONS = [

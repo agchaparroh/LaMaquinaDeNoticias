@@ -3,6 +3,7 @@
 
 // Components
 export { HechoCard } from './HechoCard';
+export { ClusterCard } from './ClusterCard';
 export { ImportanceSlider } from './ImportanceSlider';
 export { FeedbackModal } from './FeedbackModal';
 export { ConfirmationDialog } from './ConfirmationDialog';

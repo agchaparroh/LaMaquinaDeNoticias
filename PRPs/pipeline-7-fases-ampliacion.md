@@ -18,13 +18,13 @@ Ampliar el pipeline de procesamiento de artículos periodísticos de 4 a 7 fases
 Transformar el pipeline actual de 4 fases secuenciales en un sistema de 7 fases con:
 - Procesamiento adaptativo basado en análisis spaCy
 - Chunking inteligente para contenido extenso
-- Simplificación lingüística para mejor comprensión del LLM
+- Simplificación lingüística de artículos periodísticos para mejor comprensión del LLM
 - Separación de extracciones (entidades, hechos, datos, citas)
 - Consolidación cross-chunk robusta
 - Detección paralela de relaciones estructurales y temporales
 
 ## Why
-- **Calidad mejorada**: Mayor precisión en extracciones al separar por tipo
+- **Calidad mejorada**: Mayor precisión en extracciones al separar por tipo de item
 - **Escalabilidad**: Manejo eficiente de artículos largos mediante chunking
 - **Adaptabilidad**: Flujo dinámico según características del contenido
 - **Optimización LLM**: Texto simplificado mejora comprensión y reduce errores
@@ -48,6 +48,7 @@ Sistema de pipeline inteligente que:
 - [ ] Rendimiento: 60-70% mejora en artículos largos con chunking paralelo
 - [ ] Sistema de configuración dinámico funcionando con todas las variables
 - [ ] Relaciones 7B.1 y 7B.2 ejecutan en paralelo con asyncio.gather()
+- [ ] Chunk parallelization para completar fases ágilmente
 - [ ] Compatibilidad total con API y persistencia existentes
 - [ ] Documentación completa de nuevas funcionalidades
 
@@ -81,7 +82,7 @@ Sistema de pipeline inteligente que:
   why: Estándares y convenciones del proyecto
 ```
 
-### Current Codebase Structure
+### Codebase Structure
 ```bash
 src/module_pipeline/
 ├── src/
@@ -164,6 +165,7 @@ graph TB
     
     subgraph "Phase 7: Finalization"
         F7A[Normalization<br/>Supabase]
+        F7B[Relaciones<br/>7B.1 &#124;&#124; 7B.2]
         F7B[Relations<br/>7B.1 || 7B.2]
     end
     
@@ -217,7 +219,85 @@ Task 3: Implement ChunkingService
   Validation: /test --unit --coverage
   Expected_Output: Chunking service with context preservation
 
-Task 4: Analyze JSON Schema Coherence Across Phases
+Task 4: Enhance Phase 1 with spaCy analysis
+  Priority: high
+  Dependencies: [Task 1, Task 3]
+  SuperClaude Command: /build --feature --nlp --enhance --tdd
+  Persona: --persona-backend
+  Files:
+    - MODIFY src/module_pipeline/src/pipeline/fase_1_triaje.py
+    - CREATE src/module_pipeline/src/models/analisis_componentes.py
+  Validation: /test --unit --regression
+  Expected_Output: Enhanced Phase 1 with content metrics
+
+Task 5: Implement Phase 2 - Text Simplification
+  Priority: high
+  Dependencies: [Task 4]
+  SuperClaude Command: /build --feature --nlp --simplification --tdd
+  Persona: --persona-backend
+  Files:
+    - CREATE src/module_pipeline/src/pipeline/fase_2_simplificacion.py
+    - USES docs/PipelineAmpliación/Simplificación.md
+  Validation: /test --unit --quality
+  Expected_Output: Simplification phase with language normalization
+
+Task 6: Split extraction into Phases 3-6
+  Priority: high
+  Dependencies: [Task 5]
+  SuperClaude Command: /build --feature --extraction --modular --tdd
+  Persona: --persona-backend
+  Files:
+    - CREATE src/module_pipeline/src/pipeline/fase_3_entidades.py
+    - CREATE src/module_pipeline/src/pipeline/fase_4_hechos.py
+    - CREATE src/module_pipeline/src/pipeline/fase_5_datos.py
+    - CREATE src/module_pipeline/src/pipeline/fase_6_citas.py
+  Validation: /test --unit --integration
+  Expected_Output: Four specialized extraction phases
+
+Task 7: Implement cross-chunk consolidation
+  Priority: high
+  Dependencies: [Task 6]
+  SuperClaude Command: /build --feature --consolidation --algorithms --tdd
+  Persona: --persona-backend
+  Files:
+    - CREATE src/module_pipeline/src/services/consolidation_service.py
+    - CREATE src/module_pipeline/src/utils/similarity_algorithms.py
+  Focus:
+    - Consolidation happens WITHIN each phase after processing all chunks
+    - Merge duplicate entities/facts/quotes from different chunks
+    - Maintain ID consistency and relationships
+    - Simple similarity algorithms (exact match, fuzzy match)
+  Validation: /test --unit --accuracy
+  Expected_Output: Consolidation service with >95% dedup accuracy
+
+Task 8: Enhance Phase 7 with parallel relations
+  Priority: high
+  Dependencies: [Task 7]
+  SuperClaude Command: /build --feature --relations --parallel --tdd
+  Persona: --persona-backend
+  Files:
+    - MODIFY src/module_pipeline/src/pipeline/fase_7_normalizacion.py
+    - CREATE src/module_pipeline/src/pipeline/fase_7_relaciones.py
+  Validation: /test --unit --concurrent
+  Expected_Output: Parallel relation detection (structural + temporal)
+
+Task 9: Update PipelineController for 7 phases
+  Priority: high
+  Dependencies: [Task 8]
+  SuperClaude Command: /improve --refactor --controller --flow
+  Persona: --persona-refactorer
+  Files:
+    - MODIFY src/module_pipeline/src/controller.py
+    - MODIFY src/module_pipeline/src/pipeline/pipeline_coordinator.py
+  Focus:
+    - Orchestrate 7 phases with adaptive flow control
+    - Implement conditional execution based on spaCy analysis
+    - Handle chunk processing when thresholds exceeded
+    - Simple parallel execution for relations (7B.1 and 7B.2)
+  Validation: /test --integration --flow
+  Expected_Output: Controller orchestrating 7 phases adaptively
+
+Task 10: Analyze JSON Schema Coherence Across Phases
   Priority: high
   Dependencies: [Task 2]
   SuperClaude Command: /analyze --schemas --flow --optimization
@@ -235,87 +315,9 @@ Task 4: Analyze JSON Schema Coherence Across Phases
   Validation: /review --schemas --consistency
   Expected_Output: Complete schema mapping document with optimized models design
 
-Task 5: Enhance Phase 1 with spaCy analysis
-  Priority: high
-  Dependencies: [Task 1, Task 3, Task 4]
-  SuperClaude Command: /build --feature --nlp --enhance --tdd
-  Persona: --persona-backend
-  Files:
-    - MODIFY src/module_pipeline/src/pipeline/fase_1_triaje.py
-    - CREATE src/module_pipeline/src/models/analisis_componentes.py
-  Validation: /test --unit --regression
-  Expected_Output: Enhanced Phase 1 with content metrics
-
-Task 6: Implement Phase 2 - Text Simplification
-  Priority: high
-  Dependencies: [Task 5]
-  SuperClaude Command: /build --feature --nlp --simplification --tdd
-  Persona: --persona-backend
-  Files:
-    - CREATE src/module_pipeline/src/pipeline/fase_2_simplificacion.py
-    - USES docs/PipelineAmpliación/Simplificación.md
-  Validation: /test --unit --quality
-  Expected_Output: Simplification phase with language normalization
-
-Task 7: Split extraction into Phases 3-6
-  Priority: high
-  Dependencies: [Task 6]
-  SuperClaude Command: /build --feature --extraction --modular --tdd
-  Persona: --persona-backend
-  Files:
-    - CREATE src/module_pipeline/src/pipeline/fase_3_entidades.py
-    - CREATE src/module_pipeline/src/pipeline/fase_4_hechos.py
-    - CREATE src/module_pipeline/src/pipeline/fase_5_datos.py
-    - CREATE src/module_pipeline/src/pipeline/fase_6_citas.py
-  Validation: /test --unit --integration
-  Expected_Output: Four specialized extraction phases
-
-Task 8: Implement cross-chunk consolidation
-  Priority: high
-  Dependencies: [Task 7]
-  SuperClaude Command: /build --feature --consolidation --algorithms --tdd
-  Persona: --persona-backend
-  Files:
-    - CREATE src/module_pipeline/src/services/consolidation_service.py
-    - CREATE src/module_pipeline/src/utils/similarity_algorithms.py
-  Focus:
-    - Consolidation happens WITHIN each phase after processing all chunks
-    - Merge duplicate entities/facts/quotes from different chunks
-    - Maintain ID consistency and relationships
-    - Simple similarity algorithms (exact match, fuzzy match)
-  Validation: /test --unit --accuracy
-  Expected_Output: Consolidation service with >95% dedup accuracy
-
-Task 9: Enhance Phase 7 with parallel relations
-  Priority: high
-  Dependencies: [Task 8]
-  SuperClaude Command: /build --feature --relations --parallel --tdd
-  Persona: --persona-backend
-  Files:
-    - MODIFY src/module_pipeline/src/pipeline/fase_7_normalizacion.py
-    - CREATE src/module_pipeline/src/pipeline/fase_7_relaciones.py
-  Validation: /test --unit --concurrent
-  Expected_Output: Parallel relation detection (structural + temporal)
-
-Task 10: Update PipelineController for 7 phases
-  Priority: high
-  Dependencies: [Task 9]
-  SuperClaude Command: /improve --refactor --controller --flow
-  Persona: --persona-refactorer
-  Files:
-    - MODIFY src/module_pipeline/src/controller.py
-    - MODIFY src/module_pipeline/src/pipeline/pipeline_coordinator.py
-  Focus:
-    - Orchestrate 7 phases with adaptive flow control
-    - Implement conditional execution based on spaCy analysis
-    - Handle chunk processing when thresholds exceeded
-    - Simple parallel execution for relations (7B.1 and 7B.2)
-  Validation: /test --integration --flow
-  Expected_Output: Controller orchestrating 7 phases adaptively
-
 Task 11: Extend Pydantic models for new phases
   Priority: medium
-  Dependencies: [Task 4, Task 7]
+  Dependencies: [Task 10, Task 6]
   SuperClaude Command: /build --models --pydantic --validation
   Persona: --persona-backend
   Files:
@@ -323,15 +325,16 @@ Task 11: Extend Pydantic models for new phases
     - MODIFY src/module_pipeline/src/models/metadatos.py
     - CREATE src/module_pipeline/src/models/simplificacion.py
   Focus:
-    - Implement models based on Task 4 schema analysis
+    - Implement models based on Task 10 schema analysis
     - Ensure minimal fields for token optimization
     - Coherent transformations between phases
   Validation: /test --unit --models
   Expected_Output: Complete model coverage for 7 phases with optimized schemas
 
+
 Task 12: Implement Chunk Parallel Processing
   Priority: medium
-  Dependencies: [Task 3, Task 7]
+  Dependencies: [Task 3, Task 6]
   SuperClaude Command: /build --feature --async --chunks --simple
   Persona: --persona-backend
   Files:

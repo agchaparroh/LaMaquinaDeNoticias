@@ -4,6 +4,8 @@
 // Dashboard types
 export type {
   Hecho,
+  HechoRelacion,
+  HechoCluster,
   ArticuloMetadata,
   FilterState,
   PaginationParams,

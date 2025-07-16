@@ -71,7 +71,7 @@ export const DashboardPage: React.FC = () => {
     async (hechoId: number) => {
       try {
         await feedback.submitEvaluacionEditorial(hechoId, {
-          hechoId: hechoId,
+          hechoId,
           evaluacion: 'falso',
           comentarios: 'Marcado como falso desde el dashboard',
         });

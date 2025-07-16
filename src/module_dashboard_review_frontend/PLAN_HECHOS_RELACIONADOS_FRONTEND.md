@@ -66,5 +66,11 @@ Objetivos:
 
 # PRECAUCIONES:
 
+- La ampliación consiste **ÚNICA Y EXCLUSIVAMENTE** en lo que está aquí descrito. Nada más.
 - No disponemos del MCP Magic.
 - Existe un src/nginx_reverse_proxy para hacer de intermediario entre src/module_dashboard_review_backend y src/module_dashboard_review_frontend
+- Buscamos una implementación que cumpla las siguientes características:
+    - Solución **integral**: No buscamos una implementación por fases. El sistema todavía no está en producción, así que no es necesario planificar migraciones paulatinas e incrementales, (...). 
+    - NO ROTUNDO A LA **SOBREINGENIERÍA**: Buscamos una implementación robusta y "a prueba de balas", sin piezas móviles innecesarias que añadan complejidad para conseguir mejoras marginales y que tengan facilidad para romperse. Lo sencillo es mejor. 
+    - No debe ser una solución **destructiva**: Construimos sobre los cimientos que ya están implementado. No buscamos sustituir o destruir, sino mejorar.
+    - Debe ser **sostenible a largo plazo**, evitando soluciones temporales o parches.

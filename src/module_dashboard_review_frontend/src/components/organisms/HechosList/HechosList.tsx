@@ -17,8 +17,9 @@ import {
   SearchOff as EmptyIcon,
   Refresh as RefreshIcon
 } from '@mui/icons-material';
-import { HechoCard } from '@/components/molecules';
+import { ClusterCard } from '@/components/molecules';
 import type { Hecho } from '@/types/domain';
+import { useClusters } from '@/hooks/useClusters';
 
 interface HechosListProps {
   hechos: Hecho[];
@@ -83,6 +84,9 @@ export const HechosList: React.FC<HechosListProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Usar el hook de clustering para agrupar hechos relacionados
+  const { clusters, stats } = useClusters(hechos);
   
   // Estado de loading - mostrar skeletons
   if (isLoading) {
@@ -191,21 +195,39 @@ export const HechosList: React.FC<HechosListProps> = ({
   // Estado con datos - lista de hechos
   return (
     <Box>
-      {/* Header simplificado */}
+      {/* Header con información de clustering */}
       {totalItems > 0 && (
         <Box sx={{ mb: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            {totalItems.toLocaleString()} hechos encontrados
-          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+            <Typography variant="body2" color="text.secondary">
+              {totalItems.toLocaleString()} hechos encontrados
+            </Typography>
+            {stats.totalClusters > 1 && (
+              <>
+                <Divider orientation="vertical" flexItem />
+                <Typography variant="body2" color="primary.main">
+                  {stats.totalClusters} grupos de hechos relacionados
+                </Typography>
+              </>
+            )}
+            {stats.singletonClusters > 0 && stats.totalClusters > stats.singletonClusters && (
+              <>
+                <Divider orientation="vertical" flexItem />
+                <Typography variant="body2" color="text.secondary">
+                  {stats.totalClusters - stats.singletonClusters} con múltiples hechos
+                </Typography>
+              </>
+            )}
+          </Stack>
         </Box>
       )}
 
-      {/* Lista de HechoCards */}
-      <Stack spacing={0}>
-        {hechos.map((hecho) => (
-          <HechoCard
-            key={hecho.id}
-            hecho={hecho}
+      {/* Lista de clusters */}
+      <Stack spacing={2}>
+        {clusters.map((cluster) => (
+          <ClusterCard
+            key={cluster.id}
+            cluster={cluster}
             onImportanceChange={onImportanceChange}
             onMarkAsFalse={onMarkAsFalse}
             onFeedbackSubmitted={onFeedbackSubmitted}
