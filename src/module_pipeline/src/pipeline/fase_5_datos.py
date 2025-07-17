@@ -94,7 +94,7 @@ def _preparar_contexto_referencias(
         hechos_json.append({
             "id": hecho.id_hecho,
             "contenido": hecho.texto_original_del_hecho,
-            "tipo": hecho.metadata_hecho.tipo_hecho_llm
+            "tipo": hecho.metadata_hecho.tipo_hecho
         })
     
     # Formatear entidades como JSON simple
@@ -292,17 +292,17 @@ def _procesar_datos_extraidos(
             
             # Crear metadatos específicos
             metadatos = MetadatosDato(
-                indicador_llm=dato.get("indicador", ""),
-                categoria_llm=dato.get("categoria", "otro"),
+                indicador=dato.get("indicador", ""),
+                categoria=dato.get("categoria", "otro"),
                 hecho_id_relacionado=dato.get("hecho_id"),
-                ambito_geografico_llm=dato.get("ambito_geografico", []),
-                periodo_inicio_llm=fecha_inicio,
-                periodo_fin_llm=fecha_fin,
-                tipo_periodo_llm=dato.get("tipo_periodo", "puntual"),
-                valor_anterior_llm=dato.get("valor_anterior"),
-                variacion_absoluta_llm=dato.get("variacion_absoluta"),
-                variacion_porcentual_llm=dato.get("variacion_porcentual"),
-                tendencia_llm=dato.get("tendencia")
+                ambito_geografico=dato.get("ambito_geografico", []),
+                periodo_inicio=fecha_inicio,
+                periodo_fin=fecha_fin,
+                tipo_periodo=dato.get("tipo_periodo", "puntual"),
+                valor_anterior=dato.get("valor_anterior"),
+                variacion_absoluta=dato.get("variacion_absoluta"),
+                variacion_porcentual=dato.get("variacion_porcentual"),
+                tendencia=dato.get("tendencia")
             )
             
             # Crear dato cuantitativo
@@ -481,7 +481,7 @@ def _contar_categorias_datos(datos: List[DatosCuantitativos]) -> Dict[str, int]:
     """
     conteo = {}
     for dato in datos:
-        categoria = dato.metadata_dato.categoria_llm
+        categoria = dato.metadata_dato.categoria
         conteo[categoria] = conteo.get(categoria, 0) + 1
     return conteo
 
@@ -506,7 +506,7 @@ async def _procesar_chunk_datos_async(
         hechos_json = json.dumps([{
             "id": hecho.id_hecho,
             "contenido": hecho.texto_hecho,
-            "tipo": hecho.metadata_hecho.tipo_hecho_llm if hasattr(hecho, 'metadata_hecho') and hecho.metadata_hecho else "DESCONOCIDO"
+            "tipo": hecho.metadata_hecho.tipo_hecho if hasattr(hecho, 'metadata_hecho') and hecho.metadata_hecho else "DESCONOCIDO"
         } for hecho in hechos_chunk], ensure_ascii=False, indent=2)
         
         entidades_json = json.dumps([{

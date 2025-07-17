@@ -1,5 +1,5 @@
-# Use Python 3.9 slim image for smaller size and security
-FROM python:3.9-slim
+# Use Python 3.11 slim image for compatibility with black==25.7.0
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
@@ -19,8 +19,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better Docker layer caching
-COPY requirements.txt .
+# Copy module-specific requirements first for better Docker layer caching
+COPY src/module_pipeline/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
@@ -36,6 +36,9 @@ RUN useradd --create-home --shell /bin/bash pipeline && \
 # Copy application code
 COPY src/ ./src/
 COPY .env.example .env
+
+# Copy prompts
+COPY src/module_pipeline/prompts ./prompts
 
 # Create necessary directories with proper permissions
 RUN mkdir -p /app/logs \

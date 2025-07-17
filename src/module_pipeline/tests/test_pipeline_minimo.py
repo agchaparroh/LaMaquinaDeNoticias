@@ -23,45 +23,47 @@ async def test_criterio_1():
     """Test del Criterio 1: Procesamiento de artículo medio con persistencia."""
     print("\n=== TEST CRITERIO 1: Artículo tamaño medio + persistencia ===\n")
     
-    # Artículo de prueba (tamaño medio ~2000 caracteres)
+    # Artículo de prueba (tamaño medio ~2000 caracteres) - Cumple criterios de relevancia
     articulo_test = {
         "id": 1100,
         "url": "https://www.infobae.com/test/2025/07/17/test-pipeline-criterio-1",
         "medio": "Infobae Test",
         "tipo_medio": "otro",
-        "titular": "La Unión Europea alcanza un acuerdo histórico sobre regulación de inteligencia artificial",
+        "titular": "Congreso de México aprueba reforma judicial que elimina autonomía de la Corte Suprema",
         "fecha_publicacion": "2025-07-17T10:00:00Z",
-        "autor": "María García",
-        "contenido_texto": """La Unión Europea ha logrado un acuerdo histórico sobre la regulación de la inteligencia artificial (IA), 
-        estableciendo el primer marco legal integral del mundo para esta tecnología. El acuerdo, alcanzado tras largas 
-        negociaciones entre el Parlamento Europeo y los estados miembros, busca equilibrar la innovación tecnológica 
-        con la protección de los derechos fundamentales.
+        "autor": "Roberto Hernández",
+        "contenido_texto": """El Congreso de México aprobó este jueves 17 de julio de 2025 una controvertida reforma judicial 
+        que modifica sustancialmente la estructura y funcionamiento del Poder Judicial, eliminando la autonomía de la 
+        Suprema Corte de Justicia de la Nación (SCJN) y estableciendo un nuevo sistema de elección popular para los magistrados.
 
-        La presidenta de la Comisión Europea, Ursula von der Leyen, calificó el acuerdo como "un momento decisivo para 
-        Europa" y añadió que "este reglamento garantizará que la IA se desarrolle de manera que respete nuestros valores 
-        y derechos fundamentales". Por su parte, el comisario de Mercado Interior, Thierry Breton, destacó que "Europa 
-        se convierte en el primer continente en establecer normas claras para el uso de la IA".
+        La votación en la Cámara de Diputados concluyó con 334 votos a favor, 166 en contra y 0 abstenciones, superando 
+        la mayoría calificada necesaria de dos tercios. El presidente Andrés Manuel López Obrador celebró la aprobación 
+        declarando que "hoy es un día histórico para la justicia mexicana".
 
-        El nuevo reglamento establece diferentes niveles de riesgo para las aplicaciones de IA. Los sistemas considerados 
-        de "riesgo inaceptable", como los sistemas de puntuación social al estilo chino o el reconocimiento facial 
-        biométrico en espacios públicos con fines policiales, quedarán prohibidos con excepciones muy limitadas.
+        La ministra presidenta de la SCJN, Norma Lucía Piña Hernández, advirtió que la reforma "representa un retroceso 
+        de 100 años en la independencia judicial" y anunció que presentarán recursos ante organismos internacionales. 
+        "Esta reforma viola los principios fundamentales de separación de poderes establecidos en nuestra Constitución", 
+        afirmó Piña Hernández.
 
-        Los sistemas de "alto riesgo", que incluyen aplicaciones en áreas críticas como salud, educación, empleo y 
-        aplicación de la ley, estarán sujetos a estrictos requisitos antes de su comercialización. Estos incluyen 
-        evaluaciones de riesgo, alta calidad de los conjuntos de datos, trazabilidad de los resultados y supervisión 
-        humana adecuada.
+        Los cambios principales incluyen: la elección popular directa de ministros, magistrados y jueces federales cada 
+        seis años; la reducción de 11 a 9 ministros en la SCJN; la eliminación del Consejo de la Judicatura Federal; 
+        y la creación de un Tribunal de Disciplina Judicial controlado por el Ejecutivo.
 
-        Las empresas tecnológicas han expresado preocupación por el impacto potencial en la innovación. Sam Altman, 
-        CEO de OpenAI, advirtió que "una regulación excesivamente restrictiva podría frenar el desarrollo de la IA 
-        en Europa". Sin embargo, defensores de los derechos civiles han aplaudido las medidas como necesarias para 
-        proteger a los ciudadanos.
+        La oposición, liderada por el PAN, PRI y PRD, denunció irregularidades en el proceso legislativo. El coordinador 
+        del PAN en el Senado, Julen Rementería, señaló que "se está destruyendo el equilibrio de poderes para concentrar 
+        todo el poder en el Ejecutivo". Por su parte, la senadora del PRI, Claudia Ruiz Massieu, calificó la reforma 
+        como "un golpe de Estado técnico".
 
-        El reglamento también aborda específicamente los modelos de IA generativa como ChatGPT, requiriendo transparencia 
-        sobre el contenido generado por IA y salvaguardias contra la generación de contenido ilegal. Las multas por 
-        incumplimiento pueden alcanzar hasta el 7% de la facturación global anual de una empresa.""",
+        Organizaciones civiles y barras de abogados convocaron a protestas masivas para el próximo sábado 20 de julio. 
+        La Barra Mexicana de Abogados emitió un comunicado alertando sobre "las graves consecuencias para el Estado de 
+        Derecho y la seguridad jurídica del país".
+
+        La reforma debe ser ratificada por al menos 17 congresos estatales para entrar en vigor. Hasta el momento, 
+        15 estados controlados por Morena han anunciado su apoyo, mientras que la oposición busca frenar el proceso 
+        en estados como Coahuila y Nuevo León, donde gobierna en coalición.""",
         "idioma": "es",
-        "seccion": "tecnologia",
-        "area_geografica": "EUROPA"
+        "seccion": "politica",
+        "area_geografica": "MEXICO"
     }
     
     controller = PipelineController()

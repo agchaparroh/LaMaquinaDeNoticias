@@ -483,7 +483,7 @@ def ejecutar_fase_1(
 
 # --- Funciones para Subtarea 15.3: Integración Groq API ---
 
-_PROMPT_TRIAGE_PATH = Path(__file__).resolve().parent.parent.parent / "prompts" / "Prompt_1_filtrado.md"
+_PROMPT_TRIAGE_PATH = Path(__file__).resolve().parent.parent.parent / "prompts" / "Importancia.md"
 _PROMPT_TRIAGE_TEMPLATE: Optional[str] = None
 
 def _load_prompt_template() -> str:
@@ -505,7 +505,7 @@ def _get_groq_config() -> Dict[str, Any]:
     """Carga la configuración para la API de Groq desde variables de entorno."""
     return {
         "api_key": os.getenv("GROQ_API_KEY"),
-        "model_id": os.getenv("GROQ_MODEL_ID", "mixtral-8x7b-32768"), # Un default razonable
+        "model_id": os.getenv("GROQ_MODEL_ID", "llama-3.1-8b-instant"), # Un default razonable
         "timeout": float(os.getenv("GROQ_API_TIMEOUT", "30.0")),
         "temperature": float(os.getenv("GROQ_API_TEMPERATURE", "0.1")),
         "max_tokens": int(os.getenv("GROQ_API_MAX_TOKENS", "1000")), # Ajustado para triaje

@@ -94,7 +94,7 @@ def _preparar_contexto_referencias(
         hechos_json.append({
             "id": hecho.id_hecho,
             "contenido": hecho.texto_original_del_hecho,
-            "tipo": hecho.metadata_hecho.tipo_hecho_llm
+            "tipo": hecho.metadata_hecho.tipo_hecho
         })
     
     # Formatear entidades como JSON simple
@@ -287,12 +287,12 @@ def _procesar_citas_extraidas(
         try:
             # Crear metadatos específicos
             metadatos = MetadatosCita(
-                cita_textual_llm=cita.get("cita", ""),
+                cita_textual=cita.get("cita", ""),
                 entidad_emisora_id=cita.get("entidad_id"),
                 hecho_relacionado_id=cita.get("hecho_id"),
-                fecha_cita_llm=cita.get("fecha"),
-                contexto_llm=cita.get("contexto"),
-                relevancia_llm=cita.get("relevancia", 3)
+                fecha_cita=cita.get("fecha"),
+                contexto=cita.get("contexto"),
+                relevancia=cita.get("relevancia", 3)
             )
             
             # Determinar persona citada
@@ -506,7 +506,7 @@ def _calcular_relevancia_promedio(citas: List[CitaTextual]) -> float:
     if not citas:
         return 0.0
     
-    total_relevancia = sum(c.metadata_cita.relevancia_llm for c in citas)
+    total_relevancia = sum(c.metadata_cita.relevancia for c in citas)
     return total_relevancia / len(citas)
 
 
@@ -530,7 +530,7 @@ async def _procesar_chunk_citas_async(
         hechos_json = json.dumps([{
             "id": hecho.id_hecho,
             "contenido": hecho.texto_hecho,
-            "tipo": hecho.metadata_hecho.tipo_hecho_llm if hasattr(hecho, 'metadata_hecho') and hecho.metadata_hecho else "DESCONOCIDO"
+            "tipo": hecho.metadata_hecho.tipo_hecho if hasattr(hecho, 'metadata_hecho') and hecho.metadata_hecho else "DESCONOCIDO"
         } for hecho in hechos_chunk], ensure_ascii=False, indent=2)
         
         entidades_json = json.dumps([{
@@ -823,3 +823,23 @@ def extraer_citas_con_chunking(
         "relevancia_promedio": _calcular_relevancia_promedio(todas_las_citas),
         "requiere_consolidacion": True
     }
+
+
+def _contar_tipos_citas(citas: List[CitaTextual]) -> Dict[str, int]:
+    """
+    Cuenta las citas por tipo de entidad emisora.
+    
+    Args:
+        citas: Lista de citas procesadas
+        
+    Returns:
+        Diccionario con conteo por tipo de entidad
+    """
+    conteo = {}
+    for cita in citas:
+        if cita.persona_citada:
+            tipo = "persona_identificada"
+        else:
+            tipo = "persona_no_identificada"
+        conteo[tipo] = conteo.get(tipo, 0) + 1
+    return conteo

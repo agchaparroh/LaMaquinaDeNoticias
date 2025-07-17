@@ -81,10 +81,14 @@ def test_prompts_dir(tmp_path):
     
     # Crear archivos de prompts de prueba
     prompt_files = [
-        "Prompt_1_filtrado.md",
-        "Prompt_2_elementos_basicos.md", 
-        "Prompt_3_citas_datos.md",
-        "Prompt_4_relaciones.md"
+        "Importancia.md",
+        "Simplificación.md",
+        "Entidades.md",
+        "Hechos.md",
+        "Datos.md",
+        "Citas.md",
+        "7B.1_Relaciones-Estructurales.md",
+        "7B.2_Relaciones-Temporales.md"
     ]
     
     for prompt_file in prompt_files:

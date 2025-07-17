@@ -262,16 +262,13 @@ def _procesar_hechos_extraidos(
             
             # Crear metadatos específicos
             metadatos = MetadatosHecho(
-                contenido_hecho=hecho.get("contenido", ""),
-                tipo_hecho_llm=hecho.get("tipo_hecho", "SUCESO"),
-                fecha_inicio_llm=fecha_inicio,
-                fecha_fin_llm=fecha_fin,
-                precision_temporal_llm=hecho.get("precision_temporal", "dia"),
-                pais_llm=hecho.get("pais", []),
-                region_llm=hecho.get("region", []),
-                ciudad_llm=hecho.get("ciudad", []),
+                tipo_hecho=hecho.get("tipo_hecho", "SUCESO"),
+                precision_temporal=hecho.get("precision_temporal", "dia"),
+                pais=hecho.get("pais", []),
+                region=hecho.get("region", []),
+                ciudad=hecho.get("ciudad", []),
                 es_futuro=hecho.get("es_futuro", False),
-                estado_programacion_llm=hecho.get("estado_programacion")
+                estado_programacion=hecho.get("estado_programacion")
             )
             
             # Crear hecho procesado
@@ -424,7 +421,7 @@ def _contar_tipos_hechos(hechos: List[HechoProcesado]) -> Dict[str, int]:
     """
     conteo = {}
     for hecho in hechos:
-        tipo = hecho.metadata_hecho.tipo_hecho_llm
+        tipo = hecho.metadata_hecho.tipo_hecho
         conteo[tipo] = conteo.get(tipo, 0) + 1
     return conteo
 

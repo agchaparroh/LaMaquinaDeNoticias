@@ -9,7 +9,7 @@ uvicorn[standard]==0.30.6           # Context7: /encode/uvicorn (compatible con 
 # === IA/ML ===
 groq==0.26.0                        # Context7: /groq/groq-typescript
 spacy==3.8.2                        # Context7: /explosion/spacy (version estable)
-sentence-transformers==2.7.0        # Context7: /ukplab/sentence-transformers (compatible con numpy <2)
+# sentence-transformers==2.7.0        # Context7: /ukplab/sentence-transformers (DESHABILITADO: no se usa, instala PyTorch/CUDA innecesariamente)
 langid==1.1.6                       # Context7: /mimino666/langdetect
 
 # === BASE DE DATOS ===

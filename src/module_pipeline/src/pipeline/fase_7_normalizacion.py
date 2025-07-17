@@ -119,7 +119,7 @@ def _preparar_contexto_relaciones(
             {
                 "id": h.id_hecho,
                 "contenido": h.texto_original_del_hecho,
-                "tipo": h.metadata_hecho.tipo_hecho_llm
+                "tipo": h.metadata_hecho.tipo_hecho
             }
             for h in hechos
         ],
@@ -153,9 +153,9 @@ def _preparar_contexto_temporal(
             {
                 "id": h.id_hecho,
                 "contenido": h.texto_original_del_hecho,
-                "fecha_inicio": h.metadata_hecho.fecha_inicio_llm,
-                "fecha_fin": h.metadata_hecho.fecha_fin_llm,
-                "tipo": h.metadata_hecho.tipo_hecho_llm
+                "fecha_inicio": h.metadata_hecho.fecha_inicio,
+                "fecha_fin": h.metadata_hecho.fecha_fin,
+                "tipo": h.metadata_hecho.tipo_hecho
             }
             for h in hechos
         ]

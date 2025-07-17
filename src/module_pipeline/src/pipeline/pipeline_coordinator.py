@@ -248,8 +248,8 @@ class PipelineCoordinator:
                         groq_api_key=groq_api_key
                     )
                     
-                    if "entidades" in resultado_entidades:
-                        chunk_resultado["entidades"] = resultado_entidades["entidades"]
+                    if "entidades_extraidas" in resultado_entidades:
+                        chunk_resultado["entidades"] = resultado_entidades["entidades_extraidas"]
                         phase_logger.info(f"Entidades extraídas: {len(chunk_resultado['entidades'])}")
                 
                 # === FASE 4: EXTRACCIÓN DE HECHOS ===
@@ -262,8 +262,8 @@ class PipelineCoordinator:
                         groq_api_key=groq_api_key
                     )
                     
-                    if "hechos" in resultado_hechos:
-                        chunk_resultado["hechos"] = resultado_hechos["hechos"]
+                    if "hechos_extraidos" in resultado_hechos:
+                        chunk_resultado["hechos"] = resultado_hechos["hechos_extraidos"]
                         phase_logger.info(f"Hechos extraídos: {len(chunk_resultado['hechos'])}")
                 
                 # === FASE 5: EXTRACCIÓN DE DATOS (CONDICIONAL) ===
@@ -279,8 +279,8 @@ class PipelineCoordinator:
                             groq_api_key=groq_api_key
                         )
                         
-                        if "datos" in resultado_datos:
-                            chunk_resultado["datos"] = resultado_datos["datos"]
+                        if "datos_extraidos" in resultado_datos:
+                            chunk_resultado["datos"] = resultado_datos["datos_extraidos"]
                             phase_logger.info(f"Datos extraídos: {len(chunk_resultado['datos'])}")
                 
                 # === FASE 6: EXTRACCIÓN DE CITAS (CONDICIONAL) ===
@@ -296,8 +296,8 @@ class PipelineCoordinator:
                             groq_api_key=groq_api_key
                         )
                         
-                        if "citas" in resultado_citas:
-                            chunk_resultado["citas"] = resultado_citas["citas"]
+                        if "citas_extraidas" in resultado_citas:
+                            chunk_resultado["citas"] = resultado_citas["citas_extraidas"]
                             phase_logger.info(f"Citas extraídas: {len(chunk_resultado['citas'])}")
                 
                 resultados_por_chunk.append(chunk_resultado)
@@ -515,10 +515,10 @@ class PipelineCoordinator:
         entidades_data = []
         for entidad in entidades:
             entidades_data.append({
-                "id_temporal_entidad": str(entidad.id_entidad),  # int → str
-                "nombre_entidad": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
-                "tipo_entidad": entidad.tipo_entidad,
-                "descripcion_entidad": f"Entidad extraída con relevancia {entidad.relevancia_entidad}",
+                "id": str(entidad.id_entidad),  # int → str
+                "nombre": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
+                "tipo": entidad.tipo_entidad,
+                "descripcion": f"Entidad extraída con relevancia {entidad.relevancia_entidad}",
                 "relevancia_entidad_articulo": int(entidad.relevancia_entidad * 10),
                 "metadata_entidad": {
                     **(entidad.metadata_entidad.model_dump() if hasattr(entidad.metadata_entidad, 'model_dump') else {}),

@@ -57,10 +57,14 @@ def check_file_structure():
     critical_files = [
         'requirements.txt',
         '.env',
-        'prompts/Prompt_1_filtrado.md',
-        'prompts/Prompt_2_elementos_basicos.md',
-        'prompts/Prompt_3_citas_datos.md',
-        'prompts/Prompt_4_relaciones.md'
+        'prompts/Importancia.md',
+        'prompts/Simplificación.md',
+        'prompts/Entidades.md',
+        'prompts/Hechos.md',
+        'prompts/Datos.md',
+        'prompts/Citas.md',
+        'prompts/7B.1_Relaciones-Estructurales.md',
+        'prompts/7B.2_Relaciones-Temporales.md'
     ]
     
     all_present = True

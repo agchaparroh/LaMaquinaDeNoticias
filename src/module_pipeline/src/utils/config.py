@@ -173,7 +173,7 @@ IMPORTANCE_MODEL_VERSION = os.getenv('IMPORTANCE_MODEL_VERSION', '1.0')
 IMPORTANCE_DEFAULT = _get_int_env('IMPORTANCE_DEFAULT', 5)
 
 # Configuración de embeddings (si se usan)
-EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'sentence-transformers/all-MiniLM-L6-v2')
+# EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'sentence-transformers/all-MiniLM-L6-v2')  # DESHABILITADO: no se usa actualmente
 EMBEDDING_DIMENSION = _get_int_env('EMBEDDING_DIMENSION', 384)
 
 # =============================================================================
@@ -290,10 +290,14 @@ def validate_configuration() -> bool:
     
     # Verificar que los archivos de prompts críticos existan
     required_prompts = [
-        'Prompt_1_filtrado.md',
-        'Prompt_2_elementos_basicos.md', 
-        'Prompt_3_citas_datos.md',
-        'Prompt_4_relaciones.md'
+        'Importancia.md',
+        'Simplificación.md',
+        'Entidades.md',
+        'Hechos.md',
+        'Datos.md',
+        'Citas.md',
+        '7B.1_Relaciones-Estructurales.md',
+        '7B.2_Relaciones-Temporales.md'
     ]
     
     for prompt_file in required_prompts:

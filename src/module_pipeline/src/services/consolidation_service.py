@@ -187,8 +187,8 @@ class ConsolidationService:
         ).ratio()
         
         # Verificar alias
-        alias1 = set(entidad1.metadata_entidad.alias_llm or [])
-        alias2 = set(entidad2.metadata_entidad.alias_llm or [])
+        alias1 = set(entidad1.metadata_entidad.alias or [])
+        alias2 = set(entidad2.metadata_entidad.alias or [])
         
         # Si el nombre de una está en los alias de la otra
         if (entidad1.texto_entidad in alias2 or 
@@ -229,23 +229,23 @@ class ConsolidationService:
         todos_alias = set()
         for entidad in grupo:
             todos_alias.add(entidad.texto_entidad)
-            if entidad.metadata_entidad.alias_llm:
-                todos_alias.update(entidad.metadata_entidad.alias_llm)
+            if entidad.metadata_entidad.alias:
+                todos_alias.update(entidad.metadata_entidad.alias)
         
         # Remover el nombre principal de los alias
         todos_alias.discard(entidad_base.texto_entidad)
         
         # Actualizar metadatos
-        entidad_base.metadata_entidad.alias_llm = sorted(list(todos_alias))
+        entidad_base.metadata_entidad.alias = sorted(list(todos_alias))
         
         # Combinar descripciones si existen
         descripciones = []
         for entidad in grupo:
-            if entidad.metadata_entidad.descripcion_llm:
-                descripciones.append(entidad.metadata_entidad.descripcion_llm)
+            if entidad.metadata_entidad.descripcion:
+                descripciones.append(entidad.metadata_entidad.descripcion)
         
         if descripciones:
-            entidad_base.metadata_entidad.descripcion_llm = " - ".join(set(descripciones))
+            entidad_base.metadata_entidad.descripcion = " - ".join(set(descripciones))
         
         # Usar la mayor relevancia
         entidad_base.relevancia_entidad = max(e.relevancia_entidad for e in grupo)
@@ -352,15 +352,15 @@ class ConsolidationService:
         ).ratio()
         
         # Bonus si son del mismo tipo
-        tipo_bonus = 0.1 if (hecho1.metadata_hecho.tipo_hecho_llm == 
-                            hecho2.metadata_hecho.tipo_hecho_llm) else 0
+        tipo_bonus = 0.1 if (hecho1.metadata_hecho.tipo_hecho == 
+                            hecho2.metadata_hecho.tipo_hecho) else 0
         
         # Bonus si tienen fechas similares
         fecha_bonus = 0
-        if (hecho1.metadata_hecho.fecha_inicio_llm and 
-            hecho2.metadata_hecho.fecha_inicio_llm):
-            if (hecho1.metadata_hecho.fecha_inicio_llm == 
-                hecho2.metadata_hecho.fecha_inicio_llm):
+        if (hecho1.metadata_hecho.fecha_inicio and 
+            hecho2.metadata_hecho.fecha_inicio):
+            if (hecho1.metadata_hecho.fecha_inicio == 
+                hecho2.metadata_hecho.fecha_inicio):
                 fecha_bonus = 0.1
         
         return min(texto_sim + tipo_bonus + fecha_bonus, 1.0)

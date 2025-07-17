@@ -340,6 +340,9 @@ def ejecutar_fase_2_simplificacion(
             f"Fase 2 completada: {len(texto_original)} → {len(texto_simplificado)} chars "
             f"({reduccion:.1f}% reducción), {sum(transformaciones.values())} transformaciones"
         )
+        logger.info(f"DEBUG TRUNCATION: tokens_prompt={metadatos_llamada.get('tokens_prompt')}, "
+                   f"tokens_respuesta={metadatos_llamada.get('tokens_respuesta')}, "
+                   f"texto_simplificado_length={len(texto_simplificado)}")
         
         return resultado
         

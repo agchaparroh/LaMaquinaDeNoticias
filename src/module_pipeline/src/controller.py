@@ -305,6 +305,14 @@ class PipelineController:
             "simplificacion_aplicada": resultado.get('flujo_adaptativo', {}).get('simplificacion_aplicada', False)
         }
         
+        # Manejar persistencia si el pipeline la incluye
+        if resultado_pipeline.get('payload'):
+            resultado["persistencia"] = self._persistir_resultado_7_fases(
+                resultado_pipeline, 
+                fragmento,
+                article_logger
+            )
+        
         # Log final con estado de procesamiento
         if resultado.get("procesamiento_parcial", False):
             article_logger.info(
@@ -980,10 +988,10 @@ class PipelineController:
             if resultado_fase4 and hasattr(resultado_fase4, 'entidades_normalizadas'):
                 entidades_autonomas_data = [
                     {
-                        "id_temporal_entidad": str(entidad.id_entidad),
-                        "texto_entidad": entidad.texto_entidad,
-                        "tipo_entidad": entidad.tipo_entidad,
-                        "relevancia_entidad": entidad.relevancia_entidad,
+                        "id": str(entidad.id_entidad),
+                        "nombre": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
+                        "tipo": entidad.tipo_entidad,
+                        "relevancia_entidad_articulo": int(entidad.relevancia_entidad * 10),
                         "metadata_entidad": entidad.metadata_entidad.model_dump() if entidad.metadata_entidad else {},
                         "id_entidad_normalizada": str(entidad.id_entidad_normalizada) if entidad.id_entidad_normalizada else None,
                         "nombre_entidad_normalizada": entidad.nombre_entidad_normalizada,

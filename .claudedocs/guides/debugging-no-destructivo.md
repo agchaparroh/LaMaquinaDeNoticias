@@ -120,7 +120,7 @@ Cambiar 1 cosa → Probar → ¿Funciona? → Commit
 ### 📝 Regla 4: Documentar Todo
 ```bash
 # Estructura de documentación:
-.claudedocs/debugging/BUG-[fecha]/
+LaMaquinaDeNoticias/.claudedocs/debugging/BUG-[fecha]/
 ├── 1-sintomas.md      # Qué está pasando
 ├── 2-investigacion.md # Qué descubriste
 ├── 3-hipotesis.md     # Ideas para arreglar
