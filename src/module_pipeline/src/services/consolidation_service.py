@@ -661,7 +661,8 @@ class ConsolidationService:
             if hasattr(entidad, '_chunk_origen'):
                 chunks_origen.add(entidad._chunk_origen)
             relevancia_total += entidad.relevancia_entidad
-            apariciones_total += entidad.apariciones_entidad
+            # apariciones_entidad no existe en el modelo - usar contador simple
+            apariciones_total += 1
         
         # Crear entidad fusionada
         entidad_fusionada = EntidadProcesada(
@@ -669,9 +670,8 @@ class ConsolidationService:
             texto_entidad=entidad_base.texto_entidad,
             tipo_entidad=entidad_base.tipo_entidad,
             relevancia_entidad=relevancia_total / len(entidades),  # Promedio
-            apariciones_entidad=apariciones_total,  # Suma
-            metadata_entidad=entidad_base.metadata_entidad,
-            vinculaciones_hecho=entidad_base.vinculaciones_hecho
+            id_fragmento_origen=entidad_base.id_fragmento_origen,  # CAMPO REQUERIDO
+            metadata_entidad=entidad_base.metadata_entidad
         )
         
         # Agregar metadata de chunks origen

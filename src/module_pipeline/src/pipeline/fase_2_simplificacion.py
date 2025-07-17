@@ -46,7 +46,7 @@ except ImportError:
 
 
 # Ruta al prompt de simplificación
-_PROMPT_SIMPLIFICACION_PATH = Path(__file__).resolve().parent.parent.parent.parent / "docs" / "PipelineAmpliación" / "Simplificación.md"
+_PROMPT_SIMPLIFICACION_PATH = Path(__file__).resolve().parent.parent.parent / "prompts" / "Simplificación.md"
 _PROMPT_SIMPLIFICACION_TEMPLATE: Optional[str] = None
 
 
@@ -283,8 +283,8 @@ def ejecutar_fase_2_simplificacion(
         
         # Determinar modelo según longitud del texto
         modelo = "llama-3.1-8b-instant"
-        if len(texto_original) > 6000:  # Umbral para modelo grande
-            modelo = "llama-3.1-70b-versatile"
+        if len(texto_original) > 10000:  # Umbral para modelo grande - casos excepcionales
+            modelo = "llama3-70b-8192"
             logger.info(f"Usando modelo grande debido a longitud del texto: {len(texto_original)} chars")
         
         # Llamar a Groq

@@ -278,8 +278,27 @@ class PipelineController:
             )
         
         # Actualizar campos que el pipeline debe generar según Context7
+        # Manejar payload que puede ser objeto Pydantic o dict
+        payload = resultado.get("payload")
+        resumen = "Procesado con 7 fases"
+        
+        if payload:
+            # Si es objeto Pydantic, acceder directamente al atributo
+            if hasattr(payload, 'resumen_generado_fragmento'):
+                resumen = payload.resumen_generado_fragmento
+            # Si es dict, usar get()
+            elif isinstance(payload, dict):
+                resumen = payload.get("resumen_generado_fragmento", "Procesado con 7 fases")
+            else:
+                # Caso por defecto si no es ni Pydantic ni dict
+                article_logger.warning(
+                    f"Payload tiene tipo inesperado: {type(payload).__name__}",
+                    payload_type=type(payload).__name__
+                )
+                resumen = "Procesado con 7 fases"
+        
         resultado["campos_generados"] = {
-            "resumen": resultado.get("payload", {}).get("resumen_generado_fragmento", "Procesado con 7 fases"),
+            "resumen": resumen,
             "categorias_asignadas": [],
             "puntuacion_relevancia": None,
             "fases_ejecutadas": resultado.get('fase_completada', 0),
@@ -928,6 +947,7 @@ class PipelineController:
             # Preparar datos para el payload
             # Metadatos del fragmento
             metadatos_fragmento = {
+                "id_fragmento": str(fragmento.id_fragmento),  # E012 FIX: Añadir id_fragmento faltante
                 "indice_secuencial_fragmento": fragmento.orden_en_articulo or 0,
                 "titulo_seccion_fragmento": fragmento.metadata_adicional.get("titulo_seccion"),
                 "contenido_texto_original_fragmento": fragmento.texto_original,

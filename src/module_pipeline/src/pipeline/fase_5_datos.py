@@ -44,7 +44,7 @@ except ImportError:
 
 
 # Ruta al prompt de datos
-_PROMPT_DATOS_PATH = Path(__file__).resolve().parent.parent.parent.parent / "docs" / "PipelineAmpliación" / "Datos.md"
+_PROMPT_DATOS_PATH = Path(__file__).resolve().parent.parent.parent / "prompts" / "Datos.md"
 _PROMPT_DATOS_TEMPLATE: Optional[str] = None
 
 
@@ -415,7 +415,7 @@ def ejecutar_fase_5_datos(
         logger.info(f"Extraídos {len(datos_raw)} datos cuantitativos")
         
         # Procesar datos
-        fragment_processor = FragmentProcessor()
+        fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
         datos_procesados = _procesar_datos_extraidos(
             datos_raw,
             resultado_simplificacion.id_fragmento,
@@ -575,7 +575,7 @@ async def extraer_datos_con_chunking_paralelo(
     
     client = Groq(api_key=api_key)
     contexto = contexto_articulo or {}
-    fragment_processor = FragmentProcessor()
+    fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
     
     # Procesar chunks en lotes
     todos_los_datos = []
@@ -717,7 +717,7 @@ def extraer_datos_con_chunking(
     
     client = Groq(api_key=api_key)
     contexto = contexto_articulo or {}
-    fragment_processor = FragmentProcessor()
+    fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
     
     # Procesar cada chunk
     for i, chunk in enumerate(chunks):

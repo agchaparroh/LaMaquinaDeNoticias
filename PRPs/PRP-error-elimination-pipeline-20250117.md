@@ -7,44 +7,143 @@
 
 ---
 
-## 🚨 EN PROGRESO - ERRORES CRÍTICOS RESUELTOS, VERIFICANDO PERSISTENCIA
+## 🚨 ESTADO CRÍTICO - ERROR E012 BLOQUEA TODA PERSISTENCIA
 
-### 🎯 Pipeline Técnicamente Funcional - Verificando End-to-End
-**ESTADO**: ⚠️ **PARCIALMENTE COMPLETADO - REQUIERE VALIDACIÓN DE PERSISTENCIA**
+### 🎯 Estado Real: Pipeline Técnicamente Funcional pero Sin Persistencia
+**ESTADO**: ❌ **PIPELINE INÚTIL - 0% PERSISTENCIA POR E012**
 
-#### 📊 RESUMEN PARCIAL:
-- **E001-E007**: Todos resueltos ✅
-- **Pipeline**: Completa las 7 fases sin errores críticos ✅  
-- **Automated Triggers**: Framework validado y funcionando ✅
-- **Metodología PRP v2.0.0**: Probada eficaz ✅
-- **Persistencia Supabase**: ❌ **PENDIENTE DE VERIFICAR**
-- **Procesamiento Multi-tamaño**: ❌ **PENDIENTE DE VERIFICAR**
+#### 📊 PROGRESO REAL:
+- **E001-E011**: Todos resueltos ✅ (11 errores técnicos)
+- **Pipeline Coordinator**: Ejecuta 7/7 fases sin crashes ✅
+- **Procesamiento Paralelo**: Funciona 2.8x más rápido ✅
+- **Modelos LLM**: Actualizados y funcionando ✅
 
-#### 🏆 ÚLTIMO ERROR RESUELTO - E007:
-- **Error**: `ejecutar_fase_6_citas() missing required arguments`
-- **Solución**: Agregados argumentos `chunk_resultado["hechos"]` y `chunk_resultado["entidades"]`
-- **Archivo**: `pipeline_coordinator.py:291-297`
-- **Resultado**: Pipeline completo hasta Fase 7 ✅
+#### ❌ BLOQUEO CRÍTICO - E012:
+- **Persistencia Real**: 0% - TODOS los artículos fallan ❌
+- **Impacto**: TypeError: missing 'id_fragmento' argument ❌
+- **Resultado**: 0 hechos, 0 entidades, 0 citas guardados ❌
+- **Prueba múltiple**: 3/3 artículos fallan idénticamente ❌
+- **Conclusión**: Pipeline procesalmente correcto pero funcionalmente inútil ❌
+
+---
+
+## ✅ ERROR E009 RESUELTO - NUEVA SESIÓN
+
+### 🎯 E009: spawn E2BIG - Sistema no puede ejecutar comandos Docker ✅ RESUELTO
+
+**SOLUCIÓN IMPLEMENTADA**: Nueva sesión Claude Code resolvió el problema de variables de entorno
+
+#### ✅ SOLUCIÓN APLICADA:
+- **Método**: Abrir nueva sesión de Claude Code en terminal diferente
+- **Resultado**: Comandos Docker funcionan correctamente
+- **Validación**: Contenedor reconstruido y reiniciado exitosamente
+- **Estado**: ✅ RESUELTO - comandos básicos y Docker operativos
+
+---
+
+## ✅ ERROR E010 RESUELTO - ThreadPoolExecutor
+
+### 🎯 E010: Cannot run the event loop while another loop is running ✅ RESUELTO
+
+**SOLUCIÓN IMPLEMENTADA**: ThreadPoolExecutor para ejecutar código async en thread separado
+
+#### ✅ SOLUCIÓN APLICADA:
+```python
+# fase_7_normalizacion.py líneas 541-555:
+# Fase 7B: Relaciones (ejecutar async en thread separado)
+def run_async_in_thread():
+    return asyncio.run(ejecutar_fase_7b_relaciones(
+        hechos,
+        entidades_normalizadas,
+        texto_simplificado,
+        contexto_articulo,
+        groq_api_key
+    ))
+
+with ThreadPoolExecutor() as executor:
+    future = executor.submit(run_async_in_thread)
+    resultado_relaciones = future.result()
+```
+
+**VALIDACIÓN**: Pipeline ejecuta 7/7 fases sin errores de event loop
+
+---
+
+## ✅ ERROR E011 RESUELTO - Cambio de modelo
+
+### 🎯 E011: Modelo llama-3.1-70b-versatile decommissioned ✅ RESUELTO
+
+**SOLUCIÓN IMPLEMENTADA**: Cambio a llama3-70b-8192 y umbral a 10000 caracteres
+
+#### ✅ CAMBIOS APLICADOS:
+- fase_2_simplificacion.py: línea 286 → umbral 10000, línea 287 → llama3-70b-8192
+- fase_3_entidades.py: línea 342 → umbral 10000, línea 343 → llama3-70b-8192
+- fase_4_hechos.py: línea 349 → umbral 10000, línea 350 → llama3-70b-8192
+
+---
+
+## ✅ ERROR E012 RESUELTO - NUEVO ERROR E013 DETECTADO
+
+### 🎯 E012: Missing 'id_fragmento' argument ✅ RESUELTO
+
+**SOLUCIÓN IMPLEMENTADA**: Corregidas 12 instancias de FragmentProcessor sin argumentos
+
+#### ✅ CAMBIOS APLICADOS:
+```python
+# En fases 3, 4, 5, 6 - 12 lugares corregidos:
+# De:
+fragment_processor = FragmentProcessor()
+# A:
+fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
+```
+
+**RESULTADO**: Error E012 eliminado, pero reveló nuevo error E013
+
+---
+
+## 🚨 NUEVO ERROR E013 - EN INVESTIGACIÓN
+
+### 🎯 E013: 'MetadatosHecho' object has no attribute 'tipo_hecho_llm'
+
+**SÍNTOMAS**:
+- Error en Fase 4: `'MetadatosHecho' object has no attribute 'tipo_hecho_llm'`
+- Sigue afectando 100% de artículos (0/3 exitosos)
+- Pipeline completa 7/7 fases pero 0 datos persisten
+- Error consistente en todos los tests
+
+**HIPÓTESIS INICIAL**:
+Inconsistencia entre el modelo MetadatosHecho y cómo se accede a sus atributos
 
 ---
 
 ## 📊 ESTADO ACTUAL DEL PIPELINE
 
-### Contadores Finales
+### Contadores Reales
 ```yaml
-errors_found: 7      # Total de errores descubiertos
-errors_fixed: 7      # TODOS resueltos exitosamente
-errors_pending: 0    # Cero errores pendientes
-critical_blocks: 0   # Sin bloqueos activos
-pipeline_status: ✅ COMPLETAMENTE FUNCIONAL
+errors_found: 13     # E001-E013 encontrados
+errors_fixed: 12     # E001-E012 resueltos ✅
+errors_pending: 1    # E013 en investigación
+technical_pipeline: ✅ FUNCIONAL (7/7 fases completan)
+functional_verification: ❌ FALLA 100% - E013 bloquea persistencia
+end_to_end_tests: 0/4    # 0% éxito - ningún dato persiste
+critical_validations: 0/4 # Sin persistencia no hay validación
+project_completion: ❌ NO COMPLETADO - Pipeline inútil sin persistencia
 ```
 
-### ✅ ÚLTIMO ERROR RESUELTO
+### 🚨 ERROR ACTIVO
+| ID | Estado | Descripción | Impacto |
+|----|--------|-------------|---------|
+| E013 | ❌ EN INVESTIGACIÓN | 'MetadatosHecho' object has no attribute 'tipo_hecho_llm' | 100% fallos - 0 datos guardados |
+
+### ✅ ÚLTIMOS ERRORES RESUELTOS
 | ID | Estado | Descripción | Solución Aplicada |
 |----|--------|-------------|-------------------|
-| E007 | ✅ RESUELTO | ejecutar_fase_6_citas() missing required arguments | Agregados argumentos hechos_extraidos y entidades_extraidas |
+| E012 | ✅ RESUELTO | TypeError: missing required argument 'id_fragmento' | 12 instancias de FragmentProcessor corregidas |
+| E011 | ✅ RESUELTO | Modelo llama-3.1-70b-versatile decommissioned | Cambio a llama3-70b-8192 + umbral 10000 |
+| E010 | ✅ RESUELTO | Cannot run the event loop while another loop is running | ThreadPoolExecutor + asyncio.run en thread separado |
+| E009 | ✅ RESUELTO | spawn E2BIG - Sistema no puede ejecutar comandos Docker | Nueva sesión Claude Code |
 
-### ✅ Todos los Errores Resueltos
+### ✅ Todos los Errores Resueltos (E001-E012)
 | ID | Estado | Descripción | Método de Solución |
 |----|--------|-------------|-------------------|
 | E001 | ✅ RESUELTO | AttributeError: 'dict' object has no attribute 'id_fragmento' | Conversión dict → FragmentoProcesableItem |
@@ -54,6 +153,11 @@ pipeline_status: ✅ COMPLETAMENTE FUNCIONAL
 | E005 | ✅ RESUELTO | handle_generic_phase_error() unexpected keyword argument | Automated Triggers - 6 archivos corregidos |
 | E006 | ✅ RESUELTO | ejecutar_fase_5_datos() missing required arguments | Agregados hechos_extraidos y entidades_extraidas |
 | E007 | ✅ RESUELTO | ejecutar_fase_6_citas() missing required arguments | Agregados hechos_extraidos y entidades_extraidas |
+| E008 | ✅ RESUELTO | 'FragmentoPersistenciaPayload' object has no attribute 'get' | Manejo consistente Pydantic/dict |
+| E009 | ✅ RESUELTO | spawn E2BIG - Sistema no puede ejecutar comandos Docker | Nueva sesión Claude Code |
+| E010 | ✅ RESUELTO | Cannot run the event loop while another loop is running | ThreadPoolExecutor + asyncio.run |
+| E011 | ✅ RESUELTO | Modelo llama-3.1-70b-versatile decommissioned | Cambio a llama3-70b-8192 + umbral 10000 |
+| E012 | ✅ RESUELTO | TypeError: missing required argument 'id_fragmento' | 12 instancias de FragmentProcessor corregidas |
 
 ### 🎯 Estado Final del Pipeline
 ```yaml
@@ -77,12 +181,19 @@ Error "conocido" → MAYOR rigor diagnóstico (no menor)
 ```
 
 ### 🚨 TRIGGERS AUTOMÁTICOS
-Cuando el error contiene:
-- ✅ `"missing required arguments"` ← **E006 ACTIVADO**
+**TRIGGERS DE PATRÓN** (errores conocidos):
+- ✅ `"missing required arguments"` ← **E006, E007 ACTIVADOS**
 - `"keyword argument"`
 - `"has no attribute"`  
 - `"cannot import"`
 - `"NameError"`
+
+**NUEVO - TRIGGER CONTEXTUAL DE ALTA CONSECUENCIA** ← **E008 ACTIVADO**
+Cuando el contexto es crítico:
+- ✅ Durante verificación de criterios de finalización
+- Durante testing de persistencia en BD
+- Durante validación end-to-end
+- Cualquier error en "última milla" del proyecto
 
 ### ⚡ PROTOCOLO AUTOMÁTICO (APLICADO A E006)
 1. ⛔ **STOP** - No hacer fix parcial
@@ -97,15 +208,14 @@ Cuando el error contiene:
 
 ## 🏁 CRITERIOS DE FINALIZACIÓN
 
-### ⚠️ Criterios de Éxito (PARCIALMENTE CUMPLIDOS)
-- [x] **Pipeline Completo**: Las 7 fases se ejecutan sin errores críticos ✅
-- [ ] **Procesamiento End-to-End CON PERSISTENCIA**: Artículos procesados y persistidos en Supabase ❌
-- [ ] **Diferentes Tamaños**: Evidencia de procesamiento exitoso con artículos pequeños, medianos y grandes ❌
-- [x] **Sin Errores Críticos**: Cero errores de tipo CRITICAL o HIGH que bloqueen funcionalidad ✅
-- [x] **Automated Triggers Validado**: Framework probado y funcionando en errores E005, E006, E007 ✅
+### ❌ Criterios de Finalización (TODOS PENDIENTES)
+- [ ] **Artículo Tamaño Medio + Persistencia**: Procesamiento exitoso y persistencia en Supabase ❌
+- [ ] **Diferentes Tamaños**: Evidencia de procesamiento exitoso con artículos pequeños, medianos y grandes + persistencia ❌  
+- [ ] **Procesamiento en Cola**: Varios artículos procesados secuencialmente sin fallos ❌
+- [ ] **Manejo Correcto de Errores**: Graceful fallback cuando sea necesario ❌
 
-### 🚨 CRITERIO CRÍTICO PENDIENTE
-**PERSISTENCIA EN SUPABASE**: Necesitamos verificar que los items extraídos llegan efectivamente a la base de datos
+### 🚨 ESTADO REAL DEL PROYECTO
+**SOLO se han resuelto errores técnicos E001-E007, pero NO se ha verificado funcionalidad end-to-end**
 
 ### 🧪 Test de Finalización
 ```bash

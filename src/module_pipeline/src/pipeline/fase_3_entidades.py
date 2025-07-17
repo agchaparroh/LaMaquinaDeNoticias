@@ -40,7 +40,7 @@ except ImportError:
 
 
 # Ruta al prompt de entidades
-_PROMPT_ENTIDADES_PATH = Path(__file__).resolve().parent.parent.parent.parent / "docs" / "PipelineAmpliación" / "Entidades.md"
+_PROMPT_ENTIDADES_PATH = Path(__file__).resolve().parent.parent.parent / "prompts" / "Entidades.md"
 _PROMPT_ENTIDADES_TEMPLATE: Optional[str] = None
 
 
@@ -257,13 +257,11 @@ def _procesar_entidades_extraidas(
         try:
             # Crear metadatos específicos
             metadatos = MetadatosEntidad(
-                tipo_entidad_llm=entidad.get("tipo", "DESCONOCIDO"),
-                nombre_canónico=entidad.get("nombre", ""),
-                alias_llm=entidad.get("alias", []),
-                descripcion_llm=entidad.get("descripcion"),
-                confianza_extraccion=0.9,  # Alta confianza por defecto
-                fecha_nacimiento_llm=entidad.get("fecha_nacimiento"),
-                fecha_disolucion_llm=entidad.get("fecha_disolucion")
+                tipo=entidad.get("tipo", "DESCONOCIDO"),
+                alias=entidad.get("alias", []),
+                fecha_nacimiento=entidad.get("fecha_nacimiento"),
+                fecha_disolucion=entidad.get("fecha_disolucion"),
+                descripcion_estructurada=entidad.get("descripcion", "").split(" - ") if entidad.get("descripcion") else []
             )
             
             # Crear entidad procesada
@@ -339,8 +337,8 @@ def ejecutar_fase_3_entidades(
         
         # Determinar modelo según longitud
         modelo = "llama-3.1-8b-instant"
-        if len(resultado_simplificacion.texto_simplificado) > 4000:
-            modelo = "llama-3.1-70b-versatile"
+        if len(resultado_simplificacion.texto_simplificado) > 10000:
+            modelo = "llama3-70b-8192"
             logger.info(f"Usando modelo grande para extracción de entidades")
         
         # Llamar a Groq
@@ -351,7 +349,7 @@ def ejecutar_fase_3_entidades(
         logger.info(f"Extraídas {len(entidades_raw)} entidades")
         
         # Procesar entidades
-        fragment_processor = FragmentProcessor()
+        fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
         entidades_procesadas = _procesar_entidades_extraidas(
             entidades_raw,
             resultado_simplificacion.id_fragmento,
@@ -516,7 +514,7 @@ async def extraer_entidades_con_chunking_paralelo(
     
     client = Groq(api_key=api_key)
     contexto = contexto_articulo or {}
-    fragment_processor = FragmentProcessor()
+    fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
     
     # Procesar chunks en lotes para respetar concurrencia
     todas_las_entidades = []
@@ -646,7 +644,7 @@ def extraer_entidades_con_chunking(
     
     client = Groq(api_key=api_key)
     contexto = contexto_articulo or {}
-    fragment_processor = FragmentProcessor()
+    fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
     
     # Procesar cada chunk
     for i, chunk in enumerate(chunks):

@@ -44,7 +44,7 @@ except ImportError:
 
 
 # Ruta al prompt de citas
-_PROMPT_CITAS_PATH = Path(__file__).resolve().parent.parent.parent.parent / "docs" / "PipelineAmpliación" / "Citas.md"
+_PROMPT_CITAS_PATH = Path(__file__).resolve().parent.parent.parent / "prompts" / "Citas.md"
 _PROMPT_CITAS_TEMPLATE: Optional[str] = None
 
 
@@ -414,7 +414,7 @@ def ejecutar_fase_6_citas(
         logger.info(f"Extraídas {len(citas_raw)} citas textuales")
         
         # Procesar citas
-        fragment_processor = FragmentProcessor()
+        fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
         citas_procesadas = _procesar_citas_extraidas(
             citas_raw,
             resultado_simplificacion.id_fragmento,
@@ -599,7 +599,7 @@ async def extraer_citas_con_chunking_paralelo(
     
     client = Groq(api_key=api_key)
     contexto = contexto_articulo or {}
-    fragment_processor = FragmentProcessor()
+    fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
     
     # Procesar chunks en lotes
     todas_las_citas = []
@@ -741,7 +741,7 @@ def extraer_citas_con_chunking(
     
     client = Groq(api_key=api_key)
     contexto = contexto_articulo or {}
-    fragment_processor = FragmentProcessor()
+    fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
     
     # Procesar cada chunk
     for i, chunk in enumerate(chunks):

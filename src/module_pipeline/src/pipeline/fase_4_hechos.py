@@ -40,7 +40,7 @@ except ImportError:
 
 
 # Ruta al prompt de hechos
-_PROMPT_HECHOS_PATH = Path(__file__).resolve().parent.parent.parent.parent / "docs" / "PipelineAmpliación" / "Hechos.md"
+_PROMPT_HECHOS_PATH = Path(__file__).resolve().parent.parent.parent / "prompts" / "Hechos.md"
 _PROMPT_HECHOS_TEMPLATE: Optional[str] = None
 
 
@@ -346,8 +346,8 @@ def ejecutar_fase_4_hechos(
         
         # Determinar modelo según longitud
         modelo = "llama-3.1-8b-instant"
-        if len(resultado_simplificacion.texto_simplificado) > 4000:
-            modelo = "llama-3.1-70b-versatile"
+        if len(resultado_simplificacion.texto_simplificado) > 10000:
+            modelo = "llama3-70b-8192"
             logger.info(f"Usando modelo grande para extracción de hechos")
         
         # Llamar a Groq
@@ -358,7 +358,7 @@ def ejecutar_fase_4_hechos(
         logger.info(f"Extraídos {len(hechos_raw)} hechos")
         
         # Procesar hechos
-        fragment_processor = FragmentProcessor()
+        fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
         hechos_procesados = _procesar_hechos_extraidos(
             hechos_raw,
             resultado_simplificacion.id_fragmento,
@@ -524,7 +524,7 @@ async def extraer_hechos_con_chunking_paralelo(
     
     client = Groq(api_key=api_key)
     contexto = contexto_articulo or {}
-    fragment_processor = FragmentProcessor()
+    fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
     
     # Procesar chunks en lotes para respetar concurrencia
     todos_los_hechos = []
@@ -654,7 +654,7 @@ def extraer_hechos_con_chunking(
     
     client = Groq(api_key=api_key)
     contexto = contexto_articulo or {}
-    fragment_processor = FragmentProcessor()
+    fragment_processor = FragmentProcessor(resultado_simplificacion.id_fragmento)
     
     # Procesar cada chunk
     for i, chunk in enumerate(chunks):

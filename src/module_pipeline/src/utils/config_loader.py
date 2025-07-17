@@ -18,7 +18,7 @@ Variables de entorno específicas del pipeline:
 - PIPELINE_CHUNKING_QUOTES_THRESHOLD (default: 30)
 - PIPELINE_CHUNKING_DATA_THRESHOLD (default: 30)
 - PIPELINE_GROQ_MODEL_DEFAULT (default: llama-3.1-8b-instant)
-- PIPELINE_GROQ_MODEL_LARGE (default: llama-3.1-70b-versatile)
+- PIPELINE_GROQ_MODEL_LARGE (default: llama-3.2-90b-text-preview)
 - PIPELINE_GROQ_MODEL_TOKEN_THRESHOLD (default: 8000)
 - PIPELINE_CONSOLIDATION_SIMILARITY_THRESHOLD (default: 0.85)
 - PIPELINE_MAX_RETRIES_PER_PHASE (default: 3)
@@ -90,7 +90,7 @@ class ChunkingConfig:
 class GroqModelConfig:
     """Configuración para modelos Groq utilizados en el pipeline."""
     default_model: str = field(default="llama-3.1-8b-instant")
-    large_model: str = field(default="llama-3.1-70b-versatile")
+    large_model: str = field(default="llama3-70b-8192")
     token_threshold: int = field(default=8000)
     
     def __post_init__(self):
@@ -173,7 +173,7 @@ def load_pipeline_config() -> PipelineConfig:
     # Configuración de modelos Groq
     groq_config = GroqModelConfig(
         default_model=_get_str_env('PIPELINE_GROQ_MODEL_DEFAULT', 'llama-3.1-8b-instant'),
-        large_model=_get_str_env('PIPELINE_GROQ_MODEL_LARGE', 'llama-3.1-70b-versatile'),
+        large_model=_get_str_env('PIPELINE_GROQ_MODEL_LARGE', 'llama3-70b-8192'),
         token_threshold=_get_int_env('PIPELINE_GROQ_MODEL_TOKEN_THRESHOLD', 8000)
     )
     
@@ -277,8 +277,7 @@ def validate_pipeline_config(config: PipelineConfig) -> bool:
     known_models = [
         'llama-3.1-8b-instant',
         'llama-3.1-70b-versatile',
-        'llama-3.2-1b-preview',
-        'llama-3.2-3b-preview'
+        'llama3-70b-8192'
     ]
     
     if config.groq_models.default_model not in known_models:

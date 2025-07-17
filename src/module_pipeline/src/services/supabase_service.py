@@ -9,11 +9,12 @@ Basado en el patrón establecido en module_scraper, adaptado para las necesidade
 específicas del pipeline de procesamiento de artículos y fragmentos.
 """
 
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, List, Tuple, Union
 from functools import lru_cache
 import time
 from supabase import create_client, Client
 from loguru import logger
+from pydantic import BaseModel
 
 from ..utils.config import SUPABASE_URL, SUPABASE_KEY, MAX_RETRIES, MAX_WAIT_SECONDS
 # Importar excepciones personalizadas y decoradores
@@ -106,22 +107,37 @@ class SupabaseService:
             )
         return self.client
 
-    def _validar_estructura_payload(self, payload: Dict[str, Any], tipo: str) -> None:
+    def _validar_estructura_payload(self, payload: Union[Dict[str, Any], BaseModel], tipo: str) -> Dict[str, Any]:
         """
         Valida la estructura básica del payload antes de enviarlo a Supabase.
+        Convierte objetos Pydantic a diccionarios si es necesario.
         
         Args:
-            payload: Payload a validar
+            payload: Payload a validar (puede ser dict o Pydantic model)
             tipo: 'articulo' o 'fragmento'
+            
+        Returns:
+            El payload como diccionario
             
         Raises:
             ValidationError: Si la estructura es inválida
         """
-        if not isinstance(payload, dict):
+        # Convertir Pydantic a dict si es necesario
+        if isinstance(payload, BaseModel):
+            payload_dict = payload.model_dump()
+        elif isinstance(payload, dict):
+            payload_dict = payload
+        else:
             raise ValidationError(
-                message=f"Payload debe ser un diccionario, recibido: {type(payload).__name__}",
+                message=f"Payload debe ser un diccionario o modelo Pydantic, recibido: {type(payload).__name__}",
                 phase=ErrorPhase.GENERAL
             )
+        
+        # El resto de la validación continúa igual pero usando payload_dict
+        payload = payload_dict
+        
+        # Retornar el payload como diccionario para que pueda ser usado en las validaciones
+        # posteriores
         
         # Validar campos requeridos según el tipo
         campos_requeridos = []
@@ -152,6 +168,8 @@ class SupabaseService:
                     validation_errors=[{"field": lista, "error": f"Expected list, got {type(payload[lista]).__name__}"}],
                     phase=ErrorPhase.GENERAL
                 )
+        
+        return payload
     
     def _validar_respuesta_insercion(self, payload: Dict[str, Any], respuesta: Dict[str, Any], tipo: str) -> None:
         """
@@ -194,7 +212,7 @@ class SupabaseService:
                 self.logger.warning(f"  - {warning}")
     
     @retry_supabase_rpc(connection_retries=1)  # Según documentación: 1 reintento para conexión
-    def insertar_articulo_completo(self, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def insertar_articulo_completo(self, payload: Union[Dict[str, Any], BaseModel]) -> Optional[Dict[str, Any]]:
         """
         Llama a la RPC insertar_articulo_completo para persistir un artículo procesado.
         
@@ -229,13 +247,13 @@ class SupabaseService:
         try:
             self.logger.info("Llamando RPC insertar_articulo_completo")
             
-            # Validar estructura del payload
-            self._validar_estructura_payload(payload, 'articulo')
+            # Validar estructura del payload y convertir a dict si es necesario
+            payload_dict = self._validar_estructura_payload(payload, 'articulo')
             
             # Llamar RPC
             response = self.client.rpc(
                 'insertar_articulo_completo',
-                {'datos_json': payload}
+                {'datos_json': payload_dict}
             ).execute()
             
             if response.data:
@@ -244,7 +262,7 @@ class SupabaseService:
                     result = result[0]
                 
                 # Validar respuesta de inserción
-                self._validar_respuesta_insercion(payload, result, 'articulo')
+                self._validar_respuesta_insercion(payload_dict, result, 'articulo')
                 
                 self.logger.info(
                     f"Artículo insertado exitosamente. "
@@ -262,7 +280,7 @@ class SupabaseService:
             raise
 
     @retry_supabase_rpc(connection_retries=1)  # Según documentación: 1 reintento para conexión
-    def insertar_fragmento_completo(self, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def insertar_fragmento_completo(self, payload: Union[Dict[str, Any], BaseModel]) -> Optional[Dict[str, Any]]:
         """
         Llama a la RPC insertar_fragmento_completo para persistir un fragmento procesado.
         
@@ -282,13 +300,13 @@ class SupabaseService:
         try:
             self.logger.info("Llamando RPC insertar_fragmento_completo")
             
-            # Validar estructura del payload
-            self._validar_estructura_payload(payload, 'fragmento')
+            # Validar estructura del payload y convertir a dict si es necesario
+            payload_dict = self._validar_estructura_payload(payload, 'fragmento')
             
             # Llamar RPC
             response = self.client.rpc(
                 'insertar_fragmento_completo',
-                {'datos_json': payload}
+                {'datos_json': payload_dict}
             ).execute()
             
             if response.data:
@@ -297,7 +315,7 @@ class SupabaseService:
                     result = result[0]
                 
                 # Validar respuesta de inserción
-                self._validar_respuesta_insercion(payload, result, 'fragmento')
+                self._validar_respuesta_insercion(payload_dict, result, 'fragmento')
                 
                 self.logger.info(
                     f"Fragmento insertado exitosamente. "

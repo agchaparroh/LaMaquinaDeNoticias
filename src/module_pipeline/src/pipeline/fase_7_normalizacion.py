@@ -57,8 +57,8 @@ except ImportError:
 
 
 # Rutas a los prompts de relaciones
-_PROMPT_RELACIONES_ESTRUCTURALES_PATH = Path(__file__).resolve().parent.parent.parent.parent / "docs" / "PipelineAmpliación" / "7B.1_Relaciones-Estructurales.md"
-_PROMPT_RELACIONES_TEMPORALES_PATH = Path(__file__).resolve().parent.parent.parent.parent / "docs" / "PipelineAmpliación" / "7B.2_Relaciones-Temporales.md"
+_PROMPT_RELACIONES_ESTRUCTURALES_PATH = Path(__file__).resolve().parent.parent.parent / "prompts" / "7B.1_Relaciones-Estructurales.md"
+_PROMPT_RELACIONES_TEMPORALES_PATH = Path(__file__).resolve().parent.parent.parent / "prompts" / "7B.2_Relaciones-Temporales.md"
 
 _PROMPT_RELACIONES_ESTRUCTURALES: Optional[str] = None
 _PROMPT_RELACIONES_TEMPORALES: Optional[str] = None
@@ -192,7 +192,7 @@ async def _detectar_relaciones_estructurales(
         tokens_estimados = len(contexto_json) // 4
         modelo = "llama-3.1-8b-instant"
         if tokens_estimados > 8000:
-            modelo = "llama-3.1-70b-versatile"
+            modelo = "llama3-70b-8192"
             logger.info(f"Usando modelo grande para relaciones estructurales ({tokens_estimados} tokens)")
         
         # Preparar prompt
@@ -283,7 +283,7 @@ async def _detectar_relaciones_temporales(
         tokens_estimados = (len(contexto_hechos) + len(texto_simplificado)) // 4
         modelo = "llama-3.1-8b-instant"
         if tokens_estimados > 8000:
-            modelo = "llama-3.1-70b-versatile"
+            modelo = "llama3-70b-8192"
             logger.info(f"Usando modelo grande para relaciones temporales ({tokens_estimados} tokens)")
         
         # Preparar prompt
@@ -537,22 +537,19 @@ def ejecutar_fase_7_completa(
         
         entidades_normalizadas = resultado_normalizacion["entidades_normalizadas"]
         
-        # Fase 7B: Relaciones (crear event loop para ejecutar async)
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
-        try:
-            resultado_relaciones = loop.run_until_complete(
-                ejecutar_fase_7b_relaciones(
-                    hechos,
-                    entidades_normalizadas,
-                    texto_simplificado,
-                    contexto_articulo,
-                    groq_api_key
-                )
-            )
-        finally:
-            loop.close()
+        # Fase 7B: Relaciones (ejecutar async en thread separado)
+        def run_async_in_thread():
+            return asyncio.run(ejecutar_fase_7b_relaciones(
+                hechos,
+                entidades_normalizadas,
+                texto_simplificado,
+                contexto_articulo,
+                groq_api_key
+            ))
+
+        with ThreadPoolExecutor() as executor:
+            future = executor.submit(run_async_in_thread)
+            resultado_relaciones = future.result()
         
         # Crear resultado final
         resultado = ResultadoFase4Normalizacion(
