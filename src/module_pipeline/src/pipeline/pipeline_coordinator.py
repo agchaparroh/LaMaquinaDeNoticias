@@ -145,7 +145,7 @@ class PipelineCoordinator:
                 phase_logger.info(
                     "Triaje completado",
                     es_relevante=resultado_fase1.es_relevante,
-                    justificacion=resultado_fase1.justificacion_relevancia[:50] + "..." if resultado_fase1.justificacion_relevancia else None
+                    justificacion=resultado_fase1.justificacion_triaje[:50] + "..." if resultado_fase1.justificacion_triaje else None
                 )
             
             resultado["resultados_fases"]["fase_1"] = resultado_fase1
@@ -155,7 +155,7 @@ class PipelineCoordinator:
             if not resultado_fase1.es_relevante:
                 logger.info(
                     f"Fragmento marcado como no relevante. Pipeline terminado.",
-                    razon=resultado_fase1.justificacion_relevancia
+                    razon=resultado_fase1.justificacion_triaje
                 )
                 resultado["exito"] = True
                 resultado["payload"] = self._crear_payload_no_relevante(fragmento, resultado_fase1)
@@ -176,7 +176,7 @@ class PipelineCoordinator:
                     phase_logger.info("Aplicando chunking inteligente al texto")
                     chunks = self.chunking_service.dividir_en_chunks(
                         resultado_fase1.texto_para_siguiente_fase,
-                        resultado_fase1.metadata_analisis.get("analisis_spacy", {})
+                        resultado_fase1.metadatos_specificos_triaje.analisis_contenido if resultado_fase1.metadatos_specificos_triaje else {}
                     )
                     phase_logger.info(f"Texto dividido en {len(chunks)} chunks")
                     resultado["metadatos"]["chunks_count"] = len(chunks)
@@ -196,8 +196,8 @@ class PipelineCoordinator:
                             id_fragmento=fragmento_uuid,
                             texto_para_siguiente_fase=chunk_texto,
                             es_relevante=True,
-                            justificacion_relevancia="Chunk de fragmento relevante",
-                            metadata_analisis=resultado_fase1.metadata_analisis
+                            justificacion_triaje="Chunk de fragmento relevante",
+                            metadatos_specificos_triaje=resultado_fase1.metadatos_specificos_triaje
                         )
                         
                         resultado_simplif = ejecutar_fase_2_simplificacion(
@@ -273,6 +273,8 @@ class PipelineCoordinator:
                         
                         resultado_datos = ejecutar_fase_5_datos(
                             resultado_simplif,
+                            chunk_resultado["hechos"],
+                            chunk_resultado["entidades"],
                             contexto_articulo=contexto_articulo,
                             groq_api_key=groq_api_key
                         )
@@ -288,6 +290,8 @@ class PipelineCoordinator:
                         
                         resultado_citas = ejecutar_fase_6_citas(
                             resultado_simplif,
+                            chunk_resultado["hechos"],
+                            chunk_resultado["entidades"],
                             contexto_articulo=contexto_articulo,
                             groq_api_key=groq_api_key
                         )
@@ -437,23 +441,23 @@ class PipelineCoordinator:
         Returns:
             Configuración del flujo adaptativo
         """
-        analisis = resultado_fase1.metadata_analisis.get("analisis_spacy", {})
-        metricas = analisis.get("metricas_texto", {})
+        analisis = resultado_fase1.metadatos_specificos_triaje.analisis_contenido if resultado_fase1.metadatos_specificos_triaje else {}
+        metricas = analisis
         
-        # Determinar si necesita simplificación
-        complejidad = metricas.get("complejidad_promedio", 0)
-        simplificacion_necesaria = complejidad > 0.7
+        # Determinar si necesita simplificación (basado en densidad de entidades)
+        densidad_entidades = metricas.get("densidad_entidades", 0)
+        simplificacion_necesaria = densidad_entidades > 10  # Más de 10 entidades por 100 tokens
         
         # Determinar si necesita chunking
-        num_tokens = metricas.get("num_tokens", 0)
+        num_tokens = metricas.get("conteo_tokens", 0)
         chunking_necesario = num_tokens > 1000
         
         # Determinar si ejecutar Fase 5 (datos cuantitativos)
-        numeros_detectados = metricas.get("numeros_detectados", 0)
+        numeros_detectados = metricas.get("conteo_datos", 0)
         fase_5_necesaria = numeros_detectados > 0
         
         # Determinar si ejecutar Fase 6 (citas)
-        citas_potenciales = analisis.get("citas_potenciales", 0)
+        citas_potenciales = metricas.get("conteo_citas", 0)
         fase_6_necesaria = citas_potenciales > 0
         
         # Consolidación necesaria si hay chunking

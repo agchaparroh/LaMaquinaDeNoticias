@@ -20,6 +20,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 import time
 import threading
+import uuid
 from loguru import logger
 
 # Importar servicios existentes
@@ -27,6 +28,8 @@ from .services.groq_service import GroqService
 from .services.supabase_service import get_supabase_service, SupabaseService
 # Importar FragmentProcessor para gestión coherente de IDs
 from .utils.fragment_processor import FragmentProcessor
+# Importar modelos de entrada para validación
+from .models.entrada import FragmentoProcesableItem
 # Importar utilidades de logging estructurado
 from .utils.logging_config import get_logger, log_phase
 # Importar JobTrackerService para procesamiento asíncrono
@@ -179,7 +182,7 @@ class PipelineController:
         # Crear FragmentoProcesableItem desde el artículo completo
         # Según Context7 5.3: "El procesamiento se divide en fases secuenciales"
         fragmento_data = {
-            "id_fragmento": f"{articulo_id}_fragmento_unico",
+            "id_fragmento": str(uuid.uuid4()),  # Generar UUID válido
             "texto_original": contenido,
             "id_articulo_fuente": str(articulo_id),
             "orden_en_articulo": 0,  # Único fragmento
@@ -213,6 +216,14 @@ class PipelineController:
         
         article_logger.debug("Artículo convertido a FragmentoProcesableItem con todos los metadatos")
         
+        # Convertir dict a objeto FragmentoProcesableItem antes de pasar al pipeline
+        try:
+            fragmento = FragmentoProcesableItem(**fragmento_data)
+            article_logger.debug(f"Fragmento validado correctamente: ID={fragmento.id_fragmento}")
+        except Exception as e:
+            article_logger.error(f"Error al validar fragmento: {str(e)}")
+            raise
+        
         # Medir tiempo de procesamiento del artículo
         tiempo_inicio = time.time()
         
@@ -222,7 +233,7 @@ class PipelineController:
         
         # Llamar al pipeline coordinator
         resultado_pipeline = self.pipeline_coordinator.ejecutar_pipeline_completo(
-            fragmento=fragmento_data,
+            fragmento=fragmento,  # Ahora pasamos el objeto, no el dict
             modelo_spacy="es_core_news_lg",
             request_id=request_id,
             groq_api_key=groq_api_key,

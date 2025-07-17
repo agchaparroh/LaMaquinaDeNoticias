@@ -35,7 +35,79 @@
       },
       "resolved": false,
       "resolved_at": null
+    },
+    {
+      "id": "6988594a-014e-4a1a-a025-a247c3b86979",
+      "alert_type": "chunking_error",
+      "severity": "warning",
+      "title": "Chunking System Error",
+      "description": "Error en sistema de chunking: Error en procesamiento de artículo en background: 'FragmentoPersistenciaPayload' object has no attribute 'get'",
+      "timestamp": "2025-07-17T01:20:33.285829",
+      "labels": {
+        "component": "chunking_service",
+        "phase": "unknown"
+      },
+      "annotations": {
+        "message": "Error en procesamiento de artículo en background: 'FragmentoPersistenciaPayload' object has no attribute 'get'",
+        "chunks_count": "unknown"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "fb8ff099-7f2e-42e5-939f-bac7efd08ccb",
+      "alert_type": "chunking_error",
+      "severity": "warning",
+      "title": "Chunking System Error",
+      "description": "Error en sistema de chunking: Error en Fase6_Citas_Chunk0: ejecutar_fase_6_citas() missing 2 required positional arguments: 'hechos_extraidos' and 'entidades_extraidas'",
+      "timestamp": "2025-07-17T01:24:01.680999",
+      "labels": {
+        "component": "chunking_service",
+        "phase": "unknown"
+      },
+      "annotations": {
+        "message": "Error en Fase6_Citas_Chunk0: ejecutar_fase_6_citas() missing 2 required positional arguments: 'hechos_extraidos' and 'entidades_extraidas'",
+        "chunks_count": "unknown"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "ffd5e006-6978-4909-9bc3-5cfc20bb7f4d",
+      "alert_type": "groq_api_failure",
+      "severity": "critical",
+      "title": "Groq API Failure Detected",
+      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 48623958-2c9f-4901-93e2-17559f6aca62: Error al parsear respuesta LLM: ** El artículo reporta el fallecimiento de Suso Díaz, un líder sindical importa",
+      "timestamp": "2025-07-17T02:13:29.234703",
+      "labels": {
+        "service": "groq_api",
+        "error_type": "unknown"
+      },
+      "annotations": {
+        "message": "GroqAPIError durante evaluación de relevancia para 48623958-2c9f-4901-93e2-17559f6aca62: Error al parsear respuesta LLM: ** El artículo reporta el fallecimiento de Suso Díaz, un líder sindical importante en España, y la reacción de Pedro Sánchez, el presidente del Gobierno. El contenido es informativo y relevante para el ámbito hispánico.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS CLAVE:**\n\n- Fallecimiento de Suso Díaz a los 80 años\n- Reacción de Pedro Sánchez, quien ha expresado su \"cariño\" y \"respeto\" ",
+        "timestamp": "2025-07-17T02:13:29.230490+00:00"
+      },
+      "resolved": false,
+      "resolved_at": null
+    },
+    {
+      "id": "dc951822-f3c5-4e68-a6e7-a1ad8522d807",
+      "alert_type": "phase_failure",
+      "severity": "warning",
+      "title": "Phase fase_1_triaje Failure",
+      "description": "Error en fase_1_triaje: Fallback: Groq API relevance evaluation failed for article 48623958-2c9f-4901-93e2-17559f6aca62. Accepting article by policy.",
+      "timestamp": "2025-07-17T02:13:29.241059",
+      "labels": {
+        "phase": "fase_1_triaje",
+        "pipeline_type": "unknown"
+      },
+      "annotations": {
+        "message": "Fallback: Groq API relevance evaluation failed for article 48623958-2c9f-4901-93e2-17559f6aca62. Accepting article by policy.",
+        "request_id": "NO_REQUEST_ID"
+      },
+      "resolved": false,
+      "resolved_at": null
     }
   ],
-  "last_updated": "2025-07-17T00:07:20.463727"
+  "last_updated": "2025-07-17T02:13:29.241821"
 }

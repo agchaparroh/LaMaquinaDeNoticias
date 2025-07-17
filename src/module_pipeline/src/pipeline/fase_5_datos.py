@@ -449,15 +449,10 @@ def ejecutar_fase_5_datos(
     except Exception as e:
         logger.error(f"Error en Fase 5: {str(e)}")
         error_info = handle_generic_phase_error(
-            error=e,
+            article_id=str(resultado_simplificacion.id_fragmento),
             phase=ErrorPhase.FASE_3_CITAS_DATOS,  # Ahora es fase 5
-            fragment_id=str(resultado_simplificacion.id_fragmento),
-            context={
-                "texto_length": len(resultado_simplificacion.texto_simplificado),
-                "contexto": contexto_articulo,
-                "hechos_count": len(hechos_extraidos),
-                "entidades_count": len(entidades_extraidas)
-            }
+            step_failed="extraccion_datos",
+            exception=e
         )
         
         # Retornar resultado vacío con error

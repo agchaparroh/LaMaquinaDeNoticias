@@ -346,13 +346,10 @@ def ejecutar_fase_2_simplificacion(
     except Exception as e:
         logger.error(f"Error en Fase 2: {str(e)}")
         error_info = handle_generic_phase_error(
-            error=e,
+            article_id=str(resultado_triaje.id_fragmento),
             phase=ErrorPhase.SIMPLIFICACION,
-            fragment_id=str(resultado_triaje.id_fragmento),
-            context={
-                "texto_length": len(resultado_triaje.texto_para_siguiente_fase or ""),
-                "fecha_articulo": fecha_articulo
-            }
+            step_failed="proceso_simplificacion",
+            exception=e
         )
         
         # Retornar resultado fallido

@@ -392,13 +392,10 @@ def ejecutar_fase_4_hechos(
     except Exception as e:
         logger.error(f"Error en Fase 4: {str(e)}")
         error_info = handle_generic_phase_error(
-            error=e,
+            article_id=str(resultado_simplificacion.id_fragmento),
             phase=ErrorPhase.FASE_2_EXTRACCION,  # Ahora es fase 4
-            fragment_id=str(resultado_simplificacion.id_fragmento),
-            context={
-                "texto_length": len(resultado_simplificacion.texto_simplificado),
-                "contexto": contexto_articulo
-            }
+            step_failed="extraccion_hechos",
+            exception=e
         )
         
         # Retornar resultado vacío con error

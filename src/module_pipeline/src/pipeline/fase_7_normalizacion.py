@@ -579,13 +579,10 @@ def ejecutar_fase_7_completa(
     except Exception as e:
         logger.error(f"Error en Fase 7: {str(e)}")
         error_info = handle_generic_phase_error(
-            error=e,
+            article_id=str(hechos[0].id_fragmento_origen if hechos else "unknown"),
             phase=ErrorPhase.FASE_4_NORMALIZACION,
-            fragment_id=str(hechos[0].id_fragmento_origen if hechos else "unknown"),
-            context={
-                "hechos_count": len(hechos),
-                "entidades_count": len(entidades)
-            }
+            step_failed="normalizacion_relaciones",
+            exception=e
         )
         
         # Retornar resultado con error
