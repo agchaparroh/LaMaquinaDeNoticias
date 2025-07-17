@@ -13,7 +13,7 @@ services:
     environment:
       # Supabase connection
       - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
       # Server configuration
       - API_HOST=0.0.0.0
       - API_PORT=8004

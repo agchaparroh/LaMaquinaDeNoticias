@@ -14,10 +14,10 @@ Analiza el siguiente `CONTENIDO` de un artículo o documento. Extrae **Citas tex
 {{CONTENIDO}}
 
 **Hechos identificados:**
-{{Fase6_Hechos}}
+{{Fase4_Hechos}}
 
 **Entidades identidicadas:**
-{{Fase5_Entidades}}
+{{Fase3_Entidades}}
 
 # Extraer Citas Textuales:
 

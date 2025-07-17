@@ -99,6 +99,23 @@ Continue with standard SuperClaude commands for:
 ### Standards
 @include shared/superclaude-core.yml#Standards
 
+### Debugging Standards
+**IMPORTANTE**: Para cualquier tarea de debugging, SIEMPRE consultar primero:
+- `.claudedocs/guides/debugging-no-destructivo.md` - Guía completa de debugging seguro
+- Seguir el workflow de 5 fases: Preservar → Investigar → Hipótesis → Implementar → Validar
+- Aplicar las 5 reglas de oro para evitar crear más problemas
+- Usar comandos específicos de debugging documentados en la guía
+
+**RESPUESTA OBLIGATORIA** cuando el usuario pida "encontrar/corregir/eliminar todos los errores":
+1. NO crear lista de todos con linters/tests/tipado
+2. PRIMERO preguntar: "¿Qué problema específico estás experimentando?"
+3. Aplicar la Regla de Tres Preguntas:
+   - ¿Los usuarios reportan problemas?
+   - ¿El servicio está funcionando?
+   - ¿Los datos se procesan correctamente?
+4. Si todo funciona → "No hay errores que corregir"
+5. FILOSOFÍA: "Si funciona en producción, NO es un error"
+
 ### Severity System
 @include commands/shared/quality-patterns.yml#Severity_Levels
 @include commands/shared/quality-patterns.yml#Validation_Sequence

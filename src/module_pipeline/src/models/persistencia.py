@@ -39,6 +39,12 @@ class HechoExtraidoItem(PersistenciaBaseModel):
     lugar_ocurrencia_hecho: Optional[str] = Field(default=None, description="Lugar donde ocurrió el hecho.")
     relevancia_hecho: Optional[int] = Field(default=None, ge=1, le=10, description="Relevancia del hecho (1-10).")
     contexto_adicional_hecho: Optional[str] = Field(default=None, description="Contexto adicional sobre el hecho.")
+    
+    # CAMPOS AGREGADOS (existen en base de datos Supabase pero faltaban en modelo)
+    precision_temporal: Optional[str] = Field(default=None, description="Precisión temporal del hecho (coincide con columna 'precision_temporal' en DB).")
+    es_evento_futuro: Optional[bool] = Field(default=None, description="Indica si el hecho es un evento futuro (coincide con columna 'es_evento_futuro' en DB).")
+    estado_programacion: Optional[str] = Field(default=None, description="Estado de programación para eventos futuros (coincide con columna 'estado_programacion' en DB).")
+    
     detalle_complejo_hecho: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Objeto JSON para detalles más complejos o no estructurados del hecho.")
     embedding_hecho_vector: Optional[List[float]] = Field(default=None, description="Vector de embedding semántico del hecho.")
     entidades_del_hecho: Optional[List[EntidadEnHechoItem]] = Field(default_factory=list, description="Lista de entidades involucradas en este hecho.")
@@ -47,15 +53,32 @@ class EntidadAutonomaItem(PersistenciaBaseModel):
     """
     Representa una entidad extraída de forma autónoma, no necesariamente ligada a un hecho específico en este punto.
     Referencia: "Documento 1 de Persistencia", sección "entidades_autonomas[]".
+    
+    ACTUALIZACIÓN: Campos sincronizados con esquema real de base de datos Supabase.
+    Los campos con nombres correctos coinciden exactamente con las columnas de la tabla 'entidades'.
     """
-    id_temporal_entidad: str = Field(description="ID temporal único para esta entidad.")
-    nombre_entidad: str = Field(description="Nombre de la entidad.")
-    tipo_entidad: str = Field(description="Tipo de entidad.")
-    descripcion_entidad: Optional[str] = Field(default=None, description="Descripción breve de la entidad.")
-    alias_entidad: Optional[List[str]] = Field(default_factory=list, description="Lista de alias o nombres alternativos para la entidad.")
+    # CAMPOS CORRECTOS (coinciden con base de datos Supabase)
+    id: str = Field(description="ID único para esta entidad (coincide con columna 'id' en DB).")
+    nombre: str = Field(description="Nombre de la entidad (coincide con columna 'nombre' en DB).")
+    tipo: str = Field(description="Tipo de entidad (coincide con columna 'tipo' en DB).")
+    descripcion: Optional[str] = Field(default=None, description="Descripción breve de la entidad (coincide con columna 'descripcion' en DB).")
+    alias: Optional[List[str]] = Field(default_factory=list, description="Lista de alias o nombres alternativos (coincide con columna 'alias' en DB).")
+    
+    # CAMPOS AGREGADOS (existen en base de datos pero faltaban en modelo)
+    fecha_nacimiento: Optional[str] = Field(default=None, description="Fecha de nacimiento/inicio de la entidad (coincide con columna 'fecha_nacimiento' tstzrange en DB).")
+    fecha_disolucion: Optional[str] = Field(default=None, description="Fecha de disolución/fin de la entidad (coincide con columna 'fecha_disolucion' tstzrange en DB).")
+    
+    # CAMPOS ADICIONALES (no están en esquema de base de datos pero se mantienen para lógica de negocio)
     relevancia_entidad_articulo: Optional[int] = Field(default=None, ge=1, le=10, description="Relevancia de la entidad en el contexto general del artículo (1-10).")
     metadata_entidad: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Metadatos adicionales sobre la entidad.")
     embedding_entidad_vector: Optional[List[float]] = Field(default=None, description="Vector de embedding semántico de la entidad.")
+    
+    # CAMPOS DEPRECATED (mantener compatibilidad temporal - REMOVER EN PRÓXIMA VERSIÓN)
+    id_temporal_entidad: Optional[str] = Field(default=None, description="DEPRECATED: Usar 'id' en su lugar.")
+    nombre_entidad: Optional[str] = Field(default=None, description="DEPRECATED: Usar 'nombre' en su lugar.")
+    tipo_entidad: Optional[str] = Field(default=None, description="DEPRECATED: Usar 'tipo' en su lugar.")
+    descripcion_entidad: Optional[str] = Field(default=None, description="DEPRECATED: Usar 'descripcion' en su lugar.")
+    alias_entidad: Optional[List[str]] = Field(default=None, description="DEPRECATED: Usar 'alias' en su lugar.")
 
 class CitaTextualExtraidaItem(PersistenciaBaseModel):
     """
@@ -85,6 +108,16 @@ class DatoCuantitativoExtraidoItem(PersistenciaBaseModel):
     contexto_dato: Optional[str] = Field(default=None, description="Contexto del dato cuantitativo.")
     relevancia_dato: Optional[int] = Field(default=None, ge=1, le=10, description="Relevancia del dato (1-10).")
     hecho_principal_relacionado_id_temporal: Optional[str] = Field(default=None, description="ID temporal_hecho del hecho principal al que se relaciona este dato.")
+    
+    # CAMPOS AGREGADOS (existen en base de datos Supabase pero faltaban en modelo)
+    categoria: Optional[str] = Field(default=None, description="Categoría del dato cuantitativo (coincide con columna 'categoria' en DB).")
+    tipo_periodo: Optional[str] = Field(default=None, description="Tipo de período al que se refiere el dato (coincide con columna 'tipo_periodo' en DB).")
+    tendencia: Optional[str] = Field(default=None, description="Tendencia observada en el dato (coincide con columna 'tendencia' en DB).")
+    valor_anterior: Optional[float] = Field(default=None, description="Valor anterior para comparación (coincide con columna 'valor_anterior' en DB).")
+    variacion_absoluta: Optional[float] = Field(default=None, description="Variación absoluta respecto al valor anterior (coincide con columna 'variacion_absoluta' en DB).")
+    variacion_porcentual: Optional[float] = Field(default=None, description="Variación porcentual respecto al valor anterior (coincide con columna 'variacion_porcentual' en DB).")
+    periodo_referencia_inicio: Optional[str] = Field(default=None, description="Fecha de inicio del período de referencia (coincide con columna 'periodo_referencia_inicio' en DB).")
+    periodo_referencia_fin: Optional[str] = Field(default=None, description="Fecha de fin del período de referencia (coincide con columna 'periodo_referencia_fin' en DB).")
 
 class RelacionHechosItem(PersistenciaBaseModel):
     """

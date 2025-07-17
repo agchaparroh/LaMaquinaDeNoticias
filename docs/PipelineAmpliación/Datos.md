@@ -14,10 +14,10 @@ Analiza el siguiente `CONTENIDO` de un artículo o documento. Extrae **Datos cua
 {{CONTENIDO}}
 
 **Hechos identificados:**
-{{Fase6_Hechos}}
+{{Fase4_Hechos}}
 
 **Entidades identidicadas:**
-{{Fase5_Entidades}}
+{{Fase3_Entidades}}
 
 # Extraer Datos Cuantitativos:
 
@@ -53,10 +53,8 @@ Presenta esta información en formato JSON siguiendo exactamente esta estructura
       "valor": 0,
       "unidad": "",
       "ambito_geografico": [],
-      "periodo": {
-        "inicio": "",
-        "fin": ""
-      },
+      "periodo_inicio": "",
+      "periodo_fin": "",
       "tipo_periodo": "",
       "valor_anterior": null,
       "variacion_absoluta": null,
@@ -84,10 +82,8 @@ Para un texto publicado el 15/03/2023 que dice:
       "valor": 3.5,
       "unidad": "porcentaje",
       "ambito_geografico": ["España"],
-      "periodo": {
-        "inicio": "2022-01-01",
-        "fin": "2022-12-31"
-      },
+      "periodo_inicio": "2022-01-01",
+      "periodo_fin": "2022-12-31",
       "tipo_periodo": "anual",
       "valor_anterior": 5.1,
       "variacion_absoluta": -1.6,

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseño 4 - Lista Cronológica</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* LISTA CRONOLÓGICA */
+        .chronological-list {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .list-header {
+            color: #005A99;
+            font-weight: bold;
+            margin-bottom: 24px;
+            text-align: center;
+            font-size: 18px;
+        }
+        
+        .fact-item {
+            margin-bottom: 16px;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #ddd;
+            position: relative;
+        }
+        
+        /* HECHO PRINCIPAL MÁS GRANDE */
+        .fact-item.main {
+            border-left-color: #005A99;
+            background: #f8f9ff;
+            padding: 28px;
+            margin-bottom: 24px;
+            border: 2px solid #005A99;
+        }
+        
+        .fact-item.main .fact-content {
+            font-size: 20px;
+            font-weight: bold;
+            line-height: 1.4;
+        }
+        
+        .fact-item.main .cluster-indicator {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: #005A99;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        /* HECHOS RELACIONADOS */
+        .fact-item.related {
+            background: #fafafa;
+        }
+        
+        .fact-item.mutual {
+            border-left-color: #FF9800;
+            background: #fff8f0;
+        }
+        
+        .fact-item.consecuencia {
+            border-left-color: #4CAF50;
+            background: #f0f8f0;
+        }
+        
+        .fact-item.contradiccion {
+            border-left-color: #F44336;
+            background: #fff0f0;
+        }
+        
+        .fact-item.antecedente {
+            border-left-color: #9C27B0;
+            background: #f8f0ff;
+        }
+        
+        .fact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .fact-date {
+            font-size: 12px;
+            color: #666;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .relation-badge {
+            display: inline-block;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .relation-badge.main {
+            background: #005A99;
+        }
+        
+        .relation-badge.mutual {
+            background: #FF9800;
+        }
+        
+        .relation-badge.consecuencia {
+            background: #4CAF50;
+        }
+        
+        .relation-badge.contradiccion {
+            background: #F44336;
+        }
+        
+        .relation-badge.antecedente {
+            background: #9C27B0;
+        }
+        
+        .country-chips {
+            margin-bottom: 12px;
+        }
+        
+        .country-chip {
+            display: inline-block;
+            background: #005A99;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin-right: 6px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .fact-content {
+            font-size: 16px;
+            line-height: 1.4;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        
+        .fact-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .fact-source {
+            font-weight: bold;
+        }
+        
+        .fact-importance {
+            font-weight: bold;
+        }
+        
+        .metadata-chips {
+            margin-top: 8px;
+        }
+        
+        .metadata-chip {
+            display: inline-block;
+            border: 1px solid #ccc;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-right: 6px;
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .evaluation-chip {
+            background: #4CAF50;
+            color: white;
+            border: none;
+        }
+        
+        /* FUENTES FOOTER */
+        .sources-footer {
+            background: white;
+            border-radius: 8px;
+            margin-top: 20px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .sources-toggle {
+            color: #005A99;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        .sources-content {
+            display: none;
+        }
+        
+        .sources-content.expanded {
+            display: block;
+        }
+        
+        .source-box {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px;
+            background: #f8f9fa;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        
+        .source-label {
+            color: #005A99;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        
+        .source-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        
+        .source-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .source-chip {
+            display: inline-block;
+            background: #005A99;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-right: 6px;
+            font-size: 11px;
+        }
+        
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 32px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 24px;
+            padding-right: 40px;
+        }
+        
+        .modal-section {
+            margin-bottom: 24px;
+        }
+        
+        .modal-section h3 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #005A99;
+        }
+    </style>
+</head>
+<body>
+    <h1>Diseño 4 - Lista Cronológica</h1>
+    <p style="color: #666; margin-bottom: 20px; text-align: center;">
+        Hecho principal + relacionados como lista cronológica. Diferentes backgrounds para tipos de relación.
+    </p>
+    
+    <div class="container">
+        <!-- LISTA CRONOLÓGICA -->
+        <div class="chronological-list">
+            <div class="list-header">📰 Cronología de Hechos</div>
+            
+            <!-- HECHO PRINCIPAL -->
+            <div class="fact-item main">
+                <div class="cluster-indicator">🔗 2 relacionados</div>
+                
+                <div class="fact-header">
+                    <div class="relation-badge main">🎯 HECHO PRINCIPAL</div>
+                    <div class="fact-date">12 jun 2025</div>
+                </div>
+                
+                <div class="country-chips">
+                    <span class="country-chip">BRASIL</span>
+                    <span class="country-chip">ARGENTINA</span>
+                    <span class="country-chip">COLOMBIA</span>
+                    <span class="country-chip">MÉXICO</span>
+                    <span class="country-chip">CHILE</span>
+                </div>
+                
+                <div class="fact-content" onclick="showModal()">
+                    Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+                </div>
+                
+                <div class="metadata-chips">
+                    <span class="metadata-chip">EVENTO</span>
+                    <span class="metadata-chip evaluation-chip">Verificado</span>
+                </div>
+                
+                <div class="fact-meta">
+                    <span class="fact-source">Reuters América Latina</span>
+                    <span class="fact-importance">Importancia: 10/10</span>
+                </div>
+            </div>
+            
+            <!-- HECHOS RELACIONADOS -->
+            <div class="fact-item related mutual">
+                <div class="fact-header">
+                    <div class="relation-badge mutual">↔ Relacionado</div>
+                    <div class="fact-date">15 mar 2027</div>
+                </div>
+                
+                <div class="country-chips">
+                    <span class="country-chip">ECUADOR</span>
+                </div>
+                
+                <div class="fact-content" onclick="showModal()">
+                    Se anuncia la construcción del primer centro espacial comercial de Sudamérica que será inaugurado en Ecuador en 2027, con inversión de 2.8 mil millones de dólares.
+                </div>
+                
+                <div class="metadata-chips">
+                    <span class="metadata-chip">ANUNCIO</span>
+                    <span class="metadata-chip evaluation-chip">Verificado</span>
+                </div>
+                
+                <div class="fact-meta">
+                    <span class="fact-source">El Comercio Ecuador</span>
+                    <span class="fact-importance">Importancia: 8/10</span>
+                </div>
+            </div>
+            
+            <div class="fact-item related consecuencia">
+                <div class="fact-header">
+                    <div class="relation-badge consecuencia">➡ Causa</div>
+                    <div class="fact-date">3 jun 2025</div>
+                </div>
+                
+                <div class="country-chips">
+                    <span class="country-chip">CHILE</span>
+                    <span class="country-chip">PERÚ</span>
+                    <span class="country-chip">COLOMBIA</span>
+                    <span class="country-chip">MÉXICO</span>
+                </div>
+                
+                <div class="fact-content" onclick="showModal()">
+                    Alianza económica entre Chile, Perú, Colombia y México establece nuevo bloque comercial del Pacífico con proyecciones de crecimiento del PIB conjunto del 15% en los próximos 5 años.
+                </div>
+                
+                <div class="metadata-chips">
+                    <span class="metadata-chip">ACUERDO</span>
+                    <span class="metadata-chip evaluation-chip">Verificado</span>
+                </div>
+                
+                <div class="fact-meta">
+                    <span class="fact-source">Bloomberg Línea</span>
+                    <span class="fact-importance">Importancia: 10/10</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- FUENTES FOOTER -->
+        <div class="sources-footer">
+            <div class="sources-toggle" onclick="toggleSources()">
+                ▼ Ver todas las fuentes originales
+            </div>
+            
+            <div class="sources-content" id="sourcesContent">
+                <div class="source-box" onclick="openSource()">
+                    <div class="source-label">📰 Fuente Principal</div>
+                    <div class="source-title">Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</div>
+                    <div class="source-meta">
+                        <span class="source-chip">Reuters América Latina</span>
+                        <span class="source-chip">12 jun 2025</span>
+                        <span class="source-chip">Isabella García-Montenegro</span>
+                    </div>
+                </div>
+                
+                <div class="source-box" onclick="openSource()">
+                    <div class="source-label">📰 Fuente Relacionada</div>
+                    <div class="source-title">Ecuador será sede del primer centro espacial comercial de Sudamérica</div>
+                    <div class="source-meta">
+                        <span class="source-chip">El Comercio Ecuador</span>
+                        <span class="source-chip">15 mar 2027</span>
+                        <span class="source-chip">Carlos Mendoza</span>
+                    </div>
+                </div>
+                
+                <div class="source-box" onclick="openSource()">
+                    <div class="source-label">📰 Fuente Relacionada</div>
+                    <div class="source-title">Nace la Alianza del Pacífico: nueva potencia económica regional</div>
+                    <div class="source-meta">
+                        <span class="source-chip">Bloomberg Línea</span>
+                        <span class="source-chip">3 jun 2025</span>
+                        <span class="source-chip">Ana Gutierrez</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-close" onclick="hideModal()">×</div>
+            
+            <div class="modal-title">
+                Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+            </div>
+            
+            <div class="modal-section">
+                <h3>📍 Ubicación</h3>
+                <div class="country-chips">
+                    <span class="country-chip">BRASIL</span>
+                    <span class="country-chip">ARGENTINA</span>
+                    <span class="country-chip">COLOMBIA</span>
+                    <span class="country-chip">MÉXICO</span>
+                    <span class="country-chip">CHILE</span>
+                </div>
+            </div>
+            
+            <div class="modal-section">
+                <h3>📰 Fuente Original</h3>
+                <div class="source-title">Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</div>
+                <div>
+                    <strong>Medio:</strong> Reuters América Latina<br>
+                    <strong>Autor:</strong> Isabella García-Montenegro<br>
+                    <strong>Fecha:</strong> 12 de junio de 2025<br>
+                    <strong>URL:</strong> <a href="#">https://reuters.com/mundo/cumbre-clima-latinoamerica-2025</a>
+                </div>
+            </div>
+            
+            <div class="modal-section">
+                <h3>📊 Clasificación</h3>
+                <p><strong>Fecha ocurrencia:</strong> 12 de junio de 2025</p>
+                <p><strong>Tipo de hecho:</strong> EVENTO</p>
+                <p><strong>Importancia:</strong> 10/10</p>
+                <p><strong>Evaluación editorial:</strong> <span style="color: green;">Verificado OK</span></p>
+            </div>
+            
+            <div class="modal-section">
+                <h3>🔗 Cronología Completa</h3>
+                <div style="border-left: 2px solid #ddd; padding-left: 16px;">
+                    <div style="margin-bottom: 12px; padding: 8px; background: #f0f8f0; border-radius: 4px;">
+                        <div style="font-size: 12px; color: #4CAF50; font-weight: bold;">3 jun 2025 - ➡ Causa</div>
+                        <div style="font-size: 14px;">Alianza económica del Pacífico</div>
+                    </div>
+                    <div style="margin-bottom: 12px; padding: 8px; background: #f8f9ff; border-radius: 4px;">
+                        <div style="font-size: 12px; color: #005A99; font-weight: bold;">12 jun 2025 - 🎯 Principal</div>
+                        <div style="font-size: 14px;">Cumbre climática histórica</div>
+                    </div>
+                    <div style="margin-bottom: 12px; padding: 8px; background: #fff8f0; border-radius: 4px;">
+                        <div style="font-size: 12px; color: #FF9800; font-weight: bold;">15 mar 2027 - ↔ Relacionado</div>
+                        <div style="font-size: 14px;">Centro espacial comercial</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSources() {
+            const content = document.getElementById('sourcesContent');
+            const toggle = document.querySelector('.sources-toggle');
+            
+            content.classList.toggle('expanded');
+            toggle.textContent = content.classList.contains('expanded') ? 
+                '▲ Ocultar fuentes' : '▼ Ver todas las fuentes originales';
+        }
+        
+        function showModal() {
+            document.getElementById('modal').classList.add('show');
+        }
+        
+        function hideModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+        
+        function openSource() {
+            alert('Abrir fuente original en nueva ventana');
+        }
+        
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
+    </script>
+</body>
+</html>

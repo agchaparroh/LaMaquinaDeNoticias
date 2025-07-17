@@ -57,7 +57,8 @@ function convertMockToBackendFormat(mockHecho: Hecho): any {
       categorias_asignadas: mockHecho.articuloMetadata.categoriasAsignadas,
       puntuacion_relevancia: mockHecho.articuloMetadata.puntuacionRelevancia,
       estado_procesamiento: mockHecho.articuloMetadata.estadoProcesamiento
-    }
+    },
+    relaciones: mockHecho.relaciones
   };
 }
 

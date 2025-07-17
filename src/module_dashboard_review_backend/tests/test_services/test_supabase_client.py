@@ -43,7 +43,7 @@ def mock_settings():
     """Mock settings for testing."""
     with patch('services.supabase_client.settings') as mock:
         mock.supabase_url = "https://test.supabase.co"
-        mock.supabase_key = "test-key-123"
+        mock.supabase_anon_key = "test-key-123"
         yield mock
 
 
@@ -62,7 +62,7 @@ class TestSupabaseClientInitialization:
         # create_client should only be called once
         mock_create_client.assert_called_once_with(
             supabase_url="https://test.supabase.co",
-            supabase_key="test-key-123"
+            supabase_anon_key="test-key-123"
         )
     
     def test_successful_initialization(self, mock_create_client, mock_settings):
@@ -88,7 +88,7 @@ class TestSupabaseClientInitialization:
     def test_initialization_with_missing_key(self, mock_settings):
         """Test initialization fails with missing key."""
         # Set key to empty
-        mock_settings.supabase_key = ""
+        mock_settings.supabase_anon_key = ""
         
         # Should raise DatabaseConnectionError
         with pytest.raises(DatabaseConnectionError) as exc_info:

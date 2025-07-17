@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     
     # Supabase connection (required)
     supabase_url: str
-    supabase_key: str
+    supabase_anon_key: str
     
     # Server configuration  
     api_host: str = "0.0.0.0"

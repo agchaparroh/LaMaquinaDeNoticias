@@ -78,7 +78,7 @@ Caracas – El presidente de Venezuela, Nicolás Maduro, anunció anoche la capt
       "fecha_disolucion": null
     },
     {
-      "id": 4,
+      "id": 3,
       "nombre": "La Guaira",
       "alias": ["estado La Guaira"],
       "tipo": "LUGAR",
@@ -87,7 +87,7 @@ Caracas – El presidente de Venezuela, Nicolás Maduro, anunció anoche la capt
       "fecha_disolucion": null
     },
     {
-      "id": 5,
+      "id": 4,
       "nombre": "Elecciones Presidenciales del 28 de julio",
       "alias": [],
       "tipo": "EVENTO",
@@ -96,7 +96,7 @@ Caracas – El presidente de Venezuela, Nicolás Maduro, anunció anoche la capt
       "fecha_disolucion": null
     },
     {
-      "id": 6,
+      "id": 5,
       "nombre": "Caracas",
       "alias": [],
       "tipo": "LUGAR",

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseño 7 - Card Deck</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            font-weight: 300;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        /* DECK DE CARTAS */
+        .card-deck {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 30px;
+            margin: 40px 0;
+            perspective: 1000px;
+            min-height: 500px;
+        }
+        
+        /* CARTA PRINCIPAL */
+        .main-card {
+            width: 400px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform: rotateY(-5deg) scale(1.1);
+            z-index: 10;
+            position: relative;
+        }
+        
+        .main-card:hover {
+            transform: rotateY(0deg) scale(1.15);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+        }
+        
+        .main-card::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #f5576c);
+            border-radius: 20px;
+            z-index: -1;
+            animation: rotate 4s linear infinite;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .card-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .card-type {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .country-badges {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 20px 0;
+        }
+        
+        .country-badge {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .main-content {
+            font-size: 18px;
+            line-height: 1.5;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .main-meta {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .importance-display {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        /* CARTAS RELACIONADAS */
+        .related-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .related-card {
+            width: 320px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .related-card:hover {
+            transform: translateY(-5px) scale(1.05);
+        }
+        
+        .related-card.causa {
+            transform: rotateY(10deg) translateX(-20px);
+            box-shadow: 0 15px 30px rgba(231, 76, 60, 0.3);
+            border-left: 5px solid #e74c3c;
+        }
+        
+        .related-card.causa:hover {
+            transform: rotateY(0deg) translateX(0px) translateY(-5px) scale(1.05);
+            box-shadow: 0 25px 50px rgba(231, 76, 60, 0.4);
+        }
+        
+        .related-card.relacionado {
+            transform: rotateY(-10deg) translateX(20px);
+            box-shadow: 0 15px 30px rgba(52, 152, 219, 0.3);
+            border-left: 5px solid #3498db;
+        }
+        
+        .related-card.relacionado:hover {
+            transform: rotateY(0deg) translateX(0px) translateY(-5px) scale(1.05);
+            box-shadow: 0 25px 50px rgba(52, 152, 219, 0.4);
+        }
+        
+        .related-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        
+        .related-card:hover::before {
+            transform: translateX(100%);
+        }
+        
+        .relation-indicator {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .relation-indicator.causa {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+        
+        .relation-indicator.relacionado {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+        }
+        
+        .related-content {
+            font-size: 16px;
+            line-height: 1.4;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+        
+        .related-meta {
+            font-size: 12px;
+            color: #7f8c8d;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        
+        .source-tag {
+            display: inline-block;
+            background: #ecf0f1;
+            color: #2c3e50;
+            padding: 3px 8px;
+            border-radius: 8px;
+            margin-right: 5px;
+            font-size: 11px;
+        }
+        
+        .importance-tag {
+            float: right;
+            background: #f39c12;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        /* ÁREA DESPLEGABLE DE FUENTES */
+        .sources-area {
+            margin-top: 40px;
+            text-align: center;
+        }
+        
+        .sources-toggle {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .sources-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+        
+        .sources-content {
+            display: none;
+            margin-top: 20px;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .sources-content.open {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .sources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .source-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        
+        .source-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .source-label {
+            font-size: 12px;
+            color: #667eea;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        .source-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+        
+        .source-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .source-chip {
+            background: #e9ecef;
+            color: #495057;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+        }
+        
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            animation: modalAppear 0.3s ease;
+        }
+        
+        @keyframes modalAppear {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            cursor: pointer;
+            font-size: 30px;
+            color: #7f8c8d;
+            transition: color 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            color: #e74c3c;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: #2c3e50;
+            padding-right: 40px;
+        }
+        
+        .modal-section {
+            margin-bottom: 30px;
+        }
+        
+        .modal-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .card-deck {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .main-card {
+                width: 90%;
+                max-width: 400px;
+                transform: none;
+            }
+            
+            .related-cards {
+                width: 100%;
+                align-items: center;
+            }
+            
+            .related-card {
+                width: 90%;
+                max-width: 350px;
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Diseño 7 - Card Deck</h1>
+        
+        <!-- DECK DE CARTAS -->
+        <div class="card-deck">
+            <!-- CARTA PRINCIPAL -->
+            <div class="main-card" onclick="showModal()">
+                <div class="card-header">
+                    <div class="card-type">🌍 Evento Internacional</div>
+                </div>
+                
+                <div class="country-badges">
+                    <span class="country-badge">Brasil</span>
+                    <span class="country-badge">Argentina</span>
+                    <span class="country-badge">Colombia</span>
+                    <span class="country-badge">México</span>
+                    <span class="country-badge">Chile</span>
+                </div>
+                
+                <div class="main-content">
+                    Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+                </div>
+                
+                <div class="main-meta">
+                    12 de junio de 2025
+                    <span class="importance-display">★ 10/10</span>
+                </div>
+            </div>
+            
+            <!-- CARTAS RELACIONADAS -->
+            <div class="related-cards">
+                <div class="related-card causa">
+                    <div class="relation-indicator causa">➡️ Causa</div>
+                    <div class="related-content">
+                        Alianza económica entre Chile, Perú, Colombia y México establece nuevo bloque comercial del Pacífico con proyecciones de crecimiento del PIB conjunto del 15% en los próximos 5 años.
+                    </div>
+                    <div class="related-meta">
+                        <span class="source-tag">Bloomberg Línea</span>
+                        <span class="source-tag">3 jun 2025</span>
+                        <span class="importance-tag">10/10</span>
+                    </div>
+                </div>
+                
+                <div class="related-card relacionado">
+                    <div class="relation-indicator relacionado">↔️ Relacionado</div>
+                    <div class="related-content">
+                        Se anuncia la construcción del primer centro espacial comercial de Sudamérica que será inaugurado en Ecuador en 2027, con inversión de 2.8 mil millones de dólares.
+                    </div>
+                    <div class="related-meta">
+                        <span class="source-tag">El Comercio Ecuador</span>
+                        <span class="source-tag">15 mar 2027</span>
+                        <span class="importance-tag">8/10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ÁREA DESPLEGABLE DE FUENTES -->
+        <div class="sources-area">
+            <button class="sources-toggle" onclick="toggleSources()">
+                📚 Explorar Fuentes
+            </button>
+            
+            <div class="sources-content" id="sourcesContent">
+                <div class="sources-grid">
+                    <div class="source-card">
+                        <div class="source-label">Fuente Original</div>
+                        <div class="source-title">Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</div>
+                        <div class="source-details">
+                            <span class="source-chip">Reuters América Latina</span>
+                            <span class="source-chip">Isabella García-Montenegro</span>
+                            <span class="source-chip">12 jun 2025</span>
+                        </div>
+                    </div>
+                    
+                    <div class="source-card">
+                        <div class="source-label">Fuente Relacionada</div>
+                        <div class="source-title">Alianza del Pacífico: Nueva era comercial en Latinoamérica</div>
+                        <div class="source-details">
+                            <span class="source-chip">Bloomberg Línea</span>
+                            <span class="source-chip">Carlos Mendoza</span>
+                            <span class="source-chip">3 jun 2025</span>
+                        </div>
+                    </div>
+                    
+                    <div class="source-card">
+                        <div class="source-label">Fuente Relacionada</div>
+                        <div class="source-title">Ecuador inaugura era espacial sudamericana</div>
+                        <div class="source-details">
+                            <span class="source-chip">El Comercio Ecuador</span>
+                            <span class="source-chip">Ana Rodríguez</span>
+                            <span class="source-chip">15 mar 2027</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MODAL -->
+        <div class="modal" id="modal">
+            <div class="modal-content">
+                <div class="modal-close" onclick="hideModal()">×</div>
+                
+                <div class="modal-title">
+                    Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+                </div>
+                
+                <div class="modal-section">
+                    <h3>🌍 Ubicación</h3>
+                    <div class="country-badges">
+                        <span class="country-badge">Brasil</span>
+                        <span class="country-badge">Argentina</span>
+                        <span class="country-badge">Colombia</span>
+                        <span class="country-badge">México</span>
+                        <span class="country-badge">Chile</span>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <h3>📊 Clasificación</h3>
+                    <p><strong>Fecha:</strong> 12 de junio de 2025</p>
+                    <p><strong>Tipo:</strong> EVENTO INTERNACIONAL</p>
+                    <p><strong>Importancia:</strong> 10/10</p>
+                    <p><strong>Estado:</strong> <span style="color: #27ae60;">Verificado</span></p>
+                    <p><strong>Editor:</strong> Dr. María Elena Vásquez</p>
+                </div>
+                
+                <div class="modal-section">
+                    <h3>🔗 Hechos Relacionados</h3>
+                    <div class="related-card causa" style="width: auto; margin-bottom: 15px; transform: none;">
+                        <div class="relation-indicator causa">➡️ Causa</div>
+                        <div class="related-content">Alianza económica del Pacífico</div>
+                    </div>
+                    <div class="related-card relacionado" style="width: auto; transform: none;">
+                        <div class="relation-indicator relacionado">↔️ Relacionado</div>
+                        <div class="related-content">Centro espacial comercial de Sudamérica</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSources() {
+            const content = document.getElementById('sourcesContent');
+            const button = document.querySelector('.sources-toggle');
+            
+            content.classList.toggle('open');
+            
+            if (content.classList.contains('open')) {
+                button.textContent = '📚 Ocultar Fuentes';
+            } else {
+                button.textContent = '📚 Explorar Fuentes';
+            }
+        }
+        
+        function showModal() {
+            document.getElementById('modal').classList.add('show');
+        }
+        
+        function hideModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+        
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
+        
+        // Cerrar modal y fuentes con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideModal();
+                document.getElementById('sourcesContent').classList.remove('open');
+                document.querySelector('.sources-toggle').textContent = '📚 Explorar Fuentes';
+            }
+        });
+        
+        // Efectos de hover adicionales
+        document.querySelectorAll('.related-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.zIndex = '20';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.zIndex = '5';
+            });
+        });
+    </script>
+</body>
+</html>

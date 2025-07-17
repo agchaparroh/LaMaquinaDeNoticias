@@ -78,13 +78,13 @@ class SupabaseClient:
             logger.info("Initializing Supabase client...")
             
             # Validate required settings
-            if not settings.supabase_url or not settings.supabase_key:
+            if not settings.supabase_url or not settings.supabase_anon_key:
                 raise ValueError("Supabase URL and key must be provided")
             
             # Create the client
             cls._client = create_client(
                 supabase_url=settings.supabase_url,
-                supabase_key=settings.supabase_key
+                supabase_key=settings.supabase_anon_key
             )
             
             logger.info("Supabase client initialized successfully")

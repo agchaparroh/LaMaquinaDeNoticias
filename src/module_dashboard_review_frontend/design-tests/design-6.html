@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseño 6 - Newspaper Style</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            margin: 0;
+            padding: 20px;
+            background: #fafafa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        /* HEADER ESTILO PERIÓDICO */
+        .newspaper-header {
+            background: #1a1a1a;
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+            border-bottom: 3px solid #d4af37;
+        }
+        
+        .newspaper-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .newspaper-date {
+            font-size: 14px;
+            color: #ccc;
+        }
+        
+        /* CONTENIDO PRINCIPAL */
+        .newspaper-content {
+            padding: 30px;
+        }
+        
+        .country-header {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #d4af37;
+        }
+        
+        .country-tag {
+            background: #1a1a1a;
+            color: white;
+            padding: 5px 15px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* TITULAR PRINCIPAL */
+        .main-headline {
+            font-size: 36px;
+            font-weight: bold;
+            line-height: 1.2;
+            margin-bottom: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        
+        .main-headline:hover {
+            color: #d4af37;
+        }
+        
+        .main-meta {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        
+        .importance-star {
+            color: #d4af37;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        
+        /* SECCIÓN HECHOS RELACIONADOS */
+        .related-section {
+            margin-top: 30px;
+            border-top: 2px solid #1a1a1a;
+            padding-top: 25px;
+        }
+        
+        .related-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #1a1a1a;
+        }
+        
+        .related-stories {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .story-card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            background: #f9f9f9;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .story-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .story-card.causa {
+            border-left: 5px solid #e74c3c;
+        }
+        
+        .story-card.relacionado {
+            border-left: 5px solid #3498db;
+        }
+        
+        .story-type {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: white;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid #ddd;
+        }
+        
+        .story-type.causa {
+            color: #e74c3c;
+            border-color: #e74c3c;
+        }
+        
+        .story-type.relacionado {
+            color: #3498db;
+            border-color: #3498db;
+        }
+        
+        .story-headline {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            margin-top: 10px;
+            line-height: 1.3;
+        }
+        
+        .story-meta {
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 15px;
+        }
+        
+        .story-source {
+            font-weight: bold;
+            color: #1a1a1a;
+        }
+        
+        .story-importance {
+            float: right;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        
+        /* DIVISOR DECORATIVO */
+        .decorative-line {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 24px;
+            color: #d4af37;
+        }
+        
+        /* FUENTES COLAPSABLES */
+        .sources-section {
+            border-top: 2px solid #1a1a1a;
+            padding-top: 20px;
+            margin-top: 30px;
+        }
+        
+        .sources-toggle {
+            background: #1a1a1a;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+            transition: background 0.3s ease;
+        }
+        
+        .sources-toggle:hover {
+            background: #333;
+        }
+        
+        .sources-content {
+            display: none;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-top: none;
+        }
+        
+        .sources-content.open {
+            display: block;
+        }
+        
+        .source-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-left: 4px solid #d4af37;
+        }
+        
+        .source-label {
+            font-size: 11px;
+            color: #d4af37;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .source-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+        }
+        
+        .source-details {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .source-tag {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            margin-right: 5px;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+        
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 28px;
+            color: #666;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #1a1a1a;
+            padding-right: 40px;
+        }
+        
+        .modal-section {
+            margin-bottom: 25px;
+        }
+        
+        .modal-section h3 {
+            font-size: 18px;
+            font-weight: bold;
+            color: #d4af37;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .main-headline {
+                font-size: 28px;
+            }
+            
+            .related-stories {
+                grid-template-columns: 1fr;
+            }
+            
+            .newspaper-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER PERIÓDICO -->
+        <div class="newspaper-header">
+            <div class="newspaper-title">LA MÁQUINA DE NOTICIAS</div>
+            <div class="newspaper-date">Miércoles, 12 de Junio de 2025 • Edición Digital</div>
+        </div>
+        
+        <div class="newspaper-content">
+            <!-- PAÍSES -->
+            <div class="country-header">
+                <span class="country-tag">Brasil</span>
+                <span class="country-tag">Argentina</span>
+                <span class="country-tag">Colombia</span>
+                <span class="country-tag">México</span>
+                <span class="country-tag">Chile</span>
+            </div>
+            
+            <!-- TITULAR PRINCIPAL -->
+            <div class="main-headline" onclick="showModal()">
+                Cumbre Internacional Sobre Cambio Climático Alcanza Acuerdo Histórico Para Reducir Emisiones de Carbono en un 50% Para 2030
+            </div>
+            
+            <div class="main-meta">
+                12 de junio de 2025 • Evento Internacional
+                <span class="importance-star">★★★★★★★★★★</span>
+            </div>
+            
+            <div class="decorative-line">❦ ❦ ❦</div>
+            
+            <!-- HECHOS RELACIONADOS -->
+            <div class="related-section">
+                <div class="related-header">Historias Relacionadas</div>
+                
+                <div class="related-stories">
+                    <div class="story-card causa">
+                        <div class="story-type causa">Causa</div>
+                        <div class="story-headline">
+                            Alianza Económica del Pacífico Establece Nuevo Bloque Comercial
+                        </div>
+                        <div class="story-meta">
+                            <span class="story-source">Bloomberg Línea</span>
+                            <span class="story-importance">10/10</span>
+                            <br>3 de junio de 2025
+                        </div>
+                    </div>
+                    
+                    <div class="story-card relacionado">
+                        <div class="story-type relacionado">Relacionado</div>
+                        <div class="story-headline">
+                            Ecuador Anuncia Primer Centro Espacial Comercial de Sudamérica
+                        </div>
+                        <div class="story-meta">
+                            <span class="story-source">El Comercio Ecuador</span>
+                            <span class="story-importance">8/10</span>
+                            <br>15 de marzo de 2027
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="decorative-line">❦ ❦ ❦</div>
+            
+            <!-- FUENTES COLAPSABLES -->
+            <div class="sources-section">
+                <button class="sources-toggle" onclick="toggleSources()">
+                    📰 Ver Fuentes y Referencias
+                </button>
+                <div class="sources-content" id="sourcesContent">
+                    <div class="source-item">
+                        <div class="source-label">Fuente Original</div>
+                        <div class="source-title">Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</div>
+                        <div class="source-details">
+                            <span class="source-tag">Reuters América Latina</span>
+                            <span class="source-tag">Isabella García-Montenegro</span>
+                            <span class="source-tag">12 jun 2025</span>
+                        </div>
+                    </div>
+                    
+                    <div class="source-item">
+                        <div class="source-label">Fuente Relacionada</div>
+                        <div class="source-title">Alianza del Pacífico: Nueva era comercial en Latinoamérica</div>
+                        <div class="source-details">
+                            <span class="source-tag">Bloomberg Línea</span>
+                            <span class="source-tag">Carlos Mendoza</span>
+                            <span class="source-tag">3 jun 2025</span>
+                        </div>
+                    </div>
+                    
+                    <div class="source-item">
+                        <div class="source-label">Fuente Relacionada</div>
+                        <div class="source-title">Ecuador inaugura era espacial sudamericana</div>
+                        <div class="source-details">
+                            <span class="source-tag">El Comercio Ecuador</span>
+                            <span class="source-tag">Ana Rodríguez</span>
+                            <span class="source-tag">15 mar 2027</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MODAL -->
+        <div class="modal" id="modal">
+            <div class="modal-content">
+                <div class="modal-close" onclick="hideModal()">×</div>
+                
+                <div class="modal-title">
+                    Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+                </div>
+                
+                <div class="modal-section">
+                    <h3>📍 Cobertura Geográfica</h3>
+                    <div class="country-header">
+                        <span class="country-tag">Brasil</span>
+                        <span class="country-tag">Argentina</span>
+                        <span class="country-tag">Colombia</span>
+                        <span class="country-tag">México</span>
+                        <span class="country-tag">Chile</span>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <h3>📊 Clasificación Editorial</h3>
+                    <p><strong>Fecha de ocurrencia:</strong> 12 de junio de 2025</p>
+                    <p><strong>Tipo de evento:</strong> EVENTO INTERNACIONAL</p>
+                    <p><strong>Nivel de importancia:</strong> 10/10</p>
+                    <p><strong>Estado de verificación:</strong> <span style="color: #27ae60;">Verificado</span></p>
+                    <p><strong>Editor responsable:</strong> Dr. María Elena Vásquez</p>
+                </div>
+                
+                <div class="modal-section">
+                    <h3>🔗 Conexiones Identificadas</h3>
+                    <div class="story-card causa" style="margin-bottom: 15px;">
+                        <div class="story-type causa">Causa</div>
+                        <div class="story-headline">Alianza económica del Pacífico</div>
+                    </div>
+                    <div class="story-card relacionado">
+                        <div class="story-type relacionado">Relacionado</div>
+                        <div class="story-headline">Centro espacial comercial de Sudamérica</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSources() {
+            const content = document.getElementById('sourcesContent');
+            const button = document.querySelector('.sources-toggle');
+            
+            content.classList.toggle('open');
+            
+            if (content.classList.contains('open')) {
+                button.textContent = '📰 Ocultar Fuentes y Referencias';
+            } else {
+                button.textContent = '📰 Ver Fuentes y Referencias';
+            }
+        }
+        
+        function showModal() {
+            document.getElementById('modal').classList.add('show');
+        }
+        
+        function hideModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+        
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
+        
+        // Cerrar modal con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideModal();
+            }
+        });
+    </script>
+</body>
+</html>

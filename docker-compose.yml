@@ -91,6 +91,7 @@ services:
       - ./src/module_scraper/scrapyd.conf:/etc/scrapyd/scrapyd.conf:ro
       - scrapyd_eggs:/var/lib/scrapyd/eggs
       - scrapyd_logs:/var/lib/scrapyd/logs
+      - shared_data:/data
     command: ["scrapyd", "--pidfile="]
     ports:
       - "6800:6800"

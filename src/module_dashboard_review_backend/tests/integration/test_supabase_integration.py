@@ -4,7 +4,7 @@ Integration tests with real Supabase instance.
 These tests require a real Supabase test instance to be configured.
 They test actual database operations, constraints, and behaviors.
 
-IMPORTANT: Set TEST_SUPABASE_URL and TEST_SUPABASE_KEY environment variables
+IMPORTANT: Set TEST_SUPABASE_URL and TEST_SUPABASE_ANON_KEY environment variables
 pointing to a test instance before running these tests.
 """
 
@@ -26,7 +26,7 @@ from src.services.supabase_client import SupabaseClient
 # Skip tests if test database credentials not provided
 SKIP_INTEGRATION = not all([
     os.getenv('TEST_SUPABASE_URL'),
-    os.getenv('TEST_SUPABASE_KEY')
+    os.getenv('TEST_SUPABASE_ANON_KEY')
 ])
 
 pytestmark = pytest.mark.skipif(
@@ -43,7 +43,7 @@ class TestRealSupabaseIntegration:
         """Create test client with test database."""
         with patch.dict(os.environ, {
             'SUPABASE_URL': os.getenv('TEST_SUPABASE_URL', ''),
-            'SUPABASE_KEY': os.getenv('TEST_SUPABASE_KEY', '')
+            'SUPABASE_ANON_KEY': os.getenv('TEST_SUPABASE_ANON_KEY', '')
         }):
             # Reset singleton for test
             SupabaseClient._instance = None

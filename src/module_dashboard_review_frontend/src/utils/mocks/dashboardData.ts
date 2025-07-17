@@ -1,6 +1,6 @@
 // Mock data extendido para desarrollo del dashboard
 // Incluye casos extremos, excepciones y todas las funcionalidades
-import type { Hecho, FilterOptions } from '@/types/domain';
+import type { Hecho, FilterOptions, HechoRelacion } from '@/types/domain';
 
 export const mockHechos: Hecho[] = [
   // CASO 1: Múltiples países (5 países) - Caso extremo geográfico
@@ -43,7 +43,23 @@ export const mockHechos: Hecho[] = [
       categoriasAsignadas: ["Medio Ambiente", "Política Internacional", "Economía Verde", "Desarrollo Sostenible"],
       puntuacionRelevancia: 95,
       estadoProcesamiento: "completo"
-    }
+    },
+    relaciones: [
+      {
+        hecho_relacionado_id: 5,
+        tipo_relacion: 'relacionado',
+        fuerza_relacion: 7,
+        descripcion_relacion: 'Ambos son megaproyectos de desarrollo tecnológico sostenible en Latinoamérica',
+        direccion: 'origen'
+      },
+      {
+        hecho_relacionado_id: 10,
+        tipo_relacion: 'causa',
+        fuerza_relacion: 8,
+        descripcion_relacion: 'El acuerdo climático impulsó la creación de la alianza económica del Pacífico',
+        direccion: 'origen'
+      }
+    ]
   },
 
   // CASO 2: Texto extremadamente largo - Caso extremo de contenido
@@ -81,7 +97,16 @@ export const mockHechos: Hecho[] = [
       categoriasAsignadas: ["Ciencia", "Medicina", "Biotecnología", "Salud Pública", "Investigación"],
       puntuacionRelevancia: 92,
       estadoProcesamiento: "completo"
-    }
+    },
+    relaciones: [
+      {
+        hecho_relacionado_id: 7,
+        tipo_relacion: 'ampliacion',
+        fuerza_relacion: 6,
+        descripcion_relacion: 'Ambos representan avances científicos que utilizan tecnología de punta',
+        direccion: 'origen'
+      }
+    ]
   },
 
   // CASO 3: Importancia mínima (1) + Sin evaluación + Pocos datos
@@ -141,7 +166,16 @@ export const mockHechos: Hecho[] = [
       categoriasAsignadas: ["Arqueología", "Ciencia", "Amazonía", "Controversia Científica", "Historia Precolombina"],
       puntuacionRelevancia: 67,
       estadoProcesamiento: "en_revision"
-    }
+    },
+    relaciones: [
+      {
+        hecho_relacionado_id: 8,
+        tipo_relacion: 'contradictorio',
+        fuerza_relacion: 9,
+        descripcion_relacion: 'Las afirmaciones arqueológicas contradicen los acuerdos diplomáticos sobre patrimonio cultural',
+        direccion: 'origen'
+      }
+    ]
   },
 
   // CASO 5: Evento futuro + Programación + Categorías IA extensas
@@ -177,7 +211,16 @@ export const mockHechos: Hecho[] = [
       categoriasAsignadas: ["Tecnología Espacial", "Inversión Extranjera", "Desarrollo Tecnológico", "Industria Aeroespacial", "Innovación", "Economía Digital", "Infraestructura", "Ciencia y Tecnología"],
       puntuacionRelevancia: 85,
       estadoProcesamiento: "completo"
-    }
+    },
+    relaciones: [
+      {
+        hecho_relacionado_id: 1,
+        tipo_relacion: 'relacionado',
+        fuerza_relacion: 7,
+        descripcion_relacion: 'Ambos son megaproyectos de desarrollo tecnológico sostenible en Latinoamérica',
+        direccion: 'destino'
+      }
+    ]
   },
 
   // CASO 6: Sin etiquetas, sin estadísticas + Campo pais como string (caso legacy)
@@ -232,7 +275,16 @@ export const mockHechos: Hecho[] = [
       categoriasAsignadas: ["Inteligencia Artificial", "Educación Digital", "Neurociencia", "Tecnología Educativa", "Startups", "Innovación Argentina", "EdTech", "Personalización", "Aprendizaje Adaptativo", "Ciencias Cognitivas"],
       puntuacionRelevancia: 78,
       estadoProcesamiento: "completo"
-    }
+    },
+    relaciones: [
+      {
+        hecho_relacionado_id: 2,
+        tipo_relacion: 'ampliacion',
+        fuerza_relacion: 6,
+        descripcion_relacion: 'Ambos representan avances científicos que utilizan tecnología de punta',
+        direccion: 'destino'
+      }
+    ]
   },
 
   // CASO 8: Política internacional compleja + 3 países + Opinion piece
@@ -270,7 +322,23 @@ export const mockHechos: Hecho[] = [
       categoriasAsignadas: ["Política Internacional", "Diplomacia", "Crisis Regional", "Migración", "Recursos Fronterizos"],
       puntuacionRelevancia: 91,
       estadoProcesamiento: "completo"
-    }
+    },
+    relaciones: [
+      {
+        hecho_relacionado_id: 4,
+        tipo_relacion: 'contradictorio',
+        fuerza_relacion: 9,
+        descripcion_relacion: 'Las afirmaciones arqueológicas contradicen los acuerdos diplomáticos sobre patrimonio cultural',
+        direccion: 'destino'
+      },
+      {
+        hecho_relacionado_id: 10,
+        tipo_relacion: 'causa',
+        fuerza_relacion: 8,
+        descripcion_relacion: 'Las tensiones diplomáticas motivaron la búsqueda de nuevas alianzas económicas',
+        direccion: 'origen'
+      }
+    ]
   },
 
   // CASO 9: Deporte + Sin consenso fuentes + Evaluación pendiente
@@ -347,7 +415,23 @@ export const mockHechos: Hecho[] = [
       categoriasAsignadas: ["Economía Internacional", "Comercio Exterior", "Bloques Económicos", "Integración Regional", "Pacífico", "Crecimiento Económico"],
       puntuacionRelevancia: 98,
       estadoProcesamiento: "completo"
-    }
+    },
+    relaciones: [
+      {
+        hecho_relacionado_id: 1,
+        tipo_relacion: 'consecuencia',
+        fuerza_relacion: 8,
+        descripcion_relacion: 'El acuerdo climático impulsó la creación de la alianza económica del Pacífico',
+        direccion: 'destino'
+      },
+      {
+        hecho_relacionado_id: 8,
+        tipo_relacion: 'consecuencia',
+        fuerza_relacion: 8,
+        descripcion_relacion: 'Las tensiones diplomáticas motivaron la búsqueda de nuevas alianzas económicas',
+        direccion: 'destino'
+      }
+    ]
   }
 ];
 
@@ -394,6 +478,9 @@ export const generateMockHechos = (count: number): Hecho[] => {
     population: ["la región", "los ciudadanos", "la economía", "el medio ambiente"]
   };
 
+  const generatedHechos: Hecho[] = [];
+  const relationTypes: HechoRelacion['tipo_relacion'][] = ['causa', 'consecuencia', 'contradictorio', 'relacionado', 'ampliacion'];
+
   return Array.from({ length: count }, (_, index) => {
     const template = contenidoTemplates[index % contenidoTemplates.length];
     let contenido = template;
@@ -413,8 +500,49 @@ export const generateMockHechos = (count: number): Hecho[] => {
       paisesSeleccionados.push(paisesDisponibles.splice(randomIndex, 1)[0]);
     }
 
-    return {
-      id: 1000 + index,
+    const hechoId = 1000 + index;
+    const relaciones: HechoRelacion[] = [];
+
+    // Generar relaciones aleatorias (30% sin relaciones, 50% con 1-2 relaciones, 20% con 3+ relaciones)
+    const relationProbability = Math.random();
+    let numRelaciones = 0;
+    if (relationProbability > 0.7) {
+      numRelaciones = 0; // 30% sin relaciones
+    } else if (relationProbability > 0.2) {
+      numRelaciones = Math.floor(Math.random() * 2) + 1; // 50% con 1-2 relaciones
+    } else {
+      numRelaciones = Math.floor(Math.random() * 3) + 3; // 20% con 3-5 relaciones
+    }
+
+    // Crear relaciones con hechos existentes o generados
+    const availableTargets = [
+      ...mockHechos.map(h => h.id),
+      ...generatedHechos.map(h => h.id),
+      ...Array.from({ length: count }, (_, i) => 1000 + i).filter(id => id !== hechoId)
+    ];
+
+    const usedTargets = new Set<number>();
+    for (let i = 0; i < numRelaciones && availableTargets.length > 0; i++) {
+      const targetIndex = Math.floor(Math.random() * availableTargets.length);
+      const targetId = availableTargets[targetIndex];
+      
+      if (!usedTargets.has(targetId) && targetId !== hechoId) {
+        usedTargets.add(targetId);
+        const tipoRelacion = relationTypes[Math.floor(Math.random() * relationTypes.length)];
+        const fuerzaRelacion = Math.floor(Math.random() * 7) + 4; // 4-10
+
+        relaciones.push({
+          hecho_relacionado_id: targetId,
+          tipo_relacion: tipoRelacion,
+          fuerza_relacion: fuerzaRelacion,
+          descripcion_relacion: `Relación ${tipoRelacion} entre hechos`,
+          direccion: Math.random() > 0.5 ? 'origen' : 'destino'
+        });
+      }
+    }
+
+    const hecho: Hecho = {
+      id: hechoId,
       contenido,
       fechaOcurrencia: new Date(Date.now() - (index * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
       importancia: Math.floor(Math.random() * 10) + 1,
@@ -436,7 +564,11 @@ export const generateMockHechos = (count: number): Hecho[] => {
         fechaPublicacion: new Date(Date.now() - (index * 24 * 60 * 60 * 1000)).toISOString(),
         autor: `Autor Generado ${index + 1}`,
         categoriasAsignadas: Math.random() > 0.3 ? [`Categoría ${index % 5}`, `Tema ${index % 3}`] : undefined
-      }
+      },
+      relaciones: relaciones.length > 0 ? relaciones : undefined
     };
+
+    generatedHechos.push(hecho);
+    return hecho;
   });
 };

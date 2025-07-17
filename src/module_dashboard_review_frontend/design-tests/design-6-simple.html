@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseño 6 - Compacto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: white;
+            color: black;
+            line-height: 1.3;
+        }
+        
+        .cluster-card {
+            border: 2px solid black;
+            padding: 16px;
+            margin-bottom: 20px;
+            max-width: 800px;
+        }
+        
+        /* Todo más condensado */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 8px;
+        }
+        
+        .countries-compact {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .date-compact {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .main-content {
+            font-size: 18px;
+            font-weight: bold;
+            line-height: 1.3;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        
+        /* Hechos relacionados como líneas cortas */
+        .related-compact {
+            background: #f5f5f5;
+            padding: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+        
+        .related-line {
+            padding: 4px 0;
+            border-left: 2px solid black;
+            padding-left: 8px;
+            margin-bottom: 4px;
+        }
+        
+        .related-line:last-child {
+            margin-bottom: 0;
+        }
+        
+        .rel-type {
+            font-weight: bold;
+            font-size: 11px;
+        }
+        
+        .rel-text {
+            display: inline;
+        }
+        
+        .rel-meta {
+            font-size: 11px;
+            color: #666;
+            margin-left: 4px;
+        }
+        
+        /* Metadata compacta */
+        .meta-compact {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            padding: 8px 0;
+            border-top: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+        }
+        
+        .meta-left {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .meta-chip {
+            padding: 2px 6px;
+            border: 1px solid #999;
+        }
+        
+        /* Fuente en toggle compacto */
+        .source-compact {
+            margin-top: 12px;
+            font-size: 12px;
+        }
+        
+        .source-toggle-compact {
+            cursor: pointer;
+            text-decoration: underline;
+            color: #333;
+        }
+        
+        .source-detail {
+            display: none;
+            margin-top: 8px;
+            padding: 8px;
+            background: #f5f5f5;
+            font-size: 12px;
+        }
+        
+        .source-detail.show {
+            display: block;
+        }
+        
+        /* Modal compacto */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 24px;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            border: 2px solid black;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            padding-right: 30px;
+        }
+        
+        .modal-section {
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        
+        .modal-section h3 {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .modal-section p {
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Diseño 6 - Compacto</h1>
+    
+    <div class="cluster-card">
+        <!-- Header compacto -->
+        <div class="header-row">
+            <div class="countries-compact">BRASIL • ARGENTINA • COLOMBIA • MÉXICO • CHILE</div>
+            <div class="date-compact">12 jun 2025</div>
+        </div>
+        
+        <!-- Contenido principal -->
+        <div class="main-content" onclick="showModal()">
+            Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+        </div>
+        
+        <!-- Hechos relacionados compactos -->
+        <div class="related-compact">
+            <div class="related-line">
+                <span class="rel-type">↔️</span>
+                <span class="rel-text">Centro espacial comercial de Sudamérica en Ecuador 2027</span>
+                <span class="rel-meta">(8/10)</span>
+            </div>
+            <div class="related-line">
+                <span class="rel-type">➡️</span>
+                <span class="rel-text">Alianza económica del Pacífico - crecimiento PIB 15%</span>
+                <span class="rel-meta">(10/10)</span>
+            </div>
+        </div>
+        
+        <!-- Metadata compacta -->
+        <div class="meta-compact">
+            <div class="meta-left">
+                <span class="meta-chip">EVENTO</span>
+                <span class="meta-chip">Verificado</span>
+                <span>Importancia: <strong>10/10</strong></span>
+            </div>
+        </div>
+        
+        <!-- Fuente compacta -->
+        <div class="source-compact">
+            <span class="source-toggle-compact" onclick="toggleSource()">📰 Ver fuente</span>
+            <div class="source-detail" id="sourceDetail">
+                <strong>Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</strong><br>
+                Reuters América Latina • Isabella García-Montenegro
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal compacto -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-close" onclick="hideModal()">×</div>
+            
+            <div class="modal-title">
+                Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+            </div>
+            
+            <div class="modal-section">
+                <h3>📍 Ubicación</h3>
+                <p>BRASIL • ARGENTINA • COLOMBIA • MÉXICO • CHILE</p>
+            </div>
+            
+            <div class="modal-section">
+                <h3>📰 Fuente</h3>
+                <p><strong>Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</strong></p>
+                <p>Reuters América Latina • Isabella García-Montenegro • 12 jun 2025</p>
+            </div>
+            
+            <div class="modal-section">
+                <h3>📊 Datos</h3>
+                <p>Tipo: EVENTO • Importancia: 10/10 • Estado: Verificado OK</p>
+                <p>Editor: Dr. María Elena Vásquez</p>
+            </div>
+            
+            <div class="modal-section">
+                <h3>🔗 Relacionados</h3>
+                <p>↔️ Centro espacial comercial de Sudamérica (8/10)</p>
+                <p>➡️ Alianza económica del Pacífico (10/10)</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSource() {
+            const source = document.getElementById('sourceDetail');
+            source.classList.toggle('show');
+        }
+        
+        function showModal() {
+            document.getElementById('modal').classList.add('show');
+        }
+        
+        function hideModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+        
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
+    </script>
+</body>
+</html>

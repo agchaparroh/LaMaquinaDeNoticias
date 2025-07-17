@@ -198,7 +198,7 @@ La API proporciona dos endpoints para monitoreo de salud:
 
 ### Supabase connection
 SUPABASE_URL=
-SUPABASE_KEY=
+SUPABASE_ANON_KEY=
 
 ### Server configuration  
 API_HOST=0.0.0.0
@@ -320,7 +320,7 @@ Required variables:
 ```bash
 # Supabase connection
 SUPABASE_URL=https://xxxxx.supabase.co
-SUPABASE_KEY=your_supabase_anon_key
+SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # Optional (with defaults)
 API_HOST=0.0.0.0

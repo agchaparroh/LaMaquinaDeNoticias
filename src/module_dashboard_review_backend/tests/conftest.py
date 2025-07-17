@@ -107,7 +107,7 @@ def mock_environment():
     """Mock environment variables for testing."""
     env_vars = {
         "SUPABASE_URL": "https://test.supabase.co",
-        "SUPABASE_KEY": "test-key",
+        "SUPABASE_ANON_KEY": "test-key",
         "API_HOST": "0.0.0.0",
         "API_PORT": "8004",
         "CORS_ORIGINS": "http://localhost:3001",
@@ -123,7 +123,7 @@ def auto_mock_environment():
     """Automatically mock environment variables for all tests."""
     env_vars = {
         "SUPABASE_URL": "https://test.supabase.co",
-        "SUPABASE_KEY": "test-key",
+        "SUPABASE_ANON_KEY": "test-key",
         "API_HOST": "0.0.0.0",
         "API_PORT": "8004",
         "CORS_ORIGINS": "http://localhost:3001",

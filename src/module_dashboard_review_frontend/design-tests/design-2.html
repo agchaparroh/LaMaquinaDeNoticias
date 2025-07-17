@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseño 2 - Timeline Integrado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1000px;
+            display: flex;
+            gap: 20px;
+        }
+        
+        /* BLOQUE PRINCIPAL */
+        .main-block {
+            flex: 2;
+            background: white;
+            border: 2px solid #005A99;
+            border-radius: 8px;
+            padding: 24px;
+            position: relative;
+        }
+        
+        .cluster-indicator {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #005A99;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .country-chips {
+            margin-bottom: 16px;
+        }
+        
+        .country-chip {
+            display: inline-block;
+            background: #005A99;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            margin-right: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .main-content {
+            font-size: 20px;
+            font-weight: bold;
+            line-height: 1.4;
+            margin-bottom: 24px;
+            cursor: pointer;
+        }
+        
+        .metadata-row {
+            margin-bottom: 16px;
+        }
+        
+        .metadata-chip {
+            display: inline-block;
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .evaluation-chip {
+            background: #4CAF50;
+            color: white;
+            border: none;
+        }
+        
+        .importance {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+        
+        /* SOURCES TOGGLE */
+        .sources-section {
+            border-top: 1px solid #eee;
+            padding-top: 16px;
+        }
+        
+        .sources-toggle {
+            color: #005A99;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+        
+        .sources-content {
+            display: none;
+        }
+        
+        .sources-content.expanded {
+            display: block;
+        }
+        
+        .source-box {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px;
+            background: #f8f9fa;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        
+        .source-label {
+            color: #005A99;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        
+        .source-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        
+        .source-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .source-chip {
+            display: inline-block;
+            background: #005A99;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-right: 6px;
+            font-size: 11px;
+        }
+        
+        /* TIMELINE LATERAL */
+        .timeline-block {
+            flex: 1;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            height: fit-content;
+        }
+        
+        .timeline-header {
+            color: #005A99;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .timeline-vertical {
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .timeline-vertical::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #ddd;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #fafafa;
+            border-radius: 6px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #2196F3;
+            border: 2px solid white;
+        }
+        
+        .timeline-item.consecuencia {
+            border-left-color: #4CAF50;
+        }
+        
+        .timeline-item.consecuencia::before {
+            background: #4CAF50;
+        }
+        
+        .timeline-item.mutual {
+            border-left-color: #FF9800;
+        }
+        
+        .timeline-item.mutual::before {
+            background: #FF9800;
+        }
+        
+        .timeline-item.contradiccion {
+            border-left-color: #F44336;
+        }
+        
+        .timeline-item.contradiccion::before {
+            background: #F44336;
+        }
+        
+        .relation-badge {
+            display: inline-block;
+            background: #2196F3;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .relation-badge.consecuencia {
+            background: #4CAF50;
+        }
+        
+        .relation-badge.mutual {
+            background: #FF9800;
+        }
+        
+        .relation-badge.contradiccion {
+            background: #F44336;
+        }
+        
+        .timeline-content {
+            font-size: 14px;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        
+        .timeline-meta {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 32px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 24px;
+            padding-right: 40px;
+        }
+        
+        .modal-section {
+            margin-bottom: 24px;
+        }
+        
+        .modal-section h3 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #005A99;
+        }
+        
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .timeline-block {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Diseño 2 - Timeline Integrado</h1>
+    <p style="color: #666; margin-bottom: 20px;">
+        Hechos relacionados siempre visibles como timeline vertical lateral. Fuentes en toggle colapsado.
+    </p>
+    
+    <div class="container">
+        <!-- BLOQUE PRINCIPAL -->
+        <div class="main-block">
+            <div class="cluster-indicator">🔗 2 hechos relacionados</div>
+            
+            <div class="country-chips">
+                <span class="country-chip">BRASIL</span>
+                <span class="country-chip">ARGENTINA</span>
+                <span class="country-chip">COLOMBIA</span>
+                <span class="country-chip">MÉXICO</span>
+                <span class="country-chip">CHILE</span>
+            </div>
+            
+            <div class="main-content" onclick="showModal()">
+                Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+            </div>
+            
+            <div class="metadata-row">
+                <span class="metadata-chip">12 de junio de 2025</span>
+                <span class="metadata-chip">EVENTO</span>
+                <span class="metadata-chip evaluation-chip">Verificado</span>
+            </div>
+            
+            <div class="importance">Importancia: <strong>10/10</strong></div>
+            
+            <!-- SOURCES TOGGLE -->
+            <div class="sources-section">
+                <div class="sources-toggle" onclick="toggleSources()">
+                    ▼ Ver fuentes originales
+                </div>
+                
+                <div class="sources-content" id="sourcesContent">
+                    <div class="source-box" onclick="openSource()">
+                        <div class="source-label">📰 Fuente Original</div>
+                        <div class="source-title">Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</div>
+                        <div class="source-meta">
+                            <span class="source-chip">Reuters América Latina</span>
+                            <span class="source-chip">12 jun 2025</span>
+                            <span class="source-chip">Isabella García-Montenegro</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TIMELINE LATERAL -->
+        <div class="timeline-block">
+            <div class="timeline-header">📊 Hechos Relacionados</div>
+            
+            <div class="timeline-vertical">
+                <div class="timeline-item mutual">
+                    <div class="relation-badge mutual">↔️ Relacionado</div>
+                    <div class="timeline-content">
+                        Se anuncia la construcción del primer centro espacial comercial de Sudamérica que será inaugurado en Ecuador en 2027, con inversión de 2.8 mil millones de dólares.
+                    </div>
+                    <div class="timeline-meta">
+                        El Comercio Ecuador • 15 mar 2027 • Alta importancia (8/10)
+                    </div>
+                </div>
+                
+                <div class="timeline-item consecuencia">
+                    <div class="relation-badge consecuencia">➡️ Causa</div>
+                    <div class="timeline-content">
+                        Alianza económica entre Chile, Perú, Colombia y México establece nuevo bloque comercial del Pacífico con proyecciones de crecimiento del PIB conjunto del 15% en los próximos 5 años.
+                    </div>
+                    <div class="timeline-meta">
+                        Bloomberg Línea • 3 jun 2025 • Alta importancia (10/10)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-close" onclick="hideModal()">×</div>
+            
+            <div class="modal-title">
+                Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+            </div>
+            
+            <div class="modal-section">
+                <h3>📍 Ubicación</h3>
+                <div class="country-chips">
+                    <span class="country-chip">BRASIL</span>
+                    <span class="country-chip">ARGENTINA</span>
+                    <span class="country-chip">COLOMBIA</span>
+                    <span class="country-chip">MÉXICO</span>
+                    <span class="country-chip">CHILE</span>
+                </div>
+            </div>
+            
+            <div class="modal-section">
+                <h3>📰 Fuente Original</h3>
+                <div class="source-title">Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</div>
+                <div>
+                    <strong>Medio:</strong> Reuters América Latina<br>
+                    <strong>Autor:</strong> Isabella García-Montenegro<br>
+                    <strong>Fecha:</strong> 12 de junio de 2025<br>
+                    <strong>URL:</strong> <a href="#">https://reuters.com/mundo/cumbre-clima-latinoamerica-2025</a>
+                </div>
+            </div>
+            
+            <div class="modal-section">
+                <h3>📊 Clasificación</h3>
+                <p><strong>Fecha ocurrencia:</strong> 12 de junio de 2025</p>
+                <p><strong>Tipo de hecho:</strong> EVENTO</p>
+                <p><strong>Importancia:</strong> 10/10</p>
+                <p><strong>Evaluación editorial:</strong> <span style="color: green;">Verificado OK</span></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSources() {
+            const content = document.getElementById('sourcesContent');
+            const toggle = document.querySelector('.sources-toggle');
+            
+            content.classList.toggle('expanded');
+            toggle.textContent = content.classList.contains('expanded') ? 
+                '▲ Ocultar fuentes' : '▼ Ver fuentes originales';
+        }
+        
+        function showModal() {
+            document.getElementById('modal').classList.add('show');
+        }
+        
+        function hideModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+        
+        function openSource() {
+            alert('Abrir fuente original en nueva ventana');
+        }
+        
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
+    </script>
+</body>
+</html>

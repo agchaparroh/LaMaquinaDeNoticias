@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseño 4 - Todo Lineal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: white;
+            color: black;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* Sin cajas, solo separadores sutiles */
+        .section {
+            padding: 20px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .section:last-child {
+            border-bottom: none;
+        }
+        
+        .country-list {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        
+        .main-content {
+            font-size: 20px;
+            font-weight: bold;
+            line-height: 1.4;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        
+        .metadata-inline {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 24px;
+        }
+        
+        /* Hechos relacionados integrados */
+        .related-section {
+            margin-top: 24px;
+        }
+        
+        .related-header {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+        
+        .related-item {
+            padding-left: 24px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .related-item::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: black;
+        }
+        
+        .relation-type {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        
+        .related-text {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        
+        .related-source {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Fuente en toggle simple */
+        .source-section {
+            margin-top: 32px;
+        }
+        
+        .source-toggle {
+            cursor: pointer;
+            padding: 12px 0;
+            border-top: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .source-header {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .source-content {
+            display: none;
+            padding-top: 12px;
+        }
+        
+        .source-content.show {
+            display: block;
+        }
+        
+        .source-title {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        
+        .source-details {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Modal minimalista */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 40px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 24px;
+            padding-right: 40px;
+        }
+        
+        .modal-section {
+            margin-bottom: 24px;
+        }
+        
+        .modal-section h3 {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Diseño 4 - Todo Lineal</h1>
+        
+        <!-- Flujo vertical simple sin cajas -->
+        <div class="section">
+            <!-- Países -->
+            <div class="country-list">
+                BRASIL • ARGENTINA • COLOMBIA • MÉXICO • CHILE
+            </div>
+            
+            <!-- Contenido principal -->
+            <div class="main-content" onclick="showModal()">
+                Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+            </div>
+            
+            <!-- Metadata inline -->
+            <div class="metadata-inline">
+                12 de junio de 2025 • EVENTO • Verificado • Importancia: 10/10
+            </div>
+            
+            <!-- Hechos relacionados integrados -->
+            <div class="related-section">
+                <div class="related-header">Hechos Relacionados</div>
+                
+                <div class="related-item">
+                    <div class="relation-type">↔️ Relacionado</div>
+                    <div class="related-text">
+                        Se anuncia la construcción del primer centro espacial comercial de Sudamérica que será inaugurado en Ecuador en 2027, con inversión de 2.8 mil millones de dólares.
+                    </div>
+                    <div class="related-source">
+                        El Comercio Ecuador • 15 mar 2027 • Importancia: 8/10
+                    </div>
+                </div>
+                
+                <div class="related-item">
+                    <div class="relation-type">➡️ Causa</div>
+                    <div class="related-text">
+                        Alianza económica entre Chile, Perú, Colombia y México establece nuevo bloque comercial del Pacífico con proyecciones de crecimiento del PIB conjunto del 15% en los próximos 5 años.
+                    </div>
+                    <div class="related-source">
+                        Bloomberg Línea • 3 jun 2025 • Importancia: 10/10
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Fuente al final -->
+        <div class="source-section">
+            <div class="source-toggle" onclick="toggleSource()">
+                <div class="source-header">📰 Fuente Original ▼</div>
+                <div class="source-content" id="sourceContent">
+                    <div class="source-title">Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</div>
+                    <div class="source-details">
+                        Reuters América Latina • 12 jun 2025 • Isabella García-Montenegro
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-close" onclick="hideModal()">×</div>
+            
+            <div class="modal-title">
+                Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+            </div>
+            
+            <div class="modal-section">
+                <h3>Ubicación</h3>
+                <p>BRASIL • ARGENTINA • COLOMBIA • MÉXICO • CHILE</p>
+            </div>
+            
+            <div class="modal-section">
+                <h3>Fuente Original</h3>
+                <p><strong>Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</strong></p>
+                <p>
+                    Medio: Reuters América Latina<br>
+                    Autor: Isabella García-Montenegro<br>
+                    Fecha: 12 de junio de 2025<br>
+                    URL: https://reuters.com/mundo/cumbre-clima-latinoamerica-2025
+                </p>
+            </div>
+            
+            <div class="modal-section">
+                <h3>Clasificación</h3>
+                <p>
+                    Fecha ocurrencia: 12 de junio de 2025<br>
+                    Tipo de hecho: EVENTO<br>
+                    Importancia: 10/10<br>
+                    Evaluación editorial: Verificado OK<br>
+                    Editor evaluador: Dr. María Elena Vásquez
+                </p>
+            </div>
+            
+            <div class="modal-section">
+                <h3>Hechos Relacionados</h3>
+                <p><strong>↔️ Relacionado:</strong> Centro espacial comercial de Sudamérica</p>
+                <p><strong>➡️ Causa:</strong> Alianza económica del Pacífico</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSource() {
+            const source = document.getElementById('sourceContent');
+            source.classList.toggle('show');
+        }
+        
+        function showModal() {
+            document.getElementById('modal').classList.add('show');
+        }
+        
+        function hideModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+        
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
+    </script>
+</body>
+</html>

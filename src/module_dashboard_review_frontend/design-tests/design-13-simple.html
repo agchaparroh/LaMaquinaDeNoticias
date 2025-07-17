@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseño 13 - Dos columnas: contenido y contexto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        
+        /* BLOQUE PRINCIPAL DEL DASHBOARD */
+        .cluster-card {
+            background: white;
+            border: 2px solid #005A99;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 20px;
+            position: relative;
+            max-width: 1000px;
+        }
+        
+        .cluster-indicator {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #005A99;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        /* Layout de dos columnas */
+        .two-column-layout {
+            display: flex;
+            gap: 24px;
+        }
+        
+        .main-column {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .context-column {
+            width: 35%;
+            min-width: 280px;
+        }
+        
+        .country-chips {
+            margin-bottom: 16px;
+        }
+        
+        .country-chip {
+            display: inline-block;
+            background: #005A99;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .main-content {
+            font-size: 20px;
+            font-weight: bold;
+            line-height: 1.4;
+            margin-bottom: 24px;
+            cursor: pointer;
+        }
+        
+        .source-box {
+            border: 2px solid #005A99;
+            border-radius: 8px;
+            padding: 16px;
+            background: #f8f9fa;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+        
+        .source-label {
+            color: #005A99;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        .source-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .source-meta {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .source-chip {
+            display: inline-block;
+            background: #005A99;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 8px;
+            font-size: 12px;
+        }
+        
+        .metadata-row {
+            margin-bottom: 16px;
+        }
+        
+        .metadata-chip {
+            display: inline-block;
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .evaluation-chip {
+            background: #4CAF50;
+            color: white;
+            border: none;
+        }
+        
+        .bottom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .importance {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Columna de contexto */
+        .context-box {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        
+        .timeline-header {
+            color: #005A99;
+            font-weight: bold;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        
+        .timeline-item {
+            border-left: 4px solid #2196F3;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: white;
+            border: 1px solid #eee;
+        }
+        
+        .timeline-item.consecuencia {
+            border-left-color: #4CAF50;
+        }
+        
+        .relation-badge {
+            display: inline-block;
+            background: #2196F3;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+        
+        .relation-badge.consecuencia {
+            background: #4CAF50;
+        }
+        
+        .timeline-content {
+            font-size: 13px;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .timeline-meta {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        /* Fuente en toggle colapsable */
+        .source-toggle-box {
+            border: 1px solid #005A99;
+            border-radius: 4px;
+            margin-top: 16px;
+        }
+        
+        .source-toggle-header {
+            padding: 12px 16px;
+            cursor: pointer;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .source-toggle-label {
+            color: #005A99;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .source-arrow {
+            color: #005A99;
+            font-size: 12px;
+        }
+        
+        .source-toggle-content {
+            display: none;
+            padding: 16px;
+            border-top: 1px solid #005A99;
+        }
+        
+        .source-toggle-content.show {
+            display: block;
+        }
+        
+        /* MODAL/POPUP */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 32px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 24px;
+            padding-right: 40px;
+        }
+        
+        .modal-section {
+            margin-bottom: 24px;
+        }
+        
+        .modal-section h3 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #005A99;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .two-column-layout {
+                flex-direction: column;
+            }
+            
+            .context-column {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Diseño 13 - Dos columnas: contenido y contexto</h1>
+    
+    <!-- BLOQUE PRINCIPAL DEL DASHBOARD -->
+    <div class="cluster-card">
+        <!-- Indicador de cluster -->
+        <div class="cluster-indicator">🔗 2 hechos relacionados</div>
+        
+        <div class="two-column-layout">
+            <!-- COLUMNA PRINCIPAL (izquierda) -->
+            <div class="main-column">
+                <!-- Países -->
+                <div class="country-chips">
+                    <span class="country-chip">BRASIL</span>
+                    <span class="country-chip">ARGENTINA</span>
+                    <span class="country-chip">COLOMBIA</span>
+                    <span class="country-chip">MÉXICO</span>
+                    <span class="country-chip">CHILE</span>
+                </div>
+                
+                <!-- Contenido principal -->
+                <div class="main-content" onclick="showModal()">
+                    Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+                </div>
+                
+                <!-- Metadata -->
+                <div class="metadata-row">
+                    <span class="metadata-chip">12 de junio de 2025</span>
+                    <span class="metadata-chip">EVENTO</span>
+                    <span class="metadata-chip evaluation-chip">Verificado</span>
+                    <div class="importance" style="margin-top: 8px;">Importancia: <strong>10/10</strong></div>
+                </div>
+                
+                <!-- Fuente en toggle -->
+                <div class="source-toggle-box">
+                    <div class="source-toggle-header" onclick="toggleSource()">
+                        <span class="source-toggle-label">📰 FUENTE ORIGINAL</span>
+                        <span class="source-arrow" id="sourceArrow">▼</span>
+                    </div>
+                    <div class="source-toggle-content" id="sourceContent">
+                        <div class="source-title">Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</div>
+                        <div class="source-meta">
+                            <span class="source-chip">Reuters América Latina</span>
+                            <span class="source-chip">12 jun 2025</span>
+                            <span class="source-chip">Isabella García-Montenegro</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- COLUMNA DE CONTEXTO (derecha) -->
+            <div class="context-column">
+                <div class="context-box">
+                    <div class="timeline-header">📊 HECHOS RELACIONADOS</div>
+                    
+                    <div class="timeline-item">
+                        <div class="relation-badge">↔️ Relacionado</div>
+                        <div class="timeline-content">
+                            Se anuncia la construcción del primer centro espacial comercial de Sudamérica que será inaugurado en Ecuador en 2027, con inversión de 2.8 mil millones de dólares.
+                        </div>
+                        <div class="timeline-meta">
+                            El Comercio Ecuador<br>
+                            15 mar 2027<br>
+                            Importancia: 8/10
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item consecuencia">
+                        <div class="relation-badge consecuencia">➡️ Causa</div>
+                        <div class="timeline-content">
+                            Alianza económica entre Chile, Perú, Colombia y México establece nuevo bloque comercial del Pacífico con proyecciones de crecimiento del PIB conjunto del 15% en los próximos 5 años.
+                        </div>
+                        <div class="timeline-meta">
+                            Bloomberg Línea<br>
+                            3 jun 2025<br>
+                            Importancia: 10/10
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL/POPUP -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-close" onclick="hideModal()">×</div>
+            
+            <div class="modal-title">
+                Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+            </div>
+            
+            <div class="modal-section">
+                <h3>📍 Ubicación</h3>
+                <div class="country-chips">
+                    <span class="country-chip">BRASIL</span>
+                    <span class="country-chip">ARGENTINA</span>
+                    <span class="country-chip">COLOMBIA</span>
+                    <span class="country-chip">MÉXICO</span>
+                    <span class="country-chip">CHILE</span>
+                </div>
+            </div>
+            
+            <div class="modal-section">
+                <h3>📰 Fuente Original</h3>
+                <div class="source-title">Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</div>
+                <div>
+                    <strong>Medio:</strong> Reuters América Latina<br>
+                    <strong>Autor:</strong> Isabella García-Montenegro<br>
+                    <strong>Fecha:</strong> 12 de junio de 2025<br>
+                    <strong>URL:</strong> <a href="#">https://reuters.com/mundo/cumbre-clima-latinoamerica-2025</a>
+                </div>
+            </div>
+            
+            <div class="modal-section">
+                <h3>📊 Clasificación</h3>
+                <p><strong>Fecha ocurrencia:</strong> 12 de junio de 2025</p>
+                <p><strong>Tipo de hecho:</strong> EVENTO</p>
+                <p><strong>Importancia:</strong> 10/10</p>
+                <p><strong>Evaluación editorial:</strong> <span style="color: green;">Verificado OK</span></p>
+                <p><strong>Editor evaluador:</strong> Dr. María Elena Vásquez</p>
+            </div>
+            
+            <div class="modal-section">
+                <h3>🔗 Hechos Relacionados</h3>
+                <div class="timeline-item">
+                    <div class="relation-badge">↔️ Relacionado</div>
+                    <div class="timeline-content">Centro espacial comercial de Sudamérica</div>
+                </div>
+                <div class="timeline-item consecuencia">
+                    <div class="relation-badge consecuencia">➡️ Causa</div>
+                    <div class="timeline-content">Alianza económica del Pacífico</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSource() {
+            const source = document.getElementById('sourceContent');
+            const arrow = document.getElementById('sourceArrow');
+            source.classList.toggle('show');
+            arrow.textContent = source.classList.contains('show') ? '▲' : '▼';
+        }
+        
+        function showModal() {
+            document.getElementById('modal').classList.add('show');
+        }
+        
+        function hideModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+        
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
+    </script>
+</body>
+</html>

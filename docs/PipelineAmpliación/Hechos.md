@@ -19,7 +19,8 @@ Analiza el siguiente `CONTENIDO` de un artículo o documento. Extrae **Hechos Pr
 Identifica eventos, sucesos, declaraciones o anuncios significativos.  Para cada hecho, proporciona: 
 + `id` (único secuencial)
 + `contenido` (descripción completa del hecho), 
-+ `fecha` (objeto con `inicio` y `fin` en formato YYYY-MM-DD), 
++ `fecha_inicio` (string YYYY-MM-DD para el inicio del hecho), 
++ `fecha_fin` (string YYYY-MM-DD para el fin del hecho, igual a fecha_inicio si es puntual), 
 + `precision_temporal` (`exacta`, `dia`, `semana`, `mes`, `trimestre`, `año`, `decada`, `periodo`), 
 + `tipo_hecho` (`SUCESO`, `ANUNCIO`, `DECLARACION`, `BIOGRAFIA`, `CONCEPTO`, `NORMATIVA`, `EVENTO`), 
 + `pais` (array de strings), 
@@ -56,10 +57,8 @@ Caracas – El presidente de Venezuela, Nicolás Maduro, anunció anoche la capt
     {
       "id": 1,
       "contenido": "El presidente de Venezuela, Nicolás Maduro, anunció la captura de más de 50 mercenarios en el estado La Guaira.",
-      "fecha": {
-        "inicio": "2024-05-14",
-        "fin": "2024-05-14"
-      },
+      "fecha_inicio": "2024-05-14",
+      "fecha_fin": "2024-05-14",
       "precision_temporal": "dia",
       "tipo_hecho": "ANUNCIO",
       "pais": ["Venezuela"],
@@ -71,10 +70,8 @@ Caracas – El presidente de Venezuela, Nicolás Maduro, anunció anoche la capt
     {
       "id": 2,
       "contenido": "Según Nicolás Maduro, los mercenarios capturados pretendían realizar un atentado en la víspera de las elecciones presidenciales del 28 de julio.",
-      "fecha": {
-        "inicio": "2024-05-14", 
-        "fin": "2024-05-14"
-      },
+      "fecha_inicio": "2024-05-14",
+      "fecha_fin": "2024-05-14",
       "precision_temporal": "dia",
       "tipo_hecho": "DECLARACION",
       "pais": ["Venezuela"],
@@ -86,10 +83,8 @@ Caracas – El presidente de Venezuela, Nicolás Maduro, anunció anoche la capt
     {
       "id": 3,
       "contenido": "Las elecciones presidenciales están programadas para el 28 de julio.",
-      "fecha": {
-        "inicio": "2024-07-28",
-        "fin": "2024-07-28"
-      },
+      "fecha_inicio": "2024-07-28",
+      "fecha_fin": "2024-07-28",
       "precision_temporal": "exacta",
       "tipo_hecho": "EVENTO",
       "pais": ["Venezuela"],

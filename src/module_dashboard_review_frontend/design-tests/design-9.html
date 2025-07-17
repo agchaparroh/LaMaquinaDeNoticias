@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseño 9 - Radar/Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        
+        /* CONTENEDOR PRINCIPAL TIPO DASHBOARD */
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        /* PANEL CENTRAL - HECHO PRINCIPAL */
+        .central-panel {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            grid-column: 2;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .central-panel:hover {
+            transform: translateY(-5px);
+        }
+        
+        .central-panel::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        
+        .importance-radar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: conic-gradient(from 0deg, #10b981 0%, #10b981 100%, #1e293b 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(16,185,129,0.3);
+        }
+        
+        .importance-radar::before {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: #1e293b;
+            border-radius: 50%;
+        }
+        
+        .importance-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #10b981;
+            z-index: 1;
+        }
+        
+        .main-date {
+            background: rgba(59,130,246,0.2);
+            color: #93c5fd;
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            display: inline-block;
+            margin-bottom: 20px;
+            border: 1px solid rgba(59,130,246,0.3);
+        }
+        
+        .main-countries {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .country-indicator {
+            background: rgba(16,185,129,0.1);
+            color: #86efac;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(16,185,129,0.3);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .main-content {
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.6;
+            color: #f1f5f9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .event-type {
+            position: absolute;
+            bottom: 20px;
+            left: 40px;
+            background: rgba(251,146,60,0.2);
+            color: #fed7aa;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            border: 1px solid rgba(251,146,60,0.3);
+        }
+        
+        /* WIDGETS DE HECHOS RELACIONADOS */
+        .related-widget {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 24px;
+            border: 2px solid #334155;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            height: fit-content;
+        }
+        
+        .related-widget:hover {
+            border-color: #3b82f6;
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(59,130,246,0.2);
+        }
+        
+        .widget-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        
+        .relation-type {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .relation-type.related {
+            color: #60a5fa;
+        }
+        
+        .relation-type.cause {
+            color: #34d399;
+        }
+        
+        .relation-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .relation-icon.related {
+            background: rgba(59,130,246,0.2);
+        }
+        
+        .relation-icon.cause {
+            background: rgba(16,185,129,0.2);
+        }
+        
+        .widget-metric {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e2e8f0;
+        }
+        
+        .widget-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+        }
+        
+        .widget-source {
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .widget-date {
+            font-size: 11px;
+            color: #475569;
+            margin-top: 8px;
+        }
+        
+        /* INDICADORES VISUALES */
+        .impact-meter {
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+        
+        .impact-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        .impact-fill.high {
+            width: 80%;
+        }
+        
+        .impact-fill.max {
+            width: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+        }
+        
+        /* PANEL LATERAL DE FUENTES */
+        .sources-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: #0f172a;
+            border-left: 2px solid #334155;
+            transition: right 0.3s;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        
+        .sources-panel.open {
+            right: 0;
+        }
+        
+        .sources-header {
+            padding: 24px;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .sources-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+        
+        .sources-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .sources-close:hover {
+            background: #475569;
+        }
+        
+        .source-item {
+            padding: 20px 24px;
+            border-bottom: 1px solid #1e293b;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .source-item:hover {
+            background: #1e293b;
+        }
+        
+        .source-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+        }
+        
+        .source-details {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        /* BOTÓN DE FUENTES */
+        .sources-toggle {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(59,130,246,0.3);
+            transition: all 0.3s;
+            z-index: 90;
+        }
+        
+        .sources-toggle:hover {
+            transform: scale(1.1);
+            background: #2563eb;
+        }
+        
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            border: 2px solid #334155;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            color: #94a3b8;
+            transition: all 0.2s;
+        }
+        
+        .modal-close:hover {
+            background: #475569;
+            color: #e2e8f0;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f1f5f9;
+            line-height: 1.4;
+            margin-bottom: 30px;
+            padding-right: 40px;
+        }
+        
+        .modal-section {
+            margin-bottom: 30px;
+        }
+        
+        .modal-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #60a5fa;
+        }
+        
+        .modal-section p {
+            margin: 8px 0;
+            color: #cbd5e1;
+        }
+        
+        .modal-section strong {
+            color: #e2e8f0;
+        }
+        
+        /* GRID DE WIDGETS */
+        .widgets-grid {
+            display: grid;
+            grid-template-rows: repeat(2, 1fr);
+            gap: 20px;
+            align-content: center;
+        }
+        
+        /* ANIMACIONES */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .central-panel {
+                grid-column: 1;
+            }
+            
+            .sources-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; color: #f1f5f9; margin-bottom: 40px;">Diseño 9 - Radar/Dashboard</h1>
+    
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="dashboard-container">
+        <!-- WIDGET IZQUIERDO -->
+        <div class="widgets-grid">
+            <div class="related-widget">
+                <div class="widget-header">
+                    <div class="relation-type related">
+                        <div class="relation-icon related">↔️</div>
+                        <span>Relacionado</span>
+                    </div>
+                    <div class="widget-metric">8/10</div>
+                </div>
+                <div class="widget-content">
+                    Se anuncia la construcción del primer centro espacial comercial de Sudamérica que será inaugurado en Ecuador en 2027, con inversión de 2.8 mil millones de dólares.
+                </div>
+                <div class="widget-source">
+                    <span>📰</span>
+                    <span>El Comercio Ecuador</span>
+                </div>
+                <div class="widget-date">15 mar 2027</div>
+                <div class="impact-meter">
+                    <div class="impact-fill high"></div>
+                </div>
+            </div>
+            
+            <div class="related-widget">
+                <div class="widget-header">
+                    <div class="relation-type cause">
+                        <div class="relation-icon cause">➡️</div>
+                        <span>Causa</span>
+                    </div>
+                    <div class="widget-metric">10/10</div>
+                </div>
+                <div class="widget-content">
+                    Alianza económica entre Chile, Perú, Colombia y México establece nuevo bloque comercial del Pacífico con proyecciones de crecimiento del PIB conjunto del 15% en los próximos 5 años.
+                </div>
+                <div class="widget-source">
+                    <span>📈</span>
+                    <span>Bloomberg Línea</span>
+                </div>
+                <div class="widget-date">3 jun 2025</div>
+                <div class="impact-meter">
+                    <div class="impact-fill max"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PANEL CENTRAL -->
+        <div class="central-panel" onclick="showModal()">
+            <div class="importance-radar pulse">
+                <span class="importance-value">10</span>
+            </div>
+            
+            <div class="main-date">📅 12 de junio de 2025</div>
+            
+            <div class="main-countries">
+                <div class="country-indicator">
+                    <span>🇧🇷</span>
+                    <span>BRASIL</span>
+                </div>
+                <div class="country-indicator">
+                    <span>🇦🇷</span>
+                    <span>ARGENTINA</span>
+                </div>
+                <div class="country-indicator">
+                    <span>🇨🇴</span>
+                    <span>COLOMBIA</span>
+                </div>
+                <div class="country-indicator">
+                    <span>🇲🇽</span>
+                    <span>MÉXICO</span>
+                </div>
+                <div class="country-indicator">
+                    <span>🇨🇱</span>
+                    <span>CHILE</span>
+                </div>
+            </div>
+            
+            <div class="main-content">
+                Cumbre internacional sobre cambio climático alcanza acuerdo histórico para reducir emisiones de carbono en un 50% para 2030, con participación de líderes mundiales y compromisos financieros sin precedentes.
+            </div>
+            
+            <div class="event-type">EVENTO</div>
+        </div>
+        
+        <!-- INDICADORES ADICIONALES -->
+        <div class="widgets-grid">
+            <div style="background: #1e293b; border-radius: 16px; padding: 24px; border: 2px solid #334155; text-align: center;">
+                <div style="font-size: 14px; color: #64748b; margin-bottom: 8px;">Estado Editorial</div>
+                <div style="font-size: 20px; font-weight: bold; color: #10b981;">✓ Verificado</div>
+                <div style="font-size: 12px; color: #475569; margin-top: 8px;">Dr. María Elena Vásquez</div>
+            </div>
+            
+            <div style="background: #1e293b; border-radius: 16px; padding: 24px; border: 2px solid #334155; text-align: center;">
+                <div style="font-size: 14px; color: #64748b; margin-bottom: 8px;">Conexiones</div>
+                <div style="font-size: 36px; font-weight: bold; color: #3b82f6;">2</div>
+                <div style="font-size: 12px; color: #475569; margin-top: 8px;">Hechos relacionados</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- BOTÓN DE FUENTES -->
+    <div class="sources-toggle" onclick="toggleSources()">
+        <span style="font-size: 24px;">📰</span>
+    </div>
+    
+    <!-- PANEL LATERAL DE FUENTES -->
+    <div class="sources-panel" id="sourcesPanel">
+        <div class="sources-header">
+            <div class="sources-title">📰 Fuentes Originales</div>
+            <div class="sources-close" onclick="toggleSources()">×</div>
+        </div>
+        <div class="source-item" onclick="openSource()">
+            <div class="source-name">Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</div>
+            <div class="source-details">
+                Reuters América Latina • Isabella García-Montenegro • 12 jun 2025
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-close" onclick="hideModal()">×</div>
+            
+            <div class="modal-title">
+                Cumbre internacional sobre cambio climático alcanza acuerdo histórico
+            </div>
+            
+            <div class="modal-section">
+                <h3>📊 Métricas del Dashboard</h3>
+                <p><strong>Importancia:</strong> 10/10 (Máxima prioridad)</p>
+                <p><strong>Fecha:</strong> 12 de junio de 2025</p>
+                <p><strong>Tipo:</strong> EVENTO</p>
+                <p><strong>Cobertura:</strong> 5 países</p>
+                <p><strong>Estado:</strong> ✓ Verificado</p>
+            </div>
+            
+            <div class="modal-section">
+                <h3>🌎 Alcance Geográfico</h3>
+                <div class="main-countries">
+                    <div class="country-indicator">
+                        <span>🇧🇷</span>
+                        <span>BRASIL</span>
+                    </div>
+                    <div class="country-indicator">
+                        <span>🇦🇷</span>
+                        <span>ARGENTINA</span>
+                    </div>
+                    <div class="country-indicator">
+                        <span>🇨🇴</span>
+                        <span>COLOMBIA</span>
+                    </div>
+                    <div class="country-indicator">
+                        <span>🇲🇽</span>
+                        <span>MÉXICO</span>
+                    </div>
+                    <div class="country-indicator">
+                        <span>🇨🇱</span>
+                        <span>CHILE</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-section">
+                <h3>🔗 Análisis de Conexiones</h3>
+                <p style="background: #0f172a; padding: 16px; border-radius: 12px; margin-bottom: 12px;">
+                    <strong>Hecho Relacionado (8/10):</strong><br>
+                    Centro espacial comercial de Sudamérica - Ecuador 2027
+                </p>
+                <p style="background: #0f172a; padding: 16px; border-radius: 12px;">
+                    <strong>Causa Precedente (10/10):</strong><br>
+                    Alianza económica del Pacífico - Bloque comercial regional
+                </p>
+            </div>
+            
+            <div class="modal-section">
+                <h3>📰 Fuente Principal</h3>
+                <p><strong>Título:</strong> Histórico: Cinco países latinoamericanos firman pacto climático más ambicioso de la región</p>
+                <p><strong>Medio:</strong> Reuters América Latina</p>
+                <p><strong>Autor:</strong> Isabella García-Montenegro</p>
+                <p><strong>URL:</strong> <a href="#" style="color: #60a5fa;">https://reuters.com/mundo/cumbre-clima-latinoamerica-2025</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSources() {
+            const panel = document.getElementById('sourcesPanel');
+            panel.classList.toggle('open');
+        }
+        
+        function showModal() {
+            document.getElementById('modal').classList.add('show');
+        }
+        
+        function hideModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+        
+        function openSource() {
+            alert('Abrir fuente original en nueva ventana');
+        }
+        
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
+        
+        // Animación de los medidores de impacto
+        window.addEventListener('load', function() {
+            const meters = document.querySelectorAll('.impact-fill');
+            setTimeout(() => {
+                meters.forEach(meter => {
+                    meter.style.width = meter.classList.contains('max') ? '100%' : '80%';
+                });
+            }, 500);
+        });
+    </script>
+</body>
+</html>

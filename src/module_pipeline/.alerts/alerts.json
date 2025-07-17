@@ -1,95 +1,41 @@
 {
   "alerts": [
     {
-      "id": "a7b5761f-364f-4ce3-87dc-249a6894b8e6",
-      "alert_type": "groq_api_failure",
-      "severity": "critical",
-      "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 7135a242-57a2-43fc-a89a-3710759448cf: Error al parsear respuesta LLM: ** El artículo reporta hechos recientes sobre la crisis en Gaza, incluyendo la ",
-      "timestamp": "2025-07-12T02:01:59.840185",
+      "id": "96bbffcb-f27a-454a-8f6b-3ea8a6a14fc8",
+      "alert_type": "chunking_error",
+      "severity": "warning",
+      "title": "Chunking System Error",
+      "description": "Error en sistema de chunking: Error en procesamiento de artículo en background: 'dict' object has no attribute 'id_fragmento'",
+      "timestamp": "2025-07-16T12:47:48.595478",
       "labels": {
-        "service": "groq_api",
-        "error_type": "unknown"
+        "component": "chunking_service",
+        "phase": "unknown"
       },
       "annotations": {
-        "message": "GroqAPIError durante evaluación de relevancia para 7135a242-57a2-43fc-a89a-3710759448cf: Error al parsear respuesta LLM: ** El artículo reporta hechos recientes sobre la crisis en Gaza, incluyendo la firma de un acuerdo provisional entre Israel y Hamás, y la reacción de los líderes políticos involucrados. La densidad factual es alta, con múltiples hechos concretos y fechas precisas. La complejidad relacional es también alta, ya que se presentan conexiones significativas entre los actores y event",
-        "timestamp": "2025-07-12T02:01:59.836670+00:00"
+        "message": "Error en procesamiento de artículo en background: 'dict' object has no attribute 'id_fragmento'",
+        "chunks_count": "unknown"
       },
       "resolved": false,
       "resolved_at": null
     },
     {
-      "id": "9c0bafb8-038b-41e3-980a-9ef2d7c662e1",
-      "alert_type": "groq_api_failure",
-      "severity": "critical",
-      "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 3061713d-3a9b-4beb-be5f-d67f22d93aa5: Error al parsear respuesta LLM: ** El artículo tiene un valor informativo moderado, ya que se centra en un tema",
-      "timestamp": "2025-07-12T04:22:21.655732",
+      "id": "9175794d-0d50-488d-9491-0ad7608479d1",
+      "alert_type": "chunking_error",
+      "severity": "warning",
+      "title": "Chunking System Error",
+      "description": "Error en sistema de chunking: Error en procesamiento de artículo en background: 'dict' object has no attribute 'id_fragmento'",
+      "timestamp": "2025-07-17T00:07:20.462156",
       "labels": {
-        "service": "groq_api",
-        "error_type": "unknown"
+        "component": "chunking_service",
+        "phase": "unknown"
       },
       "annotations": {
-        "message": "GroqAPIError durante evaluación de relevancia para 3061713d-3a9b-4beb-be5f-d67f22d93aa5: Error al parsear respuesta LLM: ** El artículo tiene un valor informativo moderado, ya que se centra en un tema de interés público y se mencionan hechos concretos. Sin embargo, la relevancia geográfica es media y la complejidad relacional es baja.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS CLAVE:**\n\n- La muerte de Michu y la respuesta de José Ortega Cano\n- La relación de José Ortega Cano con su familia y su decisión ",
-        "timestamp": "2025-07-12T04:22:21.647518+00:00"
-      },
-      "resolved": false,
-      "resolved_at": null
-    },
-    {
-      "id": "07347762-bec7-4b67-ada4-864ec2b94d96",
-      "alert_type": "groq_api_failure",
-      "severity": "critical",
-      "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para bde07aba-01a4-425e-beb1-cccde8a341c0: Error al parsear respuesta LLM: ** El artículo reporta de manera detallada las medidas económicas anunciadas po",
-      "timestamp": "2025-07-12T11:26:17.761461",
-      "labels": {
-        "service": "groq_api",
-        "error_type": "unknown"
-      },
-      "annotations": {
-        "message": "GroqAPIError durante evaluación de relevancia para bde07aba-01a4-425e-beb1-cccde8a341c0: Error al parsear respuesta LLM: ** El artículo reporta de manera detallada las medidas económicas anunciadas por el presidente de España, incluyendo la reducción del IVA en productos básicos y el aumento del salario mínimo. Además, se mencionan las reacciones de la oposición y los sindicatos, lo que muestra una compleja red de relaciones entre actores políticos y sociales.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS C",
-        "timestamp": "2025-07-12T11:26:17.758531+00:00"
-      },
-      "resolved": false,
-      "resolved_at": null
-    },
-    {
-      "id": "cb3c9a90-0851-49cb-a139-e0933d16d239",
-      "alert_type": "groq_api_failure",
-      "severity": "critical",
-      "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para ab81fe89-106f-4f55-9e5a-e42caa43f633: Error al parsear respuesta LLM: ** El artículo presenta un análisis detallado sobre las semillas de cacao, sus ",
-      "timestamp": "2025-07-12T12:02:07.721523",
-      "labels": {
-        "service": "groq_api",
-        "error_type": "unknown"
-      },
-      "annotations": {
-        "message": "GroqAPIError durante evaluación de relevancia para ab81fe89-106f-4f55-9e5a-e42caa43f633: Error al parsear respuesta LLM: ** El artículo presenta un análisis detallado sobre las semillas de cacao, sus beneficios para la salud y cómo consumirlas de manera saludable. La información es precisa y verificable, lo que la convierte en un contenido valioso para nuestro sistema.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS CLAVE:**\n\n- Las semillas de cacao son ricas en flavonoides, que ayudan a proteger las células ",
-        "timestamp": "2025-07-12T12:02:07.718728+00:00"
-      },
-      "resolved": false,
-      "resolved_at": null
-    },
-    {
-      "id": "ece40ccd-e17d-4cc3-9ea4-5d8327b104cb",
-      "alert_type": "groq_api_failure",
-      "severity": "critical",
-      "title": "Groq API Failure Detected",
-      "description": "Error en Groq API: GroqAPIError durante evaluación de relevancia para 9379a97f-5799-4177-925b-e925f6b35ac6: Error al parsear respuesta LLM: ** Aunque el artículo no se centra en temas prioritarios como la política o la ",
-      "timestamp": "2025-07-12T12:14:19.914616",
-      "labels": {
-        "service": "groq_api",
-        "error_type": "unknown"
-      },
-      "annotations": {
-        "message": "GroqAPIError durante evaluación de relevancia para 9379a97f-5799-4177-925b-e925f6b35ac6: Error al parsear respuesta LLM: ** Aunque el artículo no se centra en temas prioritarios como la política o la economía, ofrece información interesante sobre la vida personal de celebridades y las decisiones que toman en su carrera. Sin embargo, su valor informativo podría ser mayor si se analizaran en profundidad las conexiones entre los eventos y las personas involucradas.\n\n**SI PROCEDE ANÁLISIS, ELEMENTOS",
-        "timestamp": "2025-07-12T12:14:19.903077+00:00"
+        "message": "Error en procesamiento de artículo en background: 'dict' object has no attribute 'id_fragmento'",
+        "chunks_count": "unknown"
       },
       "resolved": false,
       "resolved_at": null
     }
   ],
-  "last_updated": "2025-07-12T12:14:19.915447"
+  "last_updated": "2025-07-17T00:07:20.463727"
 }

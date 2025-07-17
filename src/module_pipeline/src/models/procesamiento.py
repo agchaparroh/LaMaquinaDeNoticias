@@ -61,7 +61,7 @@ class MetadatosFase1Triaje(BaseModel):
     Metadatos específicos y estructurados de la fase 1 (triaje).
     
     Incluye tanto información técnica de la llamada al LLM como metadatos 
-    del procesamiento interno de la fase.
+    del procesamiento interno de la fase, análisis de contenido y decisiones de flujo.
     """
     # Metadatos de la llamada al LLM
     nombre_modelo_triaje: Optional[str] = Field(None, description="Nombre del modelo LLM utilizado para el triaje")
@@ -73,6 +73,11 @@ class MetadatosFase1Triaje(BaseModel):
     texto_limpio_utilizado: Optional[str] = Field(None, description="Texto limpio que se utilizó para la evaluación")
     idioma_detectado_original: Optional[str] = Field(None, description="Idioma detectado del texto original")
     notas_adicionales: Optional[List[str]] = Field(default=None, description="Notas adicionales sobre el procesamiento, como fallbacks aplicados.")
+    
+    # Análisis de contenido (NUEVA FUNCIONALIDAD)
+    analisis_contenido: Optional[Dict[str, Any]] = Field(None, description="Resultados del análisis de contenido con SpacyAnalyzer")
+    decisiones_flujo: Optional[Dict[str, Any]] = Field(None, description="Decisiones de flujo adaptativo generadas por AdaptiveFlowController")
+    estadisticas_procesamiento: Optional[Dict[str, Any]] = Field(None, description="Estadísticas sobre la complejidad y configuración del procesamiento")
 
 # --- Modelos de Subtarea 5.2: HechoBase y EntidadBase ---
 # SOLUCIÓN ARQUITECTÓNICA: IDs Secuenciales para optimización LLM
