@@ -10,6 +10,9 @@ class ArticuloInItem(BaseModel):
     Modelo temporal para testing del sistema de monitoreo.
     Representa un artículo completo para procesamiento en el pipeline.
     """
+    # ID del artículo en la base de datos (propagado desde el scraper)
+    articulo_id: Optional[int] = Field(default=None, description="ID del artículo en la base de datos")
+    
     medio: str = Field(..., description="Nombre del medio de comunicación")
     area_geografica: str = Field(..., description="Área geográfica donde se publicó el artículo")
     tipo_medio: str = Field(..., description="Tipo de medio (digital, impreso, televisión, etc.)")

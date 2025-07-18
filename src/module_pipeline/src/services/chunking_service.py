@@ -28,6 +28,7 @@ except ImportError:
 
 from loguru import logger
 from pydantic import BaseModel, Field
+from ..config import get_spacy_model_name, get_spacy_fallback_models
 
 # Modelos de datos
 class ChunkType(str, Enum):
@@ -110,24 +111,50 @@ class ChunkingService:
             overlap_size=self.config.overlap_size
         )
     
-    def _get_nlp_model(self, model_name: str = "es_core_news_lg") -> Optional[Language]:
-        """Obtiene o carga el modelo spaCy."""
+    def _get_nlp_model(self, model_name: Optional[str] = None) -> Optional[Language]:
+        """Obtiene o carga el modelo spaCy usando configuración centralizada."""
         if self.nlp:
             return self.nlp
             
         if not spacy:
             logger.warning("spaCy no está instalado. Usando chunking simple.")
             return None
+        
+        # Usar configuración centralizada si no se especifica modelo
+        if model_name is None:
+            model_name = get_spacy_model_name()
             
         if model_name not in self._nlp_cache:
-            try:
-                self._nlp_cache[model_name] = spacy.load(model_name)
-                logger.debug(f"Modelo spaCy '{model_name}' cargado para chunking")
-            except Exception as e:
-                logger.warning(f"No se pudo cargar modelo spaCy '{model_name}': {e}")
-                return None
+            # Intentar cargar el modelo solicitado
+            loaded_model = self._try_load_model(model_name)
+            if loaded_model:
+                self._nlp_cache[model_name] = loaded_model
+                return loaded_model
+            
+            # Si falló, intentar modelos de fallback
+            fallback_models = get_spacy_fallback_models()
+            for fallback_model in fallback_models:
+                if fallback_model != model_name:  # No intentar el mismo modelo otra vez
+                    loaded_model = self._try_load_model(fallback_model)
+                    if loaded_model:
+                        logger.warning(f"Chunking usando modelo de fallback '{fallback_model}' en lugar de '{model_name}'")
+                        self._nlp_cache[model_name] = loaded_model  # Cache con el nombre solicitado
+                        return loaded_model
+            
+            logger.warning(f"No se pudo cargar modelo spaCy '{model_name}' ni ningún fallback para chunking")
+            return None
                 
         return self._nlp_cache.get(model_name)
+    
+    def _try_load_model(self, model_name: str) -> Optional[Language]:
+        """Intenta cargar un modelo spaCy específico."""
+        try:
+            model = spacy.load(model_name)
+            logger.debug(f"Modelo spaCy '{model_name}' cargado para chunking")
+            return model
+        except Exception as e:
+            logger.debug(f"No se pudo cargar modelo spaCy '{model_name}': {e}")
+            return None
     
     def create_chunks(
         self, 

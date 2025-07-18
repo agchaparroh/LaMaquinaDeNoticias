@@ -14,6 +14,9 @@ class ArticuloInItem(BaseModel):
     Pydantic model for article data validation.
     Maps to the ArticuloInItem structure from module_scraper.
     """
+    # ID del artículo en la base de datos (propagado desde el scraper)
+    articulo_id: Optional[int] = Field(None, description="ID del artículo en la BD")
+    
     # Campos principales
     url: Optional[str] = None                    # URL original del artículo
     storage_path: Optional[str] = None           # Ruta en Supabase Storage
@@ -136,8 +139,13 @@ def prepare_articulo(articulo_data: dict) -> ArticuloInItem:
     # Create a copy to avoid modifying original data
     data = articulo_data.copy()
     
-    # If ID is not present, generate a unique one based on URL or timestamp
-    if 'id' not in data or not data['id']:
+    # Use articulo_id from database if available, otherwise generate ID
+    # This maintains traceability from scraper through the entire pipeline
+    if 'articulo_id' in data and data['articulo_id']:
+        # Propagate the database ID as the primary identifier
+        data['id'] = f"ART-{data['articulo_id']}"
+    elif 'id' not in data or not data['id']:
+        # Fallback: generate ID for legacy files without articulo_id
         if data.get('url'):
             data['id'] = f"art_{hash(data['url']) % 1000000:06d}"
         else:

@@ -20,6 +20,10 @@ Variables de entorno específicas del pipeline:
 - PIPELINE_GROQ_MODEL_DEFAULT (default: llama-3.1-8b-instant)
 - PIPELINE_GROQ_MODEL_LARGE (default: llama-3.2-90b-text-preview)
 - PIPELINE_GROQ_MODEL_TOKEN_THRESHOLD (default: 8000)
+- PIPELINE_SPACY_MODEL_DEFAULT (default: es_core_news_md)
+- PIPELINE_SPACY_MODEL_LARGE (default: es_core_news_lg)
+- PIPELINE_SPACY_MODEL_ENGLISH (default: en_core_web_sm)
+- PIPELINE_SPACY_FALLBACK_MODELS (default: es_core_news_sm,es_core_news_lg)
 - PIPELINE_CONSOLIDATION_SIMILARITY_THRESHOLD (default: 0.85)
 - PIPELINE_MAX_RETRIES_PER_PHASE (default: 3)
 - PIPELINE_CHUNK_PARALLEL_ENABLED (default: true)
@@ -27,7 +31,7 @@ Variables de entorno específicas del pipeline:
 """
 
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
 from dotenv import load_dotenv
 
@@ -103,6 +107,25 @@ class GroqModelConfig:
             raise ValueError("large_model no puede estar vacío")
 
 @dataclass
+class SpacyModelConfig:
+    """Configuración para modelos spaCy utilizados en el pipeline."""
+    default_model: str = field(default="es_core_news_md")
+    fallback_models: List[str] = field(default_factory=lambda: ["es_core_news_sm", "es_core_news_lg"])
+    large_model: str = field(default="es_core_news_lg")
+    english_model: str = field(default="en_core_web_sm")
+    
+    def __post_init__(self):
+        """Validar configuración de modelos spaCy."""
+        if not self.default_model:
+            raise ValueError("default_model no puede estar vacío")
+        if not isinstance(self.fallback_models, list):
+            raise ValueError("fallback_models debe ser una lista")
+        if not self.large_model:
+            raise ValueError("large_model no puede estar vacío")
+        if not self.english_model:
+            raise ValueError("english_model no puede estar vacío")
+
+@dataclass
 class ProcessingConfig:
     """Configuración para procesamiento del pipeline."""
     consolidation_similarity_threshold: float = field(default=0.85)
@@ -124,6 +147,7 @@ class PipelineConfig:
     """Configuración completa del pipeline de 7 fases."""
     chunking: ChunkingConfig = field(default_factory=ChunkingConfig)
     groq_models: GroqModelConfig = field(default_factory=GroqModelConfig)
+    spacy_models: SpacyModelConfig = field(default_factory=SpacyModelConfig)
     processing: ProcessingConfig = field(default_factory=ProcessingConfig)
     
     def to_dict(self) -> Dict[str, Any]:
@@ -139,6 +163,12 @@ class PipelineConfig:
                 "default_model": self.groq_models.default_model,
                 "large_model": self.groq_models.large_model,
                 "token_threshold": self.groq_models.token_threshold
+            },
+            "spacy_models": {
+                "default_model": self.spacy_models.default_model,
+                "large_model": self.spacy_models.large_model,
+                "english_model": self.spacy_models.english_model,
+                "fallback_models": self.spacy_models.fallback_models
             },
             "processing": {
                 "consolidation_similarity_threshold": self.processing.consolidation_similarity_threshold,
@@ -177,6 +207,17 @@ def load_pipeline_config() -> PipelineConfig:
         token_threshold=_get_int_env('PIPELINE_GROQ_MODEL_TOKEN_THRESHOLD', 8000)
     )
     
+    # Configuración de modelos spaCy
+    fallback_models_str = _get_str_env('PIPELINE_SPACY_FALLBACK_MODELS', 'es_core_news_sm,es_core_news_lg')
+    fallback_models_list = [model.strip() for model in fallback_models_str.split(',') if model.strip()]
+    
+    spacy_config = SpacyModelConfig(
+        default_model=_get_str_env('PIPELINE_SPACY_MODEL_DEFAULT', 'es_core_news_md'),
+        large_model=_get_str_env('PIPELINE_SPACY_MODEL_LARGE', 'es_core_news_lg'),
+        english_model=_get_str_env('PIPELINE_SPACY_MODEL_ENGLISH', 'en_core_web_sm'),
+        fallback_models=fallback_models_list
+    )
+    
     # Configuración de procesamiento
     processing_config = ProcessingConfig(
         consolidation_similarity_threshold=_get_float_env('PIPELINE_CONSOLIDATION_SIMILARITY_THRESHOLD', 0.85),
@@ -188,6 +229,7 @@ def load_pipeline_config() -> PipelineConfig:
     return PipelineConfig(
         chunking=chunking_config,
         groq_models=groq_config,
+        spacy_models=spacy_config,
         processing=processing_config
     )
 
@@ -206,6 +248,10 @@ def get_groq_model_config() -> GroqModelConfig:
 def get_processing_config() -> ProcessingConfig:
     """Retorna solo la configuración de procesamiento."""
     return load_pipeline_config().processing
+
+def get_spacy_model_config() -> SpacyModelConfig:
+    """Retorna solo la configuración de modelos spaCy."""
+    return load_pipeline_config().spacy_models
 
 def should_use_large_model(text_length: int) -> bool:
     """
@@ -260,6 +306,36 @@ def get_chunk_parallel_settings() -> Dict[str, Any]:
         'max_concurrent_chunks': config.max_concurrent_chunks,
         'retry_limit': config.max_retries_per_phase
     }
+
+def get_spacy_model_name(prefer_large: bool = False, language: str = 'es') -> str:
+    """
+    Retorna el nombre del modelo spaCy apropiado basado en preferencias.
+    
+    Args:
+        prefer_large: Si se prefiere el modelo grande
+        language: Idioma ('es' para español, 'en' para inglés)
+        
+    Returns:
+        str: Nombre del modelo spaCy a usar
+    """
+    config = get_spacy_model_config()
+    
+    if language == 'en':
+        return config.english_model
+    elif prefer_large:
+        return config.large_model
+    else:
+        return config.default_model
+
+def get_spacy_fallback_models() -> List[str]:
+    """
+    Retorna la lista de modelos de fallback para spaCy.
+    
+    Returns:
+        List[str]: Lista de modelos de fallback
+    """
+    config = get_spacy_model_config()
+    return config.fallback_models.copy()
 
 def validate_pipeline_config(config: PipelineConfig) -> bool:
     """
@@ -324,6 +400,12 @@ def print_pipeline_config_summary(config: Optional[PipelineConfig] = None):
     print(f"  - Default: {config.groq_models.default_model}")
     print(f"  - Large: {config.groq_models.large_model}")
     print(f"  - Token threshold: {config.groq_models.token_threshold:,}")
+    print()
+    print("🧠 MODELOS SPACY:")
+    print(f"  - Default (ES): {config.spacy_models.default_model}")
+    print(f"  - Large (ES): {config.spacy_models.large_model}")
+    print(f"  - English: {config.spacy_models.english_model}")
+    print(f"  - Fallbacks: {', '.join(config.spacy_models.fallback_models)}")
     print()
     print("⚡ PROCESAMIENTO:")
     print(f"  - Similarity threshold: {config.processing.consolidation_similarity_threshold}")

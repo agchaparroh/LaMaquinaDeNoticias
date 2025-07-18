@@ -48,6 +48,7 @@ from ..utils.fragment_processor import FragmentProcessor
 from ..services.payload_builder import PayloadBuilder
 from ..services.consolidation_service import ConsolidationService
 from ..services.chunking_service import ChunkingService
+from ..config import get_spacy_model_name
 
 
 class PipelineCoordinator:
@@ -75,7 +76,7 @@ class PipelineCoordinator:
     def ejecutar_pipeline_completo(
         self, 
         fragmento: FragmentoProcesableItem,
-        modelo_spacy: str = "es_core_news_lg",
+        modelo_spacy: Optional[str] = None,
         request_id: Optional[str] = None,
         groq_api_key: Optional[str] = None,
         contexto_articulo: Optional[Dict[str, Any]] = None
@@ -85,7 +86,7 @@ class PipelineCoordinator:
         
         Args:
             fragmento: Fragmento a procesar
-            modelo_spacy: Modelo spaCy para fase 1
+            modelo_spacy: Modelo spaCy para fase 1 (opcional, usa configuración)
             request_id: ID único de la request (se genera si no se proporciona)
             groq_api_key: API key de Groq para LLMs
             contexto_articulo: Contexto del artículo (titulo, fecha, fuente, etc)
@@ -139,7 +140,7 @@ class PipelineCoordinator:
                 resultado_fase1 = ejecutar_fase_1(
                     id_fragmento_original=fragmento_uuid,
                     texto_original_fragmento=fragmento.texto_original,
-                    modelo_spacy_nombre=modelo_spacy
+                    modelo_spacy_nombre=modelo_spacy or get_spacy_model_name()
                 )
                 
                 phase_logger.info(

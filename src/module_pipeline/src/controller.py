@@ -36,6 +36,8 @@ from .utils.logging_config import get_logger, log_phase
 from .services.job_tracker_service import get_job_tracker_service, JobStatus
 # Importar pipeline coordinator para 7 fases
 from .pipeline.pipeline_coordinator import PipelineCoordinator
+# Importar configuración de spaCy
+from .config import get_spacy_model_name
 
 
 class PipelineController:
@@ -181,8 +183,21 @@ class PipelineController:
         
         # Crear FragmentoProcesableItem desde el artículo completo
         # Según Context7 5.3: "El procesamiento se divide en fases secuenciales"
+        
+        
+        # Usar articulo_id de la BD si está disponible, sino generar UUID
+        # Esto mantiene trazabilidad desde el scraper hasta la persistencia
+        if articulo_data.get('articulo_id'):
+            # Usar el ID del artículo de la base de datos con prefijo para identificación
+            id_fragmento = f"ART-{articulo_data['articulo_id']}"
+            article_logger.info(f"Usando ID de BD para fragmento: {id_fragmento}")
+        else:
+            # Fallback a UUID si no hay ID de BD (archivos legacy)
+            id_fragmento = str(uuid.uuid4())
+            article_logger.warning(f"No se encontró articulo_id en datos, usando UUID: {id_fragmento}")
+        
         fragmento_data = {
-            "id_fragmento": str(uuid.uuid4()),  # Generar UUID válido
+            "id_fragmento": id_fragmento,
             "texto_original": contenido,
             "id_articulo_fuente": str(articulo_id),
             "orden_en_articulo": 0,  # Único fragmento
@@ -234,7 +249,7 @@ class PipelineController:
         # Llamar al pipeline coordinator
         resultado_pipeline = self.pipeline_coordinator.ejecutar_pipeline_completo(
             fragmento=fragmento,  # Ahora pasamos el objeto, no el dict
-            modelo_spacy="es_core_news_lg",
+            modelo_spacy=get_spacy_model_name(),
             request_id=request_id,
             groq_api_key=groq_api_key,
             contexto_articulo=contexto_articulo
@@ -452,7 +467,7 @@ class PipelineController:
             # Usar el pipeline coordinator de 7 fases
             resultado_pipeline = self.pipeline_coordinator.ejecutar_pipeline_completo(
                 fragmento=fragmento,
-                modelo_spacy="es_core_news_lg",
+                modelo_spacy=get_spacy_model_name(),
                 request_id=request_id,
                 groq_api_key=groq_api_key,
                 contexto_articulo=contexto_articulo
@@ -561,9 +576,18 @@ class PipelineController:
             else:
                 payload_dict = payload
             
-            # Llamar a insertar_fragmento_completo
-            logger.info("Persistiendo resultado de 7 fases")
-            resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
+            # Detectar si es artículo o fragmento
+            es_articulo = False
+            if hasattr(fragmento, 'metadata_adicional') and fragmento.metadata_adicional:
+                es_articulo = fragmento.metadata_adicional.get('es_articulo_completo', False)
+            
+            # Usar la RPC correcta según el tipo
+            if es_articulo:
+                logger.info("Persistiendo como artículo completo")
+                resultado_persistencia = supabase_service.insertar_articulo_completo(payload_dict)
+            else:
+                logger.info("Persistiendo como fragmento")
+                resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
             
             if resultado_persistencia:
                 return {
@@ -642,7 +666,7 @@ class PipelineController:
                 from .models.procesamiento import ResultadoFase1Triaje
                 fallback_data = handle_spacy_load_error_fase1(
                     article_id=str(fragment_uuid),
-                    model_name="es_core_news_lg",
+                    model_name=get_spacy_model_name(),
                     exception=e
                 )
                 # Usar el texto original como texto para siguiente fase

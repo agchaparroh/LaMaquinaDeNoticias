@@ -252,6 +252,21 @@ class SupabaseStoragePipeline:
 
             if upserted_data:
                 logger.info(f"Successfully upserted article data for {item_url_for_log}. DB Response: {upserted_data}")
+                
+                # Extract and propagate the article ID from the database response
+                # This ID will be included in the JSON export for the connector/pipeline
+                if isinstance(upserted_data, list) and len(upserted_data) > 0:
+                    articulo_id = upserted_data[0].get('id') if isinstance(upserted_data[0], dict) else None
+                elif isinstance(upserted_data, dict):
+                    articulo_id = upserted_data.get('id')
+                else:
+                    articulo_id = None
+                
+                if articulo_id:
+                    adapter['articulo_id'] = articulo_id
+                    logger.info(f"Article ID {articulo_id} added to item for propagation through the pipeline")
+                else:
+                    logger.warning(f"Could not extract article ID from upsert response for {item_url_for_log}")
             else:
                 logger.warning(f"Upsert article data for {item_url_for_log} did not return data, indicating a potential issue.")
                 adapter['error_detalle'] = f"DB upsert for {item_url_for_log} returned no data; {adapter.get('error_detalle', '')}"

@@ -43,6 +43,7 @@ except ImportError:
     Groq = None
 
 from loguru import logger
+from ..config import get_spacy_model_name, get_spacy_fallback_models
 
 # --- Modelos de spaCy Cargados (Singleton simple) ---
 _NLP_MODELS_CACHE: Dict[str, Optional[Language]] = {}
@@ -51,30 +52,52 @@ class ErrorFase1(Exception):
     """Excepción base para errores específicos de la Fase 1."""
     pass
 
-def _cargar_modelo_spacy(modelo: str = "es_core_news_lg") -> Optional[Language]:
-    """Carga un modelo de spaCy. Cachea el modelo cargado."""
+def _cargar_modelo_spacy(modelo: Optional[str] = None) -> Optional[Language]:
+    """Carga un modelo de spaCy usando configuración centralizada. Cachea el modelo cargado."""
     if not spacy:
-        logger.warning("spaCy no está instalado. No se puede cargar ningún modelo.") # Changed to warning
+        logger.warning("spaCy no está instalado. No se puede cargar ningún modelo.")
         return None
 
+    # Usar configuración centralizada si no se especifica modelo
+    if modelo is None:
+        modelo = get_spacy_model_name()
+
     if modelo not in _NLP_MODELS_CACHE:
-        try:
-            logger.info(f"Cargando modelo spaCy: {modelo}")
-            _NLP_MODELS_CACHE[modelo] = spacy.load(modelo)
-            logger.info(f"Modelo spaCy '{modelo}' cargado exitosamente.")
-        except OSError:
-            logger.warning(f"No se pudo cargar el modelo spaCy '{modelo}'. " # Changed to warning
-                         f"Asegúrate de que está descargado (ej: python -m spacy download {modelo})")
-            _NLP_MODELS_CACHE[modelo] = None # Marcar como no cargado para no reintentar innecesariamente
-        except Exception as e:
-            logger.warning(f"Error inesperado al cargar el modelo spaCy '{modelo}': {e}") # Changed to warning
-            _NLP_MODELS_CACHE[modelo] = None
-    
-    if _NLP_MODELS_CACHE.get(modelo) is None and modelo != "es_core_news_lg": # Evitar recursión infinita si el default falla
-        logger.warning(f"Fallback: Intentando cargar modelo por defecto 'es_core_news_lg' en lugar de '{modelo}'.")
-        return _cargar_modelo_spacy("es_core_news_lg")
+        # Intentar cargar el modelo solicitado
+        loaded_model = _try_load_spacy_model(modelo)
+        if loaded_model:
+            _NLP_MODELS_CACHE[modelo] = loaded_model
+            return loaded_model
+        
+        # Si falló, intentar modelos de fallback
+        fallback_models = get_spacy_fallback_models()
+        for fallback_model in fallback_models:
+            if fallback_model != modelo:  # No intentar el mismo modelo otra vez
+                loaded_model = _try_load_spacy_model(fallback_model)
+                if loaded_model:
+                    logger.warning(f"Usando modelo de fallback '{fallback_model}' en lugar de '{modelo}'")
+                    _NLP_MODELS_CACHE[modelo] = loaded_model  # Cache con el nombre solicitado
+                    return loaded_model
+        
+        logger.error(f"No se pudo cargar modelo spaCy '{modelo}' ni ningún fallback")
+        _NLP_MODELS_CACHE[modelo] = None
         
     return _NLP_MODELS_CACHE.get(modelo)
+
+def _try_load_spacy_model(modelo: str) -> Optional[Language]:
+    """Intenta cargar un modelo spaCy específico."""
+    try:
+        logger.info(f"Cargando modelo spaCy: {modelo}")
+        model = spacy.load(modelo)
+        logger.info(f"Modelo spaCy '{modelo}' cargado exitosamente.")
+        return model
+    except OSError:
+        logger.debug(f"No se pudo cargar el modelo spaCy '{modelo}'. " 
+                     f"Asegúrate de que está descargado (ej: python -m spacy download {modelo})")
+        return None
+    except Exception as e:
+        logger.debug(f"Error inesperado al cargar el modelo spaCy '{modelo}': {e}")
+        return None
 
 def _limpiar_texto(texto_original: str, nlp_model: Optional[Language]) -> str:
     """Limpia el texto utilizando spaCy para tokenización y reglas heurísticas."""
@@ -142,7 +165,7 @@ def _detectar_idioma(texto_para_detectar: str, nlp_model: Optional[Language]) ->
 def ejecutar_fase_1(
     id_fragmento_original: UUID,
     texto_original_fragmento: str,
-    modelo_spacy_nombre: str = "es_core_news_lg" # Permitir especificar modelo
+    modelo_spacy_nombre: Optional[str] = None # Usar configuración centralizada
 ) -> ResultadoFase1Triaje:
     """
     Ejecuta la Fase 1: Preprocesamiento y Triaje.
@@ -461,11 +484,15 @@ def ejecutar_fase_1(
             puntuacion_triaje_val = None
 
 
+    # PARCHE TEMPORAL PARA DEBUGGING: Forzar todos los artículos como relevantes
+    # TODO: Remover este parche antes de producción
+    debug_force_relevant = os.getenv("DEBUG_FORCE_RELEVANT", "false").lower() == "true"
+    
     resultado_final = ResultadoFase1Triaje(
         id_fragmento=id_fragmento_original,
-        es_relevante=(evaluacion_triaje.get("decision", "ERROR_TRIAGE") == "PROCESAR"),
+        es_relevante=True if debug_force_relevant else (evaluacion_triaje.get("decision", "ERROR_TRIAGE") == "PROCESAR"),
         decision_triaje=evaluacion_triaje.get("decision", "ERROR_TRIAGE"),
-        justificacion_triaje=evaluacion_triaje.get("justificacion"),
+        justificacion_triaje=evaluacion_triaje.get("justificacion") + " [DEBUG: Forzado como relevante]" if debug_force_relevant else evaluacion_triaje.get("justificacion"),
         categoria_principal=evaluacion_triaje.get("tipo_articulo"),
         palabras_clave_triaje=evaluacion_triaje.get("elementos_clave", []),
         puntuacion_triaje=puntuacion_triaje_val,

@@ -1,40 +1,111 @@
-# .dockerignore for module_pipeline
-# Excluir archivos y directorios innecesarios del contexto de Docker
+# .dockerignore para module_pipeline
+# Optimizado para reducir el tamaño del contexto de build y la imagen final
+# Reducción esperada: ~200MB
 
-# Git
-.git
+# === LOGS Y ARCHIVOS TEMPORALES (Mayor impacto en tamaño) ===
+logs/
+*.log
+*.log.gz
+*.log.*
+log_*.txt
+development/
+staging/
+production/
+
+# === TESTS Y DESARROLLO (~50MB) ===
+tests/
+*test*.py
+pytest.ini
+conftest.py
+benchmark_*.py
+verificar_*.py
+ejecutar_tests_completos.bat
+run_tests.py
+run_complete_test_suite.py
+mocks/
+
+# === DOCUMENTACIÓN (~10MB) ===
+docs/
+*.md
+README.*
+ARQUITECTURA_DETALLADA.md
+VERIFICACION_E008.md
+linting_report.md
+
+# === CONTROL DE VERSIONES ===
+.git/
 .gitignore
+.gitattributes
 
-# Python
+# === CACHE Y ARCHIVOS COMPILADOS ===
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# === ENTORNOS VIRTUALES ===
 venv/
 ENV/
+env/
 .venv/
-pip-log.txt
-pip-delete-this-directory.txt
+.virtualenv/
+virtualenv/
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-tests/
-*_test.py
-test_*.py
-
-# IDE
+# === IDE Y EDITORES ===
 .vscode/
 .idea/
 *.swp
 *.swo
+*.swn
 *~
+.project
+.pydevproject
+.settings/
+*.sublime-*
+.atom/
+.cursor/
+.roo/
 
-# OS
+# === COBERTURA DE TESTS ===
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+nosetests.xml
+htmlcov/
+.tox/
+.nox/
+
+# === CONFIGURACIÓN LOCAL ===
+.env
+.env.*
+!.env.example
+*.local
+config.local.py
+
+# === ARCHIVOS DEL SISTEMA ===
 .DS_Store
 .DS_Store?
 ._*
@@ -42,39 +113,69 @@ test_*.py
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Logs y métricas locales
-logs/*.log
-metrics/*.json
-*.log
+# === DOCKER (excepto el Dockerfile principal) ===
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile.*
+!Dockerfile
+.dockerignore
 
-# Configuración local
-.env
-.env.local
-.env.development
-.env.test
+# === SCRIPTS DE DESARROLLO ===
+scripts/test_*.py
+scripts/setup_env.py
+scripts/dev_*
+Makefile
 
-# Archivos temporales
+# === MÉTRICAS Y MONITOREO LOCAL ===
+metrics/
+monitoring/prometheus.yml
+*.json
+!package.json
+!tsconfig.json
+
+# === ARCHIVOS GRANDES INNECESARIOS ===
+*.tar
+*.tar.gz
+*.zip
+*.rar
+*.7z
+*.bz2
+*.gz
+*.xz
+
+# === NOTEBOOKS Y DATOS ===
+*.ipynb
+.ipynb_checkpoints/
+*.csv
+*.xlsx
+*.xls
+data/
+
+# === ARCHIVOS TEMPORALES ===
 *.tmp
 *.temp
+*.bak
+*.orig
+*.swp
 .tmp/
 temp/
+tmp/
+cache/
 
-# Documentación
-README.md
-*.md
-docs/
-
-# Scripts de desarrollo
-scripts/dev_*
-scripts/test_*
-*.bat
-*.sh
-
-# Alertas y caché
-.alerts/
-.cursor/
-.roo/
-
-# Archivos de salida
+# === ARCHIVOS DE SALIDA Y DEBUG ===
 sys.stdout
+output/
+debug/
+*.out
+
+# === OTROS ARCHIVOS DE DESARROLLO ===
+TODO.txt
+NOTES.txt
+*.todo
+scratch/
+
+# === ALERTAS Y NOTIFICACIONES ===
+.alerts/
+notifications/

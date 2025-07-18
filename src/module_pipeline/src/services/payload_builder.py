@@ -405,6 +405,17 @@ class PayloadBuilder:
                 "fecha_procesamiento_pipeline_fragmento": fecha_procesamiento_pipeline_fragmento
             }
             
+            # PARCHE TEMPORAL: Asegurar que id_fragmento esté presente en el nivel raíz
+            # para facilitar su extracción en supabase_service
+            # TODO: Remover cuando se implemente el sistema de chunking completo
+            if 'id_fragmento' not in payload_data and metadatos_fragmento_data:
+                # Buscar id_fragmento en metadatos
+                for key, value in metadatos_fragmento_data.items():
+                    if key == 'id_fragmento':
+                        payload_data['id_fragmento'] = value
+                        self.logger.debug(f"id_fragmento agregado al nivel raíz: {value}")
+                        break
+            
             # Preparar datos para validación (como diccionarios)
             payload_data_para_validacion = payload_data.copy()
             

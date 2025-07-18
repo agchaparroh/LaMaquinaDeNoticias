@@ -327,6 +327,7 @@ async def send_to_pipeline(session: aiohttp.ClientSession, article: ArticuloInIt
         title_preview = article.titular[:30] + "..." if len(article.titular) > 30 else article.titular
         logger.info(f"Sending article to pipeline: '{title_preview}' (ID: {article_id})")
         
+        
         # Send POST request to Pipeline API
         async with session.post(
             endpoint, 

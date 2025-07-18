@@ -1,0 +1,145 @@
+# Dockerfile Alpine - Versión ultra-ligera
+# Reducción esperada: 7GB → ~1.5-2GB
+# ADVERTENCIA: Alpine puede tener problemas de compatibilidad con algunas librerías Python
+
+# ===== STAGE 1: Builder =====
+FROM python:3.11-alpine as builder
+
+# Instalar dependencias de compilación para Alpine
+RUN apk add --no-cache \
+    gcc \
+    g++ \
+    musl-dev \
+    linux-headers \
+    libffi-dev \
+    openssl-dev \
+    # Para numpy y scipy
+    gfortran \
+    openblas-dev \
+    lapack-dev
+
+# Directorio de trabajo
+WORKDIR /build
+
+# Copiar requirements
+COPY requirements-prod.txt .
+
+# Crear wheels - esto puede tomar más tiempo en Alpine
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements-prod.txt
+
+# ===== STAGE 2: Runtime =====
+FROM python:3.11-alpine
+
+# Variables de entorno optimizadas
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONOPTIMIZE=2 \
+    # Configuración específica de Alpine para SSL
+    CRYPTOGRAPHY_DONT_BUILD_RUST=1
+
+# Instalar solo dependencias runtime para Alpine
+RUN apk add --no-cache \
+    # Librerías compartidas necesarias
+    libstdc++ \
+    libgomp \
+    openblas \
+    lapack \
+    # Para health checks
+    curl \
+    # Para timezone support
+    tzdata \
+    && rm -rf /var/cache/apk/*
+
+# Configurar timezone (importante para logs)
+ENV TZ=UTC
+
+# Directorio de trabajo
+WORKDIR /app
+
+# Copiar wheels del builder
+COPY --from=builder /wheels /wheels
+
+# Copiar requirements
+COPY requirements-prod.txt .
+
+# Instalar desde wheels
+RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements-prod.txt \
+    && rm -rf /wheels \
+    && rm -rf /root/.cache/pip
+
+# Descargar modelos de spaCy (versiones pequeñas para máxima optimización)
+# NOTA: Considera montar estos como volúmenes en producción
+RUN python -m spacy download es_core_news_sm && \
+    python -m spacy download en_core_web_sm && \
+    # Limpiar todo el cache posible
+    rm -rf /root/.cache/pip \
+    && find /usr/local/lib/python3.11 -name '__pycache__' -type d -exec rm -rf {} + \
+    && find /usr/local/lib/python3.11 -name '*.pyc' -delete
+
+# Crear usuario no-root (Alpine usa adduser diferente)
+RUN adduser -D -u 1000 -s /bin/sh pipeline && \
+    mkdir -p /app/logs /app/metrics /app/prompts && \
+    chown -R pipeline:pipeline /app
+
+# Copiar solo el código necesario
+COPY --chown=pipeline:pipeline src/ ./src/
+COPY --chown=pipeline:pipeline prompts/ ./prompts/
+
+# Archivo de configuración mínimo
+RUN echo "LOG_LEVEL=INFO" > .env && \
+    chown pipeline:pipeline .env
+
+# Cambiar a usuario no-root
+USER pipeline
+
+# Variables de entorno mínimas
+ENV PIPELINE_API_HOST=0.0.0.0 \
+    PIPELINE_API_PORT=8003 \
+    LOG_LEVEL=WARNING \
+    # Desactivar características no esenciales
+    DEBUG_MODE=false \
+    # Reducir workers para menor consumo de memoria
+    UVICORN_WORKERS=1 \
+    WEB_CONCURRENCY=1
+
+# Puerto
+EXPOSE 8003
+
+# Health check simplificado
+HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -sf http://localhost:8003/health || exit 1
+
+# Comando optimizado para producción
+CMD ["python", "-O", "-m", "uvicorn", "src.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8003", \
+     "--workers", "1", \
+     "--loop", "uvloop", \
+     "--no-access-log", \
+     "--log-level", "warning"]
+
+# ===== OPTIMIZACIONES ALPINE =====
+# 1. Imagen base Alpine: ~5MB vs ~45MB (slim)
+# 2. Compilación nativa Alpine: más pequeña pero más lenta
+# 3. Modelos spaCy pequeños: es_core_news_sm (14MB) vs md (47MB)
+# 4. Python -O flag: omite asserts y __debug__
+# 5. PYTHONOPTIMIZE=2: elimina docstrings
+# 6. Log level WARNING: menos output
+# 7. Sin características de debug
+#
+# Tamaño esperado: ~1.5-2GB (reducción del 70-80%)
+#
+# CONSIDERACIONES:
+# - Alpine puede ser más lento para operaciones matemáticas
+# - Algunos paquetes pueden tener problemas de compatibilidad
+# - El build inicial es más lento debido a compilación
+# - Recomendado para ambientes con restricciones de espacio
+#
+# ALTERNATIVA DE MONTAJE DE MODELOS:
+# En lugar de incluir modelos spaCy en la imagen, considerar:
+# 1. Crear volumen con modelos pre-descargados
+# 2. Montar en /app/models
+# 3. Configurar spacy para usar esa ruta
+# Esto reduciría la imagen en ~600MB adicionales

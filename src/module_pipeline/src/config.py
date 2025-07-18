@@ -22,11 +22,15 @@ from .utils.config_loader import (
     get_pipeline_config,
     get_chunking_config,
     get_groq_model_config,
+    get_spacy_model_config,
     get_processing_config,
     should_use_large_model,
     should_chunk_content,
     get_chunk_parallel_settings,
-    print_pipeline_config_summary
+    get_spacy_model_name,
+    get_spacy_fallback_models,
+    print_pipeline_config_summary,
+    SpacyModelConfig
 )
 
 # Crear objeto settings compatible con FastAPI
@@ -71,6 +75,7 @@ class Settings:
         # Pipeline shortcuts for easy access
         self.chunking_config = self.pipeline_config.chunking
         self.groq_models_config = self.pipeline_config.groq_models
+        self.spacy_models_config = self.pipeline_config.spacy_models
         self.processing_config = self.pipeline_config.processing
 
 # Instancia global para compatibilidad
@@ -98,7 +103,8 @@ pipeline_config = get_pipeline_config()
 
 # Configuraciones específicas para fácil acceso
 chunking_config = pipeline_config.chunking
-groq_models_config = pipeline_config.groq_models  
+groq_models_config = pipeline_config.groq_models
+spacy_models_config = pipeline_config.spacy_models
 processing_config = pipeline_config.processing
 
 # =============================================================================

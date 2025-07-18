@@ -12,6 +12,9 @@ class ArticuloInItem(scrapy.Item):
     Item para almacenar artículos periodísticos extraídos.
     Mapea directamente a la tabla 'articulos' en la base de datos.
     """
+    # ID del artículo en la base de datos (propagado después del upsert)
+    articulo_id = scrapy.Field()            # ID del artículo en la BD
+    
     # Campos principales
     url = scrapy.Field()                    # URL original del artículo
     storage_path = scrapy.Field()           # Ruta en Supabase Storage

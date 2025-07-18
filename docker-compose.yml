@@ -37,17 +37,21 @@ services:
   module_pipeline:
     build:
       context: ./src/module_pipeline
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.optimized
     container_name: lamacquina_pipeline
-    command: /bin/sh -c "cd /app && python -m uvicorn src.main:app --host 0.0.0.0 --port 8003"
+    # Comando ya definido en el Dockerfile optimizado
     volumes:
-      - ./src/module_pipeline:/app
+      # NO montar código fuente para aprovechar optimizaciones
+      - ./.env:/app/.env:ro
+      - pipeline_logs:/app/logs
+      - pipeline_metrics:/app/metrics
     ports:
       - "8003:8003"
     env_file:
       - .env
     environment:
       - GROQ_MODEL_ID=llama-3.1-8b-instant
+      - DEBUG_FORCE_RELEVANT=true  # PARCHE TEMPORAL: Forzar relevancia para debugging
     networks:
       - lamacquina_network
     restart: unless-stopped
@@ -272,4 +276,8 @@ volumes:
   redis_data:
     driver: local
   shared_data:
+    driver: local
+  pipeline_logs:
+    driver: local
+  pipeline_metrics:
     driver: local

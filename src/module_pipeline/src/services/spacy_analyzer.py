@@ -24,6 +24,7 @@ except ImportError:
 
 from loguru import logger
 from ..models.analisis import AnalisisComponentes
+from ..config import get_spacy_model_name, get_spacy_fallback_models
 
 
 class SpacyAnalyzer:
@@ -56,24 +57,50 @@ class SpacyAnalyzer:
         
         logger.info("SpacyAnalyzer inicializado")
     
-    def _get_nlp_model(self, model_name: str = "es_core_news_lg") -> Optional[Language]:
-        """Obtiene o carga el modelo spaCy."""
+    def _get_nlp_model(self, model_name: Optional[str] = None, prefer_large: bool = False) -> Optional[Language]:
+        """Obtiene o carga el modelo spaCy usando configuración centralizada."""
         if self.nlp:
             return self.nlp
             
         if not spacy:
             logger.warning("spaCy no está instalado. Análisis limitado.")
             return None
+        
+        # Usar configuración centralizada si no se especifica modelo
+        if model_name is None:
+            model_name = get_spacy_model_name(prefer_large=prefer_large)
             
         if model_name not in self._model_cache:
-            try:
-                self._model_cache[model_name] = spacy.load(model_name)
-                logger.debug(f"Modelo spaCy '{model_name}' cargado para análisis")
-            except Exception as e:
-                logger.warning(f"No se pudo cargar modelo spaCy '{model_name}': {e}")
-                return None
+            # Intentar cargar el modelo solicitado
+            loaded_model = self._try_load_model(model_name)
+            if loaded_model:
+                self._model_cache[model_name] = loaded_model
+                return loaded_model
+            
+            # Si falló, intentar modelos de fallback
+            fallback_models = get_spacy_fallback_models()
+            for fallback_model in fallback_models:
+                if fallback_model != model_name:  # No intentar el mismo modelo otra vez
+                    loaded_model = self._try_load_model(fallback_model)
+                    if loaded_model:
+                        logger.warning(f"Usando modelo de fallback '{fallback_model}' en lugar de '{model_name}'")
+                        self._model_cache[model_name] = loaded_model  # Cache con el nombre solicitado
+                        return loaded_model
+            
+            logger.error(f"No se pudo cargar modelo spaCy '{model_name}' ni ningún fallback")
+            return None
                 
         return self._model_cache.get(model_name)
+    
+    def _try_load_model(self, model_name: str) -> Optional[Language]:
+        """Intenta cargar un modelo spaCy específico."""
+        try:
+            model = spacy.load(model_name)
+            logger.debug(f"Modelo spaCy '{model_name}' cargado exitosamente")
+            return model
+        except Exception as e:
+            logger.debug(f"No se pudo cargar modelo spaCy '{model_name}': {e}")
+            return None
     
     def _get_text_hash(self, texto: str) -> str:
         """Genera hash del texto para usar como clave de caché."""
@@ -96,14 +123,16 @@ class SpacyAnalyzer:
     def analizar_contenido(
         self, 
         texto: str,
-        modelo_nombre: str = "es_core_news_lg"
+        modelo_nombre: Optional[str] = None,
+        prefer_large: bool = False
     ) -> AnalisisComponentes:
         """
         Analiza el contenido del texto y extrae métricas con caché optimizado.
         
         Args:
             texto: Texto a analizar
-            modelo_nombre: Nombre del modelo spaCy a usar
+            modelo_nombre: Nombre específico del modelo spaCy (opcional, usa configuración)
+            prefer_large: Si preferir el modelo grande cuando no se especifica modelo_nombre
             
         Returns:
             AnalisisComponentes con todas las métricas extraídas
@@ -126,7 +155,7 @@ class SpacyAnalyzer:
         analisis = self._analizar_patrones_basicos(texto, analisis)
         
         # Análisis con spaCy si está disponible
-        nlp = self._get_nlp_model(modelo_nombre)
+        nlp = self._get_nlp_model(modelo_nombre, prefer_large)
         if nlp:
             analisis = self._analizar_con_spacy(texto, nlp, analisis)
         else:

@@ -303,16 +303,58 @@ class SupabaseService:
             # Validar estructura del payload y convertir a dict si es necesario
             payload_dict = self._validar_estructura_payload(payload, 'fragmento')
             
-            # Llamar RPC
+            # PARCHE TEMPORAL: Extraer fragmento_id para usarlo también como documento_id
+            # En el sistema actual, procesamos artículos completos donde:
+            # 1 artículo = 1 documento = 1 fragmento (sin chunking real)
+            # TODO: Cuando se implemente el sistema de chunking para documentos largos,
+            # documento_id deberá venir del proceso de ingesta que divide el documento
+            # en múltiples fragmentos. Por ahora, usamos el mismo ID para ambos.
+            fragmento_id = None
+            if isinstance(payload_dict, dict):
+                # Buscar id_fragmento en diferentes posibles ubicaciones
+                if 'id_fragmento' in payload_dict:
+                    fragmento_id = payload_dict['id_fragmento']
+                elif 'fragmento' in payload_dict and isinstance(payload_dict['fragmento'], dict):
+                    fragmento_id = payload_dict['fragmento'].get('id_fragmento')
+                    
+            if not fragmento_id:
+                self.logger.warning("No se encontró id_fragmento en el payload, usando valor por defecto")
+                fragmento_id = "unknown-fragment-id"
+            
+            # Llamar RPC con documento_id = fragmento_id (parche temporal)
             response = self.client.rpc(
                 'insertar_fragmento_completo',
-                {'datos_json': payload_dict}
+                {
+                    'documento_id': fragmento_id,  # PARCHE: mismo ID para documento y fragmento
+                    'datos_json': payload_dict     # Mantener nombre original
+                }
             ).execute()
+            
+            # Log detallado de la respuesta para debugging
+            self.logger.debug(f"Respuesta RPC insertar_fragmento_completo: {response}")
+            self.logger.debug(f"Tipo de response.data: {type(response.data)}")
+            self.logger.debug(f"Contenido de response.data: {response.data}")
             
             if response.data:
                 result = response.data
                 if isinstance(result, list) and len(result) > 0:
                     result = result[0]
+                
+                # Validar que result sea un diccionario con la estructura esperada
+                if not isinstance(result, dict):
+                    self.logger.error(f"Respuesta RPC no es un diccionario: {type(result)}")
+                    return None
+                
+                # Validar campos mínimos esperados
+                if 'fragmento_id' not in result:
+                    self.logger.warning("Respuesta RPC no contiene 'fragmento_id'")
+                    self.logger.warning(f"Campos en respuesta: {list(result.keys())}")
+                    
+                    # Log el contenido completo para debugging
+                    if 'status' in result and result['status'] == 'error':
+                        self.logger.error(f"RPC retornó error: {result.get('mensaje', 'Sin mensaje')}")
+                        self.logger.error(f"Código SQL: {result.get('codigo_sql', 'Sin código')}")
+                        return None
                 
                 # Validar respuesta de inserción
                 self._validar_respuesta_insercion(payload_dict, result, 'fragmento')
@@ -326,6 +368,14 @@ class SupabaseService:
                 return result
             else:
                 self.logger.warning("RPC insertar_fragmento_completo no retornó datos")
+                # Log adicional para entender por qué no hay datos
+                self.logger.warning(f"response completo: {response}")
+                self.logger.warning(f"response.data es None o vacío: {response.data}")
+                
+                # Verificar si hay un error en la respuesta
+                if hasattr(response, 'error') and response.error:
+                    self.logger.error(f"Error en respuesta RPC: {response.error}")
+                
                 return None
                 
         except Exception as e:
