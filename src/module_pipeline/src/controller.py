@@ -195,34 +195,40 @@ class PipelineController:
             id_articulo = str(uuid.uuid4())
             article_logger.warning(f"No se encontró articulo_id en datos, usando UUID: {id_articulo}")
         
+        # Mapeo robusto que maneja tanto formato correcto (titular) como legacy (titulo)
+        # Basado en la verdad de Supabase: el campo correcto es 'titular'
+        titular = articulo_data.get('titular') or articulo_data.get('titulo')
+        if not titular:
+            raise ValueError("No se encontró campo 'titular' o 'titulo' en los datos del artículo")
+        
+        # Construir diccionario con campos esperados por ArticuloProcesableItem
+        # NO incluir campos que el modelo no acepta (extra="forbid")
         articulo_data_procesable = {
             "id_articulo": id_articulo,
+            "id_articulo_fuente": articulo_data.get('articulo_id'),  # Mapear articulo_id a id_articulo_fuente
             "contenido_texto": contenido,
             "medio": articulo_data['medio'],
-            "titulo": articulo_data['titular'],
+            "titular": titular,  # Usar el campo correcto según Supabase
+            "area_geografica": articulo_data.get('area_geografica', articulo_data.get('pais', 'España')),
+            "tipo_medio": articulo_data.get('tipo_medio', 'digital'),
             "fecha_publicacion": str(articulo_data['fecha_publicacion']),
             "autor": articulo_data.get('autor'),
-            "pais": articulo_data.get('area_geografica', 'España'),
-            "tipo_medio": articulo_data['tipo_medio'],
             "idioma": articulo_data.get('idioma', 'es'),
             "seccion": articulo_data.get('seccion'),
             "es_opinion": articulo_data.get('es_opinion', False),
-            "es_oficial": articulo_data.get('es_oficial', False),
+            "es_oficial": articulo_data.get('es_oficial', True),
             "url": articulo_data.get('url'),
-            "fuente_original": articulo_data.get('fuente_original'),
-            "medio_url_principal": articulo_data.get('medio_url_principal'),
-            "contenido_html": articulo_data.get('contenido_html'),
-            "etiquetas_fuente": articulo_data.get('etiquetas_fuente'),
+            "etiquetas_fuente": articulo_data.get('etiquetas_fuente', []),
             "metadata_adicional": articulo_data.get('metadata', {})
         }
         
         # Preparar contexto del artículo para el pipeline
         contexto_articulo = {
-            "titulo": articulo_data['titular'],
+            "titulo": titular,  # Usar la variable titular que ya mapeamos
             "fecha_publicacion": str(articulo_data['fecha_publicacion']),
             "fuente": articulo_data['medio'],
-            "pais": articulo_data.get('area_geografica', 'España'),
-            "tipo_medio": articulo_data['tipo_medio']
+            "pais": articulo_data.get('area_geografica', articulo_data.get('pais', 'España')),
+            "tipo_medio": articulo_data.get('tipo_medio', 'digital')
         }
         
         article_logger.debug("Creando ArticuloProcesableItem directamente")
@@ -320,7 +326,7 @@ class PipelineController:
         if resultado_pipeline.get('payload'):
             resultado["persistencia"] = self._persistir_resultado_7_fases(
                 resultado_pipeline, 
-                fragmento,
+                articulo,
                 article_logger
             )
         
@@ -1335,8 +1341,10 @@ class PipelineController:
         except Exception as e:
             # Log del error
             bg_logger.error(
-                f"Error en procesamiento de artículo en background: {str(e)}",
-                error_type=type(e).__name__
+                "Error en procesamiento de artículo en background",
+                error_message=str(e),
+                error_type=type(e).__name__,
+                job_id=job_id
             )
             
             # Actualizar estado a FAILED con información del error

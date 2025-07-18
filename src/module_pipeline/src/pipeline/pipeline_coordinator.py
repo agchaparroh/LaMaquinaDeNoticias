@@ -428,7 +428,7 @@ class PipelineCoordinator:
             # === GENERAR PAYLOAD FINAL ===
             logger.info("Generando payload final para persistencia")
             payload = self._generar_payload_completo_7_fases(
-                fragmento=fragmento,
+                fragmento=fragmento_unificado,
                 resultado_fase1=resultado_fase1,
                 resultados_simplificacion=resultados_simplificacion,
                 entidades=resultado_fase7.entidades_normalizadas,
