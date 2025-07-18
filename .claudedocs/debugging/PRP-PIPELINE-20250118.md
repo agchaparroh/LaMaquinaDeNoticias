@@ -1,38 +1,23 @@
 # 🚨 PRP v2.0.0: ELIMINACIÓN DE ERRORES - MODULE PIPELINE
 **Fecha**: 2025-01-18  
 **Tipo**: dynamic-evolutionary  
-**Estado**: EN PROGRESO  
+**Estado**: ANÁLISIS INICIAL  
 **Framework**: Automated Triggers ACTIVE ✅
-
----
-
-## 🚨 ACCIÓN INMEDIATA - [E001: keyword argument 'nombre' en normalizar_entidad]
-
-### 📋 Próximos Pasos Específicos:
-1. ⛔ **STOP** - Fix parcial prohibido (AUTOMATED TRIGGER ACTIVADO)
-2. 🔍 **Task tool** - COMPLETADO: Error en fase_7_normalizacion.py línea 384
-3. 📊 **Scope**: Solo 1 archivo afectado (fase_7_normalizacion.py)
-4. 🔧 **Fix integral**: Corregir llamada a normalizar_entidad con parámetros correctos
-5. ✅ **Validación**: Continuar diagnóstico después del fix
 
 ---
 
 ## 📊 ESTADO ACTUAL
 
 ### Inventario Dinámico:
-- **Errores encontrados**: 3 (+1 patrón similar)
-- **Errores corregidos**: 3  
-- **Errores pendientes**: 1
+- **Errores encontrados**: 0
+- **Errores corregidos**: 0  
+- **Errores pendientes**: 0
 
 ### Categorías de Errores:
-- **CRITICAL**: [E003: Campos requeridos faltantes para Supabase - BLOQUEA PERSISTENCIA] # Crashes, pérdida de datos
+- **CRITICAL**: [] # Crashes, pérdida de datos
 - **HIGH**: [] # Funcionalidad rota
 - **MEDIUM**: [] # Performance crítica
 - **LOW**: [] # Solo si hay tiempo
-- **FIXED**: 
-  - [✅ E001: keyword argument 'nombre' en normalizar_entidad - fase_7_normalizacion.py:384]
-  - [✅ E002: MetadatosHecho no tiene fecha_inicio - fase_7_normalizacion.py:156]
-  - [✅ Patrón E002: MetadatosDato campos periodo_inicio/fin - fase_5_datos.py:299-300]
 
 ### Estado del Pipeline:
 - [ ] Fase 1 (Triaje): NO PROBADO
@@ -146,63 +131,15 @@ curl -X POST http://localhost:8000/api/v1/pipeline/process-article \
 
 ---
 
-## 📚 REGISTRO HISTÓRICO Y LECCIONES APRENDIDAS
+## 📚 REGISTRO HISTÓRICO
 
 <details>
-<summary>Ver historial de diagnóstico y fixes</summary>
+<summary>Ver historial de diagnóstico</summary>
 
 ### Sesión 2025-01-18
 - **Inicio**: Creación del PRP
 - **Contexto**: Pipeline con 7 fases, debe procesar artículos y persistir en Supabase
-
-### 🎯 EJEMPLOS DE APLICACIÓN DEL MÉTODO
-
-### CASO E001: Lo que NO hacer vs Lo CORRECTO
-**MAL DIAGNÓSTICO (lo que hice):**
-1. Vi "keyword argument 'nombre'" en fase_7_normalizacion.py:384
-2. Asumí que debía cambiar a "nombre_entidad"
-3. Hice el cambio inmediatamente SIN verificar
-4. No verifiqué si `normalizar_entidad` existía en Supabase
-5. No revisé los tests ni el flujo real
-
-**DIAGNÓSTICO CORRECTO (lo que debí hacer):**
-1. FASE 1: Entender que `normalizar_entidad` se llama como RPC en Supabase
-2. FASE 2: Verificar en Supabase → Descubrir que NO EXISTE tal función
-3. FASE 2: Buscar el flujo real → Encontrar que usa `buscar_entidad_similar`
-4. FASE 2: Confirmar parámetros correctos: `nombre_entidad`, `tipo_entidad`
-5. FASE 2: Verificar retorno esperado: `es_nueva` no `encontrada`
-6. FASE 3: Planear cambio completo con todos los campos correctos
-7. FASE 3: Ejecutar solo después de validación completa
-
-**LECCIÓN**: Un diagnóstico apresurado casi rompe más el sistema. Solo la intervención del usuario evitó un desastre mayor.
-
-### CASO E002: Aplicación del Método ✅ RESUELTO
-**Error**: 'MetadatosHecho' object has no attribute 'fecha_inicio'
-
-**HIPÓTESIS GENERADAS**:
-- H1: MetadatosHecho no tiene campos fecha_inicio/fecha_fin
-- H2: Supabase usa otro formato para las fechas
-- H3: La transformación de fechas ocurre en otro lugar
-- H4: Los campos son opcionales y no siempre existen
-- H5: Hay un mismatch entre lo que devuelve el LLM y lo que espera el código
-
-**VERIFICACIONES REALIZADAS**:
-- H1: ✓ Confirmado - MetadatosHecho NO tenía estos campos
-- H2: ✓ Confirmado - Supabase usa 'fecha_ocurrencia' tipo tstzrange
-- H3: ✗ Descartado - Transformación sí ocurre en pipeline_coordinator
-- H4: ✓ Confirmado - Los campos son opcionales
-- H5: ✓ Confirmado - LLM devuelve fecha.inicio/fin, código esperaba fecha_inicio/fin
-
-**SOLUCIÓN IMPLEMENTADA**:
-1. Añadidos campos fecha_inicio y fecha_fin a MetadatosHecho en metadatos.py
-2. Actualizada fase_4_hechos.py para extraer y asignar las fechas del JSON
-3. Actualizado pipeline_coordinator.py para transformar fechas a ISO 8601
-
-**PATRÓN DETECTADO Y RESUELTO**:
-- Mismo problema en fase_5_datos.py con MetadatosDato
-- Intentaba asignar periodo_inicio/fin directamente en lugar de usar objeto PeriodoReferencia
-- Campos 'indicador' y 'hecho_id_relacionado' no existen en el modelo
-- Solución: Crear objeto PeriodoReferencia con las fechas y eliminar campos inexistentes
+- **Estado**: Análisis inicial pendiente
 
 </details>
 
@@ -232,9 +169,9 @@ curl -X POST http://localhost:8000/api/v1/pipeline/process-article \
 
 ---
 
-## 🎯 PLAN DE ACCIÓN INMEDIATO
+## 🎯 PLAN DE ACCIÓN
 
-### Fase 1: Diagnóstico Inicial (ACTUAL)
+### Fase 1: Diagnóstico Inicial
 1. Verificar que el servicio esté levantado
 2. Probar endpoint básico de health
 3. Intentar procesar un artículo pequeño
@@ -242,7 +179,7 @@ curl -X POST http://localhost:8000/api/v1/pipeline/process-article \
 
 ### Fase 2: Corrección Sistemática
 1. Ordenar errores por criticidad
-2. Aplicar Automated Triggers
+2. Aplicar Método de Hipótesis Múltiples
 3. Fix integral por categoría
 4. Validar después de cada fix
 

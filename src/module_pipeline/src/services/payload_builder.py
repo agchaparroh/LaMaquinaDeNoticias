@@ -1,8 +1,11 @@
-from typing import Dict, Any, List, Optional, Set
+from typing import Dict, Any, List, Optional, Set, TYPE_CHECKING
 from loguru import logger
 from pydantic import ValidationError # Asegurar que ValidationError esté importado
 import hashlib
 import json
+
+if TYPE_CHECKING:
+    from ..models.entrada import ArticuloProcesableItem
 
 # Importar utilidades de validación
 from ..utils.validation import (
@@ -265,6 +268,72 @@ class PayloadBuilder:
         if errores_totales:
             mensaje = f"Validación fallida para payload {tipo_payload}: {len(errores_totales)} errores encontrados"
             raise ValueError(mensaje)
+
+    def construir_payload_articulo_from_model(
+        self,
+        articulo_model: 'ArticuloProcesableItem',
+        resultado_procesamiento: Dict[str, Any],
+        hechos_extraidos: Optional[List[Dict[str, Any]]] = None,
+        entidades_extraidas: Optional[List[Dict[str, Any]]] = None,
+        citas_extraidas: Optional[List[Dict[str, Any]]] = None,
+        datos_extraidos: Optional[List[Dict[str, Any]]] = None,
+        relaciones_hechos: Optional[List[Dict[str, Any]]] = None,
+        relaciones_entidades: Optional[List[Dict[str, Any]]] = None,
+        contradicciones_detectadas: Optional[List[Dict[str, Any]]] = None
+    ) -> PayloadCompletoArticulo:
+        """
+        Construye el payload completo para artículo usando ArticuloProcesableItem.
+        
+        Args:
+            articulo_model: Modelo ArticuloProcesableItem con metadatos del artículo
+            resultado_procesamiento: Diccionario con resultados del procesamiento
+            hechos_extraidos: Lista de hechos extraídos
+            entidades_extraidas: Lista de entidades extraídas
+            citas_extraidas: Lista de citas extraídas
+            datos_extraidos: Lista de datos cuantitativos extraídos
+            relaciones_hechos: Lista de relaciones entre hechos
+            relaciones_entidades: Lista de relaciones entre entidades
+            contradicciones_detectadas: Lista de contradicciones detectadas
+            
+        Returns:
+            PayloadCompletoArticulo listo para RPC insertar_articulo_completo
+        """
+        self.logger.debug(f"Construyendo payload para artículo desde modelo: {articulo_model.id_articulo}")
+        
+        # Extraer metadatos del artículo desde el modelo
+        metadatos_articulo = {
+            "url": articulo_model.url,
+            "storage_path": None,  # Se puede añadir si es necesario
+            "fuente_original": articulo_model.fuente_original,
+            "medio": articulo_model.medio,
+            "medio_url_principal": articulo_model.medio_url_principal,
+            "area_geografica": articulo_model.pais,
+            "tipo_medio": articulo_model.tipo_medio,
+            "titular": articulo_model.titulo,
+            "fecha_publicacion": articulo_model.fecha_publicacion,
+            "autor": articulo_model.autor,
+            "idioma_original": articulo_model.idioma,
+            "seccion": articulo_model.seccion,
+            "etiquetas_fuente": articulo_model.etiquetas_fuente or [],
+            "es_opinion": articulo_model.es_opinion,
+            "es_oficial": articulo_model.es_oficial,
+            "contenido_texto_original": articulo_model.contenido_texto,
+            "contenido_html_original": articulo_model.contenido_html,
+            "metadata_original": articulo_model.metadata_adicional or {}
+        }
+        
+        # Usar el método existente con los datos extraídos
+        return self.construir_payload_articulo(
+            metadatos_articulo_data=metadatos_articulo,
+            procesamiento_articulo_data=resultado_procesamiento,
+            hechos_extraidos_data=hechos_extraidos,
+            entidades_autonomas_data=entidades_extraidas,
+            citas_textuales_data=citas_extraidas,
+            datos_cuantitativos_data=datos_extraidos,
+            relaciones_hechos_data=relaciones_hechos,
+            relaciones_entidades_data=relaciones_entidades,
+            contradicciones_detectadas_data=contradicciones_detectadas
+        )
 
     def construir_payload_articulo(
         self,

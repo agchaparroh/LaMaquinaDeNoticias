@@ -29,7 +29,7 @@ from .services.supabase_service import get_supabase_service, SupabaseService
 # Importar FragmentProcessor para gestión coherente de IDs
 from .utils.fragment_processor import FragmentProcessor
 # Importar modelos de entrada para validación
-from .models.entrada import FragmentoProcesableItem
+from .models.entrada import FragmentoProcesableItem, ArticuloProcesableItem
 # Importar utilidades de logging estructurado
 from .utils.logging_config import get_logger, log_phase
 # Importar JobTrackerService para procesamiento asíncrono
@@ -181,43 +181,39 @@ class PipelineController:
             longitud_contenido=len(contenido)
         )
         
-        # Crear FragmentoProcesableItem desde el artículo completo
-        # Según Context7 5.3: "El procesamiento se divide en fases secuenciales"
-        
+        # Crear ArticuloProcesableItem directamente desde el artículo
+        # Eliminando conversión innecesaria a FragmentoProcesableItem
         
         # Usar articulo_id de la BD si está disponible, sino generar UUID
         # Esto mantiene trazabilidad desde el scraper hasta la persistencia
         if articulo_data.get('articulo_id'):
             # Usar el ID del artículo de la base de datos con prefijo para identificación
-            id_fragmento = f"ART-{articulo_data['articulo_id']}"
-            article_logger.info(f"Usando ID de BD para fragmento: {id_fragmento}")
+            id_articulo = f"ART-{articulo_data['articulo_id']}"
+            article_logger.info(f"Usando ID de BD para artículo: {id_articulo}")
         else:
             # Fallback a UUID si no hay ID de BD (archivos legacy)
-            id_fragmento = str(uuid.uuid4())
-            article_logger.warning(f"No se encontró articulo_id en datos, usando UUID: {id_fragmento}")
+            id_articulo = str(uuid.uuid4())
+            article_logger.warning(f"No se encontró articulo_id en datos, usando UUID: {id_articulo}")
         
-        fragmento_data = {
-            "id_fragmento": id_fragmento,
-            "texto_original": contenido,
-            "id_articulo_fuente": str(articulo_id),
-            "orden_en_articulo": 0,  # Único fragmento
-            "request_id": request_id,  # Pasar el request_id al fragmento
-            "metadata_adicional": {
-                # Incluir metadatos relevantes del artículo
-                "es_articulo_completo": True,
-                "fragmentado": False,
-                "medio": articulo_data['medio'],
-                "area_geografica": articulo_data['area_geografica'],
-                "tipo_medio": articulo_data['tipo_medio'],
-                "titular": articulo_data['titular'],
-                "fecha_publicacion": str(articulo_data['fecha_publicacion']),
-                "autor": articulo_data.get('autor'),
-                "idioma": articulo_data.get('idioma', 'es'),
-                "seccion": articulo_data.get('seccion'),
-                "es_opinion": articulo_data.get('es_opinion', False),
-                "es_oficial": articulo_data.get('es_oficial', False),
-                "metadata_original": articulo_data.get('metadata', {})
-            }
+        articulo_data_procesable = {
+            "id_articulo": id_articulo,
+            "contenido_texto": contenido,
+            "medio": articulo_data['medio'],
+            "titulo": articulo_data['titular'],
+            "fecha_publicacion": str(articulo_data['fecha_publicacion']),
+            "autor": articulo_data.get('autor'),
+            "pais": articulo_data.get('area_geografica', 'España'),
+            "tipo_medio": articulo_data['tipo_medio'],
+            "idioma": articulo_data.get('idioma', 'es'),
+            "seccion": articulo_data.get('seccion'),
+            "es_opinion": articulo_data.get('es_opinion', False),
+            "es_oficial": articulo_data.get('es_oficial', False),
+            "url": articulo_data.get('url'),
+            "fuente_original": articulo_data.get('fuente_original'),
+            "medio_url_principal": articulo_data.get('medio_url_principal'),
+            "contenido_html": articulo_data.get('contenido_html'),
+            "etiquetas_fuente": articulo_data.get('etiquetas_fuente'),
+            "metadata_adicional": articulo_data.get('metadata', {})
         }
         
         # Preparar contexto del artículo para el pipeline
@@ -229,14 +225,14 @@ class PipelineController:
             "tipo_medio": articulo_data['tipo_medio']
         }
         
-        article_logger.debug("Artículo convertido a FragmentoProcesableItem con todos los metadatos")
+        article_logger.debug("Creando ArticuloProcesableItem directamente")
         
-        # Convertir dict a objeto FragmentoProcesableItem antes de pasar al pipeline
+        # Convertir dict a objeto ArticuloProcesableItem antes de pasar al pipeline
         try:
-            fragmento = FragmentoProcesableItem(**fragmento_data)
-            article_logger.debug(f"Fragmento validado correctamente: ID={fragmento.id_fragmento}")
+            articulo = ArticuloProcesableItem(**articulo_data_procesable)
+            article_logger.debug(f"Artículo validado correctamente: ID={articulo.id_articulo}")
         except Exception as e:
-            article_logger.error(f"Error al validar fragmento: {str(e)}")
+            article_logger.error(f"Error al validar artículo: {str(e)}")
             raise
         
         # Medir tiempo de procesamiento del artículo
@@ -248,7 +244,7 @@ class PipelineController:
         
         # Llamar al pipeline coordinator
         resultado_pipeline = self.pipeline_coordinator.ejecutar_pipeline_completo(
-            fragmento=fragmento,  # Ahora pasamos el objeto, no el dict
+            contenido=articulo,  # Ahora pasamos ArticuloProcesableItem directamente
             modelo_spacy=get_spacy_model_name(),
             request_id=request_id,
             groq_api_key=groq_api_key,
@@ -256,7 +252,7 @@ class PipelineController:
         )
         
         # Adaptar resultado al formato esperado
-        resultado = self._adaptar_resultado_7_fases(resultado_pipeline, fragmento_data)
+        resultado = self._adaptar_resultado_7_fases(resultado_pipeline, articulo_data_procesable)
         
         # Calcular tiempo total
         tiempo_procesamiento = time.time() - tiempo_inicio
@@ -576,23 +572,32 @@ class PipelineController:
             else:
                 payload_dict = payload
             
-            # Detectar si es artículo o fragmento
+            # Detectar si es artículo o fragmento usando información del pipeline
             es_articulo = False
-            if hasattr(fragmento, 'metadata_adicional') and fragmento.metadata_adicional:
+            if resultado_pipeline.get('metadatos', {}).get('es_articulo_completo'):
+                es_articulo = True
+                logger.info("Detectado artículo completo desde metadatos del pipeline")
+            elif hasattr(fragmento, 'metadata_adicional') and fragmento.metadata_adicional:
+                # Fallback para compatibilidad con código legacy
                 es_articulo = fragmento.metadata_adicional.get('es_articulo_completo', False)
+                if es_articulo:
+                    logger.info("Detectado artículo completo desde metadata_adicional (legacy)")
+            else:
+                logger.info("Detectado fragmento regular")
             
             # Si es artículo y tiene formato ART-{ID}, extraer el ID numérico
-            if es_articulo and hasattr(fragmento, 'id_fragmento') and fragmento.id_fragmento.startswith("ART-"):
+            fragmento_id = resultado_pipeline.get('fragmento_id', '')
+            if es_articulo and fragmento_id.startswith("ART-"):
                 try:
                     # Extraer el ID numérico del formato ART-{ID}
-                    articulo_id = int(fragmento.id_fragmento.replace("ART-", ""))
+                    articulo_id = int(fragmento_id.replace("ART-", ""))
                     payload_dict["articulo_id"] = articulo_id
                     logger.info(f"Extrayendo ID numérico del artículo: {articulo_id}")
                 except ValueError:
-                    logger.error(f"No se pudo extraer ID numérico de: {fragmento.id_fragmento}")
+                    logger.error(f"No se pudo extraer ID numérico de: {fragmento_id}")
                     return {
                         "exitosa": False,
-                        "mensaje": f"Formato de ID inválido para artículo: {fragmento.id_fragmento}"
+                        "mensaje": f"Formato de ID inválido para artículo: {fragmento_id}"
                     }
             
             # Usar la RPC correcta según el tipo

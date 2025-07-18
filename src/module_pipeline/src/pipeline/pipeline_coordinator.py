@@ -12,14 +12,14 @@ SOLUCIÓN IMPLEMENTADA:
 - Manejo robusto de errores y fallbacks
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union
 import uuid
 
 # Importar sistema de logging
 from ..utils.logging_config import get_logger, log_phase, LogContext
 
 # Importar modelos
-from ..models.entrada import FragmentoProcesableItem
+from ..models.entrada import FragmentoProcesableItem, ArticuloProcesableItem
 from ..models.procesamiento import (
     ResultadoFase1Triaje,
     ResultadoFase2Extraccion,
@@ -74,17 +74,17 @@ class PipelineCoordinator:
     
     def ejecutar_pipeline_completo(
         self, 
-        fragmento: FragmentoProcesableItem,
+        contenido: Union[FragmentoProcesableItem, ArticuloProcesableItem],
         modelo_spacy: Optional[str] = None,
         request_id: Optional[str] = None,
         groq_api_key: Optional[str] = None,
         contexto_articulo: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Ejecuta el pipeline completo de 7 fases para un fragmento.
+        Ejecuta el pipeline completo de 7 fases para un artículo o fragmento.
         
         Args:
-            fragmento: Fragmento a procesar
+            contenido: Artículo completo o fragmento a procesar
             modelo_spacy: Modelo spaCy para fase 1 (opcional, usa configuración)
             request_id: ID único de la request (se genera si no se proporciona)
             groq_api_key: API key de Groq para LLMs
@@ -96,22 +96,59 @@ class PipelineCoordinator:
         # Generar request_id si no se proporciona
         if not request_id:
             request_id = str(uuid.uuid4())
+        
+        # === DETECCIÓN DE TIPO Y UNIFICACIÓN ===
+        # Detectar tipo de contenido y extraer información común
+        if isinstance(contenido, ArticuloProcesableItem):
+            # Procesamiento de artículo completo
+            fragmento_id_str = contenido.id_articulo
+            texto_original = contenido.contenido_texto
+            id_articulo_fuente = contenido.id_articulo
+            orden_en_articulo = 0  # Artículo completo
             
-        # Manejar tanto formato ART-{ID} como UUIDs legacy
-        if fragmento.id_fragmento.startswith("ART-"):
-            # Formato de trazabilidad: mantener como string
-            fragmento_id_str = fragmento.id_fragmento
-            self.base_logger.info(f"Procesando fragmento con ID de trazabilidad: {fragmento_id_str}")
+            # Obtener contexto del artículo si no se proporciona
+            if contexto_articulo is None:
+                contexto_articulo = contenido.get_processing_context()
+            
+            # Crear fragmento unificado para mantener compatibilidad con fases
+            fragmento_unificado = FragmentoProcesableItem(
+                id_fragmento=fragmento_id_str,
+                texto_original=texto_original,
+                id_articulo_fuente=id_articulo_fuente,
+                orden_en_articulo=orden_en_articulo,
+                metadata_adicional=contenido.metadata_adicional or {}
+            )
+            
+            self.base_logger.info(f"Procesando artículo completo: {fragmento_id_str}")
+            
+        elif isinstance(contenido, FragmentoProcesableItem):
+            # Procesamiento de fragmento (lógica actual)
+            fragmento_unificado = contenido
+            
+            # Manejar tanto formato ART-{ID} como UUIDs legacy
+            if contenido.id_fragmento.startswith("ART-"):
+                # Formato de trazabilidad: mantener como string
+                fragmento_id_str = contenido.id_fragmento
+                self.base_logger.info(f"Procesando fragmento con ID de trazabilidad: {fragmento_id_str}")
+            else:
+                # Formato UUID legacy: validar y mantener como string
+                try:
+                    # Validar que sea un UUID válido
+                    uuid.UUID(contenido.id_fragmento)
+                    fragmento_id_str = contenido.id_fragmento
+                    self.base_logger.info(f"Procesando fragmento con UUID legacy: {fragmento_id_str}")
+                except ValueError:
+                    self.base_logger.error(f"ID de fragmento inválido: {contenido.id_fragmento}")
+                    raise ValueError(f"El ID del fragmento no es válido: {contenido.id_fragmento}")
+                    
+            # Extraer información para compatibilidad
+            texto_original = contenido.texto_original
+            id_articulo_fuente = contenido.id_articulo_fuente
+            orden_en_articulo = contenido.orden_en_articulo
+            
         else:
-            # Formato UUID legacy: validar y mantener como string
-            try:
-                # Validar que sea un UUID válido
-                uuid.UUID(fragmento.id_fragmento)
-                fragmento_id_str = fragmento.id_fragmento
-                self.base_logger.info(f"Procesando fragmento con UUID legacy: {fragmento_id_str}")
-            except ValueError:
-                self.base_logger.error(f"ID de fragmento inválido: {fragmento.id_fragmento}")
-                raise ValueError(f"El ID del fragmento no es válido: {fragmento.id_fragmento}")
+            raise ValueError(f"Tipo de contenido no soportado: {type(contenido)}. "
+                           f"Debe ser ArticuloProcesableItem o FragmentoProcesableItem.")
         
         # Crear contexto de logging para este pipeline
         log_context = LogContext(
@@ -119,13 +156,14 @@ class PipelineCoordinator:
             component="PipelineCoordinator",
             fragment_id=fragmento_id_str,
             metadata={
-                "articulo_id": fragmento.id_articulo_fuente,
-                "orden": fragmento.orden_en_articulo
+                "articulo_id": id_articulo_fuente,
+                "orden": orden_en_articulo,
+                "content_type": type(contenido).__name__
             }
         )
         
         logger = log_context.get_logger()
-        logger.info(f"Iniciando pipeline completo para fragmento {fragmento_id_str}")
+        logger.info(f"Iniciando pipeline completo para {type(contenido).__name__}: {fragmento_id_str}")
         
         resultado = {
             "request_id": request_id,
@@ -135,7 +173,12 @@ class PipelineCoordinator:
             "payload": None,
             "resultados_fases": {},
             "errores": [],
-            "metadatos": {},
+            "metadatos": {
+                "tipo_contenido_original": type(contenido).__name__,
+                "es_articulo_completo": isinstance(contenido, ArticuloProcesableItem),
+                "articulo_id_fuente": id_articulo_fuente,
+                "orden_en_articulo": orden_en_articulo
+            },
             "flujo_adaptativo": {
                 "simplificacion_aplicada": False,
                 "chunking_aplicado": False,
@@ -152,7 +195,7 @@ class PipelineCoordinator:
                 
                 resultado_fase1 = ejecutar_fase_1(
                     id_fragmento_original=fragmento_id_str,  # Ahora pasamos string, no UUID
-                    texto_original_fragmento=fragmento.texto_original,
+                    texto_original_fragmento=fragmento_unificado.texto_original,
                     modelo_spacy_nombre=modelo_spacy or get_spacy_model_name()
                 )
                 
@@ -172,7 +215,7 @@ class PipelineCoordinator:
                     razon=resultado_fase1.justificacion_triaje
                 )
                 resultado["exito"] = True
-                resultado["payload"] = self._crear_payload_no_relevante(fragmento, resultado_fase1)
+                resultado["payload"] = self._crear_payload_no_relevante(fragmento_unificado, resultado_fase1)
                 return resultado
             
             # Analizar flujo adaptativo basado en análisis de Fase 1
@@ -680,6 +723,69 @@ class PipelineCoordinator:
             id_fragmento=resultado_fase3.id_fragmento,
             entidades_normalizadas=[],  # Mock vacío
             estado_general_normalizacion="Mock_Completo"
+        )
+    
+    # === MÉTODOS DE COMPATIBILIDAD ===
+    
+    def ejecutar_pipeline_completo_fragmento(
+        self, 
+        fragmento: FragmentoProcesableItem,
+        modelo_spacy: Optional[str] = None,
+        request_id: Optional[str] = None,
+        groq_api_key: Optional[str] = None,
+        contexto_articulo: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Método de compatibilidad para procesamiento de fragmentos.
+        
+        Este método mantiene la interfaz anterior para código existente
+        que específicamente procesa fragmentos.
+        
+        Args:
+            fragmento: Fragmento a procesar
+            modelo_spacy: Modelo spaCy para fase 1 (opcional)
+            request_id: ID único de la request (opcional)
+            groq_api_key: API key de Groq para LLMs
+            contexto_articulo: Contexto del artículo (opcional)
+            
+        Returns:
+            Dict con resultado completo incluyendo payload y metadatos
+        """
+        return self.ejecutar_pipeline_completo(
+            contenido=fragmento,
+            modelo_spacy=modelo_spacy,
+            request_id=request_id,
+            groq_api_key=groq_api_key,
+            contexto_articulo=contexto_articulo
+        )
+    
+    def ejecutar_pipeline_completo_articulo(
+        self, 
+        articulo: ArticuloProcesableItem,
+        modelo_spacy: Optional[str] = None,
+        request_id: Optional[str] = None,
+        groq_api_key: Optional[str] = None,
+        contexto_articulo: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Método específico para procesamiento de artículos completos.
+        
+        Args:
+            articulo: Artículo completo a procesar
+            modelo_spacy: Modelo spaCy para fase 1 (opcional)
+            request_id: ID único de la request (opcional)
+            groq_api_key: API key de Groq para LLMs
+            contexto_articulo: Contexto del artículo (opcional, se obtiene del artículo)
+            
+        Returns:
+            Dict con resultado completo incluyendo payload y metadatos
+        """
+        return self.ejecutar_pipeline_completo(
+            contenido=articulo,
+            modelo_spacy=modelo_spacy,
+            request_id=request_id,
+            groq_api_key=groq_api_key,
+            contexto_articulo=contexto_articulo
         )
 
 
