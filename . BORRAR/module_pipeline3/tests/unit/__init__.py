@@ -1,0 +1,1 @@
+# Tests unitarios para el sistema de manejo de errores

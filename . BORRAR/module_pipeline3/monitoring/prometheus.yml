@@ -1,0 +1,78 @@
+# prometheus.yml - Configuración de Prometheus para module_pipeline
+# Configuración CORREGIDA basada en métricas REALES del sistema
+
+global:
+  scrape_interval: 15s       # Cada 15 segundos
+  evaluation_interval: 15s   # Evaluar reglas cada 15 segundos
+  
+  # Etiquetas externas para identificar esta instancia
+  external_labels:
+    monitor: 'lamaquina-pipeline'
+    environment: 'development'
+
+# === CONFIGURACIÓN DE SCRAPING ===
+scrape_configs:
+  
+  # === PROMETHEUS SELF-MONITORING ===
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # === MODULE_PIPELINE - MÉTRICAS PRINCIPALES ===
+  - job_name: 'module-pipeline-metrics'
+    static_configs:
+      - targets: ['module-pipeline:8003']  # Nombre del servicio en Docker
+    metrics_path: '/metrics'
+    scrape_interval: 10s  # Métricas críticas cada 10s
+    scrape_timeout: 5s
+    
+    # Etiquetas adicionales
+    static_configs:
+      - targets: ['module-pipeline:8003']
+        labels:
+          service: 'pipeline'
+          component: 'api'
+          version: '1.0.0'
+
+# === MÉTRICAS DISPONIBLES EN EL SISTEMA ===
+# Según main.py, el sistema genera estas métricas exactas:
+#
+# COUNTERS:
+# - pipeline_articles_processed_total
+# - pipeline_fragments_processed_total  
+# - pipeline_processing_time_seconds_total
+# - pipeline_errors_total
+#
+# GAUGES:
+# - pipeline_error_rate
+# - pipeline_average_processing_time_seconds
+# - jobs_total
+# - jobs_{status}_total (dinámicas: pending, processing, completed, failed)
+# - system_uptime_seconds
+
+# === CONFIGURACIONES ADICIONALES ===
+
+# Storage configuration
+storage:
+  tsdb:
+    path: /prometheus
+    retention.time: 7d  # Retener métricas por 7 días
+    retention.size: 2GB # Máximo 2GB de almacenamiento
+
+# === EJEMPLO DE CONSULTAS ÚTILES ===
+# Rate de procesamiento por hora:
+# rate(pipeline_fragments_processed_total[1h]) * 3600
+#
+# Tasa de error actual:
+# pipeline_error_rate
+#
+# Tiempo promedio de procesamiento:
+# pipeline_average_processing_time_seconds
+#
+# Jobs activos por estado:
+# jobs_processing_total, jobs_pending_total, etc.
+#
+# Uptime del sistema:
+# system_uptime_seconds / 3600  # en horas

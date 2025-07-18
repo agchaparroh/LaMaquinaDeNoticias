@@ -57,6 +57,18 @@ class MetadatosHecho(BaseModel):
         description="Estado de programación para eventos futuros",
         pattern=r"^(programado|confirmado|cancelado|modificado)$"
     )
+    
+    # Campos de fechas para compatibilidad con el pipeline
+    fecha_inicio: Optional[str] = Field(
+        None,
+        pattern=r'^\d{4}-\d{2}-\d{2}$',
+        description="Fecha de inicio del hecho en formato YYYY-MM-DD"
+    )
+    fecha_fin: Optional[str] = Field(
+        None,
+        pattern=r'^\d{4}-\d{2}-\d{2}$',
+        description="Fecha de fin del hecho en formato YYYY-MM-DD"
+    )
 
 class MetadatosEntidad(BaseModel):
     """
