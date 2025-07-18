@@ -581,6 +581,20 @@ class PipelineController:
             if hasattr(fragmento, 'metadata_adicional') and fragmento.metadata_adicional:
                 es_articulo = fragmento.metadata_adicional.get('es_articulo_completo', False)
             
+            # Si es artículo y tiene formato ART-{ID}, extraer el ID numérico
+            if es_articulo and hasattr(fragmento, 'id_fragmento') and fragmento.id_fragmento.startswith("ART-"):
+                try:
+                    # Extraer el ID numérico del formato ART-{ID}
+                    articulo_id = int(fragmento.id_fragmento.replace("ART-", ""))
+                    payload_dict["articulo_id"] = articulo_id
+                    logger.info(f"Extrayendo ID numérico del artículo: {articulo_id}")
+                except ValueError:
+                    logger.error(f"No se pudo extraer ID numérico de: {fragmento.id_fragmento}")
+                    return {
+                        "exitosa": False,
+                        "mensaje": f"Formato de ID inválido para artículo: {fragmento.id_fragmento}"
+                    }
+            
             # Usar la RPC correcta según el tipo
             if es_articulo:
                 logger.info("Persistiendo como artículo completo")

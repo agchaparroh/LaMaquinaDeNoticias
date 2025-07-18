@@ -23,7 +23,7 @@ Se recomienda seguir este patrón para los metadatos de todas las fases del pipe
 """
 from datetime import datetime, timezone
 from typing import Optional, Any, Dict, List, Union # Union no se usa actualmente, pero es útil tenerla
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from pydantic import BaseModel, Field, model_validator, constr, confloat, HttpUrl
 from typing_extensions import Self # Para el tipo de retorno en model_validator de Pydantic v2
@@ -47,7 +47,7 @@ class PipelineBaseModel(BaseModel):
         "use_enum_values": True,
         "json_encoders": {
             datetime: lambda dt: dt.isoformat().replace('+00:00', 'Z'), # Asegurar 'Z' para UTC
-            UUID: lambda u: str(u)
+            # UUID removido - ahora usamos strings directamente
         },
         "populate_by_name": True,
     }
@@ -126,15 +126,15 @@ class EntidadBase(PipelineBaseModel):
 
 # --- Modelos de Subtarea 5.3: HechoProcesado y EntidadProcesada ---
 class HechoProcesado(HechoBase):
-    id_fragmento_origen: UUID = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo este hecho.")
-    id_articulo_fuente: Optional[UUID] = Field(default=None, description="ID del artículo original en Supabase del cual proviene el fragmento (si está disponible).")
+    id_fragmento_origen: str = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo este hecho (formato ART-{ID} o UUID).")
+    id_articulo_fuente: Optional[str] = Field(default=None, description="ID del artículo original en Supabase del cual proviene el fragmento (si está disponible).")
     vinculado_a_entidades: List[int] = Field(default_factory=list, description="Lista de IDs secuenciales de EntidadProcesada relacionadas con este hecho.")
     prompt_utilizado: Optional[str] = Field(default=None, description="Prompt de Groq API usado para extraer o procesar este hecho.")
     respuesta_llm_bruta: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Respuesta completa (o relevante) del LLM asociada a este hecho.")
 
 class EntidadProcesada(EntidadBase):
-    id_fragmento_origen: UUID = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo esta entidad.")
-    id_entidad_normalizada: Optional[UUID] = Field(default=None, description="ID de la entidad canónica en Supabase después de la normalización (si se encontró).")
+    id_fragmento_origen: str = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo esta entidad (formato ART-{ID} o UUID).")
+    id_entidad_normalizada: Optional[str] = Field(default=None, description="ID de la entidad canónica en Supabase después de la normalización (si se encontró).")
     nombre_entidad_normalizada: Optional[str] = Field(default=None, description="Nombre de la entidad canónica.")
     uri_wikidata: Optional[HttpUrl] = Field(default=None, description="URI de Wikidata para la entidad normalizada (si aplica).")
     similitud_normalizacion: Optional[confloat(ge=0.0, le=1.0)] = Field(default=None, description="Puntuación de similitud devuelta por buscar_entidad_similar (0.0 a 1.0).")
@@ -143,7 +143,7 @@ class EntidadProcesada(EntidadBase):
 # --- Modelos de Subtarea 5.4: CitaTextual y DatosCuantitativos ---
 class CitaTextual(PipelineBaseModel):
     id_cita: int = Field(..., description="Identificador secuencial de la cita textual dentro del fragmento.")
-    id_fragmento_origen: UUID = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo esta cita.")
+    id_fragmento_origen: str = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo esta cita (formato ART-{ID} o UUID).")
     texto_cita: constr(min_length=5) = Field(..., description="El contenido textual exacto de la cita.")
     persona_citada: Optional[str] = Field(default=None, description="Nombre de la persona o entidad que realiza la cita.")
     id_entidad_citada: Optional[int] = Field(default=None, description="ID secuencial de la EntidadProcesada (persona/organización) que realiza la cita, si está identificada.")
@@ -166,7 +166,7 @@ class CitaTextual(PipelineBaseModel):
 
 class DatosCuantitativos(PipelineBaseModel):
     id_dato_cuantitativo: int = Field(..., description="Identificador secuencial del dato cuantitativo dentro del fragmento.")
-    id_fragmento_origen: UUID = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo este dato.")
+    id_fragmento_origen: str = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo este dato (formato ART-{ID} o UUID).")
     descripcion_dato: constr(min_length=3) = Field(..., description="Descripción del dato cuantitativo (ej: 'Número de empleados', 'Porcentaje de aumento').")
     valor_dato: float = Field(..., description="Valor numérico del dato.")
     unidad_dato: Optional[str] = Field(default=None, description="Unidad de medida del dato (ej: 'millones', '%', 'USD').")
@@ -190,8 +190,8 @@ class DatosCuantitativos(PipelineBaseModel):
 
 # --- Modelos de Subtarea 5.5: ResultadoFase1Triaje y ResultadoFase2Extraccion ---
 class ResultadoFase1Triaje(PipelineBaseModel):
-    id_resultado_triaje: UUID = Field(default_factory=uuid4, description="ID único del resultado de esta fase de triaje.")
-    id_fragmento: UUID = Field(..., description="ID del FragmentoProcesableItem que fue triado.")
+    id_resultado_triaje: str = Field(default_factory=lambda: str(uuid4()), description="ID único del resultado de esta fase de triaje.")
+    id_fragmento: str = Field(..., description="ID del FragmentoProcesableItem que fue triado (formato ART-{ID} o UUID).")
     es_relevante: bool = Field(..., description="Indica si el fragmento fue considerado relevante por el LLM.")
     
     # Campos derivados de la evaluación del LLM
@@ -208,8 +208,8 @@ class ResultadoFase1Triaje(PipelineBaseModel):
     metadatos_specificos_triaje: Optional[MetadatosFase1Triaje] = Field(None, description="Metadatos específicos y estructurados de la fase de triaje.")
 
 class ResultadoFase2Extraccion(PipelineBaseModel):
-    id_resultado_extraccion: UUID = Field(default_factory=uuid4, description="ID único del resultado de esta fase de extracción.")
-    id_fragmento: UUID = Field(..., description="ID del FragmentoProcesableItem del cual se extrajeron datos.")
+    id_resultado_extraccion: str = Field(default_factory=lambda: str(uuid4()), description="ID único del resultado de esta fase de extracción.")
+    id_fragmento: str = Field(..., description="ID del FragmentoProcesableItem del cual se extrajeron datos (formato ART-{ID} o UUID).")
     hechos_extraidos: List[HechoProcesado] = Field(default_factory=list, description="Lista de hechos procesados extraídos del fragmento.")
     entidades_extraidas: List[EntidadProcesada] = Field(default_factory=list, description="Lista de entidades procesadas extraídas del fragmento.")
     resumen_extraccion: Optional[str] = Field(default=None, description="Resumen generado por el LLM a partir de la información extraída.")
@@ -221,8 +221,8 @@ class ResultadoFase2Extraccion(PipelineBaseModel):
 
 # --- Modelos de Subtarea 5.6: ResultadoFase3CitasDatos y ResultadoFase4Normalizacion ---
 class ResultadoFase3CitasDatos(PipelineBaseModel):
-    id_resultado_citas_datos: UUID = Field(default_factory=uuid4, description="ID único del resultado de esta fase de citas y datos.")
-    id_fragmento: UUID = Field(..., description="ID del FragmentoProcesableItem procesado.")
+    id_resultado_citas_datos: str = Field(default_factory=lambda: str(uuid4()), description="ID único del resultado de esta fase de citas y datos.")
+    id_fragmento: str = Field(..., description="ID del FragmentoProcesableItem procesado (formato ART-{ID} o UUID).")
     citas_textuales_extraidas: List[CitaTextual] = Field(default_factory=list, description="Lista de citas textuales identificadas en el fragmento.")
     datos_cuantitativos_extraidos: List[DatosCuantitativos] = Field(default_factory=list, description="Lista de datos cuantitativos identificados en el fragmento.")
     prompt_citas_datos_usado: Optional[str] = Field(default=None, description="Prompt específico utilizado para la extracción de citas y datos.")
@@ -232,8 +232,8 @@ class ResultadoFase3CitasDatos(PipelineBaseModel):
     metadata_citas_datos: Dict[str, Any] = Field(default_factory=dict, description="Metadatos adicionales de la fase de citas y datos.")
 
 class ResultadoFase4Normalizacion(PipelineBaseModel):
-    id_resultado_normalizacion: UUID = Field(default_factory=uuid4, description="ID único del resultado de esta fase de normalización.")
-    id_fragmento: UUID = Field(..., description="ID del FragmentoProcesableItem cuyas entidades fueron normalizadas.")
+    id_resultado_normalizacion: str = Field(default_factory=lambda: str(uuid4()), description="ID único del resultado de esta fase de normalización.")
+    id_fragmento: str = Field(..., description="ID del FragmentoProcesableItem cuyas entidades fueron normalizadas (formato ART-{ID} o UUID).")
     entidades_normalizadas: List[EntidadProcesada] = Field(default_factory=list, description="Lista de entidades procesadas que ahora incluyen información de normalización.")
     resumen_normalizacion: Optional[str] = Field(default=None, description="Resumen del proceso de normalización para este fragmento.")
     prompt_normalizacion_usado: Optional[str] = Field(default=None, description="Prompt específico utilizado para la fase de normalización (si aplica).")

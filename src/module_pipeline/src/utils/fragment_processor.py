@@ -14,7 +14,6 @@ SOLUCIÓN IMPLEMENTADA:
 """
 
 from typing import Dict, Any, Optional, Tuple, List
-from uuid import UUID
 from loguru import logger
 
 # No importar logging_config para evitar import circular
@@ -34,12 +33,12 @@ class FragmentProcessor:
     - Trazabilidad completa con logging
     """
     
-    def __init__(self, id_fragmento: UUID, chunk_index: int = 0, total_chunks: int = 1):
+    def __init__(self, id_fragmento: str, chunk_index: int = 0, total_chunks: int = 1):
         """
         Inicializa generador de IDs para un fragmento específico.
         
         Args:
-            id_fragmento: UUID del fragmento que se está procesando
+            id_fragmento: ID del fragmento (formato ART-{ID} o UUID string)
             chunk_index: Índice del chunk actual (0 si no hay chunking)
             total_chunks: Total de chunks del fragmento (1 si no hay chunking)
         """
@@ -255,15 +254,15 @@ class FragmentProcessor:
             partes = referencia_global.split('#')
             
             if len(partes) == 3:
-                # Formato sin chunk: uuid#tipo#id
+                # Formato sin chunk: id#tipo#id_local
                 return {
-                    "fragmento_id": UUID(partes[0]),
+                    "fragmento_id": partes[0],  # Ya no convertimos a UUID
                     "tipo": partes[1],
                     "id_local": int(partes[2]),
                     "chunk_index": None
                 }
             elif len(partes) == 4:
-                # Formato con chunk: uuid#chunk0#tipo#id
+                # Formato con chunk: id#chunk0#tipo#id_local
                 chunk_str = partes[1]
                 if not chunk_str.startswith("chunk"):
                     raise ValueError(f"Formato de chunk inválido: {chunk_str}")
@@ -271,7 +270,7 @@ class FragmentProcessor:
                 chunk_index = int(chunk_str.replace("chunk", ""))
                 
                 return {
-                    "fragmento_id": UUID(partes[0]),
+                    "fragmento_id": partes[0],  # Ya no convertimos a UUID
                     "chunk_index": chunk_index,
                     "tipo": partes[2],
                     "id_local": int(partes[3])
@@ -361,7 +360,7 @@ class FragmentProcessor:
 
 # Función de conveniencia para casos simples
 def create_fragment_processor(
-    id_fragmento: UUID, 
+    id_fragmento: str, 
     chunk_index: int = 0, 
     total_chunks: int = 1
 ) -> FragmentProcessor:
@@ -369,7 +368,7 @@ def create_fragment_processor(
     Factory function para crear FragmentProcessor.
     
     Args:
-        id_fragmento: UUID del fragmento
+        id_fragmento: ID del fragmento (formato ART-{ID} o UUID string)
         chunk_index: Índice del chunk actual
         total_chunks: Total de chunks
         

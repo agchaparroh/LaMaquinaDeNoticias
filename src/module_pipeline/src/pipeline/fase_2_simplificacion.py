@@ -326,7 +326,7 @@ def ejecutar_fase_2_simplificacion(
         
         # Crear resultado
         resultado = ResultadoFase2Simplificacion(
-            id_resultado_simplificacion=uuid4(),
+            id_resultado_simplificacion=str(uuid4()),
             id_fragmento=resultado_triaje.id_fragmento,
             texto_simplificado=texto_simplificado,
             simplificacion_exitosa=True,
@@ -357,7 +357,7 @@ def ejecutar_fase_2_simplificacion(
         
         # Retornar resultado fallido
         return ResultadoFase2Simplificacion(
-            id_resultado_simplificacion=uuid4(),
+            id_resultado_simplificacion=str(uuid4()),
             id_fragmento=resultado_triaje.id_fragmento,
             texto_simplificado=resultado_triaje.texto_para_siguiente_fase or "",  # Fallback al original
             simplificacion_exitosa=False,
@@ -458,7 +458,7 @@ def simplificar_con_chunking(
     
     # Crear resultado
     return ResultadoFase2Simplificacion(
-        id_resultado_simplificacion=uuid4(),
+        id_resultado_simplificacion=str(uuid4()),
         id_fragmento=resultado_triaje.id_fragmento,
         texto_simplificado=texto_simplificado_completo,
         simplificacion_exitosa=True,

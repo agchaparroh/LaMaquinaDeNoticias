@@ -553,8 +553,8 @@ def ejecutar_fase_7_completa(
         
         # Crear resultado final
         resultado = ResultadoFase4Normalizacion(
-            id_resultado_normalizacion=uuid4(),
-            id_fragmento=hechos[0].id_fragmento_origen if hechos else uuid4(),
+            id_resultado_normalizacion=str(uuid4()),
+            id_fragmento=hechos[0].id_fragmento_origen if hechos else str(uuid4()),
             entidades_normalizadas=entidades_normalizadas,
             resumen_normalizacion=f"Normalizadas {resultado_normalizacion['estadisticas']['normalizadas']}/{len(entidades)} entidades",
             estado_general_normalizacion="Completo",
@@ -584,8 +584,8 @@ def ejecutar_fase_7_completa(
         
         # Retornar resultado con error
         return ResultadoFase4Normalizacion(
-            id_resultado_normalizacion=uuid4(),
-            id_fragmento=hechos[0].id_fragmento_origen if hechos else uuid4(),
+            id_resultado_normalizacion=str(uuid4()),
+            id_fragmento=hechos[0].id_fragmento_origen if hechos else str(uuid4()),
             entidades_normalizadas=entidades,  # Sin normalizar
             estado_general_normalizacion="Fallido",
             metadata_normalizacion={"error": str(error_info)}

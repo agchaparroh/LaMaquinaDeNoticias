@@ -13,7 +13,6 @@ SOLUCIÓN IMPLEMENTADA:
 """
 
 from typing import Optional, Dict, Any, List
-from uuid import UUID
 import uuid
 
 # Importar sistema de logging
@@ -98,13 +97,27 @@ class PipelineCoordinator:
         if not request_id:
             request_id = str(uuid.uuid4())
             
-        fragmento_uuid = UUID(fragmento.id_fragmento)
+        # Manejar tanto formato ART-{ID} como UUIDs legacy
+        if fragmento.id_fragmento.startswith("ART-"):
+            # Formato de trazabilidad: mantener como string
+            fragmento_id_str = fragmento.id_fragmento
+            self.base_logger.info(f"Procesando fragmento con ID de trazabilidad: {fragmento_id_str}")
+        else:
+            # Formato UUID legacy: validar y mantener como string
+            try:
+                # Validar que sea un UUID válido
+                uuid.UUID(fragmento.id_fragmento)
+                fragmento_id_str = fragmento.id_fragmento
+                self.base_logger.info(f"Procesando fragmento con UUID legacy: {fragmento_id_str}")
+            except ValueError:
+                self.base_logger.error(f"ID de fragmento inválido: {fragmento.id_fragmento}")
+                raise ValueError(f"El ID del fragmento no es válido: {fragmento.id_fragmento}")
         
         # Crear contexto de logging para este pipeline
         log_context = LogContext(
             request_id=request_id,
             component="PipelineCoordinator",
-            fragment_id=str(fragmento_uuid),
+            fragment_id=fragmento_id_str,
             metadata={
                 "articulo_id": fragmento.id_articulo_fuente,
                 "orden": fragmento.orden_en_articulo
@@ -112,11 +125,11 @@ class PipelineCoordinator:
         )
         
         logger = log_context.get_logger()
-        logger.info(f"Iniciando pipeline completo para fragmento {fragmento_uuid}")
+        logger.info(f"Iniciando pipeline completo para fragmento {fragmento_id_str}")
         
         resultado = {
             "request_id": request_id,
-            "fragmento_id": str(fragmento_uuid),
+            "fragmento_id": fragmento_id_str,
             "exito": False,
             "fase_completada": 0,
             "payload": None,
@@ -134,11 +147,11 @@ class PipelineCoordinator:
         
         try:
             # === FASE 1: TRIAJE ===
-            with log_phase("Fase1_Triaje", request_id, fragment_id=str(fragmento_uuid)) as phase_logger:
+            with log_phase("Fase1_Triaje", request_id, fragment_id=fragmento_id_str) as phase_logger:
                 phase_logger.info("Ejecutando análisis de relevancia y filtrado")
                 
                 resultado_fase1 = ejecutar_fase_1(
-                    id_fragmento_original=fragmento_uuid,
+                    id_fragmento_original=fragmento_id_str,  # Ahora pasamos string, no UUID
                     texto_original_fragmento=fragmento.texto_original,
                     modelo_spacy_nombre=modelo_spacy or get_spacy_model_name()
                 )
@@ -167,13 +180,13 @@ class PipelineCoordinator:
             resultado["flujo_adaptativo"].update(flujo_config)
             
             # === INICIALIZAR FRAGMENT PROCESSOR ===
-            processor = FragmentProcessor(fragmento_uuid)
+            processor = FragmentProcessor(fragmento_id_str)  # Ahora acepta string
             logger.debug("FragmentProcessor inicializado")
             
             # === DETERMINAR SI APLICAR CHUNKING ===
             chunks = []
             if flujo_config["chunking_aplicado"]:
-                with log_phase("Chunking", request_id, fragment_id=str(fragmento_uuid)) as phase_logger:
+                with log_phase("Chunking", request_id, fragment_id=fragmento_id_str) as phase_logger:
                     phase_logger.info("Aplicando chunking inteligente al texto")
                     chunks = self.chunking_service.dividir_en_chunks(
                         resultado_fase1.texto_para_siguiente_fase,
@@ -188,13 +201,13 @@ class PipelineCoordinator:
             # === FASE 2: SIMPLIFICACIÓN (SI ES NECESARIA) ===
             resultados_simplificacion = []
             if flujo_config["simplificacion_aplicada"]:
-                with log_phase("Fase2_Simplificacion", request_id, fragment_id=str(fragmento_uuid)) as phase_logger:
+                with log_phase("Fase2_Simplificacion", request_id, fragment_id=fragmento_id_str) as phase_logger:
                     phase_logger.info("Ejecutando simplificación de texto")
                     
                     for idx, chunk_texto in enumerate(chunks):
                         # Crear resultado temporal de triaje para cada chunk
                         resultado_triaje_chunk = ResultadoFase1Triaje(
-                            id_fragmento=fragmento_uuid,
+                            id_fragmento=fragmento_id_str,  # Ahora acepta string
                             texto_para_siguiente_fase=chunk_texto,
                             es_relevante=True,
                             justificacion_triaje="Chunk de fragmento relevante",
@@ -219,7 +232,7 @@ class PipelineCoordinator:
                 # Si no hay simplificación, crear resultados mock
                 for chunk_texto in chunks:
                     resultado_mock = ResultadoFase2Simplificacion(
-                        id_fragmento=fragmento_uuid,
+                        id_fragmento=fragmento_id_str,  # Ahora acepta string
                         texto_simplificado=chunk_texto,
                         simplificacion_exitosa=True,
                         metadata_simplificacion={}
@@ -240,7 +253,7 @@ class PipelineCoordinator:
                 }
                 
                 # === FASE 3: EXTRACCIÓN DE ENTIDADES ===
-                with log_phase(f"Fase3_Entidades_Chunk{idx}", request_id, fragment_id=str(fragmento_uuid)) as phase_logger:
+                with log_phase(f"Fase3_Entidades_Chunk{idx}", request_id, fragment_id=fragmento_id_str) as phase_logger:
                     phase_logger.info(f"Extrayendo entidades del chunk {idx}")
                     
                     resultado_entidades = ejecutar_fase_3_entidades(
@@ -254,7 +267,7 @@ class PipelineCoordinator:
                         phase_logger.info(f"Entidades extraídas: {len(chunk_resultado['entidades'])}")
                 
                 # === FASE 4: EXTRACCIÓN DE HECHOS ===
-                with log_phase(f"Fase4_Hechos_Chunk{idx}", request_id, fragment_id=str(fragmento_uuid)) as phase_logger:
+                with log_phase(f"Fase4_Hechos_Chunk{idx}", request_id, fragment_id=fragmento_id_str) as phase_logger:
                     phase_logger.info(f"Extrayendo hechos del chunk {idx}")
                     
                     resultado_hechos = ejecutar_fase_4_hechos(
@@ -269,7 +282,7 @@ class PipelineCoordinator:
                 
                 # === FASE 5: EXTRACCIÓN DE DATOS (CONDICIONAL) ===
                 if flujo_config["fase_5_ejecutada"]:
-                    with log_phase(f"Fase5_Datos_Chunk{idx}", request_id, fragment_id=str(fragmento_uuid)) as phase_logger:
+                    with log_phase(f"Fase5_Datos_Chunk{idx}", request_id, fragment_id=fragmento_id_str) as phase_logger:
                         phase_logger.info(f"Extrayendo datos cuantitativos del chunk {idx}")
                         
                         resultado_datos = ejecutar_fase_5_datos(
@@ -286,7 +299,7 @@ class PipelineCoordinator:
                 
                 # === FASE 6: EXTRACCIÓN DE CITAS (CONDICIONAL) ===
                 if flujo_config["fase_6_ejecutada"]:
-                    with log_phase(f"Fase6_Citas_Chunk{idx}", request_id, fragment_id=str(fragmento_uuid)) as phase_logger:
+                    with log_phase(f"Fase6_Citas_Chunk{idx}", request_id, fragment_id=fragmento_id_str) as phase_logger:
                         phase_logger.info(f"Extrayendo citas del chunk {idx}")
                         
                         resultado_citas = ejecutar_fase_6_citas(
@@ -307,7 +320,7 @@ class PipelineCoordinator:
             
             # === CONSOLIDACIÓN CROSS-CHUNK (SI ES NECESARIA) ===
             if flujo_config["consolidacion_aplicada"] and len(resultados_por_chunk) > 1:
-                with log_phase("Consolidacion_CrossChunk", request_id, fragment_id=str(fragmento_uuid)) as phase_logger:
+                with log_phase("Consolidacion_CrossChunk", request_id, fragment_id=fragmento_id_str) as phase_logger:
                     phase_logger.info("Aplicando consolidación cross-chunk")
                     
                     # Recopilar todos los elementos por tipo
@@ -343,7 +356,7 @@ class PipelineCoordinator:
                 citas_consolidadas = [cita for chunk in resultados_por_chunk for cita in chunk["citas"]]
             
             # === FASE 7: NORMALIZACIÓN Y RELACIONES ===
-            with log_phase("Fase7_Normalizacion_Relaciones", request_id, fragment_id=str(fragmento_uuid)) as phase_logger:
+            with log_phase("Fase7_Normalizacion_Relaciones", request_id, fragment_id=fragmento_id_str) as phase_logger:
                 phase_logger.info("Iniciando normalización y detección de relaciones")
                 
                 # Obtener texto simplificado consolidado

@@ -7,7 +7,7 @@ declaraciones significativas, usando el contexto de hechos y entidades.
 """
 
 from typing import Optional, List, Dict, Any, Tuple
-from uuid import UUID, uuid4
+from uuid import uuid4
 from datetime import datetime
 import os
 import json
@@ -267,7 +267,7 @@ def _llamar_groq_citas(
 
 def _procesar_citas_extraidas(
     citas_raw: List[Dict[str, Any]],
-    id_fragmento: UUID,
+    id_fragmento: str,  # Ahora acepta string (ART-ID o UUID)
     fragment_processor: FragmentProcessor
 ) -> List[CitaTextual]:
     """

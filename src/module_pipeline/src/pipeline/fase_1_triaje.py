@@ -1,5 +1,4 @@
 from typing import Optional, List, Dict, Any
-from uuid import UUID
 import re
 import os
 import time
@@ -163,7 +162,7 @@ def _detectar_idioma(texto_para_detectar: str, nlp_model: Optional[Language]) ->
     return lang_code
 
 def ejecutar_fase_1(
-    id_fragmento_original: UUID,
+    id_fragmento_original: str,  # Ahora acepta string (ART-ID o UUID)
     texto_original_fragmento: str,
     modelo_spacy_nombre: Optional[str] = None # Usar configuración centralizada
 ) -> ResultadoFase1Triaje:
@@ -173,7 +172,7 @@ def ejecutar_fase_1(
     evalúa la relevancia inicial.
 
     Args:
-        id_fragmento_original: El UUID del fragmento original que se está procesando.
+        id_fragmento_original: El ID del fragmento (formato ART-{ID} o UUID string).
         texto_original_fragmento: El contenido textual original del fragmento.
         modelo_spacy_nombre: Nombre del modelo de spaCy a utilizar.
 
