@@ -20,13 +20,13 @@
 - **LOW**: [] # Solo si hay tiempo
 
 ### Estado del Pipeline:
-- [x] Fase 1 (Triaje): ✅ FUNCIONANDO (spaCy tokenizó correctamente)
-- [x] Fase 2 (Simplificación): ✅ FUNCIONANDO (8.6% reducción)
-- [x] Fase 3 (Entidades): ✅ FUNCIONANDO (48 entidades extraídas)
-- [x] Fase 4 (Hechos): ✅ FUNCIONANDO (9 hechos extraídos)
+- [ ] Fase 1 (Triaje): ✅ FUNCIONANDO (spaCy tokenizó correctamente)
+- [ ] Fase 2 (Simplificación): ✅ FUNCIONANDO (8.6% reducción)
+- [ ] Fase 3 (Entidades): ✅ FUNCIONANDO (48 entidades extraídas)
+- [ ] Fase 4 (Hechos): ✅ FUNCIONANDO (9 hechos extraídos)
 - [ ] Fase 5 (Datos): NO PROBADO (fase opcional)
 - [ ] Fase 6 (Citas): NO PROBADO (fase opcional)
-- [x] Fase 7 (Normalización): ✅ FUNCIONANDO (43 relaciones detectadas)
+- [ ] Fase 7 (Normalización): ✅ FUNCIONANDO (43 relaciones detectadas)
 - [ ] Persistencia Supabase: ❌ FALLANDO (Campos requeridos faltantes)
 
 ---

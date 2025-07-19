@@ -145,7 +145,7 @@ class ArticuloProcesableItem(PipelineBaseModel):
     es_oficial: bool = Field(default=True, description="Indica si es contenido oficial")
     fecha_recopilacion: Optional[AwareDatetime] = Field(default=None, description="Fecha de recopilación")
     estado_procesamiento: Optional[str] = Field(default="pendiente_pipeline", description="Estado actual del procesamiento")
-    etiquetas_fuente: List[str] = Field(default_factory=list, description="Etiquetas del medio fuente")
+    etiquetas_fuente: Optional[List[str]] = Field(default=None, description="Etiquetas del medio fuente")
     
     # === METADATOS ADICIONALES ===
     metadata_adicional: Optional[Dict[str, Any]] = Field(
