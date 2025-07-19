@@ -143,7 +143,7 @@ class SupabaseService:
         campos_requeridos = []
         if tipo == 'articulo':
             campos_requeridos = ['url', 'titular', 'contenido_texto_original', 
-                               'fecha_procesamiento_pipeline', 'estado_procesamiento_final']
+                               'fecha_procesamiento_pipeline', 'estado_procesamiento_final_pipeline']
         elif tipo == 'fragmento':
             campos_requeridos = ['indice_secuencial_fragmento', 'contenido_texto_original_fragmento',
                                'fecha_procesamiento_pipeline_fragmento', 'estado_procesamiento_final_fragmento']

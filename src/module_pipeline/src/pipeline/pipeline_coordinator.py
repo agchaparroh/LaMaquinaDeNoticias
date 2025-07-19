@@ -31,7 +31,7 @@ from ..models.procesamiento import (
     CitaTextual
 )
 from ..models.simplificacion import ResultadoFase2Simplificacion
-from ..models.persistencia import FragmentoPersistenciaPayload
+from ..models.persistencia import FragmentoPersistenciaPayload, ArticuloPersistenciaPayload
 
 # Importar funciones de fases
 from ..pipeline.fase_1_triaje import ejecutar_fase_1
@@ -99,8 +99,11 @@ class PipelineCoordinator:
         
         # === DETECCIÓN DE TIPO Y UNIFICACIÓN ===
         # Detectar tipo de contenido y extraer información común
+        articulo_original = None  # Preservar el ArticuloProcesableItem original
+        
         if isinstance(contenido, ArticuloProcesableItem):
             # Procesamiento de artículo completo
+            articulo_original = contenido  # Preservar para uso posterior
             fragmento_id_str = contenido.id_articulo
             texto_original = contenido.contenido_texto
             id_articulo_fuente = contenido.id_articulo
@@ -177,7 +180,8 @@ class PipelineCoordinator:
                 "tipo_contenido_original": type(contenido).__name__,
                 "es_articulo_completo": isinstance(contenido, ArticuloProcesableItem),
                 "articulo_id_fuente": id_articulo_fuente,
-                "orden_en_articulo": orden_en_articulo
+                "orden_en_articulo": orden_en_articulo,
+                "articulo_original": articulo_original  # Preservar para uso posterior
             },
             "flujo_adaptativo": {
                 "simplificacion_aplicada": False,
@@ -215,7 +219,12 @@ class PipelineCoordinator:
                     razon=resultado_fase1.justificacion_triaje
                 )
                 resultado["exito"] = True
-                resultado["payload"] = self._crear_payload_no_relevante(fragmento_unificado, resultado_fase1)
+                resultado["payload"] = self._crear_payload_no_relevante(
+                    fragmento_unificado, 
+                    resultado_fase1,
+                    es_articulo_completo=resultado["metadatos"]["es_articulo_completo"],
+                    articulo_original=resultado["metadatos"].get("articulo_original")
+                )
                 return resultado
             
             # Analizar flujo adaptativo basado en análisis de Fase 1
@@ -427,17 +436,44 @@ class PipelineCoordinator:
             
             # === GENERAR PAYLOAD FINAL ===
             logger.info("Generando payload final para persistencia")
-            payload = self._generar_payload_completo_7_fases(
-                fragmento=fragmento_unificado,
-                resultado_fase1=resultado_fase1,
-                resultados_simplificacion=resultados_simplificacion,
-                entidades=resultado_fase7.entidades_normalizadas,
-                hechos=hechos_consolidados,
-                datos=datos_consolidados,
-                citas=citas_consolidadas,
-                resultado_fase7=resultado_fase7,
-                processor=processor
+            
+            # Detectar si es artículo completo o fragmento
+            articulo_original_preserved = resultado["metadatos"].get("articulo_original")
+            es_articulo_completo = resultado["metadatos"].get("es_articulo_completo", False)
+            
+            logger.info(
+                "Detección de tipo de contenido",
+                articulo_original_presente=articulo_original_preserved is not None,
+                es_articulo_completo=es_articulo_completo,
+                tipo_articulo_original=type(articulo_original_preserved).__name__ if articulo_original_preserved else "None"
             )
+            
+            if articulo_original_preserved is not None and es_articulo_completo:
+                logger.info("Generando payload para artículo completo")
+                payload = self._generar_payload_articulo_completo(
+                    articulo_original=articulo_original_preserved,
+                    resultado_fase1=resultado_fase1,
+                    resultados_simplificacion=resultados_simplificacion,
+                    entidades=resultado_fase7.entidades_normalizadas,
+                    hechos=hechos_consolidados,
+                    datos=datos_consolidados,
+                    citas=citas_consolidadas,
+                    resultado_fase7=resultado_fase7,
+                    processor=processor
+                )
+            else:
+                logger.info("Generando payload para fragmento")
+                payload = self._generar_payload_completo_7_fases(
+                    fragmento=fragmento_unificado,
+                    resultado_fase1=resultado_fase1,
+                    resultados_simplificacion=resultados_simplificacion,
+                    entidades=resultado_fase7.entidades_normalizadas,
+                    hechos=hechos_consolidados,
+                    datos=datos_consolidados,
+                    citas=citas_consolidadas,
+                    resultado_fase7=resultado_fase7,
+                    processor=processor
+                )
             
             resultado["payload"] = payload
             resultado["exito"] = True
@@ -472,21 +508,53 @@ class PipelineCoordinator:
     def _crear_payload_no_relevante(
         self, 
         fragmento: FragmentoProcesableItem, 
-        resultado_fase1: ResultadoFase1Triaje
-    ) -> FragmentoPersistenciaPayload:
-        """Crea payload para fragmentos no relevantes."""
-        return self.payload_builder.construir_payload_fragmento(
-            metadatos_fragmento_data={
-                "indice_secuencial_fragmento": fragmento.orden_en_articulo or 0,
-                "titulo_seccion_fragmento": None,
-                "contenido_texto_original_fragmento": fragmento.texto_original,
-                "num_pagina_inicio_fragmento": None,
-                "num_pagina_fin_fragmento": None
-            },
-            resumen_generado_fragmento="Fragmento descartado por triaje como no relevante",
-            estado_procesamiento_final_fragmento="descartado_no_relevante",
-            fecha_procesamiento_pipeline_fragmento=resultado_fase1.fecha_actualizacion.isoformat()
-        )
+        resultado_fase1: ResultadoFase1Triaje,
+        es_articulo_completo: bool = False,
+        articulo_original: Optional[ArticuloProcesableItem] = None
+    ) -> Union[FragmentoPersistenciaPayload, ArticuloPersistenciaPayload]:
+        """Crea payload para contenido no relevante (artículos o fragmentos)."""
+        
+        # Si es un artículo completo, generar payload de artículo
+        if es_articulo_completo and articulo_original is not None:
+            from datetime import datetime, timezone
+            
+            # Crear resultado_procesamiento mínimo para artículo no relevante
+            resultado_procesamiento = {
+                "fecha_procesamiento_pipeline": datetime.now(timezone.utc).isoformat(),
+                "estado_procesamiento_final_pipeline": "descartado_no_relevante",
+                "resumen_generado_pipeline": "Artículo descartado por triaje como no relevante",
+                "palabras_clave_generadas": [],
+                "sentimiento_general_articulo": "neutral",  # Default para artículo no relevante
+                "embedding_articulo_vector": None,
+                "version_pipeline_aplicada": "1.0.0",
+                "fecha_ingesta_sistema": articulo_original.fecha_recopilacion.isoformat() if articulo_original.fecha_recopilacion else datetime.now(timezone.utc).isoformat()
+            }
+            
+            return self.payload_builder.construir_payload_articulo_from_model(
+                articulo_model=articulo_original,
+                resultado_procesamiento=resultado_procesamiento,
+                hechos_extraidos=None,
+                entidades_extraidas=None,
+                citas_extraidas=None,
+                datos_extraidos=None,
+                relaciones_hechos=None,
+                relaciones_entidades=None,
+                contradicciones_detectadas=None
+            )
+        else:
+            # Comportamiento original para fragmentos
+            return self.payload_builder.construir_payload_fragmento(
+                metadatos_fragmento_data={
+                    "indice_secuencial_fragmento": fragmento.orden_en_articulo or 0,
+                    "titulo_seccion_fragmento": None,
+                    "contenido_texto_original_fragmento": fragmento.texto_original,
+                    "num_pagina_inicio_fragmento": None,
+                    "num_pagina_fin_fragmento": None
+                },
+                resumen_generado_fragmento="Fragmento descartado por triaje como no relevante",
+                estado_procesamiento_final_fragmento="descartado_no_relevante",
+                fecha_procesamiento_pipeline_fragmento=resultado_fase1.fecha_actualizacion.isoformat()
+            )
     
     def _determinar_flujo_adaptativo(self, resultado_fase1: ResultadoFase1Triaje) -> Dict[str, bool]:
         """
@@ -638,6 +706,130 @@ class PipelineCoordinator:
             entidades_autonomas_data=entidades_data,
             citas_textuales_data=citas_data,
             datos_cuantitativos_data=datos_data
+        )
+    
+    def _generar_payload_articulo_completo(
+        self,
+        articulo_original: ArticuloProcesableItem,
+        resultado_fase1: ResultadoFase1Triaje,
+        resultados_simplificacion: List[ResultadoFase2Simplificacion],
+        entidades: List[EntidadProcesada],
+        hechos: List[HechoProcesado],
+        datos: List[DatosCuantitativos],
+        citas: List[CitaTextual],
+        resultado_fase7: ResultadoFase4Normalizacion,
+        processor: FragmentProcessor
+    ) -> ArticuloPersistenciaPayload:
+        """
+        Genera el payload completo para persistencia de artículos completos.
+        
+        A diferencia del método para fragmentos, este preserva toda la metadata
+        del artículo original y genera campos adicionales requeridos.
+        """
+        from datetime import datetime, timezone
+        
+        # Crear diccionario de resultado_procesamiento con campos requeridos
+        resultado_procesamiento = {
+            "fecha_procesamiento_pipeline": datetime.now(timezone.utc).isoformat(),
+            "estado_procesamiento_final_pipeline": "completado_ok",
+            "resumen_generado_pipeline": resultado_fase7.resumen_normalizacion or "Artículo procesado exitosamente con 7 fases",
+            "palabras_clave_generadas": [],  # Se pueden extraer de las entidades
+            "sentimiento_general_articulo": "neutral",  # Default para artículo procesado
+            "embedding_articulo_vector": None,  # Placeholder para embeddings futuros
+            "version_pipeline_aplicada": "1.0.0",
+            "fecha_ingesta_sistema": articulo_original.fecha_recopilacion.isoformat() if articulo_original.fecha_recopilacion else datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Extraer palabras clave de las entidades más relevantes
+        palabras_clave = []
+        for entidad in sorted(entidades, key=lambda e: e.relevancia_entidad, reverse=True)[:10]:
+            if entidad.nombre_entidad_normalizada:
+                palabras_clave.append(entidad.nombre_entidad_normalizada)
+            else:
+                palabras_clave.append(entidad.texto_entidad)
+        resultado_procesamiento["palabras_clave_generadas"] = palabras_clave
+        
+        # Convertir datos al formato esperado (igual que en _generar_payload_completo_7_fases)
+        hechos_data = []
+        for hecho in hechos:
+            fecha_inicio_iso = None
+            fecha_fin_iso = None
+            if hasattr(hecho.metadata_hecho, 'fecha_inicio') and hecho.metadata_hecho.fecha_inicio:
+                fecha_inicio_iso = f"{hecho.metadata_hecho.fecha_inicio}T00:00:00Z"
+            if hasattr(hecho.metadata_hecho, 'fecha_fin') and hecho.metadata_hecho.fecha_fin:
+                fecha_fin_iso = f"{hecho.metadata_hecho.fecha_fin}T00:00:00Z"
+            
+            hechos_data.append({
+                "id_temporal_hecho": str(hecho.id_hecho),
+                "descripcion_hecho": hecho.texto_original_del_hecho,
+                "tipo_hecho": hecho.metadata_hecho.tipo_hecho if hasattr(hecho.metadata_hecho, 'tipo_hecho') else "evento",
+                "relevancia_hecho": int(hecho.confianza_extraccion * 10),
+                "fecha_ocurrencia_hecho_inicio": fecha_inicio_iso,
+                "fecha_ocurrencia_hecho_fin": fecha_fin_iso,
+                "precision_temporal": hecho.metadata_hecho.precision_temporal if hasattr(hecho.metadata_hecho, 'precision_temporal') else None,
+                "es_evento_futuro": hecho.metadata_hecho.es_futuro if hasattr(hecho.metadata_hecho, 'es_futuro') else None,
+                "estado_programacion": hecho.metadata_hecho.estado_programacion if hasattr(hecho.metadata_hecho, 'estado_programacion') else None,
+                "detalle_complejo_hecho": hecho.metadata_hecho.model_dump() if hasattr(hecho.metadata_hecho, 'model_dump') else {},
+                "entidades_del_hecho": [
+                    {
+                        "id_temporal_entidad": str(ent_id),
+                        "nombre_entidad": f"Entidad_{ent_id}",
+                        "tipo_entidad": "MENCIONADA",
+                        "rol_en_hecho": "relacionada"
+                    } for ent_id in hecho.vinculado_a_entidades
+                ]
+            })
+        
+        entidades_data = []
+        for entidad in entidades:
+            entidades_data.append({
+                "id": str(entidad.id_entidad),
+                "nombre": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
+                "tipo": entidad.tipo_entidad,
+                "descripcion": f"Entidad extraída con relevancia {entidad.relevancia_entidad}",
+                "relevancia_entidad_articulo": int(entidad.relevancia_entidad * 10),
+                "metadata_entidad": {
+                    **(entidad.metadata_entidad.model_dump() if hasattr(entidad.metadata_entidad, 'model_dump') else {}),
+                    "uri_wikidata": entidad.uri_wikidata,
+                    "id_entidad_normalizada": str(entidad.id_entidad_normalizada) if entidad.id_entidad_normalizada else None,
+                    "similitud_normalizacion": entidad.similitud_normalizacion
+                }
+            })
+        
+        citas_data = []
+        for cita in citas:
+            citas_data.append({
+                "id_temporal_cita": str(cita.id_cita),
+                "texto_cita": cita.texto_cita,
+                "entidad_emisora_id_temporal": str(cita.id_entidad_citada) if cita.id_entidad_citada else None,
+                "nombre_entidad_emisora": cita.persona_citada,
+                "contexto_cita": cita.contexto_cita,
+                "relevancia_cita": 5
+            })
+        
+        datos_data = []
+        for dato in datos:
+            datos_data.append({
+                "id_temporal_dato": str(dato.id_dato_cuantitativo),
+                "descripcion_dato": dato.descripcion_dato,
+                "valor_dato": dato.valor_dato,
+                "unidad_dato": dato.unidad_dato,
+                "fecha_dato": dato.fecha_dato,
+                "contexto_dato": f"Extraído del artículo {articulo_original.id_articulo}",
+                "relevancia_dato": 5
+            })
+        
+        # Llamar a construir_payload_articulo_from_model con todos los datos
+        return self.payload_builder.construir_payload_articulo_from_model(
+            articulo_model=articulo_original,
+            resultado_procesamiento=resultado_procesamiento,
+            hechos_extraidos=hechos_data,
+            entidades_extraidas=entidades_data,
+            citas_extraidas=citas_data,
+            datos_extraidos=datos_data,
+            relaciones_hechos=None,  # TODO: Implementar cuando estén disponibles
+            relaciones_entidades=None,  # TODO: Implementar cuando estén disponibles
+            contradicciones_detectadas=None  # TODO: Implementar cuando estén disponibles
         )
     
     # === MÉTODOS MOCK PARA FASES AÚN NO IMPLEMENTADAS ===

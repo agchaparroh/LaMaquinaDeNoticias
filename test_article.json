@@ -1,0 +1,16 @@
+{
+  "articulo_id": 1188,
+  "medio": "La Prensa",
+  "area_geografica": "México",
+  "tipo_medio": "Digital",
+  "titular": "Nuevo programa de vacunación inicia en todo el país",
+  "fecha_publicacion": "2025-01-18T10:00:00Z",
+  "contenido_texto": "El gobierno anunció hoy el inicio de un programa masivo de vacunación contra la influenza. La campaña comenzará el próximo lunes y se extenderá durante tres meses. Se espera vacunar a más de 10 millones de personas, priorizando a grupos vulnerables como adultos mayores y niños menores de 5 años.",
+  "idioma": "es",
+  "autor": "María García",
+  "url": "https://ejemplo.com/noticias/salud/vacunacion",
+  "seccion": "Salud",
+  "es_opinion": false,
+  "es_oficial": true,
+  "etiquetas_fuente": ["salud", "vacunación", "gobierno"]
+}

@@ -304,13 +304,13 @@ class PayloadBuilder:
         metadatos_articulo = {
             "url": articulo_model.url,
             "storage_path": None,  # Se puede añadir si es necesario
-            "fuente_original": articulo_model.fuente_original,
+            "fuente_original": None,  # ArticuloProcesableItem no tiene este campo
             "medio": articulo_model.medio,
-            "medio_url_principal": articulo_model.medio_url_principal,
-            "area_geografica": articulo_model.pais,
+            "medio_url_principal": None,  # ArticuloProcesableItem no tiene este campo
+            "area_geografica": articulo_model.area_geografica,  # Corregido: era pais
             "tipo_medio": articulo_model.tipo_medio,
-            "titular": articulo_model.titulo,
-            "fecha_publicacion": articulo_model.fecha_publicacion,
+            "titular": articulo_model.titular,  # Corregido: era titulo
+            "fecha_publicacion": articulo_model.fecha_publicacion.isoformat() if articulo_model.fecha_publicacion else None,
             "autor": articulo_model.autor,
             "idioma_original": articulo_model.idioma,
             "seccion": articulo_model.seccion,
@@ -318,7 +318,7 @@ class PayloadBuilder:
             "es_opinion": articulo_model.es_opinion,
             "es_oficial": articulo_model.es_oficial,
             "contenido_texto_original": articulo_model.contenido_texto,
-            "contenido_html_original": articulo_model.contenido_html,
+            "contenido_html_original": None,  # ArticuloProcesableItem no tiene este campo
             "metadata_original": articulo_model.metadata_adicional or {}
         }
         
