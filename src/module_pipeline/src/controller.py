@@ -550,13 +550,16 @@ class PipelineController:
         
         Args:
             resultado_pipeline: Resultado del pipeline coordinator
-            fragmento: Fragmento procesado
+            fragmento: Fragmento procesado (puede ser ArticuloProcesableItem)
             logger: Logger con contexto
             
         Returns:
             Diccionario con información de persistencia
         """
         try:
+            # Guardar URL si es un artículo
+            if hasattr(fragmento, 'url'):
+                self._current_article_url = fragmento.url
             # Si el pipeline ya manejó la persistencia
             if resultado_pipeline.get('persistencia'):
                 return resultado_pipeline['persistencia']
@@ -608,21 +611,37 @@ class PipelineController:
             
             # Usar la RPC correcta según el tipo
             if es_articulo:
-                logger.info("Persistiendo como artículo completo")
-                resultado_persistencia = supabase_service.insertar_articulo_completo(payload_dict)
+                # CAMBIO: Usar nuevo RPC para artículos
+                logger.info("Actualizando artículo procesado")
+                
+                # Asegurar que tenemos el ID del artículo
+                if articulo_id:
+                    payload_dict["articulo_id"] = articulo_id
+                
+                # Asegurar que tenemos la URL (fallback)
+                if "url" not in payload_dict and hasattr(self, '_current_article_url'):
+                    payload_dict["url"] = self._current_article_url
+                
+                # Llamar al nuevo RPC
+                resultado_persistencia = supabase_service.actualizar_articulo_procesado(payload_dict)
+                
             else:
+                # Mantener comportamiento actual para fragmentos
                 logger.info("Persistiendo como fragmento")
                 resultado_persistencia = supabase_service.insertar_fragmento_completo(payload_dict)
             
             if resultado_persistencia:
                 return {
                     "exitosa": True,
+                    "articulo_id": resultado_persistencia.get('articulo_id'),
                     "fragmento_id": resultado_persistencia.get('fragmento_id'),
                     "elementos_insertados": {
                         "hechos": resultado_persistencia.get('hechos_insertados', 0),
                         "entidades": resultado_persistencia.get('entidades_insertadas', 0),
+                        "entidades_nuevas": resultado_persistencia.get('entidades_nuevas', 0),
                         "citas": resultado_persistencia.get('citas_insertadas', 0),
-                        "datos": resultado_persistencia.get('datos_insertados', 0)
+                        "datos": resultado_persistencia.get('datos_insertados', 0),
+                        "relaciones": resultado_persistencia.get('relaciones_insertadas', 0)
                     }
                 }
             else:

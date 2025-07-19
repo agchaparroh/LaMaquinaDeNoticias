@@ -279,6 +279,83 @@ class SupabaseService:
             self.logger.error(f"Error en insertar_articulo_completo: {e}")
             raise
 
+    @retry_supabase_rpc(connection_retries=1)
+    def actualizar_articulo_procesado(self, payload: Union[Dict[str, Any], BaseModel]) -> Optional[Dict[str, Any]]:
+        """
+        Llama a la RPC actualizar_articulo_procesado para actualizar un artículo existente
+        con los resultados del procesamiento del pipeline.
+        
+        Args:
+            payload: Diccionario con los datos del procesamiento.
+                    Debe incluir 'articulo_id' y/o 'url' para identificar el artículo.
+            
+        Returns:
+            Dict con el resultado de la actualización o None si falla
+            {
+                "status": "exito",
+                "articulo_id": int,
+                "hechos_insertados": int,
+                "entidades_insertadas": int,
+                "citas_insertadas": int,
+                "datos_insertados": int,
+                "relaciones_insertadas": int
+            }
+            
+        Raises:
+            Exception: Si falla la llamada RPC después de los reintentos
+        """
+        try:
+            self.logger.info("Llamando RPC actualizar_articulo_procesado")
+            
+            # Validar que tengamos al menos un identificador
+            payload_dict = self._validar_estructura_payload(payload, 'articulo')
+            
+            if not payload_dict.get('articulo_id') and not payload_dict.get('url'):
+                raise ValueError("Se requiere articulo_id o url para actualizar el artículo")
+            
+            # Log de identificadores
+            if payload_dict.get('articulo_id'):
+                self.logger.info(f"Actualizando artículo por ID: {payload_dict['articulo_id']}")
+            else:
+                self.logger.info(f"Actualizando artículo por URL: {payload_dict['url'][:50]}...")
+            
+            # Llamar RPC
+            response = self.client.rpc(
+                'actualizar_articulo_procesado',
+                {'datos_json': payload_dict}
+            ).execute()
+            
+            if response.data:
+                result = response.data
+                if isinstance(result, list) and len(result) > 0:
+                    result = result[0]
+                
+                # Verificar estado
+                if result.get('status') == 'error':
+                    self.logger.error(
+                        f"Error en RPC: {result.get('mensaje')}. "
+                        f"Código: {result.get('codigo_sql')}"
+                    )
+                    return None
+                
+                # Log de éxito
+                self.logger.info(
+                    f"Artículo actualizado exitosamente. "
+                    f"ID: {result.get('articulo_id')}, "
+                    f"Hechos: {result.get('hechos_insertados', 0)}, "
+                    f"Entidades: {result.get('entidades_insertadas', 0)}, "
+                    f"Citas: {result.get('citas_insertadas', 0)}"
+                )
+                
+                return result
+            else:
+                self.logger.warning("RPC actualizar_articulo_procesado no retornó datos")
+                return None
+                
+        except Exception as e:
+            self.logger.error(f"Error en actualizar_articulo_procesado: {e}")
+            raise
+
     @retry_supabase_rpc(connection_retries=1)  # Según documentación: 1 reintento para conexión
     def insertar_fragmento_completo(self, payload: Union[Dict[str, Any], BaseModel]) -> Optional[Dict[str, Any]]:
         """
