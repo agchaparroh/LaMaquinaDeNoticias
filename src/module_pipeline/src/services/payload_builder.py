@@ -299,6 +299,9 @@ class PayloadBuilder:
             PayloadCompletoArticulo listo para RPC insertar_articulo_completo
         """
         self.logger.debug(f"Construyendo payload para artículo desde modelo: {articulo_model.id_articulo}")
+        self.logger.debug(f"=== DEBUG construir_payload_articulo_from_model: entidades_extraidas tiene {len(entidades_extraidas) if entidades_extraidas else 0} elementos ===")
+        if entidades_extraidas:
+            self.logger.debug(f"=== DEBUG construir_payload_articulo_from_model: Primera entidad: {entidades_extraidas[0]} ===")
         
         # Extraer metadatos del artículo desde el modelo
         metadatos_articulo = {
@@ -407,6 +410,11 @@ class PayloadBuilder:
                 payload_data["hechos_extraidos"] = [] # Asegurar que el campo exista como lista vacía
 
             if entidades_autonomas_data is not None:
+                self.logger.debug(f"=== DEBUG PayloadBuilder: Procesando {len(entidades_autonomas_data)} entidades ===")
+                if entidades_autonomas_data:
+                    self.logger.debug(f"=== DEBUG PayloadBuilder: Primera entidad recibida: {entidades_autonomas_data[0]} ===")
+                    self.logger.debug(f"=== DEBUG PayloadBuilder: Keys de primera entidad: {list(entidades_autonomas_data[0].keys())} ===")
+                
                 payload_data["entidades_autonomas"] = [EntidadAutonomaItem(**item) for item in entidades_autonomas_data]
             else:
                 payload_data["entidades_autonomas"] = []

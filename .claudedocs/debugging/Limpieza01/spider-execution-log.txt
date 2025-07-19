@@ -1,0 +1,344 @@
+✅ Pipelines configurados:
+  - 100: ItemConverterPipeline
+  - 200: DataCleaningPipeline
+  - 300: DataValidationPipeline
+  - 400: SupabaseStoragePipeline
+  - 900: JsonWriterPipeline
+2025-07-19 08:05:56 [24129:139685795531648] [scrapy.utils.log] INFO: Scrapy 2.11.0 started (bot: scraper_core)
+2025-07-19 08:05:56 [24129:139685795531648] [scrapy.utils.log] INFO: Versions: lxml 5.1.0.0, libxml2 2.12.3, cssselect 1.3.0, parsel 1.10.0, w3lib 2.3.1, Twisted 22.10.0, Python 3.10.18 (main, Jul  1 2025, 02:40:42) [GCC 12.2.0], pyOpenSSL 25.1.0 (OpenSSL 3.5.1 1 Jul 2025), cryptography 45.0.5, Platform Linux-6.1.141-155.222.amzn2023.x86_64-x86_64-with-glibc2.36
+2025-07-19 08:05:56 [24129:139685795531648] [scrapy.addons] INFO: Enabled addons:
+[]
+2025-07-19 08:05:56 [24129:139685795531648] [py.warnings] WARNING: /usr/local/lib/python3.10/site-packages/scrapy/utils/request.py:254: ScrapyDeprecationWarning: '2.6' is a deprecated value for the 'REQUEST_FINGERPRINTER_IMPLEMENTATION' setting.
+
+It is also the default value. In other words, it is normal to get this warning if you have not defined a value for the 'REQUEST_FINGERPRINTER_IMPLEMENTATION' setting. This is so for backward compatibility reasons, but it will change in a future version of Scrapy.
+
+See the documentation of the 'REQUEST_FINGERPRINTER_IMPLEMENTATION' setting for information on how to handle this deprecation.
+  return cls(crawler)
+
+2025-07-19 08:05:56 [24129:139685795531648] [scrapy.middleware] WARNING: Disabled scraper_core.extensions.log_rotation.LogRotationExtension: LOG_FILE not set, rotation not needed
+2025-07-19 08:05:56 [24129:139685795531648] [scrapy.middleware] INFO: Enabled extensions:
+['scrapy.extensions.corestats.CoreStats',
+ 'scrapy.extensions.memusage.MemoryUsage',
+ 'scrapy.extensions.logstats.LogStats',
+ 'scrapy.extensions.throttle.AutoThrottle',
+ 'spidermon.contrib.scrapy.extensions.Spidermon']
+2025-07-19 08:05:56 [24129:139685795531648] [scrapy.crawler] INFO: Overridden settings:
+{'AUTOTHROTTLE_ENABLED': True,
+ 'AUTOTHROTTLE_TARGET_CONCURRENCY': 2.0,
+ 'BOT_NAME': 'scraper_core',
+ 'CONCURRENT_REQUESTS': 6,
+ 'CONCURRENT_REQUESTS_PER_DOMAIN': 3,
+ 'DOWNLOAD_DELAY': 1.5,
+ 'DOWNLOAD_TIMEOUT': 30,
+ 'FEED_EXPORT_ENCODING': 'utf-8',
+ 'HTTPCACHE_ENABLED': True,
+ 'LOG_FORMAT': '%(asctime)s [%(process)d:%(thread)d] [%(name)s] %(levelname)s: '
+               '%(message)s',
+ 'LOG_LEVEL': 'INFO',
+ 'NEWSPIDER_MODULE': 'scraper_core.spiders',
+ 'RANDOMIZE_DOWNLOAD_DELAY': 0.5,
+ 'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
+ 'RETRY_TIMES': 3,
+ 'SPIDER_LOADER_WARN_ONLY': True,
+ 'SPIDER_MODULES': ['scraper_core.spiders'],
+ 'TWISTED_REACTOR': 'twisted.internet.asyncioreactor.AsyncioSelectorReactor',
+ 'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+               '(KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'}
+2025-07-19 08:05:57 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: Android
+2025-07-19 08:05:58 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:05:58 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:05:58 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:05:58 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Sony BDV13, Brand: Sony, Model: BDV13
+2025-07-19 08:05:58 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Nintendo DSi, Brand: Nintendo, Model: DSi
+2025-07-19 08:05:58 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:05:59 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: Other
+2025-07-19 08:05:59 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: LYF F90M, Brand: LYF, Model: F90M
+2025-07-19 08:05:59 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Sony BDV14, Brand: Sony, Model: BDV14
+2025-07-19 08:05:59 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: LG Web0S SmartTV, Brand: LG, Model: Web0S SmartTV
+2025-07-19 08:05:59 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:05:59 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:05:59 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:05:59 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:00 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:00 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:00 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:00 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Sony BDV11, Brand: Sony, Model: BDV11
+2025-07-19 08:06:00 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:00 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:00 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:00 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:00 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Nintendo DSi, Brand: Nintendo, Model: DSi
+2025-07-19 08:06:00 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: LYF LF-2403N, Brand: LYF, Model: LF-2403N
+2025-07-19 08:06:00 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: LYF F90M, Brand: LYF, Model: F90M
+2025-07-19 08:06:01 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:01 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:01 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: Applebot
+2025-07-19 08:06:01 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:02 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: Applebot
+2025-07-19 08:06:02 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: Other
+2025-07-19 08:06:02 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: Other
+2025-07-19 08:06:02 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: PhantomJS
+2025-07-19 08:06:02 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: SMTBot
+2025-07-19 08:06:03 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: PhantomJS
+2025-07-19 08:06:03 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: PhantomJS
+2025-07-19 08:06:03 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: WebKit Nightly
+2025-07-19 08:06:03 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: PhantomJS
+2025-07-19 08:06:03 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:03 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: PhantomJS
+2025-07-19 08:06:03 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: PhantomJS
+2025-07-19 08:06:03 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: Robot
+2025-07-19 08:06:03 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedDeviceType] Family: Other, Brand: None, Model: None
+2025-07-19 08:06:04 [24129:139685795531648] [scrapy_user_agents.user_agent_picker] WARNING: [UnsupportedBrowserType] Family: Zune
+2025-07-19 08:06:04 [24129:139685795531648] [scrapy.middleware] INFO: Enabled downloader middlewares:
+['scrapy_crawl_once.CrawlOnceMiddleware',
+ 'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware',
+ 'scrapy.downloadermiddlewares.downloadtimeout.DownloadTimeoutMiddleware',
+ 'scrapy.downloadermiddlewares.defaultheaders.DefaultHeadersMiddleware',
+ 'scrapy_user_agents.middlewares.RandomUserAgentMiddleware',
+ 'scrapy.downloadermiddlewares.retry.RetryMiddleware',
+ 'scraper_core.middlewares.playwright_custom_middleware.PlaywrightCustomDownloaderMiddleware',
+ 'scrapy.downloadermiddlewares.redirect.MetaRefreshMiddleware',
+ 'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware',
+ 'scrapy.downloadermiddlewares.redirect.RedirectMiddleware',
+ 'scrapy.downloadermiddlewares.cookies.CookiesMiddleware',
+ 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware',
+ 'scrapy.downloadermiddlewares.stats.DownloaderStats',
+ 'scrapy.downloadermiddlewares.httpcache.HttpCacheMiddleware']
+2025-07-19 08:06:04 [24129:139685795531648] [scrapy.middleware] INFO: Enabled spider middlewares:
+['scrapy.spidermiddlewares.httperror.HttpErrorMiddleware',
+ 'scrapy_crawl_once.CrawlOnceMiddleware',
+ 'scrapy.spidermiddlewares.offsite.OffsiteMiddleware',
+ 'scrapy.spidermiddlewares.referer.RefererMiddleware',
+ 'scrapy.spidermiddlewares.urllength.UrlLengthMiddleware',
+ 'scrapy.spidermiddlewares.depth.DepthMiddleware']
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.pipelines.converter] INFO: ItemConverterPipeline initialized
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.pipelines.cleaning] INFO: DataCleaningPipeline initialized with settings: strip_html=True, normalize_whitespace=True, remove_empty_lines=True
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.pipelines.validation] INFO: DataValidationPipeline initialized with 4 required fields, min_content_length=100, date_format=%Y-%m-%dT%H:%M:%S
+2025-07-19 08:06:05,189 - scraper_core.utils.supabase_client - INFO - Supabase client initialized successfully.
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: Supabase client initialized successfully.
+2025-07-19 08:06:05,189 - scraper_core.utils.supabase_client - INFO - SupabaseClient configured for simplified schema. Table: articulos='articulos'
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: SupabaseClient configured for simplified schema. Table: articulos='articulos'
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.pipelines.storage] INFO: SupabaseStoragePipeline initialized. HTML Bucket: articulos-html-beta. Tenacity: stop=3, wait_min=2, wait_max=10
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.pipelines.json_writer] INFO: JsonWriterPipeline initialized. Output directory: /data/scrapy_output/pending
+2025-07-19 08:06:05 [24129:139685795531648] [scrapy.middleware] INFO: Enabled item pipelines:
+['scraper_core.pipelines.converter.ItemConverterPipeline',
+ 'scraper_core.pipelines.cleaning.DataCleaningPipeline',
+ 'scraper_core.pipelines.validation.DataValidationPipeline',
+ 'scraper_core.pipelines.SupabaseStoragePipeline',
+ 'scraper_core.pipelines.json_writer.JsonWriterPipeline']
+2025-07-19 08:06:05 [24129:139685795531648] [scrapy.core.engine] INFO: Spider opened
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.pipelines.converter] INFO: ItemConverterPipeline opened for spider: infobae_america_latina
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.pipelines.cleaning] INFO: DataCleaningPipeline opened for spider: infobae_america_latina
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.pipelines.validation] INFO: DataValidationPipeline opened for spider: infobae_america_latina
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.pipelines.storage] INFO: Opening spider infobae_america_latina. Ensuring Supabase bucket 'articulos-html-beta' exists.
+2025-07-19 08:06:05 [24129:139685795531648] [httpx] INFO: HTTP Request: GET https://aukbzqbcvbsnjdhflyvr.supabase.co/storage/v1/bucket "HTTP/2 200 OK"
+2025-07-19 08:06:05,709 - scraper_core.utils.supabase_client - INFO - Bucket 'articulos-html-beta' already exists
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: Bucket 'articulos-html-beta' already exists
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.pipelines.storage] INFO: Supabase bucket 'articulos-html-beta' is ready.
+2025-07-19 08:06:05 [24129:139685795531648] [scrapy.extensions.logstats] INFO: Crawled 0 pages (at 0 pages/min), scraped 0 items (at 0 items/min)
+2025-07-19 08:06:05 [24129:139685795531648] [scrapy_crawl_once.middlewares] INFO: Opened crawl database '/app/.scrapy/.scrapy/crawl_once/infobae_america_latina/infobae_america_latina.sqlite' with 0 existing records
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.middlewares.playwright_custom_middleware.PlaywrightCustomDownloaderMiddleware] INFO: PlaywrightCustomDownloaderMiddleware opened for spider infobae_america_latina
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.middlewares.playwright_custom_middleware.PlaywrightCustomDownloaderMiddleware] INFO: Playwright configuration: max_retries=2, timeout=30000ms, fallback_enabled=True
+2025-07-19 08:06:05 [24129:139685795531648] [scrapy_crawl_once.middlewares] INFO: Opened crawl database '/app/.scrapy/.scrapy/crawl_once/infobae_america_latina/infobae_america_latina.sqlite' with 0 existing records
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.pipelines.json_writer] INFO: JsonWriterPipeline opened for spider: infobae_america_latina
+2025-07-19 08:06:05 [24129:139685795531648] [scraper_core.pipelines.json_writer] INFO: Output directory verified: /data/scrapy_output/pending
+2025-07-19 08:06:05 [24129:139685795531648] [scrapy-playwright] INFO: Starting download handler
+2025-07-19 08:06:05 [24129:139685795531648] [scrapy-playwright] INFO: Starting download handler
+2025-07-19 08:06:10 [24129:139685795531648] [infobae_america_latina] INFO: Iniciando scraping de RSS: https://www.infobae.com/arc/outboundfeeds/rss/
+2025-07-19 08:06:11 [24129:139685795531648] [infobae_america_latina] INFO: Encontrados 100 artículos en RSS
+2025-07-19 08:06:11 [24129:139685795531648] [infobae_america_latina] INFO: 📄 Procesando artículo: https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza/
+2025-07-19 08:06:11 [24129:139685795531648] [infobae_america_latina] INFO: 🌩️ Obteniendo artículo con CloudScraper: https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza/
+2025-07-19 08:06:11 [24129:139685795531648] [infobae_america_latina] INFO: ✅ Artículo obtenido: 152175 chars
+2025-07-19 08:06:11 [24129:139685795531648] [infobae_america_latina] INFO: Artículo 1 extraído: EEUU espera llegar a "finales de semana" a un acuerdo de alto el fuego en Gaza
+2025-07-19 08:06:11 [24129:139685795531648] [scraper_core.pipelines.converter] INFO: Successfully converted dict to ArticuloInItem for URL: https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza/
+2025-07-19 08:06:11 [24129:139685795531648] [scraper_core.pipelines.storage] INFO: Processing item: https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza
+2025-07-19 08:06:12 [24129:139685795531648] [httpx] INFO: HTTP Request: POST https://aukbzqbcvbsnjdhflyvr.supabase.co/storage/v1/object/articulos-html-beta/infobae/2025/07/09/23985e46-a1a7-4140-9dfa-544ff1192fe4.html.gz "HTTP/2 200 OK"
+2025-07-19 08:06:12,071 - scraper_core.utils.supabase_client - INFO - File uploaded to articulos-html-beta/infobae/2025/07/09/23985e46-a1a7-4140-9dfa-544ff1192fe4.html.gz
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: File uploaded to articulos-html-beta/infobae/2025/07/09/23985e46-a1a7-4140-9dfa-544ff1192fe4.html.gz
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.pipelines.storage] INFO: Successfully stored HTML for https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza at infobae/2025/07/09/23985e46-a1a7-4140-9dfa-544ff1192fe4.html.gz
+2025-07-19 08:06:12,073 - scraper_core.utils.supabase_client - INFO - === UPSERT DIAGNÓSTICO ===
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: === UPSERT DIAGNÓSTICO ===
+2025-07-19 08:06:12,074 - scraper_core.utils.supabase_client - INFO - URL: https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: URL: https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza
+2025-07-19 08:06:12,074 - scraper_core.utils.supabase_client - INFO - Estado procesamiento: pendiente
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: Estado procesamiento: pendiente
+2025-07-19 08:06:12,075 - scraper_core.utils.supabase_client - INFO - Tipo medio: otro
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: Tipo medio: otro
+2025-07-19 08:06:12,075 - scraper_core.utils.supabase_client - INFO - Fecha publicación: 2025-07-09T00:22:29.466000+00:00
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: Fecha publicación: 2025-07-09T00:22:29.466000+00:00
+2025-07-19 08:06:12,075 - scraper_core.utils.supabase_client - INFO - Campos enviados: ['url', 'storage_path', 'medio', 'area_geografica', 'tipo_medio', 'titular', 'fecha_publicacion', 'autor', 'idioma', 'seccion', 'es_opinion', 'es_oficial', 'fecha_recopilacion', 'estado_procesamiento']
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: Campos enviados: ['url', 'storage_path', 'medio', 'area_geografica', 'tipo_medio', 'titular', 'fecha_publicacion', 'autor', 'idioma', 'seccion', 'es_opinion', 'es_oficial', 'fecha_recopilacion', 'estado_procesamiento']
+2025-07-19 08:06:12,076 - scraper_core.utils.supabase_client - INFO - Tabla destino: articulos
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: Tabla destino: articulos
+2025-07-19 08:06:12 [24129:139685795531648] [httpx] INFO: HTTP Request: POST https://aukbzqbcvbsnjdhflyvr.supabase.co/rest/v1/articulos?on_conflict=url "HTTP/2 200 OK"
+2025-07-19 08:06:12,245 - scraper_core.utils.supabase_client - INFO - === RESPUESTA SUPABASE ===
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: === RESPUESTA SUPABASE ===
+2025-07-19 08:06:12,258 - scraper_core.utils.supabase_client - INFO - Response data existe: True
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: Response data existe: True
+2025-07-19 08:06:12,259 - scraper_core.utils.supabase_client - INFO - Response data length: 1
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: Response data length: 1
+2025-07-19 08:06:12,259 - scraper_core.utils.supabase_client - INFO - ✅ Article upserted successfully for URL: https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: ✅ Article upserted successfully for URL: https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza
+2025-07-19 08:06:12,260 - scraper_core.utils.supabase_client - INFO - ID del artículo guardado: 1100
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.utils.supabase_client] INFO: ID del artículo guardado: 1100
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.pipelines.storage] INFO: SupabaseClient.upsert_articulo successful for https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.pipelines.storage] INFO: Successfully upserted article data for https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza. DB Response: {'id': 1100, 'url': 'https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza', 'storage_path': 'infobae/2025/07/09/23985e46-a1a7-4140-9dfa-544ff1192fe4.html.gz', 'medio': 'Infobae', 'pais_publicacion': None, 'tipo_medio': 'otro', 'titular': 'EEUU espera llegar a "finales de semana" a un acuerdo de alto el fuego en Gaza', 'fecha_publicacion': '2025-07-09T00:22:29.466+00:00', 'autor': 'Newsroom Infobae', 'idioma': 'es', 'seccion': 'america_latina', 'etiquetas_fuente': None, 'es_opinion': False, 'es_oficial': False, 'resumen': 'Test de actualización', 'categorias_asignadas': None, 'puntuacion_relevancia': None, 'fecha_recopilacion': '2025-07-19T08:06:11.349451+00:00', 'fecha_procesamiento': '2025-07-19T07:42:39.070498+00:00', 'estado_procesamiento': 'pendiente', 'error_detalle': None, 'contenido_texto': None, 'area_geografica': 'HISPANOAMERICA'}
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.pipelines.storage] INFO: Article ID 1100 added to item for propagation through the pipeline
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.pipelines.storage] INFO: Item https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza processed successfully.
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.pipelines.json_writer] INFO: Exported article to article_infobae_20250709_002229_eeuu-espera-llegar-a-finales-de-semana-a-un-acuerd_ed385448.json.gz. URL: https://www.infobae.com/america/agencias/2025/07/09/eeuu-espera-llegar-a-finales-de-semana-a-un-acuerdo-de-alto-el-fuego-en-gaza, Size: 9140 chars
+2025-07-19 08:06:12 [24129:139685795531648] [infobae_america_latina] INFO: Filtrado RSS: 1/1 artículos aceptados (100.0%) para sección 'america_latina'
+2025-07-19 08:06:12 [24129:139685795531648] [scrapy.core.engine] INFO: Closing spider (finished)
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.pipelines.storage] INFO: Closing spider infobae_america_latina. Closing Supabase client.
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.pipelines.validation] INFO: DataValidationPipeline closed for spider: infobae_america_latina. Stats: {'total_items': 1, 'valid_items': 1, 'invalid_items': 0, 'validation_errors': {}}
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.pipelines.cleaning] INFO: DataCleaningPipeline closed for spider: infobae_america_latina. Stats: {'total_items': 1, 'items_cleaned': 1, 'html_stripped': 3, 'text_normalized': 0, 'dates_standardized': 0, 'urls_normalized': 1}
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.pipelines.converter] INFO: ItemConverterPipeline closed for spider infobae_america_latina. Stats: converted=1, passed=0, errors=0
+2025-07-19 08:06:12 [24129:139685795531648] [infobae_america_latina] INFO: 
+        ========== RESUMEN DE SCRAPING RSS ==========
+        Spider: infobae_america_latina
+        Medio: Infobae
+        Sección: america_latina
+        RSS URL: https://www.infobae.com/arc/outboundfeeds/rss/
+        Artículos extraídos: 1
+        Duración: 0.00 segundos
+        Requests exitosos: 1
+        Requests fallidos: 0
+        Errores de red: 0
+        Items generados: 1
+        ============================================
+        
+2025-07-19 08:06:12 [24129:139685795531648] [infobae_america_latina] INFO: [Spidermon] ------------------------------ MONITORS ------------------------------
+2025-07-19 08:06:12 [24129:139685795531648] [scrapy.utils.signal] ERROR: Error caught on signal handler: <bound method Spidermon.spider_closed of <spidermon.contrib.scrapy.extensions.Spidermon object at 0x7f0b1e79f940>>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/scrapy/utils/defer.py", line 348, in maybeDeferred_coro
+    result = f(*args, **kw)
+  File "/usr/local/lib/python3.10/site-packages/pydispatch/robustapply.py", line 55, in robustApply
+    return receiver(*arguments, **named)
+  File "/usr/local/lib/python3.10/site-packages/spidermon/contrib/scrapy/extensions.py", line 130, in spider_closed
+    self._run_suites(spider, self.spider_closed_suites)
+  File "/usr/local/lib/python3.10/site-packages/spidermon/contrib/scrapy/extensions.py", line 206, in _run_suites
+    runner.run(suite, **data)
+  File "/usr/local/lib/python3.10/site-packages/spidermon/runners.py", line 29, in run
+    return self.run_suite()
+  File "/usr/local/lib/python3.10/site-packages/spidermon/runners.py", line 44, in run_suite
+    self.run_monitors()
+  File "/usr/local/lib/python3.10/site-packages/spidermon/runners.py", line 51, in run_monitors
+    self.suite(self.result)
+  File "/usr/local/lib/python3.10/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/usr/local/lib/python3.10/unittest/suite.py", line 122, in run
+    test(result)
+  File "/usr/local/lib/python3.10/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/usr/local/lib/python3.10/unittest/suite.py", line 122, in run
+    test(result)
+  File "/usr/local/lib/python3.10/unittest/case.py", line 650, in __call__
+    return self.run(*args, **kwds)
+  File "/usr/local/lib/python3.10/site-packages/spidermon/contrib/scrapy/monitors/base.py", line 192, in run
+    raise NotConfigured(
+spidermon.exceptions.NotConfigured: Configure SPIDERMON_MAX_ITEM_VALIDATION_ERRORS to your project settings to use Item Validation Monitor.
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.middlewares.playwright_custom_middleware.PlaywrightCustomDownloaderMiddleware] INFO: PlaywrightCustomDownloaderMiddleware closed for spider infobae_america_latina
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.middlewares.playwright_custom_middleware.PlaywrightCustomDownloaderMiddleware] INFO: Playwright statistics - Empty content detections: 0, Retries: 0, Failures: 0, Successful recoveries: 0
+2025-07-19 08:06:12 [24129:139685795531648] [scraper_core.pipelines.json_writer] INFO: JsonWriterPipeline closed for spider infobae_america_latina. Stats: exported=1, skipped=0, errors=0
+2025-07-19 08:06:12 [24129:139685795531648] [scrapy.statscollectors] INFO: Dumping Scrapy stats:
+{'crawl_once/initial': 0,
+ 'downloader/request_bytes': 625,
+ 'downloader/request_count': 1,
+ 'downloader/request_method_count/GET': 1,
+ 'downloader/response_bytes': 166255,
+ 'downloader/response_count': 1,
+ 'downloader/response_status_count/200': 1,
+ 'elapsed_time_seconds': 6.560628,
+ 'finish_reason': 'finished',
+ 'finish_time': datetime.datetime(2025, 7, 19, 8, 6, 12, 270905, tzinfo=datetime.timezone.utc),
+ 'httpcache/hit': 1,
+ 'httpcompression/response_bytes': 480007,
+ 'httpcompression/response_count': 1,
+ 'item_scraped_count': 1,
+ 'log_count/ERROR': 1,
+ 'log_count/INFO': 69,
+ 'log_count/WARNING': 47,
+ 'memusage/max': 108060672,
+ 'memusage/startup': 108060672,
+ 'playwright/empty_content_detections': 0,
+ 'playwright/failures': 0,
+ 'playwright/retries': 0,
+ 'playwright/successful_recoveries': 0,
+ 'response_received_count': 1,
+ 'scheduler/dequeued': 1,
+ 'scheduler/dequeued/memory': 1,
+ 'scheduler/enqueued': 1,
+ 'scheduler/enqueued/memory': 1,
+ 'spidermon_field_coverage/ArticuloInItem/area_geografica': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/articulo_id': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/autor': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/contenido_html': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/contenido_texto': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/es_oficial': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/es_opinion': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/estado_procesamiento': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/fecha_publicacion': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/fecha_recopilacion': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/fuente': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/idioma': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/medio': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/medio_url_principal': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/extraction_method': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/filter_reason': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/frecuencia_minutos': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/from_rss': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/generation_date': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/og_description': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/og_image': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/og_title': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/og_type': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/rss_guid': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/rss_url': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/section_filter': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/spider_name': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/metadata/spider_type': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/seccion': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/storage_path': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/tipo_medio': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/titular': 1.0,
+ 'spidermon_field_coverage/ArticuloInItem/url': 1.0,
+ 'spidermon_item_scraped_count': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/area_geografica': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/articulo_id': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/autor': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/contenido_html': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/contenido_texto': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/es_oficial': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/es_opinion': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/estado_procesamiento': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/fecha_publicacion': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/fecha_recopilacion': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/fuente': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/idioma': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/medio': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/medio_url_principal': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/extraction_method': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/filter_reason': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/frecuencia_minutos': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/from_rss': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/generation_date': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/og_description': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/og_image': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/og_title': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/og_type': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/rss_guid': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/rss_url': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/section_filter': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/spider_name': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/metadata/spider_type': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/seccion': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/storage_path': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/tipo_medio': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/titular': 1,
+ 'spidermon_item_scraped_count/ArticuloInItem/url': 1,
+ 'start_time': datetime.datetime(2025, 7, 19, 8, 6, 5, 710277, tzinfo=datetime.timezone.utc)}
+2025-07-19 08:06:12 [24129:139685795531648] [scrapy.core.engine] INFO: Spider closed (finished)
+2025-07-19 08:06:12 [24129:139685795531648] [scrapy-playwright] INFO: Closing download handler
+2025-07-19 08:06:12 [24129:139685795531648] [scrapy-playwright] INFO: Closing download handler

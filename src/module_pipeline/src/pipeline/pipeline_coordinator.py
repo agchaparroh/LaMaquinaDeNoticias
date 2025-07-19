@@ -642,8 +642,8 @@ class PipelineCoordinator:
                 "entidades_del_hecho": [
                     {
                         "id_temporal_entidad": str(ent_id),
-                        "nombre_entidad": f"Entidad_{ent_id}",  # Placeholder
-                        "tipo_entidad": "MENCIONADA",
+                        "nombre": f"Entidad_{ent_id}",  # Placeholder - CORREGIDO: sin sufijo
+                        "tipo": "MENCIONADA",
                         "rol_en_hecho": "relacionada"
                     } for ent_id in hecho.vinculado_a_entidades
                 ]
@@ -773,16 +773,17 @@ class PipelineCoordinator:
                 "entidades_del_hecho": [
                     {
                         "id_temporal_entidad": str(ent_id),
-                        "nombre_entidad": f"Entidad_{ent_id}",
-                        "tipo_entidad": "MENCIONADA",
+                        "nombre": f"Entidad_{ent_id}",  # CORREGIDO: sin sufijo
+                        "tipo": "MENCIONADA",
                         "rol_en_hecho": "relacionada"
                     } for ent_id in hecho.vinculado_a_entidades
                 ]
             })
         
         entidades_data = []
-        for entidad in entidades:
-            entidades_data.append({
+        logger.debug(f"=== DEBUG: Construyendo entidades_data con {len(entidades)} entidades ===")
+        for idx, entidad in enumerate(entidades):
+            entidad_dict = {
                 "id": str(entidad.id_entidad),
                 "nombre": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
                 "tipo": entidad.tipo_entidad,
@@ -794,7 +795,10 @@ class PipelineCoordinator:
                     "id_entidad_normalizada": str(entidad.id_entidad_normalizada) if entidad.id_entidad_normalizada else None,
                     "similitud_normalizacion": entidad.similitud_normalizacion
                 }
-            })
+            }
+            logger.debug(f"=== DEBUG: Entidad {idx} keys: {list(entidad_dict.keys())} ===")
+            logger.debug(f"=== DEBUG: Entidad {idx} nombre: {entidad_dict.get('nombre', 'NO TIENE nombre')} ===")
+            entidades_data.append(entidad_dict)
         
         citas_data = []
         for cita in citas:
@@ -820,6 +824,12 @@ class PipelineCoordinator:
             })
         
         # Llamar a construir_payload_articulo_from_model con todos los datos
+        logger.debug(f"=== DEBUG: Antes de llamar payload_builder ===")
+        logger.debug(f"=== DEBUG: entidades_data tiene {len(entidades_data)} entidades ===")
+        if entidades_data:
+            logger.debug(f"=== DEBUG: Primera entidad keys: {list(entidades_data[0].keys())} ===")
+            logger.debug(f"=== DEBUG: Primera entidad completa: {entidades_data[0]} ===")
+        
         return self.payload_builder.construir_payload_articulo_from_model(
             articulo_model=articulo_original,
             resultado_procesamiento=resultado_procesamiento,

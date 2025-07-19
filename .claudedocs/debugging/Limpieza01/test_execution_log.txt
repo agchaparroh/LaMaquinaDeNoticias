@@ -1,0 +1,46 @@
+2025-07-19 08:57:07.482 | INFO     | NO_REQUEST_ID | Unknown | src.utils.logging_config:_setup_logging:232 | Sistema de logging configurado
+2025-07-19 08:57:09.444 | INFO     | NO_REQUEST_ID | Unknown | src.monitoring.alert_manager:__init__:124 | AlertManager inicializado
+2025-07-19 08:57:09.446 | INFO     | NO_REQUEST_ID | Unknown | src.utils.logging_config:setup_fastapi_logging:529 | FastAPI logging configurado
+2025-07-19 08:57:09.447 | INFO     | NO_REQUEST_ID | FastAPI.Main | __main__:<module>:58 | CORS middleware configurado para orígenes: *
+2025-07-19 08:57:09.456 | INFO     | NO_REQUEST_ID | MetricsCollector | src.monitoring.metrics_collector:__init__:105 | MetricsCollector inicializado
+2025-07-19 08:57:09.458 | INFO     | NO_REQUEST_ID | FastAPI.Main | __main__:<module>:63 | Middleware de métricas configurado
+/app/src/main.py:452: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+/app/src/main.py:490: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("shutdown")
+2025-07-19 08:57:09.466 | INFO     | NO_REQUEST_ID | FastAPI.Main | __main__:<module>:1952 | Iniciando servidor Uvicorn directamente desde main.py en http://0.0.0.0:8004
+2025-07-19 08:57:13.161 | INFO     | NO_REQUEST_ID | Unknown | src.utils.logging_config:_setup_logging:232 | Sistema de logging configurado
+2025-07-19 08:57:15.004 | INFO     | NO_REQUEST_ID | Unknown | src.monitoring.alert_manager:__init__:124 | AlertManager inicializado
+2025-07-19 08:57:15.006 | INFO     | NO_REQUEST_ID | Unknown | src.utils.logging_config:setup_fastapi_logging:529 | FastAPI logging configurado
+2025-07-19 08:57:15.007 | INFO     | NO_REQUEST_ID | FastAPI.Main | __mp_main__:<module>:58 | CORS middleware configurado para orígenes: *
+2025-07-19 08:57:15.018 | INFO     | NO_REQUEST_ID | MetricsCollector | src.monitoring.metrics_collector:__init__:105 | MetricsCollector inicializado
+2025-07-19 08:57:15.019 | INFO     | NO_REQUEST_ID | FastAPI.Main | __mp_main__:<module>:63 | Middleware de métricas configurado
+2025-07-19 08:57:15.124 | INFO     | NO_REQUEST_ID | Unknown | src.utils.logging_config:setup_fastapi_logging:529 | FastAPI logging configurado
+2025-07-19 08:57:15.125 | INFO     | NO_REQUEST_ID | FastAPI.Main | src.main:<module>:58 | CORS middleware configurado para orígenes: *
+2025-07-19 08:57:15.126 | INFO     | NO_REQUEST_ID | FastAPI.Main | src.main:<module>:63 | Middleware de métricas configurado
+2025-07-19 08:57:15.131 | INFO     | NO_REQUEST_ID | FastAPI.Main | src.main:startup_event:458 | Iniciando aplicación FastAPI: La Máquina de Noticias - Module Pipeline v0.1.0
+2025-07-19 08:57:15.132 | INFO     | NO_REQUEST_ID | FastAPI.Main | src.main:startup_event:459 | LOG_LEVEL actual: INFO
+2025-07-19 08:57:15.133 | INFO     | NO_REQUEST_ID | PipelineController | src.controller:__init__:65 | Inicializando PipelineController
+2025-07-19 08:57:15.134 | INFO     | NO_REQUEST_ID | Unknown | src.services.payload_builder:__init__:40 | PayloadBuilder inicializado.
+2025-07-19 08:57:15.134 | INFO     | NO_REQUEST_ID | Unknown | src.services.consolidation_service:__init__:66 | ConsolidationService inicializado con umbral: 0.85
+2025-07-19 08:57:15.135 | INFO     | NO_REQUEST_ID | Unknown | src.services.chunking_service:__init__:108 | ChunkingService inicializado
+2025-07-19 08:57:15.135 | INFO     | NO_REQUEST_ID | PipelineCoordinator | src.pipeline.pipeline_coordinator:__init__:73 | PipelineCoordinator inicializado con 7 fases
+2025-07-19 08:57:15.136 | INFO     | NO_REQUEST_ID | PipelineController | src.controller:__init__:88 | PipelineController inicializado correctamente con 7 fases
+2025-07-19 08:57:15.136 | INFO     | NO_REQUEST_ID | FastAPI.Main | src.main:startup_event:464 | PipelineController inicializado
+2025-07-19 08:57:15.137 | INFO     | NO_REQUEST_ID | JobTrackerService | src.services.job_tracker_service:__init__:126 | JobTrackerService inicializado
+2025-07-19 08:57:15.137 | INFO     | NO_REQUEST_ID | JobTrackerService | src.services.job_tracker_service:set_retention_minutes:418 | Tiempo de retención actualizado
+2025-07-19 08:57:15.138 | INFO     | NO_REQUEST_ID | FastAPI.Main | src.main:startup_event:474 | JobTrackerService configurado
+2025-07-19 08:57:15.138 | INFO     | NO_REQUEST_ID | FastAPI.Main | src.main:startup_event:483 | Tarea de limpieza de jobs iniciada
+2025-07-19 08:57:15.141 | INFO     | NO_REQUEST_ID | Unknown | src.monitoring.alert_manager:setup_alert_endpoints:688 | Alert endpoints configurados
+2025-07-19 08:57:15.141 | INFO     | NO_REQUEST_ID | FastAPI.Main | src.main:startup_event:487 | Sistema de alertas configurado y endpoints habilitados
+2025-07-19 08:57:15.142 | INFO     | NO_REQUEST_ID | JobCleanup | src.main:job_cleanup_loop:406 | Iniciando tarea de limpieza de jobs
