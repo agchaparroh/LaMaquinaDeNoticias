@@ -21,8 +21,8 @@ services:
       # API Configuration
       - PIPELINE_API_HOST=0.0.0.0
       - PIPELINE_API_PORT=8003
-      - DEBUG_MODE=false
-      - LOG_LEVEL=INFO
+      - DEBUG_MODE=true
+      - LOG_LEVEL=DEBUG
       
       # CORS para desarrollo
       - CORS_ORIGINS=["http://localhost:3000","http://localhost:8002","http://localhost:8001"]

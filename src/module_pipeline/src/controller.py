@@ -595,6 +595,7 @@ class PipelineController:
                 logger.info("Detectado fragmento regular")
             
             # Si es artículo y tiene formato ART-{ID}, extraer el ID numérico
+            articulo_id = None  # Inicializar variable
             fragmento_id = resultado_pipeline.get('fragmento_id', '')
             if es_articulo and fragmento_id.startswith("ART-"):
                 try:
@@ -1057,6 +1058,7 @@ class PipelineController:
                 entidades_autonomas_data = [
                     {
                         "id": str(entidad.id_entidad),
+                        "id_temporal": str(entidad.id_entidad),  # IMPORTANTE: Requerido por la función SQL
                         "nombre": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
                         "tipo": entidad.tipo_entidad,
                         "relevancia_entidad_articulo": int(entidad.relevancia_entidad * 10),

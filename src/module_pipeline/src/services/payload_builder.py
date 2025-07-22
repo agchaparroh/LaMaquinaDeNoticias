@@ -53,6 +53,52 @@ class PayloadBuilder:
         json_str = json.dumps(data, sort_keys=True, ensure_ascii=True, default=str)
         return hashlib.md5(json_str.encode('utf-8')).hexdigest()
     
+    def _normalizar_todos_ids(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Normaliza TODOS los IDs temporales al formato esperado por el RPC.
+        Se ejecuta ANTES de la validación para asegurar consistencia.
+        
+        Esta función resuelve el problema de inconsistencia en nomenclatura de IDs
+        entre las diferentes capas del sistema, asegurando que todos los IDs
+        lleguen en el formato correcto para la validación y el RPC.
+        
+        Args:
+            data: Diccionario con los datos del payload
+            
+        Returns:
+            Diccionario con IDs normalizados
+        """
+        # Normalizar entidades autónomas
+        for entidad in data.get('entidades_autonomas', []):
+            if not entidad.get('id_temporal'):
+                entidad['id_temporal'] = str(
+                    entidad.get('id_temporal') or 
+                    entidad.get('id') or 
+                    entidad.get('id_entidad', '')
+                )
+        
+        # Normalizar hechos
+        for hecho in data.get('hechos_extraidos', []):
+            if not hecho.get('id_temporal'):
+                hecho['id_temporal'] = str(
+                    hecho.get('id_temporal') or 
+                    hecho.get('id_hecho') or 
+                    hecho.get('id', '')
+                )
+            
+            # Normalizar entidades dentro de hechos
+            for ent in hecho.get('entidades_del_hecho', []):
+                if not ent.get('id_temporal'):
+                    ent['id_temporal'] = str(
+                        ent.get('id_temporal') or 
+                        ent.get('id', '')
+                    )
+        
+        # Citas y datos ya vienen con nombres correctos
+        # No necesitan normalización adicional
+        
+        return data
+    
     def _log_detallado_errores(self, fase: str, errores: List[str]) -> None:
         """
         Registra errores de validación de manera detallada.
@@ -84,8 +130,8 @@ class PayloadBuilder:
         
         # Recolectar IDs de hechos
         for hecho in data.get('hechos_extraidos', []):
-            if 'id_temporal_hecho' in hecho:
-                ids['hechos'].add(hecho['id_temporal_hecho'])
+            if 'id_temporal' in hecho:
+                ids['hechos'].add(hecho['id_temporal'])
         
         # Recolectar IDs de entidades autónomas
         for entidad in data.get('entidades_autonomas', []):
@@ -307,12 +353,13 @@ class PayloadBuilder:
             self.logger.debug(f"=== DEBUG construir_payload_articulo_from_model: Primera entidad: {entidades_extraidas[0]} ===")
         
         # Extraer metadatos del artículo desde el modelo
+        # IMPORTANTE: Para actualizar_articulo_procesado, NO incluir campos None que son NOT NULL en BD
         metadatos_articulo = {
             "url": articulo_model.url,
-            "storage_path": None,  # Se puede añadir si es necesario
-            "fuente_original": None,  # ArticuloProcesableItem no tiene este campo
+            # NO incluir storage_path si es None - es NOT NULL en BD
+            # NO incluir fuente_original si es None
             "medio": articulo_model.medio,
-            "medio_url_principal": None,  # ArticuloProcesableItem no tiene este campo
+            # NO incluir medio_url_principal si es None
             "area_geografica": articulo_model.area_geografica,  # Corregido: era pais
             "tipo_medio": articulo_model.tipo_medio,
             "titular": articulo_model.titular,  # Corregido: era titulo
@@ -400,15 +447,43 @@ class PayloadBuilder:
             else:
                 payload_data_para_validacion["contradicciones_detectadas"] = []
             
-            # Validar payload completo ANTES de crear objetos Pydantic
-            self._validar_payload_completo(payload_data_para_validacion, 'articulo')
+            # MOVIDO: La validación ahora se hace DESPUÉS del mapeo de campos
+            # para que los id_temporal estén disponibles y normalizados
+            # self._validar_payload_completo(payload_data_para_validacion, 'articulo')
 
             # vinculacion_externa_articulo field has been removed from ArticuloPersistenciaPayload
             # No longer setting this field
 
             # Procesar listas opcionales
             if hechos_extraidos_data is not None:
-                payload_data["hechos_extraidos"] = [HechoExtraidoItem(**item) for item in hechos_extraidos_data]
+                # Mapear campos a los nombres esperados por HechoExtraidoItem
+                self.logger.debug(f"=== DEBUG PayloadBuilder: Procesando {len(hechos_extraidos_data)} hechos ===")
+                if hechos_extraidos_data:
+                    self.logger.debug(f"=== DEBUG PayloadBuilder: Primer hecho recibido: {hechos_extraidos_data[0]} ===")
+                
+                hechos_mapeados = []
+                for item in hechos_extraidos_data:
+                    # Obtener el ID del hecho - puede venir como id_hecho, id, o id_temporal
+                    id_hecho = str(item.get('id_hecho', item.get('id', item.get('id_temporal', ''))))
+                    self.logger.debug(f"=== DEBUG PayloadBuilder: Mapeando hecho con id_hecho={id_hecho} ===")
+                    
+                    hecho_mapeado = {
+                        'id_temporal': id_hecho,
+                        'contenido': item.get('contenido', item.get('texto_original_del_hecho', '')),
+                        'tipo_hecho': item.get('tipo_hecho', item.get('metadata_hecho', {}).get('tipo_hecho')),
+                        'fecha_ocurrencia_inicio': item.get('fecha_ocurrencia_inicio', item.get('metadata_hecho', {}).get('fecha_inicio')),
+                        'fecha_ocurrencia_fin': item.get('fecha_ocurrencia_fin', item.get('metadata_hecho', {}).get('fecha_fin')),
+                        'importancia': item.get('importancia', item.get('metadata_hecho', {}).get('importancia')),
+                        'precision_temporal': item.get('precision_temporal', item.get('metadata_hecho', {}).get('precision_temporal')),
+                        'ubicacion_geografica': item.get('ubicacion_geografica', item.get('metadata_hecho', {}).get('ubicacion')),
+                        'actores_involucrados': item.get('actores_involucrados', []),
+                        'fuente_especifica': item.get('fuente_especifica'),
+                        'es_hecho_futuro': item.get('es_hecho_futuro', item.get('metadata_hecho', {}).get('es_futuro', False)),
+                        'confianza_extraccion': item.get('confianza_extraccion', 0.8)
+                    }
+                    hechos_mapeados.append(hecho_mapeado)
+                
+                payload_data["hechos_extraidos"] = [HechoExtraidoItem(**item) for item in hechos_mapeados]
             else:
                 payload_data["hechos_extraidos"] = [] # Asegurar que el campo exista como lista vacía
 
@@ -421,15 +496,17 @@ class PayloadBuilder:
                 # Mapear campos a los nombres esperados por EntidadAutonomaItem
                 entidades_mapeadas = []
                 for item in entidades_autonomas_data:
+                    # Obtener el ID temporal/original
+                    id_valor = str(item.get('id_temporal', item.get('id', item.get('id_entidad', ''))))
                     entidad_mapeada = {
-                        'id': str(item.get('id_entidad', item.get('id', ''))),
+                        'id': id_valor,  # EntidadAutonomaItem espera 'id'
+                        'id_temporal': id_valor,  # Agregar también para validación y RPC
                         'nombre': item.get('nombre', item.get('texto_entidad', '')),
                         'tipo': item.get('tipo', item.get('tipo_entidad', '')),
                         'descripcion': item.get('descripcion', ''),
                         'alias': item.get('alias', []),
                         'relevancia': item.get('relevancia', int(item.get('relevancia_entidad', 0.8) * 10) if isinstance(item.get('relevancia_entidad', 0), float) else item.get('relevancia_entidad', 8)),
-                        'metadata': item.get('metadata', item.get('metadata_entidad', {})),
-                        'id_temporal': str(item.get('id_entidad', item.get('id', '')))
+                        'metadata': item.get('metadata', item.get('metadata_entidad', {}))
                     }
                     entidades_mapeadas.append(entidad_mapeada)
                 
@@ -527,6 +604,25 @@ class PayloadBuilder:
                 payload_data["contradicciones_detectadas"] = [ContradiccionDetectadaItem(**item) for item in contradicciones_mapeadas]
             else:
                 payload_data["contradicciones_detectadas"] = []
+            
+            # Preparar payload para validación con objetos Pydantic convertidos a dict
+            payload_para_validar = {
+                **metadatos_articulo_data,
+                **procesamiento_articulo_data,
+                'hechos_extraidos': [h.model_dump() for h in payload_data.get('hechos_extraidos', [])] if payload_data.get('hechos_extraidos') else [],
+                'entidades_autonomas': [e.model_dump() for e in payload_data.get('entidades_autonomas', [])] if payload_data.get('entidades_autonomas') else [],
+                'citas_textuales_extraidas': [c.model_dump() for c in payload_data.get('citas_textuales_extraidas', [])] if payload_data.get('citas_textuales_extraidas') else [],
+                'datos_cuantitativos_extraidos': [d.model_dump() for d in payload_data.get('datos_cuantitativos_extraidos', [])] if payload_data.get('datos_cuantitativos_extraidos') else [],
+                'relaciones_hechos': [r.model_dump() for r in payload_data.get('relaciones_hechos', [])] if payload_data.get('relaciones_hechos') else [],
+                'relaciones_entidades': [r.model_dump() for r in payload_data.get('relaciones_entidades', [])] if payload_data.get('relaciones_entidades') else [],
+                'contradicciones_detectadas': [c.model_dump() for c in payload_data.get('contradicciones_detectadas', [])] if payload_data.get('contradicciones_detectadas') else []
+            }
+            
+            # Normalizar todos los IDs antes de validar
+            payload_normalizado = self._normalizar_todos_ids(payload_para_validar)
+            
+            # Validar con datos normalizados
+            self._validar_payload_completo(payload_normalizado, 'articulo')
                 
             # Crear el payload Pydantic
             payload_completo = PayloadCompletoArticulo(**payload_data)
@@ -621,7 +717,26 @@ class PayloadBuilder:
 
             # Procesar listas opcionales
             if hechos_extraidos_data is not None:
-                payload_data["hechos_extraidos"] = [HechoExtraidoItem(**item) for item in hechos_extraidos_data]
+                # Mapear campos a los nombres esperados por HechoExtraidoItem
+                hechos_mapeados = []
+                for item in hechos_extraidos_data:
+                    hecho_mapeado = {
+                        'id_temporal': str(item.get('id_temporal', item.get('id_temporal_hecho', item.get('id', '')))),
+                        'contenido': item.get('contenido', item.get('texto_original_del_hecho', '')),
+                        'tipo_hecho': item.get('tipo_hecho', item.get('metadata_hecho', {}).get('tipo_hecho')),
+                        'fecha_ocurrencia_inicio': item.get('fecha_ocurrencia_inicio', item.get('metadata_hecho', {}).get('fecha_inicio')),
+                        'fecha_ocurrencia_fin': item.get('fecha_ocurrencia_fin', item.get('metadata_hecho', {}).get('fecha_fin')),
+                        'importancia': item.get('importancia', item.get('metadata_hecho', {}).get('importancia')),
+                        'precision_temporal': item.get('precision_temporal', item.get('metadata_hecho', {}).get('precision_temporal')),
+                        'ubicacion_geografica': item.get('ubicacion_geografica', item.get('metadata_hecho', {}).get('ubicacion')),
+                        'actores_involucrados': item.get('actores_involucrados', []),
+                        'fuente_especifica': item.get('fuente_especifica'),
+                        'es_hecho_futuro': item.get('es_hecho_futuro', item.get('metadata_hecho', {}).get('es_futuro', False)),
+                        'confianza_extraccion': item.get('confianza_extraccion', 0.8)
+                    }
+                    hechos_mapeados.append(hecho_mapeado)
+                
+                payload_data["hechos_extraidos"] = [HechoExtraidoItem(**item) for item in hechos_mapeados]
             else:
                 payload_data["hechos_extraidos"] = []
 

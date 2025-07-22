@@ -18,7 +18,12 @@ PRP Mode is a selective integration of Context Engineering into SuperClaude for 
 - Validation loops
 - Comprehensive documentation
 
-**NEW**: PRPs now include explicit SuperClaude commands for each task, ensuring deterministic execution without interpretation.
+**KEY FEATURES**: 
+- Deep file study before generation
+- Three execution methods: SuperClaude Commands, Explicit Instructions, or Hybrid
+- Mandatory Consultar field for context
+- Zero ambiguity principle
+- Checkpoint after EACH task
 
 ## Operations
 
@@ -31,20 +36,22 @@ Initialize PRP mode for a feature:
 
 ### /prp --generate [feature-name]
 Generate comprehensive PRP:
-- Research codebase patterns using existing tools
-- Apply selected persona logic (--persona-* flags)
-- Generate context-rich specification
-- **Map each task to explicit SuperClaude command**
+- Deep study of all target files and patterns
+- Research using Context7 and codebase analysis
+- Generate tasks with mandatory Consultar field
+- Support 3 execution methods: Command, Explicit Instructions, Hybrid
+- Apply zero ambiguity principle to all tasks
 - Save to `PRPs/[feature-name].md`
 - Integrate with task management
 
 ### /prp --execute [prp-file]
-Execute PRP with validation:
-- Load PRP context and requirements
-- **Extract explicit SuperClaude commands from tasks**
-- Create task breakdown in TodoWrite
-- **Execute commands exactly as specified (no interpretation)**
-- Run validation loops
+Execute PRP with strict discipline:
+- Load and verify pre-study is current
+- Review Consultar field before each task
+- Execute with absolute fidelity (NO interpretation)
+- Checkpoint after EACH task (not just milestones)
+- Preserve complete context throughout
+- Run all validation loops
 - Track progress in real-time
 
 ### /prp --status
@@ -84,7 +91,7 @@ All personas enhance PRP generation:
 | `--template=[name]` | Use specific PRP template (api, frontend, fullstack) |
 | `--auto-trigger` | Evaluate complexity and auto-initiate if warranted |
 | `--validation-strict` | Enforce all validation loops |
-| `--context-full` | Include maximum context (may use more tokens) |
+| `--research-deep` | Extended file study and analysis phase |
 
 ## Decision Rules
 
@@ -152,9 +159,12 @@ Check execution status:
 
 ## Anti-Patterns
 - ❌ Using PRP for simple single-file changes
-- ❌ Skipping validation loops
-- ❌ Ignoring persona recommendations
-- ❌ Forcing PRP when direct commands suffice
+- ❌ Skipping validation loops or checkpoints
+- ❌ Using --uc or any context compression
+- ❌ Combining tasks for "efficiency"
+- ❌ Adding "helpful" improvements not in PRP
+- ❌ Skipping Consultar section review
+- ❌ Deviating from explicit instructions
 - ❌ Creating PRPs without clear requirements
 
 ---

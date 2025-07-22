@@ -12,6 +12,7 @@ específicas del pipeline de procesamiento de artículos y fragmentos.
 from typing import Optional, Dict, Any, List, Tuple, Union
 from functools import lru_cache
 import time
+import json
 from supabase import create_client, Client
 from ..utils.logging_config import get_logger
 
@@ -125,6 +126,13 @@ class SupabaseService:
         Raises:
             ValidationError: Si la estructura es inválida
         """
+        # Verificar que payload no sea None
+        if payload is None:
+            raise ValidationError(
+                message="Payload no puede ser None",
+                phase=ErrorPhase.GENERAL
+            )
+            
         # Convertir Pydantic a dict si es necesario
         if isinstance(payload, BaseModel):
             payload_dict = payload.model_dump()
@@ -311,7 +319,11 @@ class SupabaseService:
             self.logger.info("Llamando RPC actualizar_articulo_procesado")
             
             # Validar que tengamos al menos un identificador
+            self.logger.info(f"DEBUG - Tipo de payload recibido: {type(payload)}")
+            self.logger.info(f"DEBUG - payload es None: {payload is None}")
             payload_dict = self._validar_estructura_payload(payload, 'articulo')
+            self.logger.info(f"DEBUG - Tipo de payload_dict después de validar: {type(payload_dict)}")
+            self.logger.info(f"DEBUG - payload_dict es None después de validar: {payload_dict is None}")
             
             if not payload_dict.get('articulo_id') and not payload_dict.get('url'):
                 raise ValueError("Se requiere articulo_id o url para actualizar el artículo")
@@ -322,10 +334,54 @@ class SupabaseService:
             else:
                 self.logger.info(f"Actualizando artículo por URL: {payload_dict['url'][:50]}...")
             
+            # Debug: Log completo del payload (temporal en INFO para debug)
+            self.logger.info(f"DEBUG - Payload completo antes de RPC: {json.dumps(payload_dict, default=str)[:500]}...")
+            self.logger.info(f"DEBUG - Tipo de payload_dict: {type(payload_dict)}")
+            self.logger.info(f"DEBUG - payload_dict es None: {payload_dict is None}")
+            
+            # Validación adicional antes de llamar RPC
+            if payload_dict is None:
+                self.logger.error("payload_dict es None antes de llamar RPC")
+                raise ValueError("El payload no puede ser None")
+            
+            # FILTRAR CAMPOS NULL - eliminar TODOS los campos que sean null
+            # Esto es más seguro que listar campos específicos
+            campos_a_eliminar = []
+            for campo, valor in payload_dict.items():
+                if valor is None:
+                    self.logger.info(f"Eliminando campo {campo} con valor null del payload")
+                    campos_a_eliminar.append(campo)
+            
+            # Eliminar campos null después de iterar (para evitar modificar dict durante iteración)
+            for campo in campos_a_eliminar:
+                del payload_dict[campo]
+            
+            # NUEVA FUNCIÓN: Limpiar nulls en objetos anidados
+            def limpiar_nulls_profundo(obj):
+                """Elimina recursivamente todos los campos null de objetos y arrays"""
+                if isinstance(obj, dict):
+                    return {k: limpiar_nulls_profundo(v) for k, v in obj.items() if v is not None}
+                elif isinstance(obj, list):
+                    return [limpiar_nulls_profundo(item) for item in obj if item is not None]
+                else:
+                    return obj
+            
+            # Aplicar limpieza profunda
+            payload_dict = limpiar_nulls_profundo(payload_dict)
+            
+            # LOG COMPLETO DEL PAYLOAD DESPUÉS DE LIMPIEZA PROFUNDA
+            self.logger.info(f"DEBUG - Payload FINAL después de limpieza profunda: {json.dumps(payload_dict, default=str)}")
+            
+            # Construir el parámetro para la RPC
+            rpc_params = {'datos_json': payload_dict}
+            
+            # Log del parámetro completo
+            self.logger.info(f"Llamando RPC con parámetros: {json.dumps(rpc_params, default=str)[:200]}...")
+            
             # Llamar RPC
             response = self.client.rpc(
                 'actualizar_articulo_procesado',
-                {'datos_json': payload_dict}
+                rpc_params
             ).execute()
             
             if response.data:

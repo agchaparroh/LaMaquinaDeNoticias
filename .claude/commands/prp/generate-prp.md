@@ -1,227 +1,303 @@
 # Generate PRP
 
-**Purpose**: Generate comprehensive Product Requirements Prompt from feature description
+**Purpose**: Generate executable specifications for complex features
 
 ---
 
 @include shared/universal-constants.yml#Universal_Legend
 
-## Command Execution
-Execute: immediate. --plan→show research & generation steps
-Legend: Research→Analyze→Generate→Validate→Save
-Purpose: "Generate comprehensive PRP for complex feature implementation"
+## Command
+`/generate-prp [feature-name] [--flags]`
 
-## Feature File: $ARGUMENTS
+## Process Overview
+Research → Analyze → Generate → Validate → Save
 
-Generate a complete PRP (Product Requirements Prompt) with thorough research and context gathering. The generated PRP will include all necessary context for AI agents to implement features through self-validation and iterative refinement.
+## 1. Research Phase
 
-## Research Process
+### Pre-Generation File Study
+Before generating any task, deeply study ALL files that will be touched:
 
-### 1. Codebase Analysis
-- Search for similar features and patterns using /analyze
-- Identify relevant files with Glob and Grep
-- Note existing conventions using pattern recognition
-- Check test patterns for validation approaches
-- Document architectural decisions
-
-### 2. External Research
-- Search documentation with WebSearch when needed
-- Find implementation examples (GitHub, docs)
-- Identify best practices and common pitfalls
-- Gather library-specific requirements
-- Note version compatibility issues
-
-### 3. Context Gathering
-- Analyze dependencies and integrations
-- Map data flow and system boundaries
-- Identify security considerations
-- Document performance requirements
-- List regulatory/compliance needs
-
-## Generation Process
-
-### Phase 1: Feature Analysis
 ```yaml
-Analyze:
-  - Complexity evaluation against triggers
-  - Persona selection based on domain
-  - Template selection from patterns
-  - Risk assessment for critical paths
+For Each Target File:
+  1. Read Complete Content:
+     - Current structure and organization
+     - Exact line numbers for modifications
+     - Import patterns and dependencies
+     - Error handling approaches
+  
+  2. Study Patterns:
+     - Naming conventions (variables, functions)
+     - Code style (spacing, brackets, quotes)
+     - Comment format and location
+     - Test coverage and patterns
+  
+  3. Map Interactions:
+     - What imports this file?
+     - What does this file export/expose?
+     - Related test files
+     - Configuration dependencies
 ```
 
-### Phase 2: Research & Discovery
+### Configuration Ecosystem
+Study ALL configuration files that affect the implementation:
+
 ```yaml
-Research:
-  Codebase:
-    - Similar implementations
-    - Existing patterns
-    - Test approaches
-    - Error handling
-  External:
-    - API documentation
-    - Best practices
-    - Common issues
-    - Security guides
+Essential Files:
+  - package.json/requirements.txt: Exact versions
+  - .env.example: Required environment variables
+  - Config files: Build, lint, test settings
+  - Docker/CI: Deployment constraints
+  - Database schemas: Current structure
 ```
 
-### Phase 3: PRP Generation
-Using selected template (`PRPs/templates/[type].md`):
-- Populate all sections with gathered context
-- Include specific file references
-- Add executable validation commands
-- Define clear success criteria
-- Create task breakdown with explicit commands
+### Codebase Analysis
+- Find similar features already implemented
+- Document discovered conventions from file study
+- Extract patterns from actual code (not assumptions)
+- Note architectural decisions in practice
 
-#### Command Mapping Process
-For each task in the breakdown:
-1. Analyze task description keywords
-2. Match against Task_Categories in prp-patterns.yml
-3. Select appropriate SuperClaude command
-4. Determine context-specific flags
-5. Assign suitable persona
-6. Format with explicit command specification
+### External Research  
+- Search Context7 for library docs (matching installed versions)
+- Verify best practices against current codebase
+- Identify security requirements
+- Confirm compatibility with existing setup
 
-@include shared/prp-patterns.yml#Task_Command_Mapping
+## 2. Generation Phase
 
-### Phase 4: Quality Validation
+### Task Structure
+Every task MUST include:
+
 ```yaml
-Validate:
-  - Context completeness (>90%)
-  - Validation coverage (all components)
-  - Pattern references (≥3)
-  - Success criteria (measurable)
-  - Task clarity (actionable)
+Task N: [Specific description]
+  Priority: [high/medium/low]
+  Dependencies: [previous tasks]
+  
+  Consultar:
+    Codebase: [files to review before executing]
+    External: [Context7 refs, URLs]
+    Tools: [analysis commands]
+  
+  Files: [files to create/modify]
+  
+  # Choose execution method based on criteria below
+  [Execution Method - see section 3]
+  
+  Validation: [executable commands only]
+  Expected_Output: [measurable outcome]
 ```
 
-## Persona Integration
+## 3. Execution Methods
 
-Selected persona enhances generation focus:
+### Decision Criteria
 
-| Persona | Enhancement Focus |
-|---------|------------------|
-| `--persona-architect` | System design, scalability, patterns |
-| `--persona-qa` | Validation loops, test coverage, edge cases |
-| `--persona-senior-dev` | Best practices, maintainability, documentation |
-| `--persona-lead-dev` | Team interfaces, deployment, coordination |
-| `--persona-devops` | Infrastructure, monitoring, deployment |
+| Use Case | Method | When to Use |
+|----------|--------|-------------|
+| Standard operations | SuperClaude Command | Pattern exists, no special requirements |
+| Precise changes | Explicit Instructions | Exact code/config needed |
+| Complex features | Hybrid | Need guidance + specifics |
 
-## Template Selection
+### Method 1: SuperClaude Command
+```yaml
+SuperClaude Command: /build --feature --tdd
+Persona: --persona-backend
+```
 
-@include shared/prp-patterns.yml#Template_Selection
+### Method 2: Explicit Instructions  
+```yaml
+Explicit Instructions: |
+  1. In file.py line 45, replace X with Y
+  2. Create new_file.py with: [complete code]
+```
 
-## Output Format
+### Method 3: Hybrid
+```yaml
+SuperClaude Command: /build --feature
+Additional Instructions: |
+  - Specific requirement 1
+  - Specific requirement 2
+```
 
-Generated PRP includes:
+## 4. Zero Ambiguity Rules
+
+ALL instructions must be:
+- **Executable**: No interpretation needed
+- **Complete**: Full code, not descriptions  
+- **Specific**: Exact lines, values, commands
+- **Verifiable**: Runnable validations
+
+❌ Avoid: "Optimize performance"
+✅ Use: "Replace sleep(1) with sleep(0.1) on line 42"
+
+## 5. Quality Checklist
+
+Before saving PRP, verify:
+- □ All target files have been studied completely
+- □ Line numbers for modifications are exact
+- □ Code patterns match existing style
+- □ Every task has Consultar field populated
+- □ All instructions are unambiguous
+- □ Validations are executable commands
+- □ Dependencies are explicit
+- □ No redundant information
+- □ Each task maps to one execution method
+- □ Checkpoints planned after each task
+- □ Configuration requirements documented
+
+## Output
+
+Save to: `PRPs/[feature-name].md`
+
+### PRP Structure
 ```markdown
-name: "[Feature Name] - Context-Rich Implementation Spec"
-description: |
-  [Comprehensive description]
+name: [Feature] Implementation Spec
+description: [One paragraph summary]
 
 ## Goal
-[Clear end state]
+[Specific, measurable end state]
 
-## Why
-[Business value and problems solved]
+## Context
+[Only essential background]
 
-## What
-[User-visible behavior and technical requirements]
+## Tasks
+[Generated tasks following structure above]
 
-### Success Criteria
-- [ ] [Measurable outcomes]
+## Success Criteria
+- [ ] [Measurable outcome 1]
+- [ ] [Measurable outcome 2]
 
-## All Needed Context
-[Documentation, examples, references]
-
-## Implementation Blueprint
-[Task breakdown with explicit SuperClaude commands]
-
-### Task Format
-@include shared/prp-patterns.yml#Task_Format_With_Commands
-
-## Validation Loop
-[Executable validation commands]
-
-## Confidence Score: [1-10]/10
+## Validation Commands
+[Global validation commands to run after all tasks]
 ```
-
-## Command Selection Logic
-
-When generating tasks with explicit commands:
-
-### Keyword Analysis
-```python
-# Pseudo-code for command selection
-def select_command(task_description):
-    for category, config in Task_Categories:
-        if any(keyword in task_description.lower() 
-               for keyword in config['Keywords']):
-            return {
-                'command': config['Primary_Command'],
-                'flags': select_flags(task_description, config),
-                'persona': select_persona(task_description, config)
-            }
-    return default_analyze_command()
-```
-
-### Flag Selection
-@include shared/prp-patterns.yml#Command_Selection_Algorithm
-
-### Example Mappings
-| Task Description | Selected Command | Persona |
-|-----------------|------------------|---------|
-| "Analyze authentication flow" | `/analyze --architecture --code` | `--persona-architect` |
-| "Implement OAuth endpoints" | `/build --feature --tdd --uc` | `--persona-backend` |
-| "Test security vulnerabilities" | `/scan --security --owasp --strict` | `--persona-security` |
-| "Optimize database queries" | `/improve --performance --metrics` | `--persona-performance` |
-
-## Quality Metrics
-
-Target metrics for generated PRPs:
-- Context Completeness: >90%
-- One-pass Success Rate: >80%
-- Validation Coverage: 100%
-- Pattern References: ≥3
-- Confidence Score: ≥8/10
-- Command Mapping: 100% of tasks with explicit commands
-
-@include shared/flag-inheritance.yml#Universal_Always
-
-### PRP-Specific Flags
-| Flag | Purpose |
-|------|---------|
-| `--research-deep` | Extended research phase |
-| `--context-full` | Maximum context inclusion |
-| `--validation-strict` | Comprehensive validation loops |
-| `--template=[name]` | Force specific template |
 
 ## Examples
 
-Generate PRP with architect persona:
+### Example 1: Standard Feature
 ```bash
-/generate-prp oauth-implementation.md --persona-architect
-# Researches and generates with system design focus
+/generate-prp user-auth --persona-security
+
+# Generates tasks like:
+Task 1: Create authentication middleware
+  Priority: high
+  
+  Consultar:
+    Codebase: ["src/middleware/", "src/auth/"]
+    External: [Context7: "/express/docs middleware"]
+  
+  Files: ["src/middleware/auth.js"]
+  
+  SuperClaude Command: /build --feature --tdd
+  Persona: --persona-security
+  
+  Validation: |
+    npm test src/middleware/auth.test.js
+    npm run lint src/middleware/auth.js
 ```
 
-Generate with deep research:
+### Example 2: Precise Configuration
 ```bash
-/generate-prp payment-integration.md --research-deep --think-hard
-# Extended research phase before generation
+/generate-prp redis-cache --template=backend
+
+# After studying existing files, generates:
+Task 2: Configure Redis connection
+  Priority: high
+  Dependencies: [Task 1]
+  
+  Consultar:
+    Codebase: 
+      - "config/database.js"  # Studied: uses similar pattern at line 12-28
+      - "config/index.js"     # Studied: config structure at line 45
+      - ".env.example"        # Studied: current vars end at line 14
+    External: [Context7: "/redis/docs connection"]
+  
+  Files: ["config/redis.js", ".env.example"]
+  
+  Explicit Instructions: |
+    1. Create config/redis.js following pattern from config/database.js:
+       ```javascript
+       // Matching require style from database.js line 1-3
+       const Redis = require('ioredis');
+       const logger = require('../utils/logger');
+       
+       // Following singleton pattern from database.js line 12
+       const redisClient = new Redis({
+         host: process.env.REDIS_HOST || 'localhost',
+         port: process.env.REDIS_PORT || 6379,
+         password: process.env.REDIS_PASSWORD,
+         retryStrategy: (times) => Math.min(times * 50, 2000),
+         maxRetriesPerRequest: 3
+       });
+       
+       // Matching error handling from database.js line 22
+       redisClient.on('error', (err) => {
+         logger.error('Redis Client Error', err);
+       });
+       
+       module.exports = redisClient;
+       ```
+    
+    2. In .env.example, after line 14 (last DB config), add:
+       ```
+       # Redis Configuration
+       REDIS_HOST=localhost
+       REDIS_PORT=6379
+       REDIS_PASSWORD=
+       ```
+  
+  Validation: |
+    node -e "require('./config/redis').ping().then(() => console.log('Redis connected'))"
+    grep -q "REDIS_HOST" .env.example && echo "ENV vars added"
 ```
 
-Generate with specific template:
+### Example 3: Complex Integration
 ```bash
-/generate-prp user-dashboard.md --template=frontend --persona-qa
-# Uses frontend template with QA focus
+/generate-prp payment-system --research-deep
+
+# Generates tasks with hybrid approach:
+Task 5: Implement Stripe webhook handler
+  Priority: medium
+  Dependencies: [Task 3, Task 4]
+  
+  Consultar:
+    Codebase: ["src/webhooks/", "src/payments/"]
+    External: 
+      - Context7: "/stripe/docs webhooks"
+      - URL: "https://stripe.com/docs/webhooks/signatures"
+  
+  Files: ["src/webhooks/stripe.js", "src/payments/webhook-handler.js"]
+  
+  SuperClaude Command: /build --feature --secure
+  Additional Instructions: |
+    - Verify webhook signatures using stripe.webhooks.constructEvent
+    - Implement idempotency with 24-hour cache
+    - Log all events to payments_webhook_log table
+    - Return 200 immediately, process async
+    - Handle these events: payment_intent.succeeded, payment_intent.failed
+  
+  Validation: |
+    npm test src/webhooks/stripe.test.js
+    curl -X POST http://localhost:3000/webhooks/stripe -H "stripe-signature: test"
 ```
 
-## Output Location
-Save as: `PRPs/[feature-name].md`
+## Persona Focus
 
-## Post-Generation
-After generation:
-1. Review generated PRP for completeness
-2. Run `/prp --execute` to implement
-3. Or convert to task: `/task:create --from-prp`
+| Persona | Enhances |
+|---------|----------|
+| `--persona-architect` | System design, scalability, patterns |
+| `--persona-security` | Validation loops, auth, OWASP compliance |
+| `--persona-qa` | Test coverage, edge cases, validation |
+| `--persona-backend` | API design, data flow, performance |
+| `--persona-frontend` | UI patterns, accessibility, UX |
+
+## Flags
+
+| Flag | Purpose |
+|------|---------|
+| `--research-deep` | Extended analysis phase |
+| `--template=[type]` | Use specific template (backend/frontend/fullstack) |
+| `--persona-[type]` | Apply persona focus (see table above) |
+| `--validation-strict` | Include additional validation steps |
+
+@include shared/flag-inheritance.yml#Universal_Always
 
 ---
-*Generate PRP - Context-rich specification generation for SuperClaude*
+*Generates deterministic, executable specifications for complex features*

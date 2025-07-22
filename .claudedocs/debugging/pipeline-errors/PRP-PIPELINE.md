@@ -178,16 +178,25 @@ Ejecutar el spider src/module_scraper/scraper_core/spiders/infobae_america_latin
 ## 🎯 ESTADO ACTUAL
 
 ### ✅ Errores Resueltos
-*[Sin errores resueltos en esta sesión]*
+- **[2025-01-22]** | ✅ RESUELTO | RPC falla con "argument 1: key must not be null" - Faltaba campo id_temporal en entidades
+  → Detalles completos: [./pipeline-errors/ERROR-20250122-0102.md] y [FIX-ID-TEMPORAL-20250122.md]
 
 ### 🔴 Errores Activos
-*[Sin errores activos]*
+- **[2025-01-22]** | ⚠️ PARCIALMENTE RESUELTO | Validación de integridad referencial - Campo id_temporal corregido pero persisten errores de ID
+  → Detalles completos: [./ERROR-20250122-0335.md]
 
 ### 📝 Formato de registro sucinto:
 ```
 - **[FECHA]** | Estado | Descripción breve (máx 2 líneas)
   → Detalles completos: [./pipeline-errors/ERROR-YYYYMMDD-HHMM.md]
 ```
+
+### ✅ ÚLTIMA VERIFICACIÓN DE CRITERIOS GLOBALES [2025-01-22 03:20]
+- [x] Pipeline activo y respondiendo al health check
+- [⚠️] ¿Procesa artículos medianos con éxito? - Procesa todas las fases pero falla en validación de payload
+- [❓] ¿Persiste correctamente en Supabase? - No verificado debido al nuevo error
+- [❓] ¿Maneja múltiples artículos en cola? - No verificado
+- [x] ¿Los errores se manejan gracefully? - Sí, errores capturados y logueados correctamente
 
 ---
 

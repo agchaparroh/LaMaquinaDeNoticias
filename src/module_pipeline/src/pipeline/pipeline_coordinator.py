@@ -703,6 +703,7 @@ class PipelineCoordinator:
         for entidad in entidades:
             entidades_data.append({
                 "id": str(entidad.id_entidad),  # int → str
+                "id_temporal": str(entidad.id_entidad),  # IMPORTANTE: Requerido por la función SQL
                 "nombre": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
                 "tipo": entidad.tipo_entidad,
                 "descripcion": f"Entidad extraída con relevancia {entidad.relevancia_entidad}",
@@ -911,6 +912,7 @@ class PipelineCoordinator:
         for idx, entidad in enumerate(entidades):
             entidad_dict = {
                 "id": str(entidad.id_entidad),
+                "id_temporal": str(entidad.id_entidad),  # IMPORTANTE: Requerido por la función SQL
                 "nombre": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
                 "tipo": entidad.tipo_entidad,
                 "descripcion": f"Entidad extraída con relevancia {entidad.relevancia_entidad}",
