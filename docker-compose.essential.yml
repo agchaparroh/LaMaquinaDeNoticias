@@ -1,0 +1,94 @@
+networks:
+  lamaquina-unified-network:
+    external: true
+
+services:
+  # --- Pipeline Service ---
+  module_pipeline:
+    build:
+      context: ./src/module_pipeline
+      dockerfile: Dockerfile.optimized
+    container_name: lamacquina_pipeline
+    volumes:
+      - ./.env:/app/.env:ro
+      - pipeline_logs:/app/logs
+      - pipeline_metrics:/app/metrics
+    ports:
+      - "8003:8003"
+    env_file:
+      - .env
+    environment:
+      - GROQ_MODEL_ID=llama-3.1-8b-instant
+      - DEBUG_FORCE_RELEVANT=true
+    networks:
+      - lamaquina-unified-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # --- Connector Service ---
+  module_connector:
+    build:
+      context: ./src/module_connector
+      dockerfile: Dockerfile
+    container_name: lamacquina_connector
+    volumes:
+      - ./src/module_connector:/app
+      - shared_data:/data
+    env_file:
+      - .env
+      - .env.connector
+    networks:
+      - lamaquina-unified-network
+    restart: unless-stopped
+    depends_on:
+      - module_pipeline
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; exit(0 if os.path.exists('/data/pipeline_input/pending') else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # --- Scrapyd Server ---
+  scrapyd:
+    build:
+      context: ./src/module_scraper
+      dockerfile: Dockerfile
+    container_name: lamacquina_scrapyd
+    volumes:
+      - ./src/module_scraper:/app
+      - ./src/module_scraper/scrapyd.conf:/etc/scrapyd/scrapyd.conf:ro
+      - scrapyd_eggs:/var/lib/scrapyd/eggs
+      - scrapyd_logs:/var/lib/scrapyd/logs
+      - shared_data:/data
+    command: ["scrapyd", "--pidfile="]
+    ports:
+      - "6800:6800"
+    env_file:
+      - .env
+    networks:
+      - lamaquina-unified-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6800/daemonstatus.json"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Volúmenes para persistencia
+volumes:
+  scrapyd_eggs:
+    driver: local
+  scrapyd_logs:
+    driver: local
+  shared_data:
+    driver: local
+  pipeline_logs:
+    driver: local
+  pipeline_metrics:
+    driver: local

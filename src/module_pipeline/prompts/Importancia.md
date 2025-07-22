@@ -70,7 +70,7 @@ ACCIÓN: Si el artículo es de OPINIÓN debe ser descartado.
 - Gibraltar
 - Malvinas
 
-ACCIÓN: Si no trata una realidad que afecte directamente a al menos uno de estos países, descartar
+ACCIÓN: Si no trata una realidad que afecte directamente a, al menos, uno de estos países... descartar
 
 ## PASO 4: EVALUAR CRITERIOS DE RELEVANCIA
 
@@ -121,7 +121,6 @@ PAÍS: {{RESPUESTA PASO 3}}
 TIPO DE ARTÍCULO: [NOTICIA/ENTREVISTA/OPINIÓN/ANÁLISIS/CRÓNICA/REPORTAJE]
 
 PUNTUACIONES:
-- Relevancia geográfica: [1-5] - [País(es) principal(es)]
 - Relevancia temática: [1-5] - [Tema principal identificado]
 - Densidad factual: [1-5]
 - Complejidad relacional: [1-5]

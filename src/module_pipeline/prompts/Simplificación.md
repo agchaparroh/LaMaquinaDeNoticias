@@ -2,6 +2,9 @@
 
 Convierte el texto periodístico a lenguaje claro, objetivo y directo manteniendo toda la información factual.
 
+# TEXTO A NORMALIZAR:
+{{CONTENIDO_ORIGINAL}}
+
 ## TRANSFORMACIONES
 
 **1. LENGUAJE FIGURADO → LITERAL**
@@ -64,6 +67,3 @@ Nombres propios, citas textuales, cifras exactas, fechas precisas, terminología
 ✅ "lluvia de críticas" → "muchas críticas"
 
 ---
-
-# TEXTO A NORMALIZAR:
-{{CONTENIDO_ORIGINAL}}
