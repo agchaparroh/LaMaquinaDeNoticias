@@ -26,7 +26,10 @@ except ImportError:
     spacy = None
     Language = None
 
-from loguru import logger
+from ..utils.logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("ChunkingService")
 from pydantic import BaseModel, Field
 from ..config import get_spacy_model_name, get_spacy_fallback_models
 

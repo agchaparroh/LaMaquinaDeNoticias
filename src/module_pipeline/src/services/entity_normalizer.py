@@ -1,5 +1,8 @@
 from typing import List, Optional, Tuple
-from loguru import logger
+from ..utils.logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("EntityNormalizer")
 
 # Importar SupabaseService para type hinting y posible instanciación
 from .supabase_service import SupabaseService

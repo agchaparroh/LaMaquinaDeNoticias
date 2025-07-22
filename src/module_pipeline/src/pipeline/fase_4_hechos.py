@@ -14,7 +14,10 @@ import json
 import asyncio
 from pathlib import Path
 
-from loguru import logger
+from ..utils.logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("Fase4_Hechos")
 
 # Importar modelos
 from ..models.procesamiento import HechoProcesado
@@ -255,10 +258,9 @@ def _procesar_hechos_extraidos(
     
     for hecho in hechos_raw:
         try:
-            # Extraer fechas
-            fecha_obj = hecho.get("fecha", {})
-            fecha_inicio = fecha_obj.get("inicio")
-            fecha_fin = fecha_obj.get("fin")
+            # Extraer fechas - Compatible con prompt que retorna fecha_inicio/fecha_fin directamente
+            fecha_inicio = hecho.get("fecha_inicio")
+            fecha_fin = hecho.get("fecha_fin", fecha_inicio)  # Si no hay fecha_fin, usar fecha_inicio
             
             # Crear metadatos específicos
             metadatos = MetadatosHecho(
@@ -276,7 +278,7 @@ def _procesar_hechos_extraidos(
             # Crear hecho procesado
             hecho_procesado = HechoProcesado(
                 id_hecho=hecho.get("id", 0),
-                texto_original_del_hecho=hecho.get("contenido", ""),
+                texto_original_del_hecho=hecho.get("contenido", ""),  # Mantener campo interno
                 confianza_extraccion=0.9,  # Alta confianza por defecto
                 id_fragmento_origen=id_fragmento,
                 metadata_hecho=metadatos

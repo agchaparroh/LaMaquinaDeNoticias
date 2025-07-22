@@ -12,7 +12,10 @@ from datetime import datetime
 import re
 from pydantic import BaseModel, Field, validator
 
-from loguru import logger
+from .logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("SchemaValidator")
 
 
 class TipoEntidad(str, Enum):

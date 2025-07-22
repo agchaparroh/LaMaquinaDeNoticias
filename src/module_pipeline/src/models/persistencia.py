@@ -16,35 +16,36 @@ class PersistenciaBaseModel(BaseModel):
 class EntidadEnHechoItem(PersistenciaBaseModel):
     """
     Representa una entidad mencionada dentro de un hecho específico.
-    Referencia: "Documento 1 de Persistencia", sección "hechos_extraidos[].entidades_del_hecho[]".
+    Solo incluye campos que el RPC procesa: id_temporal, tipo_relacion, relevancia_en_hecho.
     """
-    id_temporal_entidad: str = Field(description="ID temporal único para esta entidad dentro del payload (puede repetirse si la misma entidad aparece en múltiples hechos).")
-    nombre_entidad: str = Field(description="Nombre de la entidad tal como aparece o fue identificada.")
-    tipo_entidad: str = Field(description="Tipo de entidad (ej: 'PERSONA', 'ORGANIZACION', 'LUGAR').")
-    rol_en_hecho: Optional[str] = Field(default=None, description="Rol que juega la entidad en este hecho (ej: 'protagonista', 'afectado', 'testigo').")
+    id_temporal: str = Field(description="ID temporal único para esta entidad dentro del payload.")
+    tipo_relacion: Optional[str] = Field(default="otro", description="Tipo de relación con el hecho (protagonista, mencionado, afectado, declarante, ubicacion, contexto, victima, agresor, organizador, participante, otro).")
+    relevancia_en_hecho: Optional[int] = Field(default=5, ge=1, le=10, description="Relevancia de la entidad en el hecho (1-10).")
 
 class HechoExtraidoItem(PersistenciaBaseModel):
     """
     Representa un hecho estructurado extraído del contenido.
     Referencia: "Documento 1 de Persistencia", sección "hechos_extraidos[]".
+    
+    ACTUALIZACIÓN 2025-01-21: Campos alineados con RPC actualizar_articulo_procesado.sql
+    Los nombres de campos coinciden exactamente con lo que espera el RPC actualizado.
     """
-    id_temporal_hecho: str = Field(description="ID temporal único para este hecho dentro del payload.")
-    descripcion_hecho: str = Field(description="Descripción del hecho.")
-    tipo_hecho: Optional[str] = Field(default=None, description="Tipo de hecho (ej: 'declaracion', 'evento_social', 'hallazgo_cientifico').")
+    # CAMPOS PRINCIPALES (esperados por RPC)
+    id_temporal: str = Field(description="ID temporal único para este hecho dentro del payload.")
+    contenido: str = Field(description="Contenido/descripción del hecho.")
+    tipo_hecho: Optional[str] = Field(default=None, description="Tipo de hecho (SUCESO, ANUNCIO, DECLARACION, BIOGRAFIA, CONCEPTO, NORMATIVA, EVENTO).")
+    fecha_ocurrencia_inicio: Optional[str] = Field(default=None, description="Fecha y hora de inicio de ocurrencia del hecho (formato ISO 8601).")
+    fecha_ocurrencia_fin: Optional[str] = Field(default=None, description="Fecha y hora de fin de ocurrencia del hecho (formato ISO 8601), si es un rango.")
+    importancia: Optional[int] = Field(default=None, ge=1, le=10, description="Importancia del hecho (1-10).")
+    precision_temporal: Optional[str] = Field(default=None, description="Precisión temporal (exacta, dia, semana, mes, trimestre, año, decada, periodo, desconocido).")
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Metadatos adicionales incluyendo pais[], region[], ciudad[], etiquetas[].")
+    
+    # CAMPOS ADICIONALES (no procesados por RPC pero útiles para lógica interna)
     subtipo_hecho: Optional[str] = Field(default=None, description="Subtipo más específico del hecho.")
-    # Nota: El documento menciona "timestamp string (YYYY-MM-DDTHH:MM:SSZ)". Pydantic puede convertir a datetime,
-    # pero para ser fiel al formato esperado por la RPC, se usa str.
-    fecha_ocurrencia_hecho_inicio: Optional[str] = Field(default=None, description="Fecha y hora de inicio de ocurrencia del hecho (formato ISO 8601).")
-    fecha_ocurrencia_hecho_fin: Optional[str] = Field(default=None, description="Fecha y hora de fin de ocurrencia del hecho (formato ISO 8601), si es un rango.")
     lugar_ocurrencia_hecho: Optional[str] = Field(default=None, description="Lugar donde ocurrió el hecho.")
-    relevancia_hecho: Optional[int] = Field(default=None, ge=1, le=10, description="Relevancia del hecho (1-10).")
     contexto_adicional_hecho: Optional[str] = Field(default=None, description="Contexto adicional sobre el hecho.")
-    
-    # CAMPOS AGREGADOS (existen en base de datos Supabase pero faltaban en modelo)
-    precision_temporal: Optional[str] = Field(default=None, description="Precisión temporal del hecho (coincide con columna 'precision_temporal' en DB).")
-    es_evento_futuro: Optional[bool] = Field(default=None, description="Indica si el hecho es un evento futuro (coincide con columna 'es_evento_futuro' en DB).")
-    estado_programacion: Optional[str] = Field(default=None, description="Estado de programación para eventos futuros (coincide con columna 'estado_programacion' en DB).")
-    
+    es_evento_futuro: Optional[bool] = Field(default=None, description="Indica si el hecho es un evento futuro.")
+    estado_programacion: Optional[str] = Field(default=None, description="Estado de programación para eventos futuros (programado, confirmado, cancelado, modificado, realizado).")
     detalle_complejo_hecho: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Objeto JSON para detalles más complejos o no estructurados del hecho.")
     embedding_hecho_vector: Optional[List[float]] = Field(default=None, description="Vector de embedding semántico del hecho.")
     entidades_del_hecho: Optional[List[EntidadEnHechoItem]] = Field(default_factory=list, description="Lista de entidades involucradas en este hecho.")
@@ -54,109 +55,110 @@ class EntidadAutonomaItem(PersistenciaBaseModel):
     Representa una entidad extraída de forma autónoma, no necesariamente ligada a un hecho específico en este punto.
     Referencia: "Documento 1 de Persistencia", sección "entidades_autonomas[]".
     
-    ACTUALIZACIÓN: Campos sincronizados con esquema real de base de datos Supabase.
-    Los campos con nombres correctos coinciden exactamente con las columnas de la tabla 'entidades'.
+    ACTUALIZACIÓN 2025-01-21: Campos alineados con RPC actualizar_articulo_procesado.sql
+    Los nombres de campos coinciden exactamente con lo que espera el RPC.
     """
-    # CAMPOS CORRECTOS (coinciden con base de datos Supabase)
-    id: str = Field(description="ID único para esta entidad (coincide con columna 'id' en DB).")
-    nombre: str = Field(description="Nombre de la entidad (coincide con columna 'nombre' en DB).")
-    tipo: str = Field(description="Tipo de entidad (coincide con columna 'tipo' en DB).")
-    descripcion: Optional[str] = Field(default=None, description="Descripción breve de la entidad (coincide con columna 'descripcion' en DB).")
-    alias: Optional[List[str]] = Field(default_factory=list, description="Lista de alias o nombres alternativos (coincide con columna 'alias' en DB).")
+    # CAMPOS PRINCIPALES (esperados por RPC)
+    id: str = Field(description="ID único para esta entidad.")
+    nombre: str = Field(description="Nombre de la entidad.")
+    tipo: str = Field(description="Tipo de entidad (PERSONA, ORGANIZACION, INSTITUCION, LUGAR, etc).")
+    descripcion: Optional[str] = Field(default=None, description="Descripción breve de la entidad.")
+    alias: Optional[List[str]] = Field(default_factory=list, description="Lista de alias o nombres alternativos.")
+    relevancia: Optional[int] = Field(default=None, ge=1, le=10, description="Relevancia de la entidad en el contexto del artículo (1-10).")
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Metadatos adicionales sobre la entidad.")
     
-    # CAMPOS AGREGADOS (existen en base de datos pero faltaban en modelo)
-    fecha_nacimiento: Optional[str] = Field(default=None, description="Fecha de nacimiento/inicio de la entidad (coincide con columna 'fecha_nacimiento' tstzrange en DB).")
-    fecha_disolucion: Optional[str] = Field(default=None, description="Fecha de disolución/fin de la entidad (coincide con columna 'fecha_disolucion' tstzrange en DB).")
+    # CAMPOS TEMPORALES (para mapeo interno en RPC)
+    id_temporal: Optional[str] = Field(default=None, description="ID temporal para mapeo interno durante procesamiento.")
     
-    # CAMPOS ADICIONALES (no están en esquema de base de datos pero se mantienen para lógica de negocio)
-    relevancia_entidad_articulo: Optional[int] = Field(default=None, ge=1, le=10, description="Relevancia de la entidad en el contexto general del artículo (1-10).")
-    metadata_entidad: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Metadatos adicionales sobre la entidad.")
+    # CAMPOS ADICIONALES (no procesados por RPC pero útiles para lógica interna)
+    fecha_nacimiento: Optional[str] = Field(default=None, description="Fecha de nacimiento/inicio de la entidad.")
+    fecha_disolucion: Optional[str] = Field(default=None, description="Fecha de disolución/fin de la entidad.")
     embedding_entidad_vector: Optional[List[float]] = Field(default=None, description="Vector de embedding semántico de la entidad.")
-    
-    # CAMPOS DEPRECATED (mantener compatibilidad temporal - REMOVER EN PRÓXIMA VERSIÓN)
-    id_temporal_entidad: Optional[str] = Field(default=None, description="DEPRECATED: Usar 'id' en su lugar.")
-    nombre_entidad: Optional[str] = Field(default=None, description="DEPRECATED: Usar 'nombre' en su lugar.")
-    tipo_entidad: Optional[str] = Field(default=None, description="DEPRECATED: Usar 'tipo' en su lugar.")
-    descripcion_entidad: Optional[str] = Field(default=None, description="DEPRECATED: Usar 'descripcion' en su lugar.")
-    alias_entidad: Optional[List[str]] = Field(default=None, description="DEPRECATED: Usar 'alias' en su lugar.")
 
 class CitaTextualExtraidaItem(PersistenciaBaseModel):
     """
     Representa una cita textual extraída del contenido.
     Referencia: "Documento 1 de Persistencia", sección "citas_textuales_extraidas[]".
+    
+    ACTUALIZACIÓN 2025-01-21: Campos alineados con RPC actualizar_articulo_procesado.sql
+    Los nombres de campos coinciden exactamente con lo que espera el RPC actualizado.
     """
+    # CAMPOS PRINCIPALES (esperados por RPC)
     id_temporal_cita: str = Field(description="ID temporal único para esta cita.")
-    texto_cita: str = Field(description="El contenido textual de la cita.")
-    entidad_emisora_id_temporal: Optional[str] = Field(default=None, description="ID temporal de la entidad que emitió la cita.")
-    nombre_entidad_emisora: Optional[str] = Field(default=None, description="Nombre de la entidad que emitió la cita (puede ser redundante si se usa ID temporal).")
-    cargo_entidad_emisora: Optional[str] = Field(default=None, description="Cargo o afiliación de la entidad emisora al momento de la cita.")
+    cita: str = Field(description="El contenido textual de la cita.")
+    id_temporal_entidad_emisora: Optional[str] = Field(default=None, description="ID temporal de la entidad que emitió la cita.")
+    id_temporal_hecho_contexto: Optional[str] = Field(default=None, description="ID temporal del hecho que proporciona contexto a esta cita.")
     fecha_cita: Optional[str] = Field(default=None, description="Fecha en que se emitió la cita (formato ISO 8601).")
-    contexto_cita: Optional[str] = Field(default=None, description="Contexto en el que se dio la cita.")
-    relevancia_cita: Optional[int] = Field(default=None, ge=1, le=10, description="Relevancia de la cita (1-10).")
-    hecho_principal_relacionado_id_temporal: Optional[str] = Field(default=None, description="ID temporal_hecho del hecho principal al que se relaciona esta cita.")
+    contexto: Optional[str] = Field(default=None, description="Contexto en el que se dio la cita.")
+    relevancia: Optional[int] = Field(default=None, ge=1, le=5, description="Relevancia de la cita (1-5).")
+    
+    # CAMPOS ADICIONALES (no procesados por RPC pero útiles para lógica interna)
+    nombre_entidad_emisora: Optional[str] = Field(default=None, description="Nombre de la entidad que emitió la cita (redundante con ID temporal).")
 
 class DatoCuantitativoExtraidoItem(PersistenciaBaseModel):
     """
     Representa un dato cuantitativo extraído.
     Referencia: "Documento 1 de Persistencia", sección "datos_cuantitativos_extraidos[]".
+    
+    ACTUALIZACIÓN 2025-01-21: Campos alineados con RPC actualizar_articulo_procesado.sql
+    Los nombres de campos coinciden exactamente con lo que espera el RPC.
     """
-    id_temporal_dato: str = Field(description="ID temporal único para este dato.")
-    descripcion_dato: str = Field(description="Descripción del dato cuantitativo.")
-    valor_dato: Union[float, int, str, None] = Field(default=None, description="El valor numérico o textual del dato.") # Doc: "float | integer | string"
-    unidad_dato: Optional[str] = Field(default=None, description="Unidad de medida del dato (ej: 'USD', 'kilogramos', '%').")
+    # CAMPOS PRINCIPALES (esperados por RPC)
+    id_temporal_hecho: str = Field(description="ID temporal del hecho al que se relaciona este dato.")
+    indicador: str = Field(description="Indicador o descripción del dato cuantitativo.")
+    categoria: str = Field(description="Categoría del dato (económico, demográfico, electoral, social, etc).")
+    valor_numerico: Union[float, int] = Field(description="El valor numérico del dato.")
+    unidad: str = Field(description="Unidad de medida del dato (ej: 'USD', 'kilogramos', '%').")
+    ambito_geografico: List[str] = Field(default_factory=list, description="Ámbito geográfico del dato (país, región, ciudad).")
+    periodo_referencia_inicio: Optional[str] = Field(default=None, description="Fecha de inicio del período de referencia (YYYY-MM-DD).")
+    periodo_referencia_fin: Optional[str] = Field(default=None, description="Fecha de fin del período de referencia (YYYY-MM-DD).")
+    tendencia: Optional[str] = Field(default=None, description="Tendencia observada (aumento, disminución, estable).")
+    
+    # CAMPOS TEMPORALES (para mapeo interno, no procesados por RPC)
+    id_temporal_dato: Optional[str] = Field(default=None, description="ID temporal único para este dato (compatibilidad).")
+    
+    # CAMPOS ADICIONALES (no procesados por RPC actual pero útiles para lógica interna)
     fecha_dato: Optional[str] = Field(default=None, description="Fecha a la que corresponde el dato (formato ISO 8601).")
     contexto_dato: Optional[str] = Field(default=None, description="Contexto del dato cuantitativo.")
     relevancia_dato: Optional[int] = Field(default=None, ge=1, le=10, description="Relevancia del dato (1-10).")
-    hecho_principal_relacionado_id_temporal: Optional[str] = Field(default=None, description="ID temporal_hecho del hecho principal al que se relaciona este dato.")
-    
-    # CAMPOS AGREGADOS (existen en base de datos Supabase pero faltaban en modelo)
-    categoria: Optional[str] = Field(default=None, description="Categoría del dato cuantitativo (coincide con columna 'categoria' en DB).")
-    tipo_periodo: Optional[str] = Field(default=None, description="Tipo de período al que se refiere el dato (coincide con columna 'tipo_periodo' en DB).")
-    tendencia: Optional[str] = Field(default=None, description="Tendencia observada en el dato (coincide con columna 'tendencia' en DB).")
-    valor_anterior: Optional[float] = Field(default=None, description="Valor anterior para comparación (coincide con columna 'valor_anterior' en DB).")
-    variacion_absoluta: Optional[float] = Field(default=None, description="Variación absoluta respecto al valor anterior (coincide con columna 'variacion_absoluta' en DB).")
-    variacion_porcentual: Optional[float] = Field(default=None, description="Variación porcentual respecto al valor anterior (coincide con columna 'variacion_porcentual' en DB).")
-    periodo_referencia_inicio: Optional[str] = Field(default=None, description="Fecha de inicio del período de referencia (coincide con columna 'periodo_referencia_inicio' en DB).")
-    periodo_referencia_fin: Optional[str] = Field(default=None, description="Fecha de fin del período de referencia (coincide con columna 'periodo_referencia_fin' en DB).")
+    tipo_periodo: Optional[str] = Field(default=None, description="Tipo de período (anual, trimestral, mensual, etc).")
+    valor_anterior: Optional[float] = Field(default=None, description="Valor anterior para comparación.")
+    variacion_absoluta: Optional[float] = Field(default=None, description="Variación absoluta respecto al valor anterior.")
+    variacion_porcentual: Optional[float] = Field(default=None, description="Variación porcentual respecto al valor anterior.")
+    fuente_especifica: Optional[str] = Field(default=None, description="Fuente específica del dato.")
 
 class RelacionHechosItem(PersistenciaBaseModel):
     """
     Representa una relación entre dos hechos extraídos.
-    Referencia: "Documento 1 de Persistencia", sección "relaciones_hechos[]".
+    Campos alineados con RPC: id_hecho_origen, id_hecho_destino.
     """
-    hecho_origen_id_temporal: str = Field(description="ID temporal_hecho del primer hecho en la relación.")
-    hecho_destino_id_temporal: str = Field(description="ID temporal_hecho del segundo hecho en la relación.")
-    tipo_relacion: str = Field(description="Tipo de relación (ej: 'causa-efecto', 'temporal_secuencial', 'aclaracion').")
+    id_hecho_origen: str = Field(description="ID temporal del primer hecho en la relación.")
+    id_hecho_destino: str = Field(description="ID temporal del segundo hecho en la relación.")
+    tipo_relacion: str = Field(description="Tipo de relación (causa, consecuencia, contexto_historico, respuesta_a, aclaracion_de, version_alternativa, seguimiento_de).")
     descripcion_relacion: Optional[str] = Field(default=None, description="Descripción de la naturaleza de la relación.")
-    direccion_relacion: Optional[str] = Field(default=None, description="Dirección de la relación (ej: 'bidireccional', 'origen_a_destino').")
-    fecha_inicio_relacion: Optional[str] = Field(default=None, description="Fecha de inicio de la validez de la relación (formato ISO 8601).")
-    fecha_fin_relacion: Optional[str] = Field(default=None, description="Fecha de fin de la validez de la relación (formato ISO 8601).")
-    fuerza_relacion: Optional[int] = Field(default=None, ge=1, le=10, description="Fuerza o confianza en la relación (1-10).")
+    fuerza_relacion: Optional[int] = Field(default=5, ge=1, le=10, description="Fuerza o confianza en la relación (1-10).")
 
 class RelacionEntidadesItem(PersistenciaBaseModel):
     """
     Representa una relación entre dos entidades.
-    Referencia: "Documento 1 de Persistencia", sección "relaciones_entidades[]".
+    Campos alineados con RPC: id_entidad_origen, id_entidad_destino, descripcion.
     """
-    entidad_origen_id_temporal: str = Field(description="ID temporal de la entidad origen.")
-    entidad_destino_id_temporal: str = Field(description="ID temporal de la entidad destino.")
-    tipo_relacion: str = Field(description="Tipo de relación entre las entidades (ej: 'empleado_de', 'subsidiaria_de', 'aliado_con').")
-    descripcion_relacion: Optional[str] = Field(default=None, description="Descripción de la naturaleza de la relación.")
-    contexto_relacion: Optional[str] = Field(default=None, description="Contexto en el que se da esta relación.")
-    fecha_inicio_relacion: Optional[str] = Field(default=None, description="Fecha de inicio de la validez de la relación (formato ISO 8601).")
-    fecha_fin_relacion: Optional[str] = Field(default=None, description="Fecha de fin de la validez de la relación (formato ISO 8601).")
-    fuerza_relacion: Optional[int] = Field(default=None, ge=1, le=10, description="Fuerza o confianza en la relación (1-10).")
+    id_entidad_origen: str = Field(description="ID temporal de la entidad origen.")
+    id_entidad_destino: str = Field(description="ID temporal de la entidad destino.")
+    tipo_relacion: str = Field(description="Tipo de relación (miembro_de, subsidiaria_de, aliado_con, opositor_a, sucesor_de, predecesor_de, casado_con, familiar_de, empleado_de).")
+    descripcion: Optional[str] = Field(default=None, description="Descripción de la naturaleza de la relación.")
+    fuerza_relacion: Optional[int] = Field(default=5, ge=1, le=10, description="Fuerza o confianza en la relación (1-10).")
 
 class ContradiccionDetectadaItem(PersistenciaBaseModel):
     """
     Representa una contradicción detectada entre dos hechos.
-    Referencia: "Documento 1 de Persistencia", sección "contradicciones_detectadas[]".
+    Campos alineados con RPC: id_hecho_principal, id_hecho_contradictorio, descripcion.
     """
-    hecho_principal_id_temporal: str = Field(description="ID temporal_hecho del primer hecho.")
-    hecho_contradictorio_id_temporal: str = Field(description="ID temporal_hecho del hecho que lo contradice.")
-    tipo_contradiccion: Optional[str] = Field(default=None, description="Tipo de contradicción (ej: 'temporal', 'logica', 'factual').")
-    grado_contradiccion: Optional[int] = Field(default=None, ge=1, le=5, description="Grado de la contradicción (1-5).")
-    descripcion_contradiccion: Optional[str] = Field(default=None, description="Explicación de la contradicción.")
+    id_hecho_principal: str = Field(description="ID temporal del primer hecho.")
+    id_hecho_contradictorio: str = Field(description="ID temporal del hecho que lo contradice.")
+    tipo_contradiccion: Optional[str] = Field(default="contenido", description="Tipo de contradicción (fecha, contenido, entidades, ubicacion, valor, completa).")
+    grado_contradiccion: Optional[int] = Field(default=3, ge=1, le=5, description="Grado de la contradicción (1-5).")
+    descripcion: Optional[str] = Field(default=None, description="Explicación de la contradicción.")
 
 
 # --- Modelo Principal para el Payload de `insertar_articulo_completo` ---

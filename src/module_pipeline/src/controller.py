@@ -1098,10 +1098,22 @@ class PipelineController:
                     for dato in resultado_fase3.datos_cuantitativos_extraidos
                 ]
             
-            # Extraer relaciones del metadata de fase 4 (si existen) - manejar datos vacíos en desarrollo
+            # Extraer relaciones del metadata de fase 7 (no fase 4)
             relaciones_metadata = {}
-            if resultado_fase4 and hasattr(resultado_fase4, 'metadata_normalizacion'):
-                relaciones_metadata = resultado_fase4.metadata_normalizacion.get("relaciones", {})
+            if resultado_pipeline and "resultados_fases" in resultado_pipeline:
+                fase7 = resultado_pipeline["resultados_fases"].get("fase_7")
+                if fase7 and hasattr(fase7, 'metadata_normalizacion'):
+                    relaciones_completas = fase7.metadata_normalizacion.get("relaciones_completas", {})
+                    relaciones_estructurales = relaciones_completas.get("relaciones_estructurales", {})
+                    relaciones_temporales = relaciones_completas.get("relaciones_temporales", {})
+                    
+                    # Mapear al formato esperado
+                    relaciones_metadata = {
+                        "hecho_entidad": relaciones_estructurales.get("hecho_entidad", []),
+                        "hecho_hecho": relaciones_temporales.get("hecho_relacionado", []),
+                        "entidad_entidad": relaciones_estructurales.get("entidad_relacion", []),
+                        "contradicciones": relaciones_temporales.get("contradicciones", [])
+                    }
             
             # NOTA: Las relaciones hecho-entidad no se persisten en la tabla de relaciones
             # porque ya están embebidas en cada hecho con el campo "entidades_del_hecho"

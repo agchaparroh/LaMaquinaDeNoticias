@@ -23,9 +23,9 @@ class MetadatosHecho(BaseModel):
     """
     # Campos de precisión temporal y clasificación
     precision_temporal: Optional[str] = Field(
-        None, 
+        "indefinido", 
         description="Precisión temporal del hecho",
-        pattern=r"^(exacta|dia|semana|mes|trimestre|año|decada|periodo)$"
+        pattern=r"^(exacta|dia|semana|mes|trimestre|año|decada|periodo|indefinido)$"
     )
     tipo_hecho: Optional[str] = Field(
         None,

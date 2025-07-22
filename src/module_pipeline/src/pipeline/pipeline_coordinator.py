@@ -495,7 +495,9 @@ class PipelineCoordinator:
             processor.log_summary(processor_logger)
             
         except Exception as e:
-            logger.error(
+            # Crear logger para error general del pipeline
+            error_logger = get_logger("PipelineCoordinator", request_id)
+            error_logger.error(
                 f"Error en pipeline: {str(e)}",
                 error_type=type(e).__name__,
                 fase_alcanzada=resultado["fase_completada"]
@@ -603,6 +605,41 @@ class PipelineCoordinator:
         
         return config
     
+    def _construir_entidades_del_hecho(self, hecho: HechoProcesado, relaciones_hecho_entidad: List[Dict]) -> List[Dict]:
+        """
+        Construye la lista de entidades_del_hecho usando las relaciones detectadas por fase 7B.1.
+        
+        Args:
+            hecho: El hecho procesado
+            relaciones_hecho_entidad: Lista de relaciones hecho-entidad de fase 7B.1
+            
+        Returns:
+            Lista de entidades del hecho con tipos de relación correctos
+        """
+        entidades_hecho = []
+        
+        # Buscar relaciones específicas para este hecho
+        for relacion in relaciones_hecho_entidad:
+            if relacion.get("hecho_id") == hecho.id_hecho:
+                entidades_hecho.append({
+                    "id_temporal": f"ENT-{relacion['entidad_id']}",
+                    "tipo_relacion": relacion.get("tipo_relacion", "otro"),
+                    "relevancia_en_hecho": relacion.get("relevancia_en_hecho", 5)
+                })
+        
+        # Si no se encontraron relaciones específicas, usar fallback
+        if not entidades_hecho:
+            # Usar las entidades vinculadas originalmente pero con valores genéricos
+            entidades_hecho = [
+                {
+                    "id_temporal": f"ENT-{ent_id}",
+                    "tipo_relacion": "mencionado",  # Valor por defecto más apropiado
+                    "relevancia_en_hecho": 5
+                } for ent_id in hecho.vinculado_a_entidades
+            ]
+            
+        return entidades_hecho
+    
     def _generar_payload_completo_7_fases(
         self,
         fragmento: FragmentoProcesableItem,
@@ -628,25 +665,37 @@ class PipelineCoordinator:
             if hasattr(hecho.metadata_hecho, 'fecha_fin') and hecho.metadata_hecho.fecha_fin:
                 fecha_fin_iso = f"{hecho.metadata_hecho.fecha_fin}T00:00:00Z"
             
+            # PRP DEBUGGING: Verificar contenido antes del mapeo
+            texto_hecho = getattr(hecho, 'texto_original_del_hecho', None)
+            # Validación de texto del hecho
+            if not texto_hecho or texto_hecho.strip() == "":
+                self.base_logger.warning(f"Hecho {hecho.id_hecho} tiene texto vacío, omitiendo")
+                continue  # SALTAR hechos vacíos
+            
             hechos_data.append({
-                "id_temporal_hecho": str(hecho.id_hecho),  # int → str
-                "descripcion_hecho": hecho.texto_original_del_hecho,
-                "tipo_hecho": hecho.metadata_hecho.tipo_hecho if hasattr(hecho.metadata_hecho, 'tipo_hecho') else "evento",
-                "relevancia_hecho": int(hecho.confianza_extraccion * 10),  # 0.0-1.0 → 1-10
-                "fecha_ocurrencia_hecho_inicio": fecha_inicio_iso,
-                "fecha_ocurrencia_hecho_fin": fecha_fin_iso,
-                "precision_temporal": hecho.metadata_hecho.precision_temporal if hasattr(hecho.metadata_hecho, 'precision_temporal') else None,
+                "id_temporal": str(hecho.id_hecho),  # int → str
+                "contenido": hecho.texto_original_del_hecho,
+                "tipo_hecho": hecho.metadata_hecho.tipo_hecho if hasattr(hecho.metadata_hecho, 'tipo_hecho') else "SUCESO",
+                "importancia": int(hecho.confianza_extraccion * 10),  # 0.0-1.0 → 1-10
+                "fecha_ocurrencia_inicio": fecha_inicio_iso,
+                "fecha_ocurrencia_fin": fecha_fin_iso,
+                "precision_temporal": hecho.metadata_hecho.precision_temporal if hasattr(hecho.metadata_hecho, 'precision_temporal') else "desconocido",
+                "metadata": {
+                    "pais": hecho.metadata_hecho.pais if hasattr(hecho.metadata_hecho, 'pais') else [],
+                    "region": hecho.metadata_hecho.region if hasattr(hecho.metadata_hecho, 'region') else [],
+                    "ciudad": hecho.metadata_hecho.ciudad if hasattr(hecho.metadata_hecho, 'ciudad') else [],
+                    "etiquetas": []  # TODO: Agregar lógica para extraer etiquetas
+                },
+                # Campos adicionales para lógica interna (no procesados por RPC pero útiles para HechoExtraidoItem)
                 "es_evento_futuro": hecho.metadata_hecho.es_futuro if hasattr(hecho.metadata_hecho, 'es_futuro') else None,
                 "estado_programacion": hecho.metadata_hecho.estado_programacion if hasattr(hecho.metadata_hecho, 'estado_programacion') else None,
                 "detalle_complejo_hecho": hecho.metadata_hecho.model_dump() if hasattr(hecho.metadata_hecho, 'model_dump') else {},
-                "entidades_del_hecho": [
-                    {
-                        "id_temporal_entidad": str(ent_id),
-                        "nombre": f"Entidad_{ent_id}",  # Placeholder - CORREGIDO: sin sufijo
-                        "tipo": "MENCIONADA",
-                        "rol_en_hecho": "relacionada"
-                    } for ent_id in hecho.vinculado_a_entidades
-                ]
+                "entidades_del_hecho": self._construir_entidades_del_hecho(
+                    hecho,
+                    resultado_fase7.metadata_normalizacion.get("relaciones_completas", {})
+                    .get("relaciones_estructurales", {})
+                    .get("hecho_entidad", [])
+                )
             })
         
         # Convertir entidades procesadas (ya normalizadas)
@@ -657,13 +706,19 @@ class PipelineCoordinator:
                 "nombre": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
                 "tipo": entidad.tipo_entidad,
                 "descripcion": f"Entidad extraída con relevancia {entidad.relevancia_entidad}",
-                "relevancia_entidad_articulo": int(entidad.relevancia_entidad * 10),
-                "metadata_entidad": {
+                "relevancia": int(entidad.relevancia_entidad * 10),  # Cambio: relevancia_entidad_articulo → relevancia
+                "metadata": {  # Cambio: metadata_entidad → metadata
                     **(entidad.metadata_entidad.model_dump() if hasattr(entidad.metadata_entidad, 'model_dump') else {}),
                     "uri_wikidata": entidad.uri_wikidata,
                     "id_entidad_normalizada": str(entidad.id_entidad_normalizada) if entidad.id_entidad_normalizada else None,
                     "similitud_normalizacion": entidad.similitud_normalizacion
-                }
+                },
+                # Campos adicionales para compatibilidad con procesamiento
+                "id_entidad": entidad.id_entidad,
+                "texto_entidad": entidad.texto_entidad,
+                "tipo_entidad": entidad.tipo_entidad,
+                "relevancia_entidad": entidad.relevancia_entidad,
+                "metadata_entidad": entidad.metadata_entidad.model_dump() if hasattr(entidad.metadata_entidad, 'model_dump') else {}
             })
         
         # Convertir citas textuales
@@ -671,11 +726,14 @@ class PipelineCoordinator:
         for cita in citas:
             citas_data.append({
                 "id_temporal_cita": str(cita.id_cita),  # int → str
-                "texto_cita": cita.texto_cita,
-                "entidad_emisora_id_temporal": str(cita.id_entidad_citada) if cita.id_entidad_citada else None,
-                "nombre_entidad_emisora": cita.persona_citada,
-                "contexto_cita": cita.contexto_cita,
-                "relevancia_cita": 5  # Default
+                "cita": cita.texto_cita,  # ACTUALIZADO: texto_cita → cita
+                "id_temporal_entidad_emisora": str(cita.id_entidad_citada) if cita.id_entidad_citada else None,
+                "id_temporal_hecho_contexto": str(cita.metadata_cita.hecho_relacionado_id) if hasattr(cita.metadata_cita, 'hecho_relacionado_id') and cita.metadata_cita.hecho_relacionado_id else None,
+                "fecha_cita": f"{cita.metadata_cita.fecha}T00:00:00Z" if hasattr(cita.metadata_cita, 'fecha') and cita.metadata_cita.fecha else None,
+                "contexto": cita.contexto_cita,  # ACTUALIZADO: contexto_cita → contexto
+                "relevancia": cita.metadata_cita.relevancia if hasattr(cita.metadata_cita, 'relevancia') else 3,  # ACTUALIZADO: relevancia_cita → relevancia, usar valor de metadata
+                # Campo adicional para compatibilidad
+                "nombre_entidad_emisora": cita.persona_citada
             })
         
         # Convertir datos cuantitativos  
@@ -749,8 +807,69 @@ class PipelineCoordinator:
                 palabras_clave.append(entidad.texto_entidad)
         resultado_procesamiento["palabras_clave_generadas"] = palabras_clave
         
-        # Convertir datos al formato esperado (igual que en _generar_payload_completo_7_fases)
+        # PRIMERO: Extraer relaciones del resultado_fase7 antes de construir hechos_data
+        relaciones_hechos_data = []
+        relaciones_entidades_data = []
+        contradicciones_data = []
+        relaciones_hecho_entidad = {}  # Diccionario para mapear hecho_id -> lista de relaciones con entidades
+        
+        if resultado_fase7 and hasattr(resultado_fase7, 'metadata_normalizacion') and resultado_fase7.metadata_normalizacion:
+            metadata = resultado_fase7.metadata_normalizacion
+            
+            # Obtener relaciones completas
+            relaciones_completas = metadata.get("relaciones_completas", {})
+            
+            # Extraer relaciones estructurales (hecho-entidad y entidad-entidad)
+            relaciones_estructurales = relaciones_completas.get("relaciones_estructurales", {})
+            if relaciones_estructurales:
+                # Procesar relaciones hecho-entidad PRIMERO para usarlas en la construcción de hechos
+                for rel in relaciones_estructurales.get("hecho_entidad", []):
+                    hecho_id = rel.get("hecho_id")
+                    if hecho_id:
+                        if hecho_id not in relaciones_hecho_entidad:
+                            relaciones_hecho_entidad[hecho_id] = []
+                        relaciones_hecho_entidad[hecho_id].append({
+                            "entidad_id": rel.get("entidad_id"),
+                            "tipo_relacion": rel.get("tipo_relacion", "otro"),
+                            "relevancia_en_hecho": rel.get("relevancia_en_hecho", 5)
+                        })
+                
+                # Procesar relaciones entidad-entidad
+                for rel in relaciones_estructurales.get("entidad_relacion", []):
+                    relaciones_entidades_data.append({
+                        "id_entidad_origen": str(rel.get("entidad_origen_id", "")),
+                        "id_entidad_destino": str(rel.get("entidad_destino_id", "")),
+                        "tipo_relacion": rel.get("tipo_relacion", ""),
+                        "descripcion": rel.get("descripcion", ""),
+                        "fuerza_relacion": rel.get("fuerza_relacion", 5)
+                    })
+            
+            # Extraer relaciones temporales (hecho-hecho y contradicciones)
+            relaciones_temporales = relaciones_completas.get("relaciones_temporales", {})
+            if relaciones_temporales:
+                # Relaciones hecho-hecho
+                for rel in relaciones_temporales.get("hecho_relacionado", []):
+                    relaciones_hechos_data.append({
+                        "id_hecho_origen": str(rel.get("hecho_origen_id", "")),
+                        "id_hecho_destino": str(rel.get("hecho_destino_id", "")),
+                        "tipo_relacion": self._mapear_tipo_relacion_hecho(rel.get("tipo_relacion", "")),
+                        "descripcion_relacion": rel.get("descripcion_relacion", ""),
+                        "fuerza_relacion": rel.get("fuerza_relacion", 5)
+                    })
+                
+                # Contradicciones
+                for cont in relaciones_temporales.get("contradicciones", []):
+                    contradicciones_data.append({
+                        "id_hecho_principal": str(cont.get("hecho_principal_id", "")),
+                        "id_hecho_contradictorio": str(cont.get("hecho_contradictorio_id", "")),
+                        "tipo_contradiccion": self._mapear_tipo_contradiccion(cont.get("tipo_contradiccion", "")),
+                        "grado_contradiccion": cont.get("grado_contradiccion", 3),
+                        "descripcion": cont.get("descripcion", "")
+                    })
+        
+        # SEGUNDO: Convertir datos al formato esperado usando las relaciones extraídas
         hechos_data = []
+        # Procesar hechos
         for hecho in hechos:
             fecha_inicio_iso = None
             fecha_fin_iso = None
@@ -759,77 +878,137 @@ class PipelineCoordinator:
             if hasattr(hecho.metadata_hecho, 'fecha_fin') and hecho.metadata_hecho.fecha_fin:
                 fecha_fin_iso = f"{hecho.metadata_hecho.fecha_fin}T00:00:00Z"
             
+            # PRP DEBUGGING: Verificar contenido antes del mapeo (FRAGMENTOS)
+            texto_hecho = getattr(hecho, 'texto_original_del_hecho', None)
+            # Validación de texto del hecho
+            if not texto_hecho or texto_hecho.strip() == "":
+                self.base_logger.warning(f"Hecho {hecho.id_hecho} tiene texto vacío, omitiendo")
+                continue  # SALTAR hechos vacíos
+            
             hechos_data.append({
-                "id_temporal_hecho": str(hecho.id_hecho),
-                "descripcion_hecho": hecho.texto_original_del_hecho,
-                "tipo_hecho": hecho.metadata_hecho.tipo_hecho if hasattr(hecho.metadata_hecho, 'tipo_hecho') else "evento",
-                "relevancia_hecho": int(hecho.confianza_extraccion * 10),
-                "fecha_ocurrencia_hecho_inicio": fecha_inicio_iso,
-                "fecha_ocurrencia_hecho_fin": fecha_fin_iso,
-                "precision_temporal": hecho.metadata_hecho.precision_temporal if hasattr(hecho.metadata_hecho, 'precision_temporal') else None,
+                "id_temporal": str(hecho.id_hecho),
+                "contenido": hecho.texto_original_del_hecho,
+                "tipo_hecho": hecho.metadata_hecho.tipo_hecho if hasattr(hecho.metadata_hecho, 'tipo_hecho') else "SUCESO",
+                "importancia": int(hecho.confianza_extraccion * 10),
+                "fecha_ocurrencia_inicio": fecha_inicio_iso,
+                "fecha_ocurrencia_fin": fecha_fin_iso,
+                "precision_temporal": hecho.metadata_hecho.precision_temporal if hasattr(hecho.metadata_hecho, 'precision_temporal') else "desconocido",
+                "metadata": {
+                    "pais": hecho.metadata_hecho.pais if hasattr(hecho.metadata_hecho, 'pais') else [],
+                    "region": hecho.metadata_hecho.region if hasattr(hecho.metadata_hecho, 'region') else [],
+                    "ciudad": hecho.metadata_hecho.ciudad if hasattr(hecho.metadata_hecho, 'ciudad') else [],
+                    "etiquetas": []  # TODO: Agregar lógica para extraer etiquetas
+                },
+                # Campos adicionales para lógica interna
                 "es_evento_futuro": hecho.metadata_hecho.es_futuro if hasattr(hecho.metadata_hecho, 'es_futuro') else None,
                 "estado_programacion": hecho.metadata_hecho.estado_programacion if hasattr(hecho.metadata_hecho, 'estado_programacion') else None,
                 "detalle_complejo_hecho": hecho.metadata_hecho.model_dump() if hasattr(hecho.metadata_hecho, 'model_dump') else {},
-                "entidades_del_hecho": [
-                    {
-                        "id_temporal_entidad": str(ent_id),
-                        "nombre": f"Entidad_{ent_id}",  # CORREGIDO: sin sufijo
-                        "tipo": "MENCIONADA",
-                        "rol_en_hecho": "relacionada"
-                    } for ent_id in hecho.vinculado_a_entidades
-                ]
+                "entidades_del_hecho": []  # Se llenará después con las relaciones reales
             })
         
         entidades_data = []
-        logger.debug(f"=== DEBUG: Construyendo entidades_data con {len(entidades)} entidades ===")
+        # Construir datos de entidades
         for idx, entidad in enumerate(entidades):
             entidad_dict = {
                 "id": str(entidad.id_entidad),
                 "nombre": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
                 "tipo": entidad.tipo_entidad,
                 "descripcion": f"Entidad extraída con relevancia {entidad.relevancia_entidad}",
-                "relevancia_entidad_articulo": int(entidad.relevancia_entidad * 10),
-                "metadata_entidad": {
+                "relevancia": int(entidad.relevancia_entidad * 10),  # Cambio: relevancia_entidad_articulo → relevancia
+                "metadata": {  # Cambio: metadata_entidad → metadata
                     **(entidad.metadata_entidad.model_dump() if hasattr(entidad.metadata_entidad, 'model_dump') else {}),
                     "uri_wikidata": entidad.uri_wikidata,
                     "id_entidad_normalizada": str(entidad.id_entidad_normalizada) if entidad.id_entidad_normalizada else None,
                     "similitud_normalizacion": entidad.similitud_normalizacion
-                }
+                },
+                # Campos adicionales para compatibilidad con procesamiento
+                "id_entidad": entidad.id_entidad,
+                "texto_entidad": entidad.texto_entidad,
+                "tipo_entidad": entidad.tipo_entidad,
+                "relevancia_entidad": entidad.relevancia_entidad,
+                "metadata_entidad": entidad.metadata_entidad.model_dump() if hasattr(entidad.metadata_entidad, 'model_dump') else {}
             }
-            logger.debug(f"=== DEBUG: Entidad {idx} keys: {list(entidad_dict.keys())} ===")
-            logger.debug(f"=== DEBUG: Entidad {idx} nombre: {entidad_dict.get('nombre', 'NO TIENE nombre')} ===")
+            # Entidad procesada
             entidades_data.append(entidad_dict)
+        
+        # TERCERO: Poblar entidades_del_hecho usando las relaciones reales
+        for hecho_dict in hechos_data:
+            hecho_id = int(hecho_dict["id_temporal"])  # Convertir a int para comparar
+            
+            # Buscar relaciones hecho-entidad para este hecho
+            if hecho_id in relaciones_hecho_entidad:
+                for rel in relaciones_hecho_entidad[hecho_id]:
+                    entidad_id = rel["entidad_id"]
+                    
+                    # Construir el item según el nuevo modelo EntidadEnHechoItem
+                    hecho_dict["entidades_del_hecho"].append({
+                        "id_temporal": str(entidad_id),  # Cambio: id_temporal_entidad → id_temporal
+                        "tipo_relacion": rel["tipo_relacion"],
+                        "relevancia_en_hecho": rel["relevancia_en_hecho"]
+                    })
+            
+            # Si no hay relaciones detectadas, usar las de vinculado_a_entidades como fallback
+            if not hecho_dict["entidades_del_hecho"]:
+                # Buscar el hecho original
+                hecho_original = next((h for h in hechos if str(h.id_hecho) == hecho_dict["id_temporal"]), None)
+                if hecho_original and hasattr(hecho_original, 'vinculado_a_entidades'):
+                    for ent_id in hecho_original.vinculado_a_entidades:
+                        hecho_dict["entidades_del_hecho"].append({
+                            "id_temporal": str(ent_id),
+                            "tipo_relacion": "otro",  # Default
+                            "relevancia_en_hecho": 5  # Default
+                        })
         
         citas_data = []
         for cita in citas:
             citas_data.append({
                 "id_temporal_cita": str(cita.id_cita),
-                "texto_cita": cita.texto_cita,
-                "entidad_emisora_id_temporal": str(cita.id_entidad_citada) if cita.id_entidad_citada else None,
-                "nombre_entidad_emisora": cita.persona_citada,
-                "contexto_cita": cita.contexto_cita,
-                "relevancia_cita": 5
+                "cita": cita.texto_cita,  # ACTUALIZADO: texto_cita → cita
+                "id_temporal_entidad_emisora": str(cita.id_entidad_citada) if cita.id_entidad_citada else None,
+                "id_temporal_hecho_contexto": str(cita.metadata_cita.hecho_relacionado_id) if hasattr(cita.metadata_cita, 'hecho_relacionado_id') and cita.metadata_cita.hecho_relacionado_id else None,
+                "fecha_cita": f"{cita.metadata_cita.fecha}T00:00:00Z" if hasattr(cita.metadata_cita, 'fecha') and cita.metadata_cita.fecha else None,
+                "contexto": cita.contexto_cita,  # ACTUALIZADO: contexto_cita → contexto
+                "relevancia": cita.metadata_cita.relevancia if hasattr(cita.metadata_cita, 'relevancia') else 3,  # ACTUALIZADO
+                "nombre_entidad_emisora": cita.persona_citada
             })
         
         datos_data = []
         for dato in datos:
+            # Obtener ID del hecho relacionado si existe
+            id_temporal_hecho = "0"  # Default si no hay hecho relacionado
+            # TODO: Implementar mapeo real cuando se tenga la relación dato-hecho
+            
             datos_data.append({
+                # Campos principales alineados con RPC
+                "id_temporal_hecho": id_temporal_hecho,
+                "indicador": dato.descripcion_dato,  # Cambio: descripcion_dato → indicador
+                "categoria": dato.metadata_dato.categoria if hasattr(dato.metadata_dato, 'categoria') else "otro",
+                "valor_numerico": dato.valor_dato,  # Cambio: valor_dato → valor_numerico
+                "unidad": dato.unidad_dato,  # Cambio: unidad_dato → unidad
+                "ambito_geografico": dato.metadata_dato.ambito_geografico if hasattr(dato.metadata_dato, 'ambito_geografico') else [],
+                "periodo_referencia_inicio": dato.metadata_dato.periodo.inicio if hasattr(dato.metadata_dato, 'periodo') and dato.metadata_dato.periodo else None,
+                "periodo_referencia_fin": dato.metadata_dato.periodo.fin if hasattr(dato.metadata_dato, 'periodo') and dato.metadata_dato.periodo else None,
+                "tendencia": dato.metadata_dato.tendencia if hasattr(dato.metadata_dato, 'tendencia') else None,
+                
+                # Campos temporales
                 "id_temporal_dato": str(dato.id_dato_cuantitativo),
+                
+                # Campos adicionales para compatibilidad con DatosCuantitativos
+                "id_dato_cuantitativo": dato.id_dato_cuantitativo,
                 "descripcion_dato": dato.descripcion_dato,
                 "valor_dato": dato.valor_dato,
                 "unidad_dato": dato.unidad_dato,
                 "fecha_dato": dato.fecha_dato,
                 "contexto_dato": f"Extraído del artículo {articulo_original.id_articulo}",
-                "relevancia_dato": 5
+                "relevancia_dato": 5,  # Default
+                
+                # Campos adicionales no procesados por RPC pero disponibles
+                "tipo_periodo": dato.metadata_dato.tipo_periodo if hasattr(dato.metadata_dato, 'tipo_periodo') else None,
+                "valor_anterior": dato.metadata_dato.valor_anterior if hasattr(dato.metadata_dato, 'valor_anterior') else None,
+                "variacion_absoluta": dato.metadata_dato.variacion_absoluta if hasattr(dato.metadata_dato, 'variacion_absoluta') else None,
+                "variacion_porcentual": dato.metadata_dato.variacion_porcentual if hasattr(dato.metadata_dato, 'variacion_porcentual') else None
             })
-        
-        # Llamar a construir_payload_articulo_from_model con todos los datos
-        logger.debug(f"=== DEBUG: Antes de llamar payload_builder ===")
-        logger.debug(f"=== DEBUG: entidades_data tiene {len(entidades_data)} entidades ===")
-        if entidades_data:
-            logger.debug(f"=== DEBUG: Primera entidad keys: {list(entidades_data[0].keys())} ===")
-            logger.debug(f"=== DEBUG: Primera entidad completa: {entidades_data[0]} ===")
-        
+        # Construir payload usando el builder
         return self.payload_builder.construir_payload_articulo_from_model(
             articulo_model=articulo_original,
             resultado_procesamiento=resultado_procesamiento,
@@ -837,9 +1016,9 @@ class PipelineCoordinator:
             entidades_extraidas=entidades_data,
             citas_extraidas=citas_data,
             datos_extraidos=datos_data,
-            relaciones_hechos=None,  # TODO: Implementar cuando estén disponibles
-            relaciones_entidades=None,  # TODO: Implementar cuando estén disponibles
-            contradicciones_detectadas=None  # TODO: Implementar cuando estén disponibles
+            relaciones_hechos=relaciones_hechos_data,
+            relaciones_entidades=relaciones_entidades_data,
+            contradicciones_detectadas=contradicciones_data
         )
     
     # === MÉTODOS MOCK PARA FASES AÚN NO IMPLEMENTADAS ===
@@ -989,6 +1168,47 @@ class PipelineCoordinator:
             groq_api_key=groq_api_key,
             contexto_articulo=contexto_articulo
         )
+    
+    def _mapear_tipo_relacion_hecho(self, tipo_original: str) -> str:
+        """
+        Mapea tipos de relación hecho-hecho del formato LLM al esperado por BD.
+        """
+        mapeo = {
+            # Mapeos directos
+            "causa": "causa",
+            "consecuencia": "consecuencia",
+            "contexto_historico": "contexto_historico",
+            "respuesta_a": "respuesta_a",
+            "version_alternativa": "version_alternativa",
+            "seguimiento_de": "seguimiento_de",
+            
+            # Mapeos que requieren transformación
+            "causa-efecto": "causa",
+            "temporal_secuencial": "seguimiento_de",
+            "aclaracion": "aclaracion_de",
+            "aclaracion_de": "aclaracion_de"
+        }
+        return mapeo.get(tipo_original, tipo_original)
+    
+    def _mapear_tipo_contradiccion(self, tipo_original: str) -> str:
+        """
+        Mapea tipos de contradicción del formato LLM al esperado por BD.
+        """
+        mapeo = {
+            # Mapeos directos
+            "fecha": "fecha",
+            "contenido": "contenido",
+            "entidades": "entidades",
+            "ubicacion": "ubicacion",
+            "valor": "valor",
+            "completa": "completa",
+            
+            # Mapeos que requieren transformación
+            "temporal": "fecha",
+            "logica": "contenido",
+            "factual": "valor"
+        }
+        return mapeo.get(tipo_original, "contenido")  # Default a contenido
 
 
 # Factory function para conveniencia
@@ -997,7 +1217,6 @@ def create_pipeline_coordinator() -> PipelineCoordinator:
     return PipelineCoordinator()
 
 
-# Testing
 if __name__ == "__main__":
     from uuid import uuid4
     

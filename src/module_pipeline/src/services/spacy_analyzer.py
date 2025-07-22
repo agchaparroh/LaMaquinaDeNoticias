@@ -22,7 +22,10 @@ except ImportError:
     Doc = None
     Token = None
 
-from loguru import logger
+from ..utils.logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("SpacyAnalyzer")
 from ..models.analisis import AnalisisComponentes
 from ..config import get_spacy_model_name, get_spacy_fallback_models
 

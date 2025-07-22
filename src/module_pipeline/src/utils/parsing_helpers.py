@@ -8,12 +8,13 @@ ANTES: Información específica se perdía al mapear todo a Dict[str, Any]
 DESPUÉS: Cada campo específico se mapea a su modelo Pydantic correspondiente
 """
 import json
-import logging
 from typing import Dict, List, Any
 from ..models.metadatos import MetadatosHecho, MetadatosEntidad, MetadatosCita, MetadatosDato, PeriodoReferencia
 from ..utils.validation import escape_html  # ✅ Importar función de sanitización
+from ..utils.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+# Configurar logger para este módulo
+logger = get_logger("ParsingHelpers")
 
 def parsear_metadatos_hecho_desde_json(hecho_data: Dict[str, Any]) -> MetadatosHecho:
     """

@@ -1,7 +1,5 @@
 -- Función RPC: actualizar_articulo_procesado
 -- Propósito: Actualizar artículos existentes con resultados del procesamiento del pipeline
--- Autor: Sistema
--- Fecha: 2025-01-19
 
 CREATE OR REPLACE FUNCTION actualizar_articulo_procesado(datos_json JSONB)
 RETURNS JSONB
@@ -75,13 +73,20 @@ BEGIN
         fecha_procesamiento = now(),
         
         -- Resultados del pipeline
-        resumen = datos_json->>'resumen_generado_pipeline',
+        resumen = datos_json->>'resumen',
         categorias_asignadas = CASE 
-            WHEN datos_json ? 'categorias_asignadas_ia' 
-            THEN ARRAY(SELECT jsonb_array_elements_text(datos_json->'categorias_asignadas_ia'))
+            WHEN datos_json ? 'categorias_asignadas' 
+            THEN ARRAY(SELECT jsonb_array_elements_text(datos_json->'categorias_asignadas'))
             ELSE NULL 
         END,
-        puntuacion_relevancia = (datos_json->>'score_relevancia')::INTEGER,
+        puntuacion_relevancia = (datos_json->>'puntuacion_relevancia')::INTEGER,
+        
+        -- Area geográfica: solo actualizar si viene explícitamente en el JSON
+        area_geografica = CASE
+            WHEN datos_json ? 'area_geografica'
+            THEN datos_json->>'area_geografica'
+            ELSE area_geografica
+        END,
         
         -- Embeddings si vienen (por ahora comentado porque no tenemos la extensión pgvector)
         -- embedding_articulo = CASE
@@ -99,9 +104,9 @@ BEGIN
     IF datos_json ? 'entidades_autonomas' THEN
         FOR v_entidad IN SELECT * FROM jsonb_array_elements(datos_json->'entidades_autonomas')
         LOOP
-            -- Verificar si ya existe por db_id
-            IF v_entidad ? 'db_id' AND v_entidad->>'db_id' IS NOT NULL THEN
-                v_entidad_id := (v_entidad->>'db_id')::BIGINT;
+            -- Verificar si ya existe por id_entidad_normalizada
+            IF v_entidad ? 'id_entidad_normalizada' AND v_entidad->>'id_entidad_normalizada' IS NOT NULL THEN
+                v_entidad_id := (v_entidad->>'id_entidad_normalizada')::BIGINT;
                 v_num_entidades_insertadas := v_num_entidades_insertadas + 1;
             ELSE
                 -- Insertar nueva entidad
@@ -114,16 +119,16 @@ BEGIN
                     metadata
                 )
                 VALUES (
-                    v_entidad->>'nombre_entidad',
-                    v_entidad->>'tipo_entidad',
-                    v_entidad->>'descripcion_entidad',
+                    v_entidad->>'nombre',
+                    v_entidad->>'tipo',
+                    v_entidad->>'descripcion',
                     CASE 
                         WHEN v_entidad ? 'alias' 
                         THEN ARRAY(SELECT jsonb_array_elements_text(v_entidad->'alias'))
                         ELSE NULL 
                     END,
-                    COALESCE((v_entidad->>'relevancia_entidad')::INTEGER, 5),
-                    v_entidad->'metadata_entidad'
+                    COALESCE((v_entidad->>'relevancia')::INTEGER, 5),
+                    v_entidad->'metadata'
                 )
                 RETURNING id INTO v_entidad_id;
                 
@@ -133,7 +138,7 @@ BEGIN
             
             -- Mapear ID temporal
             temp_entidad_id_map := temp_entidad_id_map || 
-                jsonb_build_object((v_entidad->>'id_temporal_entidad')::TEXT, v_entidad_id::TEXT);
+                jsonb_build_object((v_entidad->>'id_temporal')::TEXT, v_entidad_id::TEXT);
         END LOOP;
     END IF;
     
@@ -144,13 +149,13 @@ BEGIN
             -- Construir fecha de ocurrencia
             v_fecha_ocurrencia_hecho := tstzrange(
                 CASE 
-                    WHEN v_hecho ? 'fecha_ocurrencia_hecho_inicio' 
-                    THEN (v_hecho->>'fecha_ocurrencia_hecho_inicio')::TIMESTAMPTZ
+                    WHEN v_hecho ? 'fecha_ocurrencia_inicio' 
+                    THEN (v_hecho->>'fecha_ocurrencia_inicio')::TIMESTAMPTZ
                     ELSE (SELECT fecha_publicacion FROM articulos WHERE id = v_articulo_id)
                 END,
                 CASE 
-                    WHEN v_hecho ? 'fecha_ocurrencia_hecho_fin' 
-                    THEN (v_hecho->>'fecha_ocurrencia_hecho_fin')::TIMESTAMPTZ
+                    WHEN v_hecho ? 'fecha_ocurrencia_fin' 
+                    THEN (v_hecho->>'fecha_ocurrencia_fin')::TIMESTAMPTZ
                     ELSE (SELECT fecha_publicacion FROM articulos WHERE id = v_articulo_id)
                 END
             );
@@ -159,6 +164,7 @@ BEGIN
             INSERT INTO hechos (
                 contenido,
                 fecha_ocurrencia,
+                precision_temporal,
                 tipo_hecho,
                 importancia,
                 pais,
@@ -168,28 +174,29 @@ BEGIN
                 fecha_ingreso
             )
             VALUES (
-                v_hecho->>'descripcion_hecho',
+                v_hecho->>'contenido',
                 v_fecha_ocurrencia_hecho,
-                COALESCE(v_hecho->>'tipo_hecho', 'evento'),
-                COALESCE((v_hecho->>'relevancia_hecho')::INTEGER, 5),
+                COALESCE(v_hecho->>'precision_temporal', 'desconocido'),  -- Default a 'desconocido' si no viene
+                COALESCE(v_hecho->>'tipo_hecho', 'SUCESO'),
+                COALESCE((v_hecho->>'importancia')::INTEGER, 5),
                 CASE 
-                    WHEN v_hecho->'metadata_hecho' ? 'pais' 
-                    THEN ARRAY(SELECT jsonb_array_elements_text(v_hecho->'metadata_hecho'->'pais'))
+                    WHEN v_hecho->'metadata' ? 'pais' 
+                    THEN ARRAY(SELECT jsonb_array_elements_text(v_hecho->'metadata'->'pais'))
                     ELSE ARRAY[]::VARCHAR[] 
                 END,
                 CASE 
-                    WHEN v_hecho->'metadata_hecho' ? 'region' 
-                    THEN ARRAY(SELECT jsonb_array_elements_text(v_hecho->'metadata_hecho'->'region'))
+                    WHEN v_hecho->'metadata' ? 'region' 
+                    THEN ARRAY(SELECT jsonb_array_elements_text(v_hecho->'metadata'->'region'))
                     ELSE NULL 
                 END,
                 CASE 
-                    WHEN v_hecho->'metadata_hecho' ? 'ciudad' 
-                    THEN ARRAY(SELECT jsonb_array_elements_text(v_hecho->'metadata_hecho'->'ciudad'))
+                    WHEN v_hecho->'metadata' ? 'ciudad' 
+                    THEN ARRAY(SELECT jsonb_array_elements_text(v_hecho->'metadata'->'ciudad'))
                     ELSE NULL 
                 END,
                 CASE 
-                    WHEN v_hecho->'metadata_hecho' ? 'etiquetas' 
-                    THEN ARRAY(SELECT jsonb_array_elements_text(v_hecho->'metadata_hecho'->'etiquetas'))
+                    WHEN v_hecho->'metadata' ? 'etiquetas' 
+                    THEN ARRAY(SELECT jsonb_array_elements_text(v_hecho->'metadata'->'etiquetas'))
                     ELSE NULL 
                 END,
                 now()
@@ -214,7 +221,7 @@ BEGIN
             
             -- Mapear ID temporal
             temp_hecho_id_map := temp_hecho_id_map || 
-                jsonb_build_object((v_hecho->>'id_temporal_hecho')::TEXT, v_hecho_id::TEXT);
+                jsonb_build_object((v_hecho->>'id_temporal')::TEXT, v_hecho_id::TEXT);
             
             v_num_hechos_insertados := v_num_hechos_insertados + 1;
             
@@ -223,7 +230,7 @@ BEGIN
                 FOR v_entidad IN SELECT * FROM jsonb_array_elements(v_hecho->'entidades_del_hecho')
                 LOOP
                     -- Obtener ID real de la entidad
-                    v_entidad_id := (temp_entidad_id_map->>(v_entidad->>'id_temporal_entidad'))::BIGINT;
+                    v_entidad_id := (temp_entidad_id_map->>(v_entidad->>'id_temporal'))::BIGINT;
                     
                     IF v_entidad_id IS NOT NULL THEN
                         -- Insertar relación hecho-entidad
@@ -238,7 +245,7 @@ BEGIN
                             v_hecho_id,
                             v_fecha_ocurrencia_hecho,
                             v_entidad_id,
-                            COALESCE(v_entidad->>'tipo_relacion', 'mencionada'),
+                            COALESCE(v_entidad->>'tipo_relacion', 'otro'),
                             COALESCE((v_entidad->>'relevancia_en_hecho')::INTEGER, 5)
                         )
                         ON CONFLICT (hecho_id, fecha_ocurrencia_hecho, entidad_id, tipo_relacion) 
@@ -262,8 +269,8 @@ BEGIN
             END IF;
             
             v_hecho_id := NULL;
-            IF v_cita ? 'id_temporal_hecho_principal' THEN
-                v_hecho_id := (temp_hecho_id_map->>(v_cita->>'id_temporal_hecho_principal'))::BIGINT;
+            IF v_cita ? 'id_temporal_hecho_contexto' THEN
+                v_hecho_id := (temp_hecho_id_map->>(v_cita->>'id_temporal_hecho_contexto'))::BIGINT;
             END IF;
             
             -- Insertar cita
@@ -277,7 +284,7 @@ BEGIN
                 relevancia
             )
             VALUES (
-                v_cita->>'texto_cita',
+                v_cita->>'cita',
                 v_entidad_id,
                 v_articulo_id,
                 v_hecho_id,
@@ -286,8 +293,8 @@ BEGIN
                     THEN (v_cita->>'fecha_cita')::TIMESTAMPTZ
                     ELSE (SELECT fecha_publicacion FROM articulos WHERE id = v_articulo_id)
                 END,
-                v_cita->>'contexto_cita',
-                COALESCE((v_cita->>'relevancia_cita')::INTEGER, 3)
+                v_cita->>'contexto',
+                COALESCE((v_cita->>'relevancia')::INTEGER, 3)
             );
             
             v_num_citas_insertadas := v_num_citas_insertadas + 1;
@@ -300,8 +307,8 @@ BEGIN
         LOOP
             -- Obtener ID real del hecho relacionado
             v_hecho_id := NULL;
-            IF v_dato ? 'id_temporal_hecho_principal' THEN
-                v_hecho_id := (temp_hecho_id_map->>(v_dato->>'id_temporal_hecho_principal'))::BIGINT;
+            IF v_dato ? 'id_temporal_hecho' THEN
+                v_hecho_id := (temp_hecho_id_map->>(v_dato->>'id_temporal_hecho'))::BIGINT;
             END IF;
             
             -- Insertar dato cuantitativo
@@ -312,6 +319,7 @@ BEGIN
                 categoria,
                 valor_numerico,
                 unidad,
+                ambito_geografico,
                 periodo_referencia_inicio,
                 periodo_referencia_fin,
                 tendencia
@@ -319,21 +327,26 @@ BEGIN
             VALUES (
                 v_hecho_id,
                 v_articulo_id,
-                v_dato->>'indicador_dato',
-                v_dato->>'categoria_dato',
-                (v_dato->>'valor_dato')::NUMERIC,
-                v_dato->>'unidad_dato',
+                v_dato->>'indicador',
+                v_dato->>'categoria',
+                (v_dato->>'valor_numerico')::NUMERIC,
+                v_dato->>'unidad',
                 CASE 
-                    WHEN v_dato ? 'periodo_inicio' 
-                    THEN (v_dato->>'periodo_inicio')::DATE
+                    WHEN v_dato ? 'ambito_geografico' 
+                    THEN ARRAY(SELECT jsonb_array_elements_text(v_dato->'ambito_geografico'))
+                    ELSE ARRAY[]::VARCHAR[]  -- Array vacío por defecto
+                END,
+                CASE 
+                    WHEN v_dato ? 'periodo_referencia_inicio' 
+                    THEN (v_dato->>'periodo_referencia_inicio')::DATE
                     ELSE NULL 
                 END,
                 CASE 
-                    WHEN v_dato ? 'periodo_fin' 
-                    THEN (v_dato->>'periodo_fin')::DATE
+                    WHEN v_dato ? 'periodo_referencia_fin' 
+                    THEN (v_dato->>'periodo_referencia_fin')::DATE
                     ELSE NULL 
                 END,
-                v_dato->>'tendencia_dato'
+                v_dato->>'tendencia'
             );
             
             v_num_datos_insertados := v_num_datos_insertados + 1;
@@ -415,7 +428,7 @@ BEGIN
                         v_entidad_origen_id,
                         v_entidad_destino_id,
                         v_relacion->>'tipo_relacion',
-                        v_relacion->>'descripcion_relacion',
+                        v_relacion->>'descripcion',
                         COALESCE((v_relacion->>'fuerza_relacion')::INTEGER, 5)
                     )
                     ON CONFLICT (entidad_origen_id, entidad_destino_id, tipo_relacion) 
@@ -466,7 +479,7 @@ BEGIN
                         v_fecha_contradictoria,
                         v_relacion->>'tipo_contradiccion',
                         COALESCE((v_relacion->>'grado_contradiccion')::INTEGER, 3),
-                        v_relacion->>'descripcion_contradiccion'
+                        v_relacion->>'descripcion'
                     );
                     
                     v_num_relaciones_insertadas := v_num_relaciones_insertadas + 1;

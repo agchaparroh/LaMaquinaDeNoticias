@@ -16,7 +16,10 @@ Maneja:
 import json
 import re
 from typing import Dict, Any, Optional, Tuple
-from loguru import logger
+from .logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("JSONParser")
 
 
 class LLMJSONParseError(Exception):

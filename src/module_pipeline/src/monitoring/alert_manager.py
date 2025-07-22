@@ -24,7 +24,10 @@ from collections import defaultdict, deque
 import threading
 import uuid
 
-from loguru import logger
+from ..utils.logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("AlertManager")
 
 from ..utils.error_handling import ErrorType, ErrorPhase
 from ..utils.config import get_logging_config

@@ -1,7 +1,10 @@
 import os
 from typing import Union
 from groq import Groq, APIConnectionError, RateLimitError, APIStatusError
-from loguru import logger
+from ..utils.logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("GroqService")
 
 # Importar configuración usando import relativo
 from ..config import settings

@@ -10,7 +10,10 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass
 import os
 
-from loguru import logger
+from ..utils.logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("AdaptiveFlowController")
 from ..models.analisis import AnalisisComponentes, FlowDecision
 
 

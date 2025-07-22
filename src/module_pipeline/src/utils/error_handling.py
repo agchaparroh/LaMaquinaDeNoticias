@@ -539,7 +539,10 @@ from tenacity import (
     after_log,
     RetryError
 )
-from loguru import logger
+from .logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("ErrorHandling")
 import asyncio
 
 

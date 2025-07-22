@@ -18,7 +18,10 @@ import asyncio
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
-from loguru import logger
+from ..utils.logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("Fase7_Normalizacion")
 
 # Importar modelos
 from ..models.procesamiento import (

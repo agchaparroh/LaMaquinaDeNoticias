@@ -14,7 +14,10 @@ SOLUCIÓN IMPLEMENTADA:
 """
 
 from typing import Dict, Any, Optional, Tuple, List
-from loguru import logger
+from .logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("FragmentProcessor")
 
 # No importar logging_config para evitar import circular
 

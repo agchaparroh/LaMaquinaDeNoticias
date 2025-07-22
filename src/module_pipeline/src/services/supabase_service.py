@@ -13,7 +13,10 @@ from typing import Optional, Dict, Any, List, Tuple, Union
 from functools import lru_cache
 import time
 from supabase import create_client, Client
-from loguru import logger
+from ..utils.logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("SupabaseService")
 from pydantic import BaseModel
 
 from ..utils.config import SUPABASE_URL, SUPABASE_KEY, MAX_RETRIES, MAX_WAIT_SECONDS

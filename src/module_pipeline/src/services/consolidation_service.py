@@ -11,7 +11,10 @@ from dataclasses import dataclass
 from collections import defaultdict
 import difflib
 import time
-from loguru import logger
+from ..utils.logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("ConsolidationService")
 
 from ..models.procesamiento import (
     EntidadProcesada,

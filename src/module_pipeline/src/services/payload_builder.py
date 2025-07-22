@@ -1,8 +1,8 @@
 from typing import Dict, Any, List, Optional, Set, TYPE_CHECKING
-from loguru import logger
 from pydantic import ValidationError # Asegurar que ValidationError esté importado
 import hashlib
 import json
+from ..utils.logging_config import get_logger
 
 if TYPE_CHECKING:
     from ..models.entrada import ArticuloProcesableItem
@@ -36,7 +36,7 @@ class PayloadBuilder:
     """
 
     def __init__(self):
-        self.logger = logger.bind(service="PayloadBuilder")
+        self.logger = get_logger("PayloadBuilder")
         self.logger.info("PayloadBuilder inicializado.")
     
     def _generar_checksum(self, data: Dict[str, Any]) -> str:
@@ -89,14 +89,14 @@ class PayloadBuilder:
         
         # Recolectar IDs de entidades autónomas
         for entidad in data.get('entidades_autonomas', []):
-            if 'id_temporal_entidad' in entidad:
-                ids['entidades'].add(entidad['id_temporal_entidad'])
+            if 'id_temporal' in entidad:
+                ids['entidades'].add(entidad['id_temporal'])
         
         # Recolectar IDs de entidades en hechos
         for hecho in data.get('hechos_extraidos', []):
             for entidad in hecho.get('entidades_del_hecho', []):
-                if 'id_temporal_entidad' in entidad:
-                    ids['entidades'].add(entidad['id_temporal_entidad'])
+                if 'id_temporal' in entidad:
+                    ids['entidades'].add(entidad['id_temporal'])
         
         # Recolectar IDs de citas
         for cita in data.get('citas_textuales_extraidas', []):
@@ -125,8 +125,9 @@ class PayloadBuilder:
         
         # Validar referencias en relaciones de hechos
         for relacion in data.get('relaciones_hechos', []):
-            origen_id = relacion.get('hecho_origen_id_temporal')
-            destino_id = relacion.get('hecho_destino_id_temporal')
+            # Los modelos actualizados usan id_hecho_origen e id_hecho_destino
+            origen_id = relacion.get('id_hecho_origen', relacion.get('hecho_origen_id_temporal'))
+            destino_id = relacion.get('id_hecho_destino', relacion.get('hecho_destino_id_temporal'))
             
             if origen_id and origen_id not in ids_existentes['hechos']:
                 errores.append(f"Relación hechos: ID origen '{origen_id}' no existe")
@@ -135,8 +136,9 @@ class PayloadBuilder:
         
         # Validar referencias en relaciones de entidades
         for relacion in data.get('relaciones_entidades', []):
-            origen_id = relacion.get('entidad_origen_id_temporal')
-            destino_id = relacion.get('entidad_destino_id_temporal')
+            # Los modelos actualizados usan id_entidad_origen e id_entidad_destino
+            origen_id = relacion.get('id_entidad_origen', relacion.get('entidad_origen_id_temporal'))
+            destino_id = relacion.get('id_entidad_destino', relacion.get('entidad_destino_id_temporal'))
             
             if origen_id and origen_id not in ids_existentes['entidades']:
                 errores.append(f"Relación entidades: ID origen '{origen_id}' no existe")
@@ -145,8 +147,9 @@ class PayloadBuilder:
         
         # Validar referencias en contradicciones
         for contradiccion in data.get('contradicciones_detectadas', []):
-            principal_id = contradiccion.get('hecho_principal_id_temporal')
-            contradictorio_id = contradiccion.get('hecho_contradictorio_id_temporal')
+            # Los modelos actualizados usan id_hecho_principal e id_hecho_contradictorio
+            principal_id = contradiccion.get('id_hecho_principal', contradiccion.get('hecho_principal_id_temporal'))
+            contradictorio_id = contradiccion.get('id_hecho_contradictorio', contradiccion.get('hecho_contradictorio_id_temporal'))
             
             if principal_id and principal_id not in ids_existentes['hechos']:
                 errores.append(f"Contradicción: ID principal '{principal_id}' no existe")
@@ -225,13 +228,13 @@ class PayloadBuilder:
         
         # Validar URIs de Wikidata en entidades
         for entidad in data.get('entidades_autonomas', []):
-            if 'wikidata_uri' in entidad.get('metadata_entidad', {}):
-                uri = entidad['metadata_entidad']['wikidata_uri']
+            if 'wikidata_uri' in entidad.get('metadata', {}):
+                uri = entidad['metadata']['wikidata_uri']
                 try:
                     validate_wikidata_uri(uri)
                     # Si llegamos aquí, la URI es válida
                 except ValueError as e:
-                    errores.append(f"Entidad '{entidad.get('nombre_entidad', '?')}': {str(e)}")
+                    errores.append(f"Entidad '{entidad.get('nombre', '?')}': {str(e)}")
         
         return errores
     
@@ -415,7 +418,22 @@ class PayloadBuilder:
                     self.logger.debug(f"=== DEBUG PayloadBuilder: Primera entidad recibida: {entidades_autonomas_data[0]} ===")
                     self.logger.debug(f"=== DEBUG PayloadBuilder: Keys de primera entidad: {list(entidades_autonomas_data[0].keys())} ===")
                 
-                payload_data["entidades_autonomas"] = [EntidadAutonomaItem(**item) for item in entidades_autonomas_data]
+                # Mapear campos a los nombres esperados por EntidadAutonomaItem
+                entidades_mapeadas = []
+                for item in entidades_autonomas_data:
+                    entidad_mapeada = {
+                        'id': str(item.get('id_entidad', item.get('id', ''))),
+                        'nombre': item.get('nombre', item.get('texto_entidad', '')),
+                        'tipo': item.get('tipo', item.get('tipo_entidad', '')),
+                        'descripcion': item.get('descripcion', ''),
+                        'alias': item.get('alias', []),
+                        'relevancia': item.get('relevancia', int(item.get('relevancia_entidad', 0.8) * 10) if isinstance(item.get('relevancia_entidad', 0), float) else item.get('relevancia_entidad', 8)),
+                        'metadata': item.get('metadata', item.get('metadata_entidad', {})),
+                        'id_temporal': str(item.get('id_entidad', item.get('id', '')))
+                    }
+                    entidades_mapeadas.append(entidad_mapeada)
+                
+                payload_data["entidades_autonomas"] = [EntidadAutonomaItem(**item) for item in entidades_mapeadas]
             else:
                 payload_data["entidades_autonomas"] = []
 
@@ -425,22 +443,88 @@ class PayloadBuilder:
                 payload_data["citas_textuales_extraidas"] = []
 
             if datos_cuantitativos_data is not None:
-                payload_data["datos_cuantitativos_extraidos"] = [DatoCuantitativoExtraidoItem(**item) for item in datos_cuantitativos_data]
+                # Mapear campos a los nombres esperados por DatoCuantitativoExtraidoItem
+                datos_mapeados = []
+                for item in datos_cuantitativos_data:
+                    dato_mapeado = {
+                        # Campos principales esperados por RPC
+                        'id_temporal_hecho': item.get('id_temporal_hecho', item.get('hecho_principal_relacionado_id_temporal', '')),
+                        'indicador': item.get('indicador', item.get('descripcion_dato', '')),
+                        'categoria': item.get('categoria', 'otro'),
+                        'valor_numerico': item.get('valor_numerico', item.get('valor_dato', 0)),
+                        'unidad': item.get('unidad', item.get('unidad_dato', '')),
+                        'ambito_geografico': item.get('ambito_geografico', []),
+                        'periodo_referencia_inicio': item.get('periodo_referencia_inicio'),
+                        'periodo_referencia_fin': item.get('periodo_referencia_fin'),
+                        'tendencia': item.get('tendencia'),
+                        
+                        # Campos temporales
+                        'id_temporal_dato': item.get('id_temporal_dato', str(item.get('id_dato_cuantitativo', item.get('id', '')))),
+                        
+                        # Campos adicionales no procesados por RPC pero útiles
+                        'tipo_periodo': item.get('tipo_periodo'),
+                        'valor_anterior': item.get('valor_anterior'),
+                        'variacion_absoluta': item.get('variacion_absoluta'),
+                        'variacion_porcentual': item.get('variacion_porcentual'),
+                        'fuente_especifica': item.get('fuente_especifica'),
+                        'fecha_dato': item.get('fecha_dato'),
+                        'contexto_dato': item.get('contexto_dato'),
+                        'relevancia_dato': item.get('relevancia_dato')
+                    }
+                    datos_mapeados.append(dato_mapeado)
+                
+                payload_data["datos_cuantitativos_extraidos"] = [DatoCuantitativoExtraidoItem(**item) for item in datos_mapeados]
             else:
                 payload_data["datos_cuantitativos_extraidos"] = []
             
             if relaciones_hechos_data is not None:
-                payload_data["relaciones_hechos"] = [RelacionHechosItem(**item) for item in relaciones_hechos_data]
+                # Mapear campos a los nombres esperados por RelacionHechosItem
+                relaciones_mapeadas = []
+                for item in relaciones_hechos_data:
+                    relacion_mapeada = {
+                        'id_hecho_origen': str(item.get('hecho_origen_id', item.get('id_hecho_origen', ''))),
+                        'id_hecho_destino': str(item.get('hecho_destino_id', item.get('id_hecho_destino', ''))),
+                        'tipo_relacion': item.get('tipo_relacion', ''),
+                        'descripcion_relacion': item.get('descripcion_relacion', item.get('descripcion', '')),
+                        'fuerza_relacion': item.get('fuerza_relacion', 5)
+                    }
+                    relaciones_mapeadas.append(relacion_mapeada)
+                
+                payload_data["relaciones_hechos"] = [RelacionHechosItem(**item) for item in relaciones_mapeadas]
             else:
                 payload_data["relaciones_hechos"] = []
 
             if relaciones_entidades_data is not None:
-                payload_data["relaciones_entidades"] = [RelacionEntidadesItem(**item) for item in relaciones_entidades_data]
+                # Mapear campos a los nombres esperados por RelacionEntidadesItem
+                relaciones_mapeadas = []
+                for item in relaciones_entidades_data:
+                    relacion_mapeada = {
+                        'id_entidad_origen': str(item.get('entidad_origen_id', item.get('id_entidad_origen', ''))),
+                        'id_entidad_destino': str(item.get('entidad_destino_id', item.get('id_entidad_destino', ''))),
+                        'tipo_relacion': item.get('tipo_relacion', ''),
+                        'descripcion': item.get('descripcion', item.get('descripcion_relacion', '')),
+                        'fuerza_relacion': item.get('fuerza_relacion', 5)
+                    }
+                    relaciones_mapeadas.append(relacion_mapeada)
+                
+                payload_data["relaciones_entidades"] = [RelacionEntidadesItem(**item) for item in relaciones_mapeadas]
             else:
                 payload_data["relaciones_entidades"] = []
 
             if contradicciones_detectadas_data is not None:
-                payload_data["contradicciones_detectadas"] = [ContradiccionDetectadaItem(**item) for item in contradicciones_detectadas_data]
+                # Mapear campos a los nombres esperados por ContradiccionDetectadaItem
+                contradicciones_mapeadas = []
+                for item in contradicciones_detectadas_data:
+                    contradiccion_mapeada = {
+                        'id_hecho_principal': str(item.get('hecho_principal_id', item.get('id_hecho_principal', ''))),
+                        'id_hecho_contradictorio': str(item.get('hecho_contradictorio_id', item.get('id_hecho_contradictorio', ''))),
+                        'tipo_contradiccion': item.get('tipo_contradiccion', 'contenido'),
+                        'grado_contradiccion': item.get('grado_contradiccion', 3),
+                        'descripcion': item.get('descripcion', item.get('descripcion_contradiccion', ''))
+                    }
+                    contradicciones_mapeadas.append(contradiccion_mapeada)
+                
+                payload_data["contradicciones_detectadas"] = [ContradiccionDetectadaItem(**item) for item in contradicciones_mapeadas]
             else:
                 payload_data["contradicciones_detectadas"] = []
                 
@@ -542,7 +626,22 @@ class PayloadBuilder:
                 payload_data["hechos_extraidos"] = []
 
             if entidades_autonomas_data is not None:
-                payload_data["entidades_autonomas"] = [EntidadAutonomaItem(**item) for item in entidades_autonomas_data]
+                # Mapear campos a los nombres esperados por EntidadAutonomaItem
+                entidades_mapeadas = []
+                for item in entidades_autonomas_data:
+                    entidad_mapeada = {
+                        'id': str(item.get('id_entidad', item.get('id', ''))),
+                        'nombre': item.get('nombre', item.get('texto_entidad', '')),
+                        'tipo': item.get('tipo', item.get('tipo_entidad', '')),
+                        'descripcion': item.get('descripcion', ''),
+                        'alias': item.get('alias', []),
+                        'relevancia': item.get('relevancia', int(item.get('relevancia_entidad', 0.8) * 10) if isinstance(item.get('relevancia_entidad', 0), float) else item.get('relevancia_entidad', 8)),
+                        'metadata': item.get('metadata', item.get('metadata_entidad', {})),
+                        'id_temporal': str(item.get('id_entidad', item.get('id', '')))
+                    }
+                    entidades_mapeadas.append(entidad_mapeada)
+                
+                payload_data["entidades_autonomas"] = [EntidadAutonomaItem(**item) for item in entidades_mapeadas]
             else:
                 payload_data["entidades_autonomas"] = []
 
@@ -552,22 +651,88 @@ class PayloadBuilder:
                 payload_data["citas_textuales_extraidas"] = []
 
             if datos_cuantitativos_data is not None:
-                payload_data["datos_cuantitativos_extraidos"] = [DatoCuantitativoExtraidoItem(**item) for item in datos_cuantitativos_data]
+                # Mapear campos a los nombres esperados por DatoCuantitativoExtraidoItem
+                datos_mapeados = []
+                for item in datos_cuantitativos_data:
+                    dato_mapeado = {
+                        # Campos principales esperados por RPC
+                        'id_temporal_hecho': item.get('id_temporal_hecho', item.get('hecho_principal_relacionado_id_temporal', '')),
+                        'indicador': item.get('indicador', item.get('descripcion_dato', '')),
+                        'categoria': item.get('categoria', 'otro'),
+                        'valor_numerico': item.get('valor_numerico', item.get('valor_dato', 0)),
+                        'unidad': item.get('unidad', item.get('unidad_dato', '')),
+                        'ambito_geografico': item.get('ambito_geografico', []),
+                        'periodo_referencia_inicio': item.get('periodo_referencia_inicio'),
+                        'periodo_referencia_fin': item.get('periodo_referencia_fin'),
+                        'tendencia': item.get('tendencia'),
+                        
+                        # Campos temporales
+                        'id_temporal_dato': item.get('id_temporal_dato', str(item.get('id_dato_cuantitativo', item.get('id', '')))),
+                        
+                        # Campos adicionales no procesados por RPC pero útiles
+                        'tipo_periodo': item.get('tipo_periodo'),
+                        'valor_anterior': item.get('valor_anterior'),
+                        'variacion_absoluta': item.get('variacion_absoluta'),
+                        'variacion_porcentual': item.get('variacion_porcentual'),
+                        'fuente_especifica': item.get('fuente_especifica'),
+                        'fecha_dato': item.get('fecha_dato'),
+                        'contexto_dato': item.get('contexto_dato'),
+                        'relevancia_dato': item.get('relevancia_dato')
+                    }
+                    datos_mapeados.append(dato_mapeado)
+                
+                payload_data["datos_cuantitativos_extraidos"] = [DatoCuantitativoExtraidoItem(**item) for item in datos_mapeados]
             else:
                 payload_data["datos_cuantitativos_extraidos"] = []
             
             if relaciones_hechos_data is not None:
-                payload_data["relaciones_hechos"] = [RelacionHechosItem(**item) for item in relaciones_hechos_data]
+                # Mapear campos a los nombres esperados por RelacionHechosItem
+                relaciones_mapeadas = []
+                for item in relaciones_hechos_data:
+                    relacion_mapeada = {
+                        'id_hecho_origen': str(item.get('hecho_origen_id', item.get('id_hecho_origen', ''))),
+                        'id_hecho_destino': str(item.get('hecho_destino_id', item.get('id_hecho_destino', ''))),
+                        'tipo_relacion': item.get('tipo_relacion', ''),
+                        'descripcion_relacion': item.get('descripcion_relacion', item.get('descripcion', '')),
+                        'fuerza_relacion': item.get('fuerza_relacion', 5)
+                    }
+                    relaciones_mapeadas.append(relacion_mapeada)
+                
+                payload_data["relaciones_hechos"] = [RelacionHechosItem(**item) for item in relaciones_mapeadas]
             else:
                 payload_data["relaciones_hechos"] = []
 
             if relaciones_entidades_data is not None:
-                payload_data["relaciones_entidades"] = [RelacionEntidadesItem(**item) for item in relaciones_entidades_data]
+                # Mapear campos a los nombres esperados por RelacionEntidadesItem
+                relaciones_mapeadas = []
+                for item in relaciones_entidades_data:
+                    relacion_mapeada = {
+                        'id_entidad_origen': str(item.get('entidad_origen_id', item.get('id_entidad_origen', ''))),
+                        'id_entidad_destino': str(item.get('entidad_destino_id', item.get('id_entidad_destino', ''))),
+                        'tipo_relacion': item.get('tipo_relacion', ''),
+                        'descripcion': item.get('descripcion', item.get('descripcion_relacion', '')),
+                        'fuerza_relacion': item.get('fuerza_relacion', 5)
+                    }
+                    relaciones_mapeadas.append(relacion_mapeada)
+                
+                payload_data["relaciones_entidades"] = [RelacionEntidadesItem(**item) for item in relaciones_mapeadas]
             else:
                 payload_data["relaciones_entidades"] = []
 
             if contradicciones_detectadas_data is not None:
-                payload_data["contradicciones_detectadas"] = [ContradiccionDetectadaItem(**item) for item in contradicciones_detectadas_data]
+                # Mapear campos a los nombres esperados por ContradiccionDetectadaItem
+                contradicciones_mapeadas = []
+                for item in contradicciones_detectadas_data:
+                    contradiccion_mapeada = {
+                        'id_hecho_principal': str(item.get('hecho_principal_id', item.get('id_hecho_principal', ''))),
+                        'id_hecho_contradictorio': str(item.get('hecho_contradictorio_id', item.get('id_hecho_contradictorio', ''))),
+                        'tipo_contradiccion': item.get('tipo_contradiccion', 'contenido'),
+                        'grado_contradiccion': item.get('grado_contradiccion', 3),
+                        'descripcion': item.get('descripcion', item.get('descripcion_contradiccion', ''))
+                    }
+                    contradicciones_mapeadas.append(contradiccion_mapeada)
+                
+                payload_data["contradicciones_detectadas"] = [ContradiccionDetectadaItem(**item) for item in contradicciones_mapeadas]
             else:
                 payload_data["contradicciones_detectadas"] = []
             
@@ -617,9 +782,9 @@ if __name__ == '__main__':
             procesamiento_articulo_data=mock_procesamiento_articulo,
             hechos_extraidos_data=mock_hechos
         )
-        logger.info(f"Payload Artículo Generado: {payload_articulo.model_dump_json(indent=2)}")
+        print(f"Payload Artículo Generado: {payload_articulo.model_dump_json(indent=2)}")
     except ValueError as e:
-        logger.error(f"Error en prueba de payload artículo: {e}")
+        print(f"Error en prueba de payload artículo: {e}")
 
     # Datos mock para fragmento
     mock_metadatos_fragmento = {
@@ -637,6 +802,6 @@ if __name__ == '__main__':
             fecha_procesamiento_pipeline_fragmento="2024-01-15T12:05:00Z",
             estado_procesamiento_final_fragmento="completado_ok"
         )
-        logger.info(f"Payload Fragmento Generado: {payload_fragmento.model_dump_json(indent=2)}")
+        print(f"Payload Fragmento Generado: {payload_fragmento.model_dump_json(indent=2)}")
     except ValueError as e:
-        logger.error(f"Error en prueba de payload fragmento: {e}")
+        print(f"Error en prueba de payload fragmento: {e}")

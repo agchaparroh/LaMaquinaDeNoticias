@@ -19,7 +19,10 @@ except ImportError:
     import math
     HAS_NUMPY = False
 from functools import lru_cache
-from loguru import logger
+from .logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("SimilarityAlgorithms")
 
 
 @lru_cache(maxsize=2048)

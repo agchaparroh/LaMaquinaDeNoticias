@@ -14,7 +14,10 @@ import json
 import asyncio
 from pathlib import Path
 
-from loguru import logger
+from ..utils.logging_config import get_logger
+
+# Configurar logger para este módulo
+logger = get_logger("Fase5_Datos")
 
 # Importar modelos
 from ..models.procesamiento import (
@@ -475,19 +478,26 @@ def ejecutar_fase_5_datos(
         }
 
 
-def _contar_categorias_datos(datos: List[DatosCuantitativos]) -> Dict[str, int]:
+def _contar_categorias_datos(datos: List[Dict[str, Any]]) -> Dict[str, int]:
     """
     Cuenta los datos por categoría.
     
     Args:
-        datos: Lista de datos procesados
+        datos: Lista de datos procesados (diccionarios)
         
     Returns:
         Diccionario con conteo por categoría
     """
     conteo = {}
     for dato in datos:
-        categoria = dato.metadata_dato.categoria
+        # Usar campo 'categoria' alineado con RPC, con fallback a metadata_dato
+        categoria = dato.get("categoria")
+        if not categoria and isinstance(dato.get("metadata_dato"), dict):
+            categoria = dato["metadata_dato"].get("categoria", "otro")
+        elif not categoria and hasattr(dato.get("metadata_dato"), "categoria"):
+            categoria = dato["metadata_dato"].categoria
+        else:
+            categoria = categoria or "otro"
         conteo[categoria] = conteo.get(categoria, 0) + 1
     return conteo
 
@@ -501,7 +511,7 @@ async def _procesar_chunk_datos_async(
     contexto_articulo: Dict[str, Any],
     client: Any,
     fragment_processor: FragmentProcessor
-) -> Tuple[List[DatosCuantitativos], Dict[str, Any]]:
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """
     Procesa un chunk individual para extraer datos cuantitativos de forma asíncrona.
     """
@@ -547,7 +557,8 @@ async def _procesar_chunk_datos_async(
         datos_procesados = _procesar_datos_extraidos(
             datos_chunk,
             resultado_simplificacion.id_fragmento,
-            fragment_processor
+            fragment_processor,
+            hechos_chunk  # Pasar hechos para mapear referencias
         )
         
         logger.debug(f"Chunk {chunk_index + 1}: {len(datos_procesados)} datos extraídos")
