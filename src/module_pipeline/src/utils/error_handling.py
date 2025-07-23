@@ -1129,7 +1129,7 @@ def handle_groq_extraction_error_fase2(
     # Crear hecho básico según documentación
     hecho_basico = {
         "id_hecho": 1,
-        "texto_original_del_hecho": titulo or "[Sin título disponible]",
+        "contenido": titulo or "[Sin título disponible]",
         "metadata_hecho": {
             "tipo_hecho": "SUCESO",
             "es_fallback": True
@@ -1139,8 +1139,8 @@ def handle_groq_extraction_error_fase2(
     # Crear entidad genérica con el nombre del medio
     entidad_basica = {
         "id_entidad": 1,
-        "texto_entidad": medio or "[Medio desconocido]",
-        "tipo_entidad": "ORGANIZACION",
+        "nombre": medio or "[Medio desconocido]",
+        "tipo": "ORGANIZACION",
         "metadata_entidad": {
             "tipo": "ORGANIZACION",
             "es_fallback": True

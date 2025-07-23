@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "supabase-mcp": {
+      "command": "docker",
+      "args": [
+        "run", 
+        "--rm", 
+        "-i",
+        "--env-file", 
+        "/home/ec2-user/projects/LaMaquinaDeNoticias/MCP_BaseDeDatos/.env",
+        "supabase-mcp-server"
+      ],
+      "env": {
+        "QUERY_API_KEY": "your-api-key",
+        "SUPABASE_PROJECT_REF": "aukbzqbcvbsnjdhflyvr",
+        "SUPABASE_DB_PASSWORD": "LoginHttp2510",
+        "SUPABASE_REGION": "ap-southeast-1",
+        "SUPABASE_ACCESS_TOKEN": "sbp_07640ad4d514c804195f910ac4bf80f4690aa589",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1a2J6cWJjdmJzbmpkaGZseXZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NTkxMjY2NiwiZXhwIjoyMDYxNDg4NjY2fQ.83yZqoMnj15_qkEbvqwCQsDgObQpmBoQsd-spxywAsw",
+        "QUERY_API_URL": "http://127.0.0.1:8080/v1"
+      }
+    }
+  }
+}

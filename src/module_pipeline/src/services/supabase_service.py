@@ -704,7 +704,7 @@ class SupabaseService:
             # Agrupar por tipo para optimizar consultas
             entidades_por_tipo = {}
             for i, entidad in enumerate(entidades):
-                tipo = entidad.get('tipo_entidad', 'UNKNOWN')
+                tipo = entidad.get('tipo', 'UNKNOWN')
                 if tipo not in entidades_por_tipo:
                     entidades_por_tipo[tipo] = []
                 entidades_por_tipo[tipo].append((i, entidad))
@@ -713,12 +713,12 @@ class SupabaseService:
             
             # Procesar cada tipo en batch
             for tipo, entidades_tipo in entidades_por_tipo.items():
-                nombres = [ent['texto_entidad'] for _, ent in entidades_tipo]
+                nombres = [ent['nombre'] for _, ent in entidades_tipo]
                 
                 # Preparar payload batch para RPC
                 batch_payload = {
                     'entidades_nombres': nombres,
-                    'tipo_entidad': tipo,
+                    'tipo': tipo,
                     'umbral_similitud': 0.8
                 }
                 
@@ -747,7 +747,7 @@ class SupabaseService:
                         try:
                             # Usar método cacheado individual
                             similares = self.buscar_entidad_similar_cached(
-                                entidad['texto_entidad'], 
+                                entidad['nombre'], 
                                 tipo,
                                 0.8
                             )
@@ -775,8 +775,8 @@ class SupabaseService:
         """Normaliza una entidad individual con manejo de errores."""
         try:
             similares = self.buscar_entidad_similar_cached(
-                entidad['texto_entidad'],
-                entidad.get('tipo_entidad', 'UNKNOWN'),
+                entidad['nombre'],
+                entidad.get('tipo', 'UNKNOWN'),
                 0.8
             )
             if similares:

@@ -29,7 +29,11 @@ from ..models.procesamiento import (
     HechoProcesado,
     DatosCuantitativos,
     CitaTextual,
-    ResultadoFase4Normalizacion
+    ResultadoFase4Normalizacion,
+    HechoEntidadRelacion,
+    EntidadEntidadRelacion,
+    HechoHechoRelacion,
+    ContradiccionDetectada
 )
 
 # Importar servicios
@@ -122,7 +126,7 @@ def _preparar_contexto_relaciones(
         "hechos": [
             {
                 "id": h.id_hecho,
-                "contenido": h.texto_original_del_hecho,
+                "contenido": h.contenido,
                 "tipo": h.metadata_hecho.tipo_hecho
             }
             for h in hechos
@@ -130,8 +134,8 @@ def _preparar_contexto_relaciones(
         "entidades": [
             {
                 "id": e.id_entidad,
-                "nombre": e.texto_entidad,
-                "tipo": e.tipo_entidad
+                "nombre": e.nombre,
+                "tipo": e.tipo
             }
             for e in entidades
         ]
@@ -386,8 +390,8 @@ def ejecutar_fase_7a_normalizacion(
         try:
             # Intentar normalizar
             resultado = normalizador.normalizar_entidad(
-                nombre_entidad=entidad.texto_entidad,
-                tipo_entidad=entidad.tipo_entidad
+                nombre_entidad=entidad.nombre,
+                tipo_entidad=entidad.tipo
                 # Removido metadata - no es un parámetro válido
             )
             
@@ -404,7 +408,7 @@ def ejecutar_fase_7a_normalizacion(
             entidades_normalizadas.append(entidad)
             
         except Exception as e:
-            logger.error(f"Error normalizando entidad {entidad.texto_entidad}: {str(e)}")
+            logger.error(f"Error normalizando entidad {entidad.nombre}: {str(e)}")
             estadisticas["errores"] += 1
             entidades_normalizadas.append(entidad)
     
@@ -812,3 +816,63 @@ def _completar_campos_contradicciones(
     
     logger.info(f"Completados campos para {len(contradicciones_completas)} contradicciones")
     return contradicciones_completas
+
+
+def _convertir_a_modelos_pydantic(relaciones_validadas: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Convierte los diccionarios validados a modelos Pydantic para validación adicional.
+    
+    NOTA: Esta función es opcional. Los diccionarios validados ya están listos
+    para persistencia, pero si se requiere validación adicional con Pydantic,
+    esta función puede ser útil.
+    
+    Args:
+        relaciones_validadas: Diccionario con relaciones validadas
+        
+    Returns:
+        Diccionario con objetos Pydantic o listas vacías si hay errores
+    """
+    resultado = {
+        "hecho_entidad": [],
+        "entidad_relacion": [],
+        "hecho_relacionado": [],
+        "contradicciones": []
+    }
+    
+    # Convertir hecho_entidad
+    for rel in relaciones_validadas.get("hecho_entidad", []):
+        try:
+            obj = HechoEntidadRelacion(**rel)
+            resultado["hecho_entidad"].append(obj.model_dump())
+        except Exception as e:
+            logger.error(f"Error creando HechoEntidadRelacion: {e}")
+            continue
+    
+    # Convertir entidad_relacion
+    for rel in relaciones_validadas.get("entidad_relacion", []):
+        try:
+            obj = EntidadEntidadRelacion(**rel)
+            resultado["entidad_relacion"].append(obj.model_dump())
+        except Exception as e:
+            logger.error(f"Error creando EntidadEntidadRelacion: {e}")
+            continue
+    
+    # Convertir hecho_relacionado
+    for rel in relaciones_validadas.get("hecho_relacionado", []):
+        try:
+            obj = HechoHechoRelacion(**rel)
+            resultado["hecho_relacionado"].append(obj.model_dump())
+        except Exception as e:
+            logger.error(f"Error creando HechoHechoRelacion: {e}")
+            continue
+    
+    # Convertir contradicciones
+    for cont in relaciones_validadas.get("contradicciones", []):
+        try:
+            obj = ContradiccionDetectada(**cont)
+            resultado["contradicciones"].append(obj.model_dump())
+        except Exception as e:
+            logger.error(f"Error creando ContradiccionDetectada: {e}")
+            continue
+    
+    return resultado

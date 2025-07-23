@@ -206,8 +206,7 @@ def ejemplo_parseo_fase2(respuesta_llm: str, fragmento_id) -> Dict[str, Any]:
             # (Este código se usaría en la implementación real de Fase 2)
             hecho_info = {
                 "id_fragmento_origen": fragmento_id,
-                "texto_original_del_hecho": hecho_data["contenido"],
-                "confianza_extraccion": 0.8,  # Valor por defecto
+                "contenido": hecho_data["contenido"],
                 "metadata_hecho": metadatos  # ✅ Metadatos específicos
             }
             hechos_parseados.append(hecho_info)
@@ -220,9 +219,9 @@ def ejemplo_parseo_fase2(respuesta_llm: str, fragmento_id) -> Dict[str, Any]:
             
             entidad_info = {
                 "id_fragmento_origen": fragmento_id,
-                "texto_entidad": entidad_data["nombre"],
-                "tipo_entidad": entidad_data.get("tipo", "DESCONOCIDO"),
-                "relevancia_entidad": 0.7,  # Valor por defecto
+                "nombre": entidad_data["nombre"],
+                "tipo": entidad_data.get("tipo", "DESCONOCIDO"),
+                "relevancia": 0.7,  # Valor por defecto
                 "metadata_entidad": metadatos  # ✅ Metadatos específicos
             }
             entidades_parseadas.append(entidad_info)
@@ -255,8 +254,8 @@ def ejemplo_parseo_fase3(respuesta_llm: str, fragmento_id) -> Dict[str, Any]:
             
             cita_info = {
                 "id_fragmento_origen": fragmento_id,
-                "texto_cita": cita_data["cita"],
-                "id_entidad_citada": cita_data.get("entidad_id"),  # Mapear a UUID si existe
+                "cita": cita_data["cita"],
+                "entidad_emisora_id": cita_data.get("entidad_id"),  # Mapear a UUID si existe
                 "metadata_cita": metadatos  # ✅ Metadatos específicos
             }
             citas_parseadas.append(cita_info)
@@ -269,9 +268,9 @@ def ejemplo_parseo_fase3(respuesta_llm: str, fragmento_id) -> Dict[str, Any]:
             
             dato_info = {
                 "id_fragmento_origen": fragmento_id,
-                "descripcion_dato": dato_data["indicador"],
-                "valor_dato": dato_data["valor"],
-                "unidad_dato": dato_data.get("unidad"),
+                "indicador": dato_data["indicador"],
+                "valor_numerico": dato_data["valor"],
+                "unidad": dato_data.get("unidad"),
                 "metadata_dato": metadatos  # ✅ Metadatos específicos
             }
             datos_parseados.append(dato_info)

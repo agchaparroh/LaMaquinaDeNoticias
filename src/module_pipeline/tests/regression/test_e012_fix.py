@@ -30,9 +30,9 @@ def test_entidad_procesada_creation():
         # Crear entidad con todos los campos requeridos
         entidad = EntidadProcesada(
             id_entidad=1,
-            texto_entidad="Pedro Sánchez",
-            tipo_entidad="PERSONA",
-            relevancia_entidad=0.9,
+            nombre="Pedro Sánchez",
+            tipo="PERSONA",
+            relevancia=9,
             id_fragmento_origen=uuid4(),  # Campo requerido
             metadata_entidad=metadatos
         )
@@ -79,9 +79,9 @@ def test_fase_3_entidades():
         # Verificar que las entidades tienen id_fragmento_origen
         for entidad in resultado.get("entidades_extraidas", []):
             if hasattr(entidad, 'id_fragmento_origen'):
-                print(f"   - Entidad '{entidad.texto_entidad}' tiene id_fragmento_origen: {entidad.id_fragmento_origen}")
+                print(f"   - Entidad '{entidad.nombre}' tiene id_fragmento_origen: {entidad.id_fragmento_origen}")
             else:
-                print(f"   ❌ Entidad '{entidad.texto_entidad}' NO tiene id_fragmento_origen")
+                print(f"   ❌ Entidad '{entidad.nombre}' NO tiene id_fragmento_origen")
                 return False
         
         return True

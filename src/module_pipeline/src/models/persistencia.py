@@ -130,10 +130,10 @@ class DatoCuantitativoExtraidoItem(PersistenciaBaseModel):
 class RelacionHechosItem(PersistenciaBaseModel):
     """
     Representa una relación entre dos hechos extraídos.
-    Campos alineados con RPC: id_hecho_origen, id_hecho_destino.
+    Campos alineados con BD: hecho_origen_id, hecho_destino_id.
     """
-    id_hecho_origen: str = Field(description="ID temporal del primer hecho en la relación.")
-    id_hecho_destino: str = Field(description="ID temporal del segundo hecho en la relación.")
+    hecho_origen_id: str = Field(description="ID temporal del primer hecho en la relación.")
+    hecho_destino_id: str = Field(description="ID temporal del segundo hecho en la relación.")
     tipo_relacion: str = Field(description="Tipo de relación (causa, consecuencia, contexto_historico, respuesta_a, aclaracion_de, version_alternativa, seguimiento_de).")
     descripcion_relacion: Optional[str] = Field(default=None, description="Descripción de la naturaleza de la relación.")
     fuerza_relacion: Optional[int] = Field(default=5, ge=1, le=10, description="Fuerza o confianza en la relación (1-10).")
@@ -141,10 +141,10 @@ class RelacionHechosItem(PersistenciaBaseModel):
 class RelacionEntidadesItem(PersistenciaBaseModel):
     """
     Representa una relación entre dos entidades.
-    Campos alineados con RPC: id_entidad_origen, id_entidad_destino, descripcion.
+    Campos alineados con BD: entidad_origen_id, entidad_destino_id, descripcion.
     """
-    id_entidad_origen: str = Field(description="ID temporal de la entidad origen.")
-    id_entidad_destino: str = Field(description="ID temporal de la entidad destino.")
+    entidad_origen_id: str = Field(description="ID temporal de la entidad origen.")
+    entidad_destino_id: str = Field(description="ID temporal de la entidad destino.")
     tipo_relacion: str = Field(description="Tipo de relación (miembro_de, subsidiaria_de, aliado_con, opositor_a, sucesor_de, predecesor_de, casado_con, familiar_de, empleado_de).")
     descripcion: Optional[str] = Field(default=None, description="Descripción de la naturaleza de la relación.")
     fuerza_relacion: Optional[int] = Field(default=5, ge=1, le=10, description="Fuerza o confianza en la relación (1-10).")
@@ -152,10 +152,10 @@ class RelacionEntidadesItem(PersistenciaBaseModel):
 class ContradiccionDetectadaItem(PersistenciaBaseModel):
     """
     Representa una contradicción detectada entre dos hechos.
-    Campos alineados con RPC: id_hecho_principal, id_hecho_contradictorio, descripcion.
+    Campos alineados con BD: hecho_principal_id, hecho_contradictorio_id, descripcion.
     """
-    id_hecho_principal: str = Field(description="ID temporal del primer hecho.")
-    id_hecho_contradictorio: str = Field(description="ID temporal del hecho que lo contradice.")
+    hecho_principal_id: str = Field(description="ID temporal del primer hecho.")
+    hecho_contradictorio_id: str = Field(description="ID temporal del hecho que lo contradice.")
     tipo_contradiccion: Optional[str] = Field(default="contenido", description="Tipo de contradicción (fecha, contenido, entidades, ubicacion, valor, completa).")
     grado_contradiccion: Optional[int] = Field(default=3, ge=1, le=5, description="Grado de la contradicción (1-5).")
     descripcion: Optional[str] = Field(default=None, description="Explicación de la contradicción.")

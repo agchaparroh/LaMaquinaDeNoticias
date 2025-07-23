@@ -345,7 +345,7 @@ class SchemaValidator:
                 valido = False
             
             # Validar campos requeridos
-            campos_requeridos = ["texto_cita", "persona_citada"]
+            campos_requeridos = ["cita", "persona_citada"]
             for campo in campos_requeridos:
                 if campo not in cita:
                     self.errores.append(f"Cita {cita.get('id', idx)} sin campo {campo}")

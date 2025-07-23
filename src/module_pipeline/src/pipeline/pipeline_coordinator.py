@@ -666,7 +666,7 @@ class PipelineCoordinator:
                 fecha_fin_iso = f"{hecho.metadata_hecho.fecha_fin}T00:00:00Z"
             
             # PRP DEBUGGING: Verificar contenido antes del mapeo
-            texto_hecho = getattr(hecho, 'texto_original_del_hecho', None)
+            texto_hecho = getattr(hecho, 'contenido', None)
             # Validación de texto del hecho
             if not texto_hecho or texto_hecho.strip() == "":
                 self.base_logger.warning(f"Hecho {hecho.id_hecho} tiene texto vacío, omitiendo")
@@ -674,9 +674,9 @@ class PipelineCoordinator:
             
             hechos_data.append({
                 "id_temporal": str(hecho.id_hecho),  # int → str
-                "contenido": hecho.texto_original_del_hecho,
+                "contenido": hecho.contenido,
                 "tipo_hecho": hecho.metadata_hecho.tipo_hecho if hasattr(hecho.metadata_hecho, 'tipo_hecho') else "SUCESO",
-                "importancia": int(hecho.confianza_extraccion * 10),  # 0.0-1.0 → 1-10
+                "importancia": hecho.importancia,  # Ya es 1-10
                 "fecha_ocurrencia_inicio": fecha_inicio_iso,
                 "fecha_ocurrencia_fin": fecha_fin_iso,
                 "precision_temporal": hecho.metadata_hecho.precision_temporal if hasattr(hecho.metadata_hecho, 'precision_temporal') else "desconocido",
@@ -704,22 +704,16 @@ class PipelineCoordinator:
             entidades_data.append({
                 "id": str(entidad.id_entidad),  # int → str
                 "id_temporal": str(entidad.id_entidad),  # IMPORTANTE: Requerido por la función SQL
-                "nombre": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
-                "tipo": entidad.tipo_entidad,
-                "descripcion": f"Entidad extraída con relevancia {entidad.relevancia_entidad}",
-                "relevancia": int(entidad.relevancia_entidad * 10),  # Cambio: relevancia_entidad_articulo → relevancia
+                "nombre": entidad.nombre_entidad_normalizada or entidad.nombre,
+                "tipo": entidad.tipo,
+                "descripcion": f"Entidad extraída con relevancia {entidad.relevancia}",
+                "relevancia": entidad.relevancia,  # Ya es 1-10
                 "metadata": {  # Cambio: metadata_entidad → metadata
                     **(entidad.metadata_entidad.model_dump() if hasattr(entidad.metadata_entidad, 'model_dump') else {}),
                     "uri_wikidata": entidad.uri_wikidata,
                     "id_entidad_normalizada": str(entidad.id_entidad_normalizada) if entidad.id_entidad_normalizada else None,
                     "similitud_normalizacion": entidad.similitud_normalizacion
-                },
-                # Campos adicionales para compatibilidad con procesamiento
-                "id_entidad": entidad.id_entidad,
-                "texto_entidad": entidad.texto_entidad,
-                "tipo_entidad": entidad.tipo_entidad,
-                "relevancia_entidad": entidad.relevancia_entidad,
-                "metadata_entidad": entidad.metadata_entidad.model_dump() if hasattr(entidad.metadata_entidad, 'model_dump') else {}
+                }
             })
         
         # Convertir citas textuales
@@ -727,12 +721,12 @@ class PipelineCoordinator:
         for cita in citas:
             citas_data.append({
                 "id_temporal_cita": str(cita.id_cita),  # int → str
-                "cita": cita.texto_cita,  # ACTUALIZADO: texto_cita → cita
-                "id_temporal_entidad_emisora": str(cita.id_entidad_citada) if cita.id_entidad_citada else None,
-                "id_temporal_hecho_contexto": str(cita.metadata_cita.hecho_relacionado_id) if hasattr(cita.metadata_cita, 'hecho_relacionado_id') and cita.metadata_cita.hecho_relacionado_id else None,
-                "fecha_cita": f"{cita.metadata_cita.fecha}T00:00:00Z" if hasattr(cita.metadata_cita, 'fecha') and cita.metadata_cita.fecha else None,
-                "contexto": cita.contexto_cita,  # ACTUALIZADO: contexto_cita → contexto
-                "relevancia": cita.metadata_cita.relevancia if hasattr(cita.metadata_cita, 'relevancia') else 3,  # ACTUALIZADO: relevancia_cita → relevancia, usar valor de metadata
+                "cita": cita.cita,  # ACTUALIZADO: texto_cita → cita
+                "id_temporal_entidad_emisora": str(cita.entidad_emisora_id) if cita.entidad_emisora_id else None,
+                "id_temporal_hecho_contexto": str(cita.hecho_contexto_id) if cita.hecho_contexto_id else None,
+                "fecha_cita": cita.fecha_cita if cita.fecha_cita else None,
+                "contexto": cita.contexto,  # ACTUALIZADO: contexto_cita → contexto
+                "relevancia": cita.relevancia,  # Campo directo en CitaTextual
                 # Campo adicional para compatibilidad
                 "nombre_entidad_emisora": cita.persona_citada
             })
@@ -742,10 +736,12 @@ class PipelineCoordinator:
         for dato in datos:
             datos_data.append({
                 "id_temporal_dato": str(dato.id_dato_cuantitativo),  # int → str
-                "descripcion_dato": dato.descripcion_dato,
-                "valor_dato": dato.valor_dato,
-                "unidad_dato": dato.unidad_dato,
-                "fecha_dato": dato.fecha_dato,
+                "indicador": dato.indicador,
+                "categoria": dato.categoria,
+                "valor_numerico": dato.valor_numerico,
+                "unidad": dato.unidad,
+                "periodo_referencia_inicio": dato.periodo_referencia_inicio,
+                "periodo_referencia_fin": dato.periodo_referencia_fin,
                 "contexto_dato": f"Extraído del fragmento {fragmento.id_fragmento}",
                 "relevancia_dato": 5  # Default
             })
@@ -801,11 +797,11 @@ class PipelineCoordinator:
         
         # Extraer palabras clave de las entidades más relevantes
         palabras_clave = []
-        for entidad in sorted(entidades, key=lambda e: e.relevancia_entidad, reverse=True)[:10]:
+        for entidad in sorted(entidades, key=lambda e: e.relevancia, reverse=True)[:10]:
             if entidad.nombre_entidad_normalizada:
                 palabras_clave.append(entidad.nombre_entidad_normalizada)
             else:
-                palabras_clave.append(entidad.texto_entidad)
+                palabras_clave.append(entidad.nombre)
         resultado_procesamiento["palabras_clave_generadas"] = palabras_clave
         
         # PRIMERO: Extraer relaciones del resultado_fase7 antes de construir hechos_data
@@ -838,8 +834,8 @@ class PipelineCoordinator:
                 # Procesar relaciones entidad-entidad
                 for rel in relaciones_estructurales.get("entidad_relacion", []):
                     relaciones_entidades_data.append({
-                        "id_entidad_origen": str(rel.get("entidad_origen_id", "")),
-                        "id_entidad_destino": str(rel.get("entidad_destino_id", "")),
+                        "entidad_origen_id": str(rel.get("entidad_origen_id", "")),
+                        "entidad_destino_id": str(rel.get("entidad_destino_id", "")),
                         "tipo_relacion": rel.get("tipo_relacion", ""),
                         "descripcion": rel.get("descripcion", ""),
                         "fuerza_relacion": rel.get("fuerza_relacion", 5)
@@ -851,8 +847,8 @@ class PipelineCoordinator:
                 # Relaciones hecho-hecho
                 for rel in relaciones_temporales.get("hecho_relacionado", []):
                     relaciones_hechos_data.append({
-                        "id_hecho_origen": str(rel.get("hecho_origen_id", "")),
-                        "id_hecho_destino": str(rel.get("hecho_destino_id", "")),
+                        "hecho_origen_id": str(rel.get("hecho_origen_id", "")),
+                        "hecho_destino_id": str(rel.get("hecho_destino_id", "")),
                         "tipo_relacion": self._mapear_tipo_relacion_hecho(rel.get("tipo_relacion", "")),
                         "descripcion_relacion": rel.get("descripcion_relacion", ""),
                         "fuerza_relacion": rel.get("fuerza_relacion", 5)
@@ -861,8 +857,8 @@ class PipelineCoordinator:
                 # Contradicciones
                 for cont in relaciones_temporales.get("contradicciones", []):
                     contradicciones_data.append({
-                        "id_hecho_principal": str(cont.get("hecho_principal_id", "")),
-                        "id_hecho_contradictorio": str(cont.get("hecho_contradictorio_id", "")),
+                        "hecho_principal_id": str(cont.get("hecho_principal_id", "")),
+                        "hecho_contradictorio_id": str(cont.get("hecho_contradictorio_id", "")),
                         "tipo_contradiccion": self._mapear_tipo_contradiccion(cont.get("tipo_contradiccion", "")),
                         "grado_contradiccion": cont.get("grado_contradiccion", 3),
                         "descripcion": cont.get("descripcion", "")
@@ -880,7 +876,7 @@ class PipelineCoordinator:
                 fecha_fin_iso = f"{hecho.metadata_hecho.fecha_fin}T00:00:00Z"
             
             # PRP DEBUGGING: Verificar contenido antes del mapeo (FRAGMENTOS)
-            texto_hecho = getattr(hecho, 'texto_original_del_hecho', None)
+            texto_hecho = getattr(hecho, 'contenido', None)
             # Validación de texto del hecho
             if not texto_hecho or texto_hecho.strip() == "":
                 self.base_logger.warning(f"Hecho {hecho.id_hecho} tiene texto vacío, omitiendo")
@@ -888,9 +884,9 @@ class PipelineCoordinator:
             
             hechos_data.append({
                 "id_temporal": str(hecho.id_hecho),
-                "contenido": hecho.texto_original_del_hecho,
+                "contenido": hecho.contenido,
                 "tipo_hecho": hecho.metadata_hecho.tipo_hecho if hasattr(hecho.metadata_hecho, 'tipo_hecho') else "SUCESO",
-                "importancia": int(hecho.confianza_extraccion * 10),
+                "importancia": hecho.importancia,
                 "fecha_ocurrencia_inicio": fecha_inicio_iso,
                 "fecha_ocurrencia_fin": fecha_fin_iso,
                 "precision_temporal": hecho.metadata_hecho.precision_temporal if hasattr(hecho.metadata_hecho, 'precision_temporal') else "desconocido",
@@ -913,22 +909,16 @@ class PipelineCoordinator:
             entidad_dict = {
                 "id": str(entidad.id_entidad),
                 "id_temporal": str(entidad.id_entidad),  # IMPORTANTE: Requerido por la función SQL
-                "nombre": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
-                "tipo": entidad.tipo_entidad,
-                "descripcion": f"Entidad extraída con relevancia {entidad.relevancia_entidad}",
-                "relevancia": int(entidad.relevancia_entidad * 10),  # Cambio: relevancia_entidad_articulo → relevancia
+                "nombre": entidad.nombre_entidad_normalizada or entidad.nombre,
+                "tipo": entidad.tipo,
+                "descripcion": f"Entidad extraída con relevancia {entidad.relevancia}",
+                "relevancia": entidad.relevancia,  # Ya es 1-10
                 "metadata": {  # Cambio: metadata_entidad → metadata
                     **(entidad.metadata_entidad.model_dump() if hasattr(entidad.metadata_entidad, 'model_dump') else {}),
                     "uri_wikidata": entidad.uri_wikidata,
                     "id_entidad_normalizada": str(entidad.id_entidad_normalizada) if entidad.id_entidad_normalizada else None,
                     "similitud_normalizacion": entidad.similitud_normalizacion
-                },
-                # Campos adicionales para compatibilidad con procesamiento
-                "id_entidad": entidad.id_entidad,
-                "texto_entidad": entidad.texto_entidad,
-                "tipo_entidad": entidad.tipo_entidad,
-                "relevancia_entidad": entidad.relevancia_entidad,
-                "metadata_entidad": entidad.metadata_entidad.model_dump() if hasattr(entidad.metadata_entidad, 'model_dump') else {}
+                }
             }
             # Entidad procesada
             entidades_data.append(entidad_dict)
@@ -965,11 +955,11 @@ class PipelineCoordinator:
         for cita in citas:
             citas_data.append({
                 "id_temporal_cita": str(cita.id_cita),
-                "cita": cita.texto_cita,  # ACTUALIZADO: texto_cita → cita
-                "id_temporal_entidad_emisora": str(cita.id_entidad_citada) if cita.id_entidad_citada else None,
-                "id_temporal_hecho_contexto": str(cita.metadata_cita.hecho_relacionado_id) if hasattr(cita.metadata_cita, 'hecho_relacionado_id') and cita.metadata_cita.hecho_relacionado_id else None,
-                "fecha_cita": f"{cita.metadata_cita.fecha}T00:00:00Z" if hasattr(cita.metadata_cita, 'fecha') and cita.metadata_cita.fecha else None,
-                "contexto": cita.contexto_cita,  # ACTUALIZADO: contexto_cita → contexto
+                "cita": cita.cita,  # ACTUALIZADO: texto_cita → cita
+                "id_temporal_entidad_emisora": str(cita.entidad_emisora_id) if cita.entidad_emisora_id else None,
+                "id_temporal_hecho_contexto": str(cita.hecho_contexto_id) if cita.hecho_contexto_id else None,
+                "fecha_cita": cita.fecha_cita if cita.fecha_cita else None,
+                "contexto": cita.contexto,  # ACTUALIZADO: contexto_cita → contexto
                 "relevancia": cita.metadata_cita.relevancia if hasattr(cita.metadata_cita, 'relevancia') else 3,  # ACTUALIZADO
                 "nombre_entidad_emisora": cita.persona_citada
             })
@@ -983,29 +973,25 @@ class PipelineCoordinator:
             datos_data.append({
                 # Campos principales alineados con RPC
                 "id_temporal_hecho": id_temporal_hecho,
-                "indicador": dato.descripcion_dato,  # Cambio: descripcion_dato → indicador
-                "categoria": dato.metadata_dato.categoria if hasattr(dato.metadata_dato, 'categoria') else "otro",
-                "valor_numerico": dato.valor_dato,  # Cambio: valor_dato → valor_numerico
-                "unidad": dato.unidad_dato,  # Cambio: unidad_dato → unidad
+                "indicador": dato.indicador,
+                "categoria": dato.categoria,
+                "valor_numerico": dato.valor_numerico,
+                "unidad": dato.unidad,
                 "ambito_geografico": dato.metadata_dato.ambito_geografico if hasattr(dato.metadata_dato, 'ambito_geografico') else [],
-                "periodo_referencia_inicio": dato.metadata_dato.periodo.inicio if hasattr(dato.metadata_dato, 'periodo') and dato.metadata_dato.periodo else None,
-                "periodo_referencia_fin": dato.metadata_dato.periodo.fin if hasattr(dato.metadata_dato, 'periodo') and dato.metadata_dato.periodo else None,
+                "periodo_referencia_inicio": dato.periodo_referencia_inicio,
+                "periodo_referencia_fin": dato.periodo_referencia_fin,
                 "tendencia": dato.metadata_dato.tendencia if hasattr(dato.metadata_dato, 'tendencia') else None,
                 
                 # Campos temporales
                 "id_temporal_dato": str(dato.id_dato_cuantitativo),
                 
-                # Campos adicionales para compatibilidad con DatosCuantitativos
+                # Campos adicionales para compatibilidad
                 "id_dato_cuantitativo": dato.id_dato_cuantitativo,
-                "descripcion_dato": dato.descripcion_dato,
-                "valor_dato": dato.valor_dato,
-                "unidad_dato": dato.unidad_dato,
-                "fecha_dato": dato.fecha_dato,
+                "hecho_id": dato.hecho_id,
                 "contexto_dato": f"Extraído del artículo {articulo_original.id_articulo}",
                 "relevancia_dato": 5,  # Default
                 
                 # Campos adicionales no procesados por RPC pero disponibles
-                "tipo_periodo": dato.metadata_dato.tipo_periodo if hasattr(dato.metadata_dato, 'tipo_periodo') else None,
                 "valor_anterior": dato.metadata_dato.valor_anterior if hasattr(dato.metadata_dato, 'valor_anterior') else None,
                 "variacion_absoluta": dato.metadata_dato.variacion_absoluta if hasattr(dato.metadata_dato, 'variacion_absoluta') else None,
                 "variacion_porcentual": dato.metadata_dato.variacion_porcentual if hasattr(dato.metadata_dato, 'variacion_porcentual') else None
@@ -1041,8 +1027,7 @@ class PipelineCoordinator:
             # Mock hecho
             hecho_mock = HechoProcesado(
                 id_hecho=processor.next_hecho_id("Anuncio mock"),
-                texto_original_del_hecho="Mock: Se anunció algo importante",
-                confianza_extraccion=0.8,
+                contenido="Mock: Se anunció algo importante",
                 id_fragmento_origen=resultado_fase1.id_fragmento,
                 metadata_hecho=MetadatosHecho()
             )
@@ -1051,9 +1036,9 @@ class PipelineCoordinator:
             # Mock entidad
             entidad_mock = EntidadProcesada(
                 id_entidad=processor.next_entidad_id("Entidad mock"),
-                texto_entidad="Mock Entity",
-                tipo_entidad="PERSONA",
-                relevancia_entidad=0.7,
+                nombre="Mock Entity",
+                tipo="PERSONA",
+                relevancia=0.7,
                 id_fragmento_origen=resultado_fase1.id_fragmento,
                 metadata_entidad=MetadatosEntidad()
             )
@@ -1077,7 +1062,8 @@ class PipelineCoordinator:
             # Mock cita
             cita_mock = CitaTextual(
                 id_cita=processor.next_cita_id("Cita mock"),
-                texto_cita="Mock: Esta es una cita de ejemplo",
+                cita="Mock: Esta es una cita de ejemplo",
+                relevancia=3,
                 id_fragmento_origen=resultado_fase2.id_fragmento,
                 metadata_cita=MetadatosCita()
             )

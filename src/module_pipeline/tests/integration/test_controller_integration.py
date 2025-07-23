@@ -141,15 +141,13 @@ def mock_fase2_resultado():
         HechoProcesado(
             id_hecho=1,  # Debe ser entero
             id_fragmento_origen=fragment_id,  # Campo requerido
-            texto_original_del_hecho="Un equipo internacional de científicos ha logrado un importante avance",
-            confianza_extraccion=0.9,
+            contenido="Un equipo internacional de científicos ha logrado un importante avance",
             metadata_hecho=MetadatosHecho(tipo_hecho="SUCESO")
         ),
         HechoProcesado(
             id_hecho=2,  # Debe ser entero
             id_fragmento_origen=fragment_id,  # Campo requerido
-            texto_original_del_hecho="La temperatura media global ha aumentado 1.5 grados Celsius",
-            confianza_extraccion=0.95,
+            contenido="La temperatura media global ha aumentado 1.5 grados Celsius",
             metadata_hecho=MetadatosHecho(tipo_hecho="ANUNCIO", precision_temporal="exacta")
         )
     ]
@@ -158,25 +156,25 @@ def mock_fase2_resultado():
         EntidadProcesada(
             id_entidad=1,  # Debe ser entero
             id_fragmento_origen=fragment_id,  # Campo requerido
-            texto_entidad="Dr. Juan Pérez",
-            tipo_entidad="PERSONA",
-            relevancia_entidad=0.8,
+            nombre="Dr. Juan Pérez",
+            tipo="PERSONA",
+            relevancia=8,
             metadata_entidad=MetadatosEntidad(tipo="PERSONA", descripcion_estructurada=["líder del proyecto"])
         ),
         EntidadProcesada(
             id_entidad=2,  # Debe ser entero
             id_fragmento_origen=fragment_id,  # Campo requerido
-            texto_entidad="Dra. María González",
-            tipo_entidad="PERSONA",
-            relevancia_entidad=0.7,
+            nombre="Dra. María González",
+            tipo="PERSONA",
+            relevancia=7,
             metadata_entidad=MetadatosEntidad(tipo="PERSONA", descripcion_estructurada=["coautora del estudio"])
         ),
         EntidadProcesada(
             id_entidad=3,  # Debe ser entero
             id_fragmento_origen=fragment_id,  # Campo requerido
-            texto_entidad="Madrid",
-            tipo_entidad="LUGAR",
-            relevancia_entidad=0.6,
+            nombre="Madrid",
+            tipo="LUGAR",
+            relevancia=6,
             metadata_entidad=MetadatosEntidad(tipo="LUGAR", descripcion_estructurada=["sede de la cumbre del clima"])
         )
     ]
@@ -200,10 +198,10 @@ def mock_fase3_resultado(mock_fase2_resultado):
         CitaTextual(
             id_cita=1,  # Debe ser entero
             id_fragmento_origen=fragment_id,  # Campo requerido
-            texto_cita="Este descubrimiento cambiará nuestra forma de entender el calentamiento global",
+            cita="Este descubrimiento cambiará nuestra forma de entender el calentamiento global",
             persona_citada="Dr. Juan Pérez",
-            id_entidad_citada=1,  # Debe ser entero, referencia a la entidad 1
-            contexto_cita="Declaración sobre el impacto del descubrimiento",
+            entidad_emisora_id=1,  # Debe ser entero, referencia a la entidad 1
+            contexto="Declaración sobre el impacto del descubrimiento",
             metadata_cita=MetadatosCita(contexto="Declaración sobre el impacto del descubrimiento", relevancia=5)
         )
     ]
@@ -212,10 +210,10 @@ def mock_fase3_resultado(mock_fase2_resultado):
         DatosCuantitativos(
             id_dato_cuantitativo=1,  # Debe ser entero
             id_fragmento_origen=fragment_id,  # Campo requerido
-            descripcion_dato="Aumento de temperatura media global",
-            valor_dato=1.5,
-            unidad_dato="grados Celsius",
-            fecha_dato="últimos 50 años",
+            indicador="Aumento de temperatura media global",
+            categoria="ambiental",
+            valor_numerico=1.5,
+            unidad="grados Celsius",
             metadata_dato=MetadatosDato(categoria="ambiental", tipo_periodo="acumulado", tendencia="aumento")
         )
     ]
@@ -240,12 +238,12 @@ def mock_fase4_resultado(mock_fase2_resultado):
         entidad_norm = EntidadProcesada(
             id_entidad=entidad.id_entidad,
             id_fragmento_origen=fragment_id,  # Campo requerido
-            texto_entidad=entidad.texto_entidad,
-            tipo_entidad=entidad.tipo_entidad,
-            relevancia_entidad=entidad.relevancia_entidad,
+            nombre=entidad.nombre,
+            tipo=entidad.tipo,
+            relevancia=entidad.relevancia,
             metadata_entidad=entidad.metadata_entidad,
             id_entidad_normalizada=uuid4(),
-            nombre_entidad_normalizada=f"{entidad.texto_entidad} (Normalizado)",
+            nombre_entidad_normalizada=f"{entidad.nombre} (Normalizado)",
             similitud_normalizacion=0.92
         )
         entidades_normalizadas.append(entidad_norm)

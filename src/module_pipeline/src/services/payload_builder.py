@@ -171,9 +171,9 @@ class PayloadBuilder:
         
         # Validar referencias en relaciones de hechos
         for relacion in data.get('relaciones_hechos', []):
-            # Los modelos actualizados usan id_hecho_origen e id_hecho_destino
-            origen_id = relacion.get('id_hecho_origen', relacion.get('hecho_origen_id_temporal'))
-            destino_id = relacion.get('id_hecho_destino', relacion.get('hecho_destino_id_temporal'))
+            # Los modelos actualizados usan hecho_origen_id y hecho_destino_id
+            origen_id = relacion.get('hecho_origen_id', relacion.get('id_hecho_origen'))
+            destino_id = relacion.get('hecho_destino_id', relacion.get('id_hecho_destino'))
             
             if origen_id and origen_id not in ids_existentes['hechos']:
                 errores.append(f"Relación hechos: ID origen '{origen_id}' no existe")
@@ -182,9 +182,9 @@ class PayloadBuilder:
         
         # Validar referencias en relaciones de entidades
         for relacion in data.get('relaciones_entidades', []):
-            # Los modelos actualizados usan id_entidad_origen e id_entidad_destino
-            origen_id = relacion.get('id_entidad_origen', relacion.get('entidad_origen_id_temporal'))
-            destino_id = relacion.get('id_entidad_destino', relacion.get('entidad_destino_id_temporal'))
+            # Los modelos actualizados usan entidad_origen_id y entidad_destino_id
+            origen_id = relacion.get('entidad_origen_id', relacion.get('id_entidad_origen'))
+            destino_id = relacion.get('entidad_destino_id', relacion.get('id_entidad_destino'))
             
             if origen_id and origen_id not in ids_existentes['entidades']:
                 errores.append(f"Relación entidades: ID origen '{origen_id}' no existe")
@@ -193,9 +193,9 @@ class PayloadBuilder:
         
         # Validar referencias en contradicciones
         for contradiccion in data.get('contradicciones_detectadas', []):
-            # Los modelos actualizados usan id_hecho_principal e id_hecho_contradictorio
-            principal_id = contradiccion.get('id_hecho_principal', contradiccion.get('hecho_principal_id_temporal'))
-            contradictorio_id = contradiccion.get('id_hecho_contradictorio', contradiccion.get('hecho_contradictorio_id_temporal'))
+            # Los modelos actualizados usan hecho_principal_id y hecho_contradictorio_id
+            principal_id = contradiccion.get('hecho_principal_id', contradiccion.get('id_hecho_principal'))
+            contradictorio_id = contradiccion.get('hecho_contradictorio_id', contradiccion.get('id_hecho_contradictorio'))
             
             if principal_id and principal_id not in ids_existentes['hechos']:
                 errores.append(f"Contradicción: ID principal '{principal_id}' no existe")
@@ -479,7 +479,6 @@ class PayloadBuilder:
                         'actores_involucrados': item.get('actores_involucrados', []),
                         'fuente_especifica': item.get('fuente_especifica'),
                         'es_hecho_futuro': item.get('es_hecho_futuro', item.get('metadata_hecho', {}).get('es_futuro', False)),
-                        'confianza_extraccion': item.get('confianza_extraccion', 0.8)
                     }
                     hechos_mapeados.append(hecho_mapeado)
                 
@@ -501,11 +500,11 @@ class PayloadBuilder:
                     entidad_mapeada = {
                         'id': id_valor,  # EntidadAutonomaItem espera 'id'
                         'id_temporal': id_valor,  # Agregar también para validación y RPC
-                        'nombre': item.get('nombre', item.get('texto_entidad', '')),
-                        'tipo': item.get('tipo', item.get('tipo_entidad', '')),
+                        'nombre': item.get('nombre', ''),
+                        'tipo': item.get('tipo', ''),
                         'descripcion': item.get('descripcion', ''),
                         'alias': item.get('alias', []),
-                        'relevancia': item.get('relevancia', int(item.get('relevancia_entidad', 0.8) * 10) if isinstance(item.get('relevancia_entidad', 0), float) else item.get('relevancia_entidad', 8)),
+                        'relevancia': item.get('relevancia', 8),
                         'metadata': item.get('metadata', item.get('metadata_entidad', {}))
                     }
                     entidades_mapeadas.append(entidad_mapeada)
@@ -578,8 +577,8 @@ class PayloadBuilder:
                 relaciones_mapeadas = []
                 for item in relaciones_hechos_data:
                     relacion_mapeada = {
-                        'id_hecho_origen': str(item.get('hecho_origen_id', item.get('id_hecho_origen', ''))),
-                        'id_hecho_destino': str(item.get('hecho_destino_id', item.get('id_hecho_destino', ''))),
+                        'hecho_origen_id': str(item.get('hecho_origen_id', item.get('id_hecho_origen', ''))),
+                        'hecho_destino_id': str(item.get('hecho_destino_id', item.get('id_hecho_destino', ''))),
                         'tipo_relacion': item.get('tipo_relacion', ''),
                         'descripcion_relacion': item.get('descripcion_relacion', item.get('descripcion', '')),
                         'fuerza_relacion': item.get('fuerza_relacion', 5)
@@ -595,8 +594,8 @@ class PayloadBuilder:
                 relaciones_mapeadas = []
                 for item in relaciones_entidades_data:
                     relacion_mapeada = {
-                        'id_entidad_origen': str(item.get('entidad_origen_id', item.get('id_entidad_origen', ''))),
-                        'id_entidad_destino': str(item.get('entidad_destino_id', item.get('id_entidad_destino', ''))),
+                        'entidad_origen_id': str(item.get('entidad_origen_id', item.get('id_entidad_origen', ''))),
+                        'entidad_destino_id': str(item.get('entidad_destino_id', item.get('id_entidad_destino', ''))),
                         'tipo_relacion': item.get('tipo_relacion', ''),
                         'descripcion': item.get('descripcion', item.get('descripcion_relacion', '')),
                         'fuerza_relacion': item.get('fuerza_relacion', 5)
@@ -612,8 +611,8 @@ class PayloadBuilder:
                 contradicciones_mapeadas = []
                 for item in contradicciones_detectadas_data:
                     contradiccion_mapeada = {
-                        'id_hecho_principal': str(item.get('hecho_principal_id', item.get('id_hecho_principal', ''))),
-                        'id_hecho_contradictorio': str(item.get('hecho_contradictorio_id', item.get('id_hecho_contradictorio', ''))),
+                        'hecho_principal_id': str(item.get('hecho_principal_id', item.get('id_hecho_principal', ''))),
+                        'hecho_contradictorio_id': str(item.get('hecho_contradictorio_id', item.get('id_hecho_contradictorio', ''))),
                         'tipo_contradiccion': item.get('tipo_contradiccion', 'contenido'),
                         'grado_contradiccion': item.get('grado_contradiccion', 3),
                         'descripcion': item.get('descripcion', item.get('descripcion_contradiccion', ''))
@@ -769,11 +768,11 @@ class PayloadBuilder:
                 for item in entidades_autonomas_data:
                     entidad_mapeada = {
                         'id': str(item.get('id_entidad', item.get('id', ''))),
-                        'nombre': item.get('nombre', item.get('texto_entidad', '')),
-                        'tipo': item.get('tipo', item.get('tipo_entidad', '')),
+                        'nombre': item.get('nombre', ''),
+                        'tipo': item.get('tipo', ''),
                         'descripcion': item.get('descripcion', ''),
                         'alias': item.get('alias', []),
-                        'relevancia': item.get('relevancia', int(item.get('relevancia_entidad', 0.8) * 10) if isinstance(item.get('relevancia_entidad', 0), float) else item.get('relevancia_entidad', 8)),
+                        'relevancia': item.get('relevancia', 8),
                         'metadata': item.get('metadata', item.get('metadata_entidad', {})),
                         'id_temporal': str(item.get('id_entidad', item.get('id', '')))
                     }
@@ -847,8 +846,8 @@ class PayloadBuilder:
                 relaciones_mapeadas = []
                 for item in relaciones_hechos_data:
                     relacion_mapeada = {
-                        'id_hecho_origen': str(item.get('hecho_origen_id', item.get('id_hecho_origen', ''))),
-                        'id_hecho_destino': str(item.get('hecho_destino_id', item.get('id_hecho_destino', ''))),
+                        'hecho_origen_id': str(item.get('hecho_origen_id', item.get('id_hecho_origen', ''))),
+                        'hecho_destino_id': str(item.get('hecho_destino_id', item.get('id_hecho_destino', ''))),
                         'tipo_relacion': item.get('tipo_relacion', ''),
                         'descripcion_relacion': item.get('descripcion_relacion', item.get('descripcion', '')),
                         'fuerza_relacion': item.get('fuerza_relacion', 5)
@@ -864,8 +863,8 @@ class PayloadBuilder:
                 relaciones_mapeadas = []
                 for item in relaciones_entidades_data:
                     relacion_mapeada = {
-                        'id_entidad_origen': str(item.get('entidad_origen_id', item.get('id_entidad_origen', ''))),
-                        'id_entidad_destino': str(item.get('entidad_destino_id', item.get('id_entidad_destino', ''))),
+                        'entidad_origen_id': str(item.get('entidad_origen_id', item.get('id_entidad_origen', ''))),
+                        'entidad_destino_id': str(item.get('entidad_destino_id', item.get('id_entidad_destino', ''))),
                         'tipo_relacion': item.get('tipo_relacion', ''),
                         'descripcion': item.get('descripcion', item.get('descripcion_relacion', '')),
                         'fuerza_relacion': item.get('fuerza_relacion', 5)
@@ -881,8 +880,8 @@ class PayloadBuilder:
                 contradicciones_mapeadas = []
                 for item in contradicciones_detectadas_data:
                     contradiccion_mapeada = {
-                        'id_hecho_principal': str(item.get('hecho_principal_id', item.get('id_hecho_principal', ''))),
-                        'id_hecho_contradictorio': str(item.get('hecho_contradictorio_id', item.get('id_hecho_contradictorio', ''))),
+                        'hecho_principal_id': str(item.get('hecho_principal_id', item.get('id_hecho_principal', ''))),
+                        'hecho_contradictorio_id': str(item.get('hecho_contradictorio_id', item.get('id_hecho_contradictorio', ''))),
                         'tipo_contradiccion': item.get('tipo_contradiccion', 'contenido'),
                         'grado_contradiccion': item.get('grado_contradiccion', 3),
                         'descripcion': item.get('descripcion', item.get('descripcion_contradiccion', ''))

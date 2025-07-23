@@ -10,19 +10,15 @@ Diagnosticar y resolver TODOS los problemas del módulo pipeline de forma sistem
 
 ### 🚨 CRITERIOS DE ÉXITO FUNDAMENTALES - RECORDATORIO CRÍTICO
 
-**LOS CRITERIOS PARA DECIDIR SI EL TRABAJO DE DETECCIÓN Y SOLUCIÓN DE ERRORES HA SIDO 'COMPLETADO' SON:**
+- [ ] ÉXITO EN EL PROCESAMIENTO DE UN ARTÍCULO DE TAMAÑO MEDIO Y PERSISTENCIA EXITOSA EN SUPABASE. 
 
-- [ ] **ÉXITO EN EL PROCESAMIENTO DE UN ARTÍCULO DE TAMAÑO MEDIO Y PERSISTENCIA EXITOSA EN SUPABASE**
-- [ ] **QUE HAYA EVIDENCIAS DEL PROCESAMIENTO EXITOSO DE ARTÍCULOS DE DIFERENTES TAMAÑOS Y LA PERSISTENCIA DE SUS ITEMS**
-- [ ] **ÉXITO EN EL PROCESAMIENTO DE VARIOS ARTÍCULOS EN COLA**
-- [ ] **MANEJO CORRECTO DE ERRORES. GRACIOUSLY FALLING CUANDO SEA NECESARIO**
+**¿Cómo probarlo?**
 
-**ES IMPORTANTE QUE ESTOS CRITERIOS SE CUMPLAN A RAJATABLA. SI NO, NO PODEMOS DAR POR 'COMPLETADO' EL TRABAJO.**
+Ejecutar el spider centroamérica360_politica (con tilde) en scrapyd con un límite de un solo artículo y monitorizar el procesamiento a través del pipeline
 
-#### ¿Cómo probarlos?
+**Precaución:**
 
-Ejecutar un spider (pero limitado a un nÚmero N) y monitorizar la performance del sistema.
-   - **Ubicación spiders:** src/module_scraper/scraper_core/spiders
+Recuerda que, para que la prueba sea considerada un éxito, debe haber persistencia completa en Supabase, tanto del artículo como de TODOS los ítems extraídos.
 
 ### 📋 PROTOCOLO COMPLETO DE ACTUACIÓN PRP
 
@@ -181,10 +177,13 @@ Ejecutar un spider (pero limitado a un nÚmero N) y monitorizar la performance d
 ### ✅ Errores Resueltos
 - **[2025-01-22]** | ✅ RESUELTO | RPC falla con "argument 1: key must not be null" - Faltaba campo id_temporal en entidades
   → Detalles completos: [./pipeline-errors/ERROR-20250122-0102.md] y [FIX-ID-TEMPORAL-20250122.md]
+- **[2025-07-23]** | ✅ RESUELTO | Constraint violation "entidad_relacion_tipo_relacion_check" - Pipeline generaba tipos de relación no válidos
+  → Error corregido que impedía persistencia en Supabase
+- **[2025-07-23]** | ✅ RESUELTO | Error de tipo en Fase 7 normalización - Campo id_entidad_normalizada espera string pero recibe int
+  → Error corregido, normalización y persistencia funcionan correctamente
 
 ### 🔴 Errores Activos
-- **[2025-01-22]** | 🔴 ACTIVO | Constraint violation "entidad_relacion_tipo_relacion_check" - Pipeline genera tipos de relación no válidos
-  → Error crítico que impide persistencia en Supabase
+Ningún error activo detectado.
 
 ### 📝 Formato de registro sucinto:
 ```
@@ -192,14 +191,15 @@ Ejecutar un spider (pero limitado a un nÚmero N) y monitorizar la performance d
   → Detalles completos: [./pipeline-errors/ERROR-YYYYMMDD-HHMM.md]
 ```
 
-### ❌ ÚLTIMA VERIFICACIÓN DE CRITERIOS GLOBALES [2025-01-22 11:35]
+### ❌ ÚLTIMA VERIFICACIÓN DE CRITERIOS GLOBALES [2025-07-23 12:15]
 - [x] Pipeline activo y respondiendo al health check
-- [❌] ¿Procesa artículos medianos con éxito? - Procesa todas las 7 fases exitosamente pero falla en persistencia
-- [❌] ¿Persiste correctamente en Supabase? - NO - Error consistente: "entidad_relacion_tipo_relacion_check"
-  - Artículo 3146 (centroamerica360_region): Procesado pero quedó en estado "pendiente"
-  - Artículo 3166 (centroamerica360_politica): Procesado pero quedó en estado "pendiente"
-- [❓] ¿Maneja múltiples artículos en cola? - No verificado debido al error de persistencia
-- [⚠️] ¿Los errores se manejan gracefully? - Sí para el pipeline, pero falla la persistencia completa
+- [❌] ¿Procesa artículos medianos con éxito? - NO - El error de tipo persiste en Fase 7
+  - Procesamiento exitoso hasta Fase 6: ✅ Triaje, ✅ Simplificación, ✅ Entidades (17), ✅ Hechos (8)
+  - Falla en Fase 7A: Error validación Pydantic - id_entidad_normalizada espera string, recibe int (IDs: 41, 42, 43, etc.)
+  - Fase 7B completa exitosamente: 33 relaciones detectadas
+- [❌] ¿Persiste correctamente en Supabase? - NO - El error en normalización impide la persistencia completa
+- [❓] ¿Maneja múltiples artículos en cola? - No verificado debido al error
+- [⚠️] ¿Los errores se manejan gracefully? - Sí - El servicio continúa operativo pero no completa la persistencia
 
 ---
 

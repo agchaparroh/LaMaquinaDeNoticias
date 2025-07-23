@@ -100,7 +100,7 @@ class NormalizadorEntidades:
                     f"con score {score_norm:.2f}."
                 )
                 return {
-                    "id_entidad_normalizada": id_norm,
+                    "id_entidad_normalizada": str(id_norm),  # Convertir bigint a string para compatibilidad con modelo Pydantic
                     "nombre_normalizado": nombre_norm,
                     "tipo_normalizado": tipo_norm,
                     "score_similitud": score_norm,

@@ -94,15 +94,15 @@ class ValidadorRelacionesPost7B:
         
         for relacion in relaciones:
             # Validar campos obligatorios
-            if not relacion.get("id_entidad_origen") or not relacion.get("id_entidad_destino"):
+            if not relacion.get("entidad_origen_id") or not relacion.get("entidad_destino_id"):
                 logger.error("Relación entidad-entidad sin IDs origen/destino. Descartando.")
                 self.stats["entidad_relacion_descartadas"] += 1
                 continue
             
             # Validar que no sea la misma entidad (check_different_related_entities)
-            if relacion.get("id_entidad_origen") == relacion.get("id_entidad_destino"):
+            if relacion.get("entidad_origen_id") == relacion.get("entidad_destino_id"):
                 logger.error(
-                    f"Relación entidad-entidad con mismo origen y destino: {relacion.get('id_entidad_origen')}. "
+                    f"Relación entidad-entidad con mismo origen y destino: {relacion.get('entidad_origen_id')}. "
                     f"Descartando relación."
                 )
                 self.stats["entidad_relacion_descartadas"] += 1
@@ -119,7 +119,7 @@ class ValidadorRelacionesPost7B:
                 tipo_corregido = self.mapeo_correcciones_entidad[tipo_original]
                 logger.warning(
                     f"Corrigiendo tipo de relación entidad-entidad: '{tipo_original}' → '{tipo_corregido}' "
-                    f"(entidades: {relacion.get('id_entidad_origen')} - {relacion.get('id_entidad_destino')})"
+                    f"(entidades: {relacion.get('entidad_origen_id')} - {relacion.get('entidad_destino_id')})"
                 )
                 relacion["tipo_relacion"] = tipo_corregido
                 self.stats["entidad_relacion_corregidas"] += 1
@@ -127,7 +127,7 @@ class ValidadorRelacionesPost7B:
                 # Si no podemos corregir, descartar
                 logger.error(
                     f"Tipo de relación entidad-entidad inválido y no corregible: '{tipo_original}' "
-                    f"(entidades: {relacion.get('id_entidad_origen')} - {relacion.get('id_entidad_destino')}). "
+                    f"(entidades: {relacion.get('entidad_origen_id')} - {relacion.get('entidad_destino_id')}). "
                     f"Descartando relación."
                 )
                 self.stats["entidad_relacion_descartadas"] += 1
@@ -170,8 +170,8 @@ class ValidadorRelacionesPost7B:
         
         for relacion in relaciones:
             # Validar campos obligatorios
-            if not relacion.get("id_temporal"):
-                logger.error("Relación hecho-entidad sin id_temporal. Descartando.")
+            if not relacion.get("hecho_id") or not relacion.get("entidad_id"):
+                logger.error("Relación hecho-entidad sin hecho_id o entidad_id. Descartando.")
                 self.stats["hecho_entidad_corregidas"] += 1
                 continue
             
@@ -354,7 +354,7 @@ class ValidadorRelacionesPost7B:
         
         # Mapeo de tipos incorrectos comunes a tipos válidos
         self.mapeo_correcciones_entidad = {
-            # Tipos de hecho-entidad que el LLM usa incorrectamente
+            # Tipos de hecho-entidad que el LLM usa incorrectamente para entidad-entidad
             "ubicacion": "aliado_con",  # Si es una relación geográfica
             "mencionado": "aliado_con",  # Relación neutral
             "organizador": "empleado_de",  # Si organiza, probablemente trabaja para
@@ -365,6 +365,7 @@ class ValidadorRelacionesPost7B:
             "contexto": "aliado_con",  # Relación contextual neutral
             "victima": "opositor_a",  # Si es víctima, probablemente opositor
             "agresor": "opositor_a",  # Si es agresor, es opositor
+            # NO incluir "otro" aquí porque es válido para hecho-entidad
         }
     
     def validar_y_corregir(self, datos_fase_7b: Dict[str, Any]) -> Dict[str, Any]:

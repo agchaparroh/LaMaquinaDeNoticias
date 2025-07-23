@@ -1,0 +1,82 @@
+services:
+  supabase-mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: supabase-mcp-server:latest
+    container_name: supabase-mcp-server
+    restart: unless-stopped
+    
+    # Variables de entorno
+    environment:
+      - SUPABASE_PROJECT_REF=${SUPABASE_PROJECT_REF:-127.0.0.1:54322}
+      - SUPABASE_DB_PASSWORD=${SUPABASE_DB_PASSWORD:-postgres}
+      - SUPABASE_REGION=${SUPABASE_REGION:-us-east-1}
+      - SUPABASE_ACCESS_TOKEN=${SUPABASE_ACCESS_TOKEN:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      - QUERY_API_KEY=${QUERY_API_KEY:-test-key}
+      - QUERY_API_URL=${QUERY_API_URL:-https://api.thequery.dev/v1}
+    
+    # Para desarrollo local con Supabase
+    networks:
+      - supabase-network
+    
+    # Volúmenes para logs persistentes
+    volumes:
+      - mcp-logs:/home/mcpuser/.local/share/supabase-mcp
+    
+    # Configuración de recursos
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    
+    # Configuración de logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import supabase_mcp; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Servicio local de Supabase (opcional, para desarrollo)
+  supabase-local:
+    image: supabase/postgres:15.1.0.147
+    container_name: supabase-db
+    restart: unless-stopped
+    profiles:
+      - local-dev
+    
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    
+    ports:
+      - "54322:5432"
+    
+    networks:
+      - supabase-network
+    
+    volumes:
+      - supabase-db:/var/lib/postgresql/data
+
+networks:
+  supabase-network:
+    driver: bridge
+
+volumes:
+  mcp-logs:
+    driver: local
+  supabase-db:
+    driver: local

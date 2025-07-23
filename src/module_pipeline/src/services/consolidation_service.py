@@ -97,7 +97,7 @@ class ConsolidationService:
         # Agrupar por tipo para optimizar comparaciones
         entidades_por_tipo = defaultdict(list)
         for entidad in todas_entidades:
-            entidades_por_tipo[entidad.tipo_entidad].append(entidad)
+            entidades_por_tipo[entidad.tipo].append(entidad)
         
         # Consolidar dentro de cada tipo usando algoritmos optimizados
         entidades_consolidadas = []
@@ -179,14 +179,14 @@ class ConsolidationService:
             Score de similitud entre 0 y 1
         """
         # Similitud exacta del nombre
-        if entidad1.texto_entidad.lower() == entidad2.texto_entidad.lower():
+        if entidad1.nombre.lower() == entidad2.nombre.lower():
             return 1.0
         
         # Similitud difusa del nombre
         nombre_sim = difflib.SequenceMatcher(
             None,
-            entidad1.texto_entidad.lower(),
-            entidad2.texto_entidad.lower()
+            entidad1.nombre.lower(),
+            entidad2.nombre.lower()
         ).ratio()
         
         # Verificar alias
@@ -194,8 +194,8 @@ class ConsolidationService:
         alias2 = set(entidad2.metadata_entidad.alias or [])
         
         # Si el nombre de una está en los alias de la otra
-        if (entidad1.texto_entidad in alias2 or 
-            entidad2.texto_entidad in alias1):
+        if (entidad1.nombre in alias2 or 
+            entidad2.nombre in alias1):
             return 0.95
         
         # Similitud de alias
@@ -231,12 +231,12 @@ class ConsolidationService:
         # Recopilar todos los alias únicos
         todos_alias = set()
         for entidad in grupo:
-            todos_alias.add(entidad.texto_entidad)
+            todos_alias.add(entidad.nombre)
             if entidad.metadata_entidad.alias:
                 todos_alias.update(entidad.metadata_entidad.alias)
         
         # Remover el nombre principal de los alias
-        todos_alias.discard(entidad_base.texto_entidad)
+        todos_alias.discard(entidad_base.nombre)
         
         # Actualizar metadatos
         entidad_base.metadata_entidad.alias = sorted(list(todos_alias))
@@ -251,7 +251,7 @@ class ConsolidationService:
             entidad_base.metadata_entidad.descripcion = " - ".join(set(descripciones))
         
         # Usar la mayor relevancia
-        entidad_base.relevancia_entidad = max(e.relevancia_entidad for e in grupo)
+        entidad_base.relevancia = max(e.relevancia for e in grupo)
         
         return entidad_base
     
@@ -350,8 +350,8 @@ class ConsolidationService:
         # Similitud del texto
         texto_sim = difflib.SequenceMatcher(
             None,
-            hecho1.texto_original_del_hecho.lower(),
-            hecho2.texto_original_del_hecho.lower()
+            hecho1.contenido.lower(),
+            hecho2.contenido.lower()
         ).ratio()
         
         # Bonus si son del mismo tipo
@@ -385,10 +385,9 @@ class ConsolidationService:
             return grupo[0]
         
         # Usar el más largo como base
-        hecho_base = max(grupo, key=lambda h: len(h.texto_original_del_hecho))
+        hecho_base = max(grupo, key=lambda h: len(h.contenido))
         
-        # Usar la mayor confianza
-        hecho_base.confianza_extraccion = max(h.confianza_extraccion for h in grupo)
+        # Nota: campo confianza_extraccion eliminado del modelo HechoProcesado
         
         # Combinar vinculaciones a entidades
         todas_vinculaciones = set()
@@ -428,9 +427,9 @@ class ConsolidationService:
         for dato in todos_datos:
             # Crear clave única
             clave = (
-                dato.descripcion_dato.lower(),
-                dato.valor_dato,
-                dato.unidad_dato
+                dato.indicador.lower(),
+                dato.valor_numerico,
+                dato.unidad
             )
             
             if clave not in datos_vistos:
@@ -497,7 +496,7 @@ class ConsolidationService:
         
         for cita in citas:
             # Normalizar texto para comparación
-            texto_norm = cita.texto_cita.lower().strip()
+            texto_norm = cita.cita.lower().strip()
             
             # Buscar si ya existe una cita muy similar
             es_duplicada = False
@@ -554,10 +553,10 @@ class ConsolidationService:
         
         # Actualizar referencias en citas
         for cita in citas:
-            if cita.id_entidad_citada:
-                cita.id_entidad_citada = mapeo_ids.get(
+            if cita.entidad_emisora_id:
+                cita.entidad_emisora_id = mapeo_ids.get(
                     "entidades", {}
-                ).get(cita.id_entidad_citada, cita.id_entidad_citada)
+                ).get(cita.entidad_emisora_id, cita.entidad_emisora_id)
             
             if cita.metadata_cita.hecho_relacionado_id:
                 cita.metadata_cita.hecho_relacionado_id = mapeo_ids.get(
@@ -611,7 +610,7 @@ class ConsolidationService:
         start_time = time.time()
         
         # Extraer textos para comparación
-        textos_entidades = [entidad.texto_entidad for entidad in entidades]
+        textos_entidades = [entidad.nombre for entidad in entidades]
         
         # Usar algoritmo optimizado con early termination
         grupos_similares = consolidar_elementos_optimizado(
@@ -663,16 +662,16 @@ class ConsolidationService:
         for entidad in entidades:
             if hasattr(entidad, '_chunk_origen'):
                 chunks_origen.add(entidad._chunk_origen)
-            relevancia_total += entidad.relevancia_entidad
+            relevancia_total += entidad.relevancia
             # apariciones_entidad no existe en el modelo - usar contador simple
             apariciones_total += 1
         
         # Crear entidad fusionada
         entidad_fusionada = EntidadProcesada(
             id_entidad=entidad_base.id_entidad,
-            texto_entidad=entidad_base.texto_entidad,
-            tipo_entidad=entidad_base.tipo_entidad,
-            relevancia_entidad=relevancia_total / len(entidades),  # Promedio
+            nombre=entidad_base.nombre,
+            tipo=entidad_base.tipo,
+            relevancia=relevancia_total / len(entidades),  # Promedio
             id_fragmento_origen=entidad_base.id_fragmento_origen,  # CAMPO REQUERIDO
             metadata_entidad=entidad_base.metadata_entidad
         )

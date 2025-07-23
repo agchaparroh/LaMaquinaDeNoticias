@@ -132,12 +132,12 @@ class FragmentProcessor:
         self.logger.debug(f"Asignado ID cita {current_id} en fragmento {self.id_fragmento}: {cita_preview or 'Sin preview'}")
         return current_id
     
-    def next_dato_id(self, descripcion_dato: str = None) -> int:
+    def next_dato_id(self, indicador: str = None) -> int:
         """
         Genera el próximo ID secuencial para un dato cuantitativo.
         
         Args:
-            descripcion_dato: Descripción del dato para debugging
+            indicador: Indicador del dato para debugging
             
         Returns:
             int: ID secuencial único dentro del fragmento
@@ -145,10 +145,10 @@ class FragmentProcessor:
         current_id = self.dato_counter
         self.dato_counter += 1
         
-        if descripcion_dato:
-            self._datos_asignados[current_id] = descripcion_dato[:40]
+        if indicador:
+            self._datos_asignados[current_id] = indicador[:40]
             
-        self.logger.debug(f"Asignado ID dato {current_id} en fragmento {self.id_fragmento}: {descripcion_dato or 'Sin descripción'}")
+        self.logger.debug(f"Asignado ID dato {current_id} en fragmento {self.id_fragmento}: {indicador or 'Sin indicador'}")
         return current_id
     
     def get_stats(self) -> Dict[str, Any]:

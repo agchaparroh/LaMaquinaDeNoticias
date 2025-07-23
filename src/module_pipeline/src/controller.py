@@ -38,6 +38,8 @@ from .services.job_tracker_service import get_job_tracker_service, JobStatus
 from .pipeline.pipeline_coordinator import PipelineCoordinator
 # Importar configuración de spaCy
 from .config import get_spacy_model_name
+# Importar funciones de error handling necesarias
+from .utils.error_handling import handle_groq_extraction_error_fase2
 
 
 class PipelineController:
@@ -764,8 +766,7 @@ class PipelineController:
                     HechoProcesado(
                         id_hecho=h["id_hecho"],
                         id_fragmento_origen=fragment_uuid,  # Campo requerido
-                        texto_original_del_hecho=h["texto_original_del_hecho"],
-                        confianza_extraccion=0.5,
+                        contenido=h["contenido"],
                         metadata_hecho=h.get("metadata_hecho", {})
                     )
                     for h in fallback_data["hechos_extraidos"]
@@ -775,9 +776,9 @@ class PipelineController:
                     EntidadProcesada(
                         id_entidad=e["id_entidad"],
                         id_fragmento_origen=fragment_uuid,  # Campo requerido
-                        texto_entidad=e["texto_entidad"],
-                        tipo_entidad=e["tipo_entidad"],
-                        relevancia_entidad=0.5,
+                        nombre=e["nombre"],
+                        tipo=e["tipo"],
+                        relevancia=0.5,
                         metadata_entidad=e.get("metadata_entidad", {})
                     )
                     for e in fallback_data["entidades_extraidas"]
@@ -903,9 +904,9 @@ class PipelineController:
                 for entidad in resultado_fase2.entidades_extraidas:
                     entidad_copia = EntidadProcesada(
                         id_entidad=entidad.id_entidad,
-                        texto_entidad=entidad.texto_entidad,
-                        tipo_entidad=entidad.tipo_entidad,
-                        relevancia_entidad=entidad.relevancia_entidad,
+                        nombre=entidad.nombre,
+                        tipo=entidad.tipo,
+                        relevancia=entidad.relevancia,
                         metadata_entidad=entidad.metadata_entidad,
                         id_entidad_normalizada=None,  # Sin normalización
                         nombre_entidad_normalizada=None,
@@ -1044,9 +1045,8 @@ class PipelineController:
                 hechos_extraidos_data = [
                     {
                         "id_temporal_hecho": str(hecho.id_hecho),
-                        "descripcion_hecho": hecho.texto_original_del_hecho,
-                        "texto_original_del_hecho": hecho.texto_original_del_hecho,
-                        "confianza_extraccion": hecho.confianza_extraccion,
+                        "descripcion_hecho": hecho.contenido,
+                        "contenido": hecho.contenido,
                         "metadata_hecho": hecho.metadata_hecho.model_dump() if hecho.metadata_hecho else {}
                     }
                     for hecho in resultado_fase2.hechos_extraidos
@@ -1059,9 +1059,9 @@ class PipelineController:
                     {
                         "id": str(entidad.id_entidad),
                         "id_temporal": str(entidad.id_entidad),  # IMPORTANTE: Requerido por la función SQL
-                        "nombre": entidad.nombre_entidad_normalizada or entidad.texto_entidad,
-                        "tipo": entidad.tipo_entidad,
-                        "relevancia_entidad_articulo": int(entidad.relevancia_entidad * 10),
+                        "nombre": entidad.nombre_entidad_normalizada or entidad.nombre,
+                        "tipo": entidad.tipo,
+                        "relevancia": entidad.relevancia,
                         "metadata_entidad": entidad.metadata_entidad.model_dump() if entidad.metadata_entidad else {},
                         "id_entidad_normalizada": str(entidad.id_entidad_normalizada) if entidad.id_entidad_normalizada else None,
                         "nombre_entidad_normalizada": entidad.nombre_entidad_normalizada,
@@ -1076,10 +1076,11 @@ class PipelineController:
                 citas_textuales_data = [
                     {
                         "id_cita": cita.id_cita,
-                        "texto_cita": cita.texto_cita,
+                        "cita": cita.cita,
                         "persona_citada": cita.persona_citada,
-                        "id_entidad_citada": cita.id_entidad_citada,
-                        "contexto_cita": cita.contexto_cita,
+                        "entidad_emisora_id": cita.entidad_emisora_id,
+                        "contexto": cita.contexto,
+                        "relevancia": cita.relevancia,
                         "metadata_cita": cita.metadata_cita.model_dump() if cita.metadata_cita else {}
                     }
                     for cita in resultado_fase3.citas_textuales_extraidas
@@ -1091,10 +1092,12 @@ class PipelineController:
                 datos_cuantitativos_data = [
                     {
                         "id_dato_cuantitativo": dato.id_dato_cuantitativo,
-                        "descripcion_dato": dato.descripcion_dato,
-                        "valor_dato": dato.valor_dato,
-                        "unidad_dato": dato.unidad_dato,
-                        "fecha_dato": dato.fecha_dato,
+                        "indicador": dato.indicador,
+                        "categoria": dato.categoria,
+                        "valor_numerico": dato.valor_numerico,
+                        "unidad": dato.unidad,
+                        "periodo_referencia_inicio": dato.periodo_referencia_inicio,
+                        "periodo_referencia_fin": dato.periodo_referencia_fin,
                         "metadata_dato": dato.metadata_dato.model_dump() if dato.metadata_dato else {}
                     }
                     for dato in resultado_fase3.datos_cuantitativos_extraidos
