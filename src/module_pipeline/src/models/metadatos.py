@@ -112,31 +112,15 @@ class MetadatosEntidad(BaseModel):
 class MetadatosCita(BaseModel):
     """
     Metadatos específicos para citas extraídas por Prompt_3.
-    Preserva campos que antes se perdían en metadata_cita genérico.
     
-    Campos preservados del JSON del LLM:
-    - fecha, contexto, relevancia (con constraint 1-5)
+    NOTA: Los campos fecha, contexto y relevancia ahora están directamente
+    en el modelo CitaTextual para evitar duplicación.
+    
+    Esta clase se mantiene para futuros metadatos adicionales que no
+    formen parte del modelo principal.
     """
-    # Fecha específica de la cita
-    fecha: Optional[str] = Field(
-        None,
-        pattern=r'^\d{4}-\d{2}-\d{2}$',
-        description="Fecha específica de la cita en formato YYYY-MM-DD"
-    )
-    
-    # Contexto de la declaración
-    contexto: Optional[str] = Field(
-        None,
-        description="Contexto breve en que se realizó la cita"
-    )
-    
-    # Relevancia con constraint numérico del prompt
-    relevancia: Optional[int] = Field(
-        None,
-        ge=1,
-        le=5,
-        description="Relevancia de la cita en escala 1-5"
-    )
+    # Por ahora vacía, se puede extender con metadatos adicionales
+    pass
 
 class PeriodoReferencia(BaseModel):
     """Periodo de referencia para datos cuantitativos"""

@@ -278,8 +278,16 @@ def _procesar_hechos_extraidos(
             # Crear hecho procesado
             hecho_procesado = HechoProcesado(
                 id_hecho=hecho.get("id", 0),
-                texto_original_del_hecho=hecho.get("contenido", ""),  # Mantener campo interno
-                confianza_extraccion=0.9,  # Alta confianza por defecto
+                contenido=hecho.get("contenido", ""),
+                fecha_inicio=hecho.get("fecha_inicio", ""),
+                fecha_fin=hecho.get("fecha_fin", hecho.get("fecha_inicio", "")),
+                precision_temporal=hecho.get("precision_temporal", "dia"),
+                tipo_hecho=hecho.get("tipo_hecho", "SUCESO"),
+                importancia=hecho.get("importancia", 5),  # Ahora viene del LLM
+                pais=hecho.get("pais", []),
+                region=hecho.get("region"),
+                ciudad=hecho.get("ciudad"),
+                etiquetas=[],  # Por ahora vacío
                 id_fragmento_origen=id_fragmento,
                 metadata_hecho=metadatos
             )

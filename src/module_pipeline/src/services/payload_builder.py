@@ -515,7 +515,26 @@ class PayloadBuilder:
                 payload_data["entidades_autonomas"] = []
 
             if citas_textuales_data is not None:
-                payload_data["citas_textuales_extraidas"] = [CitaTextualExtraidaItem(**item) for item in citas_textuales_data]
+                # Mapear campos a los nombres esperados por CitaTextualExtraidaItem
+                citas_mapeadas = []
+                for item in citas_textuales_data:
+                    cita_mapeada = {
+                        # Campos principales esperados por RPC
+                        'id_temporal_cita': item.get('id_temporal_cita', str(item.get('id_cita', item.get('id', '')))),
+                        'cita': item.get('cita', item.get('texto_cita', '')),
+                        'entidad_emisora_id': item.get('entidad_emisora_id', item.get('id_entidad_citada')),
+                        'hecho_contexto_id': item.get('hecho_contexto_id', item.get('hecho_principal_relacionado_id_temporal')),
+                        'fecha_cita': item.get('fecha_cita'),
+                        'contexto': item.get('contexto', item.get('contexto_cita', '')),
+                        'relevancia': item.get('relevancia', 3),
+                        
+                        # Campos adicionales
+                        'persona_citada': item.get('persona_citada'),
+                        'metadata': item.get('metadata', item.get('metadata_cita', {}))
+                    }
+                    citas_mapeadas.append(cita_mapeada)
+                
+                payload_data["citas_textuales_extraidas"] = [CitaTextualExtraidaItem(**item) for item in citas_mapeadas]
             else:
                 payload_data["citas_textuales_extraidas"] = []
 
@@ -724,15 +743,19 @@ class PayloadBuilder:
                         'id_temporal': str(item.get('id_temporal', item.get('id_temporal_hecho', item.get('id', '')))),
                         'contenido': item.get('contenido', item.get('texto_original_del_hecho', '')),
                         'tipo_hecho': item.get('tipo_hecho', item.get('metadata_hecho', {}).get('tipo_hecho')),
-                        'fecha_ocurrencia_inicio': item.get('fecha_ocurrencia_inicio', item.get('metadata_hecho', {}).get('fecha_inicio')),
-                        'fecha_ocurrencia_fin': item.get('fecha_ocurrencia_fin', item.get('metadata_hecho', {}).get('fecha_fin')),
-                        'importancia': item.get('importancia', item.get('metadata_hecho', {}).get('importancia')),
+                        'fecha_ocurrencia_inicio': item.get('fecha_inicio', item.get('fecha_ocurrencia_inicio', item.get('metadata_hecho', {}).get('fecha_inicio'))),
+                        'fecha_ocurrencia_fin': item.get('fecha_fin', item.get('fecha_ocurrencia_fin', item.get('metadata_hecho', {}).get('fecha_fin'))),
+                        'importancia': item.get('importancia', item.get('metadata_hecho', {}).get('importancia', 5)),
                         'precision_temporal': item.get('precision_temporal', item.get('metadata_hecho', {}).get('precision_temporal')),
                         'ubicacion_geografica': item.get('ubicacion_geografica', item.get('metadata_hecho', {}).get('ubicacion')),
                         'actores_involucrados': item.get('actores_involucrados', []),
                         'fuente_especifica': item.get('fuente_especifica'),
                         'es_hecho_futuro': item.get('es_hecho_futuro', item.get('metadata_hecho', {}).get('es_futuro', False)),
-                        'confianza_extraccion': item.get('confianza_extraccion', 0.8)
+                        'confianza_extraccion': item.get('confianza_extraccion', 0.8),
+                        # Nuevos campos agregados
+                        'pais': item.get('pais', []),
+                        'region': item.get('region', []),
+                        'ciudad': item.get('ciudad', [])
                     }
                     hechos_mapeados.append(hecho_mapeado)
                 
@@ -761,7 +784,26 @@ class PayloadBuilder:
                 payload_data["entidades_autonomas"] = []
 
             if citas_textuales_data is not None:
-                payload_data["citas_textuales_extraidas"] = [CitaTextualExtraidaItem(**item) for item in citas_textuales_data]
+                # Mapear campos a los nombres esperados por CitaTextualExtraidaItem
+                citas_mapeadas = []
+                for item in citas_textuales_data:
+                    cita_mapeada = {
+                        # Campos principales esperados por RPC
+                        'id_temporal_cita': item.get('id_temporal_cita', str(item.get('id_cita', item.get('id', '')))),
+                        'cita': item.get('cita', item.get('texto_cita', '')),
+                        'entidad_emisora_id': item.get('entidad_emisora_id', item.get('id_entidad_citada')),
+                        'hecho_contexto_id': item.get('hecho_contexto_id', item.get('hecho_principal_relacionado_id_temporal')),
+                        'fecha_cita': item.get('fecha_cita'),
+                        'contexto': item.get('contexto', item.get('contexto_cita', '')),
+                        'relevancia': item.get('relevancia', 3),
+                        
+                        # Campos adicionales
+                        'persona_citada': item.get('persona_citada'),
+                        'metadata': item.get('metadata', item.get('metadata_cita', {}))
+                    }
+                    citas_mapeadas.append(cita_mapeada)
+                
+                payload_data["citas_textuales_extraidas"] = [CitaTextualExtraidaItem(**item) for item in citas_mapeadas]
             else:
                 payload_data["citas_textuales_extraidas"] = []
 

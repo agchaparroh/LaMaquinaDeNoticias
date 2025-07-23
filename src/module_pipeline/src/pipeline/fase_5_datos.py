@@ -96,7 +96,7 @@ def _preparar_contexto_referencias(
     for hecho in hechos:
         hechos_json.append({
             "id": hecho.id_hecho,
-            "contenido": hecho.texto_original_del_hecho,
+            "contenido": hecho.contenido,
             "tipo": hecho.metadata_hecho.tipo_hecho
         })
     
@@ -105,8 +105,8 @@ def _preparar_contexto_referencias(
     for entidad in entidades:
         entidades_json.append({
             "id": entidad.id_entidad,
-            "nombre": entidad.texto_entidad,
-            "tipo": entidad.tipo_entidad
+            "nombre": entidad.nombre,
+            "tipo": entidad.tipo
         })
     
     return json.dumps(hechos_json, ensure_ascii=False, indent=2), \
@@ -302,26 +302,34 @@ def _procesar_datos_extraidos(
                     fin=fecha_fin
                 )
             
-            # Crear metadatos específicos (solo campos válidos de MetadatosDato)
+            # Crear metadatos específicos (solo campos que NO están en DatosCuantitativos)
             metadatos = MetadatosDato(
-                categoria=dato.get("categoria", "otro"),
-                ambito_geografico=dato.get("ambito_geografico", []),
-                periodo=periodo_obj,  # Usar el objeto PeriodoReferencia
-                tipo_periodo=dato.get("tipo_periodo", "puntual"),
+                # SOLO campos que no están en la tabla principal de BD:
                 valor_anterior=dato.get("valor_anterior"),
                 variacion_absoluta=dato.get("variacion_absoluta"),
-                variacion_porcentual=dato.get("variacion_porcentual"),
-                tendencia=dato.get("tendencia")
+                variacion_porcentual=dato.get("variacion_porcentual")
+                # Los siguientes campos ya están en DatosCuantitativos:
+                # categoria → en DatosCuantitativos
+                # ambito_geografico → en DatosCuantitativos
+                # periodo → ahora periodo_referencia_inicio/fin en DatosCuantitativos
+                # tipo_periodo → en DatosCuantitativos
+                # tendencia → en DatosCuantitativos
             )
             
             # Crear dato cuantitativo
             dato_procesado = DatosCuantitativos(
                 id_dato_cuantitativo=dato.get("id", 0),
                 id_fragmento_origen=id_fragmento,
-                descripcion_dato=dato.get("indicador", ""),
-                valor_dato=float(dato.get("valor", 0)),
-                unidad_dato=dato.get("unidad"),
-                fecha_dato=f"{fecha_inicio} - {fecha_fin}" if fecha_inicio and fecha_fin else None,
+                hecho_id=dato.get("hecho_id"),
+                indicador=dato.get("indicador", ""),
+                categoria=dato.get("categoria", "otro"),
+                valor_numerico=float(dato.get("valor", 0)),
+                unidad=dato.get("unidad", ""),
+                ambito_geografico=dato.get("ambito_geografico", []),
+                periodo_referencia_inicio=dato.get("periodo_inicio"),
+                periodo_referencia_fin=dato.get("periodo_fin"),
+                tipo_periodo=dato.get("tipo_periodo"),
+                tendencia=dato.get("tendencia"),
                 metadata_dato=metadatos
             )
             
@@ -521,14 +529,14 @@ async def _procesar_chunk_datos_async(
         # Preparar contexto para chunk
         hechos_json = json.dumps([{
             "id": hecho.id_hecho,
-            "contenido": hecho.texto_hecho,
+            "contenido": hecho.contenido,
             "tipo": hecho.metadata_hecho.tipo_hecho if hasattr(hecho, 'metadata_hecho') and hecho.metadata_hecho else "DESCONOCIDO"
         } for hecho in hechos_chunk], ensure_ascii=False, indent=2)
         
         entidades_json = json.dumps([{
             "id": entidad.id_entidad,
-            "nombre": entidad.texto_entidad,
-            "tipo": entidad.tipo_entidad
+            "nombre": entidad.nombre,
+            "tipo": entidad.tipo
         } for entidad in entidades_chunk], ensure_ascii=False, indent=2)
         
         # Preparar prompt para chunk

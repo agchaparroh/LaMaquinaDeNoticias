@@ -51,6 +51,7 @@ from ..utils.validation import (
     validate_date_optional,
     validate_wikidata_uri
 )
+from ..utils.validador_relaciones_post7b import ValidadorRelacionesPost7B
 
 # Importar servicio Groq
 try:
@@ -155,10 +156,10 @@ def _preparar_contexto_temporal(
         "hechos": [
             {
                 "id": h.id_hecho,
-                "contenido": h.texto_original_del_hecho,
-                "fecha_inicio": h.metadata_hecho.fecha_inicio,
-                "fecha_fin": h.metadata_hecho.fecha_fin,
-                "tipo": h.metadata_hecho.tipo_hecho
+                "contenido": h.contenido,
+                "fecha_inicio": h.fecha_inicio,
+                "fecha_fin": h.fecha_fin,
+                "tipo": h.tipo_hecho
             }
             for h in hechos
         ]
@@ -485,6 +486,63 @@ async def ejecutar_fase_7b_relaciones(
         }
     }
     
+    # COMPLETAR CAMPOS FALTANTES: Agregar información que el LLM no puede generar
+    logger.info("Completando campos faltantes en relaciones detectadas")
+    
+    # Completar hecho_entidad (agregar fecha_ocurrencia_hecho)
+    if "hecho_entidad" in todas_relaciones["relaciones_estructurales"]:
+        todas_relaciones["relaciones_estructurales"]["hecho_entidad"] = _completar_campos_hecho_entidad(
+            todas_relaciones["relaciones_estructurales"]["hecho_entidad"],
+            hechos
+        )
+    
+    # Completar hecho_relacionado (agregar fechas de ocurrencia origen/destino)
+    if "hecho_relacionado" in todas_relaciones["relaciones_temporales"]:
+        todas_relaciones["relaciones_temporales"]["hecho_relacionado"] = _completar_campos_hecho_relacionado(
+            todas_relaciones["relaciones_temporales"]["hecho_relacionado"],
+            hechos
+        )
+    
+    # Completar contradicciones (agregar fechas, estado_resolucion, fecha_deteccion)
+    if "contradicciones" in todas_relaciones["relaciones_temporales"]:
+        todas_relaciones["relaciones_temporales"]["contradicciones"] = _completar_campos_contradicciones(
+            todas_relaciones["relaciones_temporales"]["contradicciones"],
+            hechos
+        )
+    
+    # VALIDACIÓN POST-7B: Aplicar validador de relaciones
+    logger.info("Aplicando validación post-7B a las relaciones detectadas")
+    validador = ValidadorRelacionesPost7B()
+    
+    # Preparar datos para validación
+    datos_para_validar = {
+        "entidad_relacion": todas_relaciones["relaciones_estructurales"].get("entidad_relacion", []),
+        "hecho_entidad": todas_relaciones["relaciones_estructurales"].get("hecho_entidad", []),
+        "hecho_relacionado": todas_relaciones["relaciones_temporales"].get("hecho_relacionado", []),
+        "contradicciones": todas_relaciones["relaciones_temporales"].get("contradicciones", [])
+    }
+    
+    # Validar y corregir
+    datos_validados = validador.validar_y_corregir(datos_para_validar)
+    
+    # Obtener estadísticas de validación
+    estadisticas_validacion = validador.obtener_estadisticas(datos_para_validar, datos_validados)
+    
+    # Actualizar con datos validados
+    todas_relaciones["relaciones_estructurales"]["entidad_relacion"] = datos_validados["entidad_relacion"]
+    todas_relaciones["relaciones_estructurales"]["hecho_entidad"] = datos_validados["hecho_entidad"]
+    todas_relaciones["relaciones_temporales"]["hecho_relacionado"] = datos_validados["hecho_relacionado"]
+    todas_relaciones["relaciones_temporales"]["contradicciones"] = datos_validados["contradicciones"]
+    
+    # Agregar estadísticas de validación a metadatos
+    todas_relaciones["metadatos"]["validacion_post_7b"] = estadisticas_validacion
+    
+    logger.info(
+        f"Validación post-7B completada: "
+        f"{estadisticas_validacion['entidad_relacion']['descartadas']} relaciones entidad-entidad descartadas, "
+        f"{estadisticas_validacion['entidad_relacion']['corregidas']} corregidas"
+    )
+    
     # Contar relaciones
     total_relaciones = (
         len(todas_relaciones["relaciones_estructurales"].get("hecho_entidad", [])) +
@@ -593,3 +651,164 @@ def ejecutar_fase_7_completa(
             estado_general_normalizacion="Fallido",
             metadata_normalizacion={"error": str(error_info)}
         )
+
+
+def _completar_campos_hecho_entidad(
+    relaciones_hecho_entidad: List[Dict[str, Any]],
+    hechos: List[HechoProcesado]
+) -> List[Dict[str, Any]]:
+    """
+    Completa los campos faltantes para relaciones hecho-entidad.
+    
+    Agrega fecha_ocurrencia_hecho desde el hecho correspondiente.
+    
+    Args:
+        relaciones_hecho_entidad: Lista de relaciones detectadas por LLM
+        hechos: Lista de hechos procesados
+        
+    Returns:
+        Lista de relaciones con campos completados
+    """
+    # Crear índice de hechos por ID
+    hechos_dict = {h.id_hecho: h for h in hechos}
+    
+    relaciones_completas = []
+    
+    for relacion in relaciones_hecho_entidad:
+        hecho_id = relacion.get("hecho_id")
+        if hecho_id not in hechos_dict:
+            logger.warning(f"Hecho {hecho_id} no encontrado para relación hecho-entidad")
+            continue
+            
+        hecho = hechos_dict[hecho_id]
+        
+        # Crear tstzrange desde fecha_inicio/fecha_fin del hecho
+        fecha_ocurrencia_hecho = f"[{hecho.fecha_inicio} 00:00:00+00,{hecho.fecha_fin} 23:59:59+00)"
+        
+        relacion_completa = {
+            "hecho_id": hecho_id,
+            "fecha_ocurrencia_hecho": fecha_ocurrencia_hecho,
+            "entidad_id": relacion.get("entidad_id"),
+            "tipo_relacion": relacion.get("tipo_relacion", "otro"),
+            "relevancia_en_hecho": relacion.get("relevancia_en_hecho", 5)
+        }
+        
+        relaciones_completas.append(relacion_completa)
+    
+    logger.info(f"Completados campos para {len(relaciones_completas)} relaciones hecho-entidad")
+    return relaciones_completas
+
+
+def _completar_campos_hecho_relacionado(
+    relaciones_hecho_relacionado: List[Dict[str, Any]],
+    hechos: List[HechoProcesado]
+) -> List[Dict[str, Any]]:
+    """
+    Completa los campos faltantes para relaciones hecho-hecho.
+    
+    Agrega fecha_ocurrencia_origen y fecha_ocurrencia_destino desde los hechos correspondientes.
+    
+    Args:
+        relaciones_hecho_relacionado: Lista de relaciones detectadas por LLM
+        hechos: Lista de hechos procesados
+        
+    Returns:
+        Lista de relaciones con campos completados
+    """
+    # Crear índice de hechos por ID
+    hechos_dict = {h.id_hecho: h for h in hechos}
+    
+    relaciones_completas = []
+    
+    for relacion in relaciones_hecho_relacionado:
+        hecho_origen_id = relacion.get("hecho_origen_id")
+        hecho_destino_id = relacion.get("hecho_destino_id")
+        
+        if hecho_origen_id not in hechos_dict:
+            logger.warning(f"Hecho origen {hecho_origen_id} no encontrado para relación hecho-hecho")
+            continue
+            
+        if hecho_destino_id not in hechos_dict:
+            logger.warning(f"Hecho destino {hecho_destino_id} no encontrado para relación hecho-hecho")
+            continue
+            
+        hecho_origen = hechos_dict[hecho_origen_id]
+        hecho_destino = hechos_dict[hecho_destino_id]
+        
+        # Crear tstzrange para ambos hechos
+        fecha_ocurrencia_origen = f"[{hecho_origen.fecha_inicio} 00:00:00+00,{hecho_origen.fecha_fin} 23:59:59+00)"
+        fecha_ocurrencia_destino = f"[{hecho_destino.fecha_inicio} 00:00:00+00,{hecho_destino.fecha_fin} 23:59:59+00)"
+        
+        relacion_completa = {
+            "hecho_origen_id": hecho_origen_id,
+            "fecha_ocurrencia_origen": fecha_ocurrencia_origen,
+            "hecho_destino_id": hecho_destino_id,
+            "fecha_ocurrencia_destino": fecha_ocurrencia_destino,
+            "tipo_relacion": relacion.get("tipo_relacion", "contexto_historico"),
+            "fuerza_relacion": relacion.get("fuerza_relacion", 5),
+            "descripcion_relacion": relacion.get("descripcion_relacion", "")
+        }
+        
+        relaciones_completas.append(relacion_completa)
+    
+    logger.info(f"Completados campos para {len(relaciones_completas)} relaciones hecho-hecho")
+    return relaciones_completas
+
+
+def _completar_campos_contradicciones(
+    contradicciones: List[Dict[str, Any]],
+    hechos: List[HechoProcesado]
+) -> List[Dict[str, Any]]:
+    """
+    Completa los campos faltantes para contradicciones.
+    
+    Agrega fechas de ocurrencia, estado_resolucion y fecha_deteccion.
+    
+    Args:
+        contradicciones: Lista de contradicciones detectadas por LLM
+        hechos: Lista de hechos procesados
+        
+    Returns:
+        Lista de contradicciones con campos completados
+    """
+    # Crear índice de hechos por ID
+    hechos_dict = {h.id_hecho: h for h in hechos}
+    
+    contradicciones_completas = []
+    fecha_deteccion_actual = datetime.now().isoformat()
+    
+    for contradiccion in contradicciones:
+        hecho_principal_id = contradiccion.get("hecho_principal_id")
+        hecho_contradictorio_id = contradiccion.get("hecho_contradictorio_id")
+        
+        if hecho_principal_id not in hechos_dict:
+            logger.warning(f"Hecho principal {hecho_principal_id} no encontrado para contradicción")
+            continue
+            
+        if hecho_contradictorio_id not in hechos_dict:
+            logger.warning(f"Hecho contradictorio {hecho_contradictorio_id} no encontrado para contradicción")
+            continue
+            
+        hecho_principal = hechos_dict[hecho_principal_id]
+        hecho_contradictorio = hechos_dict[hecho_contradictorio_id]
+        
+        # Crear tstzrange para ambos hechos
+        fecha_ocurrencia_principal = f"[{hecho_principal.fecha_inicio} 00:00:00+00,{hecho_principal.fecha_fin} 23:59:59+00)"
+        fecha_ocurrencia_contradictoria = f"[{hecho_contradictorio.fecha_inicio} 00:00:00+00,{hecho_contradictorio.fecha_fin} 23:59:59+00)"
+        
+        contradiccion_completa = {
+            "hecho_principal_id": hecho_principal_id,
+            "fecha_ocurrencia_principal": fecha_ocurrencia_principal,
+            "hecho_contradictorio_id": hecho_contradictorio_id,
+            "fecha_ocurrencia_contradictoria": fecha_ocurrencia_contradictoria,
+            "tipo_contradiccion": contradiccion.get("tipo_contradiccion", "contenido"),
+            "grado_contradiccion": contradiccion.get("grado_contradiccion", 3),
+            "descripcion": contradiccion.get("descripcion", ""),
+            "estado_resolucion": "pendiente",  # Default
+            "fecha_deteccion": fecha_deteccion_actual
+        }
+        
+        contradicciones_completas.append(contradiccion_completa)
+    
+    logger.info(f"Completados campos para {len(contradicciones_completas)} contradicciones")
+    return contradicciones_completas

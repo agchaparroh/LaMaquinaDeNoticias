@@ -4,7 +4,8 @@
 ### 🎯 OBJETIVO
 Diagnosticar y resolver TODOS los problemas del módulo pipeline de forma sistemática, documentada y sin sesgos.
 
-### 📚 RECURSOS IMPORTANTES
+### 📚 RECURSOS IMPORTANTES:
+
 - **Explicación del sistema**: Ver [COMO_FUNCIONA](./COMO_FUNCIONA) para entender el flujo completo del artículo desde la extracción hasta la persistencia.
 
 ### 🚨 CRITERIOS DE ÉXITO FUNDAMENTALES - RECORDATORIO CRÍTICO
@@ -20,8 +21,8 @@ Diagnosticar y resolver TODOS los problemas del módulo pipeline de forma sistem
 
 #### ¿Cómo probarlos?
 
-Ejecutar el spider src/module_scraper/scraper_core/spiders/infobae_america_latina.py y monitorizar la performance del sistema.
-
+Ejecutar un spider (pero limitado a un nÚmero N) y monitorizar la performance del sistema.
+   - **Ubicación spiders:** src/module_scraper/scraper_core/spiders
 
 ### 📋 PROTOCOLO COMPLETO DE ACTUACIÓN PRP
 
@@ -136,7 +137,7 @@ Ejecutar el spider src/module_scraper/scraper_core/spiders/infobae_america_latin
 #### ✅ FASE 3: POST-RESOLUCIÓN
 
 1. **ACTUALIZAR REGISTROS**:
-   - Crear archivo detallado en `.claudedocs/debugging/pipeline-errors/ERROR-[FECHA]-[HORA].md`
+   - Crear archivo detallado en `.claudedocs/debugging/pipeline-errors/registros/ERROR-[FECHA]-[HORA].md`
    - Usar la plantilla completa con TODA la información recopilada
    - En ESTE documento solo agregar un resumen sucinto (2-3 líneas) con referencia al archivo completo
    - Formato del resumen: Estado, descripción breve y link al archivo detallado
@@ -171,7 +172,7 @@ Ejecutar el spider src/module_scraper/scraper_core/spiders/infobae_america_latin
 
 ### 📊 REGISTRO DE ERRORES - RESUMEN
 
-#### 📁 Archivos de registro completos en: `.claudedocs/debugging/pipeline-errors/`
+#### 📁 Archivos de registro completos en: `.claudedocs/debugging/pipeline-errors/registros`
 
 #### [NUEVA SESIÓN - 2025-01-21]
 
@@ -182,8 +183,8 @@ Ejecutar el spider src/module_scraper/scraper_core/spiders/infobae_america_latin
   → Detalles completos: [./pipeline-errors/ERROR-20250122-0102.md] y [FIX-ID-TEMPORAL-20250122.md]
 
 ### 🔴 Errores Activos
-- **[2025-01-22]** | ⚠️ PARCIALMENTE RESUELTO | Validación de integridad referencial - Campo id_temporal corregido pero persisten errores de ID
-  → Detalles completos: [./ERROR-20250122-0335.md]
+- **[2025-01-22]** | 🔴 ACTIVO | Constraint violation "entidad_relacion_tipo_relacion_check" - Pipeline genera tipos de relación no válidos
+  → Error crítico que impide persistencia en Supabase
 
 ### 📝 Formato de registro sucinto:
 ```
@@ -191,12 +192,14 @@ Ejecutar el spider src/module_scraper/scraper_core/spiders/infobae_america_latin
   → Detalles completos: [./pipeline-errors/ERROR-YYYYMMDD-HHMM.md]
 ```
 
-### ✅ ÚLTIMA VERIFICACIÓN DE CRITERIOS GLOBALES [2025-01-22 03:20]
+### ❌ ÚLTIMA VERIFICACIÓN DE CRITERIOS GLOBALES [2025-01-22 11:35]
 - [x] Pipeline activo y respondiendo al health check
-- [⚠️] ¿Procesa artículos medianos con éxito? - Procesa todas las fases pero falla en validación de payload
-- [❓] ¿Persiste correctamente en Supabase? - No verificado debido al nuevo error
-- [❓] ¿Maneja múltiples artículos en cola? - No verificado
-- [x] ¿Los errores se manejan gracefully? - Sí, errores capturados y logueados correctamente
+- [❌] ¿Procesa artículos medianos con éxito? - Procesa todas las 7 fases exitosamente pero falla en persistencia
+- [❌] ¿Persiste correctamente en Supabase? - NO - Error consistente: "entidad_relacion_tipo_relacion_check"
+  - Artículo 3146 (centroamerica360_region): Procesado pero quedó en estado "pendiente"
+  - Artículo 3166 (centroamerica360_politica): Procesado pero quedó en estado "pendiente"
+- [❓] ¿Maneja múltiples artículos en cola? - No verificado debido al error de persistencia
+- [⚠️] ¿Los errores se manejan gracefully? - Sí para el pipeline, pero falla la persistencia completa
 
 ---
 

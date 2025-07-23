@@ -270,9 +270,11 @@ def _procesar_entidades_extraidas(
             # Crear entidad procesada
             entidad_procesada = EntidadProcesada(
                 id_entidad=entidad.get("id", 0),
-                texto_entidad=entidad.get("nombre", ""),
-                tipo_entidad=entidad.get("tipo", "DESCONOCIDO"),
-                relevancia_entidad=0.8,  # Relevancia por defecto
+                nombre=entidad.get("nombre", ""),
+                tipo=entidad.get("tipo", "DESCONOCIDO"),
+                descripcion=entidad.get("descripcion"),
+                alias=entidad.get("alias", []),
+                relevancia=8,  # Relevancia por defecto (80% = 8/10)
                 id_fragmento_origen=id_fragmento,
                 metadata_entidad=metadatos
             )
@@ -417,7 +419,7 @@ def _contar_tipos_entidades(entidades: List[EntidadProcesada]) -> Dict[str, int]
     """
     conteo = {}
     for entidad in entidades:
-        tipo = entidad.tipo_entidad
+        tipo = entidad.tipo
         conteo[tipo] = conteo.get(tipo, 0) + 1
     return conteo
 

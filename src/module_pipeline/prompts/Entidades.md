@@ -51,7 +51,7 @@ Identifica todas las entidades mencionados en el `CONTENIDO` y proporciona la si
 
 ### **Y el `CONTENIDO A ANALIZAR` fuera:**
 
-Caracas – El presidente de Venezuela, Nicolás Maduro, anunció anoche la captura de más de 50 mercenarios en el estado La Guaira que, según él, pretendían realizar un atentado en la víspera de las elecciones presidenciales del 28 de julio.
+Caracas – El presidente de Venezuela, Nicolás Maduro, anunció anoche la captura de más de 50 mercenarios en el estado La Guaira. Según Maduro, pretendían realizar un atentado en la víspera de las elecciones presidenciales del 28 de julio.
 
 
 ### **La SALIDA JSON esperada sería:**
@@ -62,7 +62,7 @@ Caracas – El presidente de Venezuela, Nicolás Maduro, anunció anoche la capt
     {
       "id": 1,
       "nombre": "Nicolás Maduro",
-      "alias": [],
+      "alias": ["Maduro"],
       "tipo": "PERSONA",
       "descripcion": "- presidente de Venezuela",
       "fecha_nacimiento": null,
@@ -91,7 +91,7 @@ Caracas – El presidente de Venezuela, Nicolás Maduro, anunció anoche la capt
       "nombre": "Elecciones Presidenciales del 28 de julio",
       "alias": [],
       "tipo": "EVENTO",
-      "descripcion": "- presidenciales",
+      "descripcion": null,
       "fecha_nacimiento": null,
       "fecha_disolucion": null
     },

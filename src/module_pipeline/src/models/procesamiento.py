@@ -85,10 +85,16 @@ class MetadatosFase1Triaje(BaseModel):
 # La conversión a UUIDs/strings se hace solo en PayloadBuilder para persistencia
 class HechoBase(PipelineBaseModel):
     id_hecho: int = Field(..., description="Identificador secuencial del hecho dentro del fragmento (1, 2, 3...).")
-    texto_original_del_hecho: constr(min_length=1) = Field(..., description="Texto literal del hecho extraído.")
-    confianza_extraccion: confloat(ge=0.0, le=1.0) = Field(..., description="Nivel de confianza de la extracción del hecho (0.0 a 1.0).")
-    offset_inicio_hecho: Optional[int] = Field(default=None, description="Posición inicial del hecho en el texto original del fragmento.", ge=0)
-    offset_fin_hecho: Optional[int] = Field(default=None, description="Posición final del hecho en el texto original del fragmento.", ge=0)
+    contenido: constr(min_length=1) = Field(..., description="Descripción completa del hecho.")
+    fecha_inicio: str = Field(..., description="Fecha de inicio del hecho en formato YYYY-MM-DD.")
+    fecha_fin: str = Field(..., description="Fecha de fin del hecho en formato YYYY-MM-DD.")
+    precision_temporal: str = Field(..., description="Precisión temporal del hecho (exacta, dia, semana, mes, etc.).")
+    tipo_hecho: str = Field(..., description="Tipo de hecho (SUCESO, ANUNCIO, DECLARACION, etc.).")
+    importancia: int = Field(..., ge=1, le=10, description="Nivel de importancia del hecho (1 a 10).")
+    pais: List[str] = Field(default_factory=list, description="Lista de países relacionados con el hecho.")
+    region: Optional[List[str]] = Field(default=None, description="Lista de regiones relacionadas con el hecho.")
+    ciudad: Optional[List[str]] = Field(default=None, description="Lista de ciudades relacionadas con el hecho.")
+    etiquetas: Optional[List[str]] = Field(default=None, description="Etiquetas o categorías del hecho.")
     
     # ✅ CAMBIO CRÍTICO: Reemplazar Dict[str, Any] con modelo específico
     metadata_hecho: MetadatosHecho = Field(
@@ -96,18 +102,13 @@ class HechoBase(PipelineBaseModel):
         description="Metadatos específicos del hecho extraído por LLM"
     )
 
-    @model_validator(mode='after')
-    def check_offsets_hecho(self) -> Self:
-        if self.offset_inicio_hecho is not None and self.offset_fin_hecho is not None:
-            if self.offset_fin_hecho < self.offset_inicio_hecho:
-                raise ValueError("offset_fin_hecho no puede ser menor que offset_inicio_hecho.")
-        return self
-
 class EntidadBase(PipelineBaseModel):
     id_entidad: int = Field(..., description="Identificador secuencial de la entidad dentro del fragmento (1, 2, 3...).")
-    texto_entidad: constr(min_length=1) = Field(..., description="Texto literal de la entidad extraída.")
-    tipo_entidad: constr(min_length=1) = Field(..., description="Tipo de entidad (ej: PERSONA, ORGANIZACION, LUGAR).")
-    relevancia_entidad: confloat(ge=0.0, le=1.0) = Field(..., description="Nivel de relevancia de la entidad (0.0 a 1.0).")
+    nombre: constr(min_length=1) = Field(..., description="Nombre canónico/principal de la entidad.")
+    tipo: constr(min_length=1) = Field(..., description="Tipo de entidad (ej: PERSONA, ORGANIZACION, LUGAR).")
+    descripcion: Optional[str] = Field(default=None, description="Descripción textual de la entidad.")
+    alias: List[str] = Field(default_factory=list, description="Lista de nombres alternativos, siglas o alias.")
+    relevancia: int = Field(..., ge=1, le=10, description="Nivel de relevancia de la entidad (1 a 10).")
     offset_inicio_entidad: Optional[int] = Field(default=None, description="Posición inicial de la entidad en el texto original del fragmento.", ge=0)
     offset_fin_entidad: Optional[int] = Field(default=None, description="Posición final de la entidad en el texto original del fragmento.", ge=0)
     
@@ -144,12 +145,15 @@ class EntidadProcesada(EntidadBase):
 class CitaTextual(PipelineBaseModel):
     id_cita: int = Field(..., description="Identificador secuencial de la cita textual dentro del fragmento.")
     id_fragmento_origen: str = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo esta cita (formato ART-{ID} o UUID).")
-    texto_cita: constr(min_length=5) = Field(..., description="El contenido textual exacto de la cita.")
+    cita: constr(min_length=5) = Field(..., description="El contenido textual exacto de la cita.")
     persona_citada: Optional[str] = Field(default=None, description="Nombre de la persona o entidad que realiza la cita.")
-    id_entidad_citada: Optional[int] = Field(default=None, description="ID secuencial de la EntidadProcesada (persona/organización) que realiza la cita, si está identificada.")
+    entidad_emisora_id: Optional[int] = Field(default=None, description="ID secuencial de la EntidadProcesada (persona/organización) que realiza la cita, si está identificada.")
+    hecho_contexto_id: Optional[int] = Field(default=None, description="ID del hecho al que pertenece o contextualiza la cita.")
+    fecha_cita: Optional[str] = Field(default=None, description="Fecha de la cita en formato YYYY-MM-DD.")
     offset_inicio_cita: Optional[int] = Field(default=None, description="Posición inicial de la cita en el texto original del fragmento.", ge=0)
     offset_fin_cita: Optional[int] = Field(default=None, description="Posición final de la cita en el texto original del fragmento.", ge=0)
-    contexto_cita: Optional[str] = Field(default=None, description="Contexto breve que rodea la cita para mejor entendimiento.")
+    contexto: Optional[str] = Field(default=None, description="Contexto breve que rodea la cita para mejor entendimiento.")
+    relevancia: int = Field(..., ge=1, le=5, description="Relevancia de la cita en escala 1-5.")
     
     # ✅ CAMBIO CRÍTICO: Reemplazar Dict[str, Any] con modelo específico
     metadata_cita: MetadatosCita = Field(
@@ -167,11 +171,19 @@ class CitaTextual(PipelineBaseModel):
 class DatosCuantitativos(PipelineBaseModel):
     id_dato_cuantitativo: int = Field(..., description="Identificador secuencial del dato cuantitativo dentro del fragmento.")
     id_fragmento_origen: str = Field(..., description="ID del FragmentoProcesableItem del cual se extrajo este dato (formato ART-{ID} o UUID).")
-    descripcion_dato: constr(min_length=3) = Field(..., description="Descripción del dato cuantitativo (ej: 'Número de empleados', 'Porcentaje de aumento').")
-    valor_dato: float = Field(..., description="Valor numérico del dato.")
-    unidad_dato: Optional[str] = Field(default=None, description="Unidad de medida del dato (ej: 'millones', '%', 'USD').")
-    fecha_dato: Optional[str] = Field(default=None, description="Fecha o período al que se refiere el dato (ej: '2023-Q4', 'anual').")
-    fuente_especifica_dato: Optional[str] = Field(default=None, description="Fuente específica mencionada para este dato dentro del texto, si la hay.")
+    hecho_id: Optional[int] = Field(default=None, description="ID del hecho relacionado con este dato cuantitativo.")
+    indicador: constr(min_length=3) = Field(..., description="Indicador o concepto medido (ej: 'PIB', 'Tasa de desempleo', 'Inflación').")
+    categoria: str = Field(..., description="Categoría del dato cuantitativo.", 
+        pattern=r"^(económico|demográfico|electoral|social|presupuestario|sanitario|ambiental|conflicto|otro)$")
+    valor_numerico: float = Field(..., description="Valor numérico exacto del dato.")
+    unidad: str = Field(..., description="Unidad de medida del dato (ej: 'millones', '%', 'USD').")
+    ambito_geografico: List[str] = Field(default_factory=list, description="Ámbito geográfico al que se refiere el dato.")
+    periodo_referencia_inicio: Optional[str] = Field(default=None, pattern=r'^(\d{4}-\d{2}-\d{2})?$', description="Fecha de inicio del periodo de referencia en formato YYYY-MM-DD.")
+    periodo_referencia_fin: Optional[str] = Field(default=None, pattern=r'^(\d{4}-\d{2}-\d{2})?$', description="Fecha de fin del periodo de referencia en formato YYYY-MM-DD.")
+    tipo_periodo: Optional[str] = Field(default=None, description="Tipo de periodo al que se refiere el dato.",
+        pattern=r"^(anual|trimestral|mensual|semanal|diario|puntual|acumulado)?$")
+    tendencia: Optional[str] = Field(default=None, description="Tendencia observada en el dato.",
+        pattern=r"^(aumento|disminución|estable)?$")
     offset_inicio_dato: Optional[int] = Field(default=None, description="Posición inicial del dato en el texto original del fragmento.", ge=0)
     offset_fin_dato: Optional[int] = Field(default=None, description="Posición final del dato en el texto original del fragmento.", ge=0)
     
@@ -241,3 +253,98 @@ class ResultadoFase4Normalizacion(PipelineBaseModel):
     # TODO: Refactorizar para usar una clase Pydantic específica para metadatos de normalización,
     #       siguiendo el patrón de MetadatosFase1Triaje.
     metadata_normalizacion: Dict[str, Any] = Field(default_factory=dict, description="Metadatos adicionales de la fase de normalización.")
+
+# --- Modelos de Subtarea 7B: Relaciones Detectadas por Fase 7 ---
+class HechoEntidadRelacion(PipelineBaseModel):
+    """
+    Representa una relación entre un hecho y una entidad (tabla hecho_entidad).
+    
+    Modelo Pydantic para validar relaciones hecho-entidad detectadas en Fase 7B.1.
+    Los campos coinciden exactamente con la tabla hecho_entidad en la BD.
+    """
+    hecho_id: int = Field(..., description="ID secuencial del hecho dentro del fragmento.")
+    fecha_ocurrencia_hecho: str = Field(..., description="Rango temporal de ocurrencia del hecho (tstzrange format).")
+    entidad_id: int = Field(..., description="ID secuencial de la entidad dentro del fragmento.")
+    tipo_relacion: constr(pattern=r"^(protagonista|mencionado|afectado|declarante|ubicacion|contexto|victima|agresor|organizador|participante|otro)$") = Field(
+        ..., description="Tipo de relación entre el hecho y la entidad."
+    )
+    relevancia_en_hecho: int = Field(..., ge=1, le=10, description="Relevancia de la entidad en el hecho (1-10).")
+
+class EntidadEntidadRelacion(PipelineBaseModel):
+    """
+    Representa una relación entre dos entidades (tabla entidad_relacion).
+    
+    Modelo Pydantic para validar relaciones entidad-entidad detectadas en Fase 7B.1.
+    Los campos coinciden exactamente con la tabla entidad_relacion en la BD.
+    """
+    entidad_origen_id: int = Field(..., description="ID secuencial de la entidad origen.")
+    entidad_destino_id: int = Field(..., description="ID secuencial de la entidad destino.")
+    tipo_relacion: constr(pattern=r"^(miembro_de|subsidiaria_de|aliado_con|opositor_a|sucesor_de|predecesor_de|casado_con|familiar_de|empleado_de)$") = Field(
+        ..., description="Tipo de relación estructural entre las entidades."
+    )
+    descripcion: Optional[str] = Field(default=None, description="Descripción textual de la relación.")
+    fuerza_relacion: int = Field(..., ge=1, le=10, description="Fuerza o confianza en la relación (1-10).")
+    
+    @model_validator(mode='after')
+    def check_entidades_diferentes(self) -> Self:
+        """Valida que las entidades origen y destino sean diferentes."""
+        if self.entidad_origen_id == self.entidad_destino_id:
+            raise ValueError("entidad_origen_id no puede ser igual a entidad_destino_id")
+        return self
+
+class HechoHechoRelacion(PipelineBaseModel):
+    """
+    Representa una relación entre dos hechos (tabla hecho_relacionado).
+    
+    Modelo Pydantic para validar relaciones hecho-hecho detectadas en Fase 7B.2.
+    Los campos coinciden exactamente con la tabla hecho_relacionado en la BD.
+    """
+    hecho_origen_id: int = Field(..., description="ID secuencial del hecho origen.")
+    fecha_ocurrencia_origen: str = Field(..., description="Rango temporal de ocurrencia del hecho origen (tstzrange format).")
+    hecho_destino_id: int = Field(..., description="ID secuencial del hecho destino.")
+    fecha_ocurrencia_destino: str = Field(..., description="Rango temporal de ocurrencia del hecho destino (tstzrange format).")
+    tipo_relacion: constr(pattern=r"^(causa|consecuencia|contexto_historico|respuesta_a|aclaracion_de|version_alternativa|seguimiento_de)$") = Field(
+        ..., description="Tipo de relación temporal/causal entre los hechos."
+    )
+    fuerza_relacion: int = Field(..., ge=1, le=10, description="Fuerza o confianza en la relación (1-10).")
+    descripcion_relacion: Optional[str] = Field(default=None, description="Descripción de cómo se relacionan los hechos.")
+    
+    @model_validator(mode='after')
+    def check_hechos_diferentes(self) -> Self:
+        """Valida que los hechos origen y destino sean diferentes O tengan fechas diferentes."""
+        if (self.hecho_origen_id == self.hecho_destino_id and 
+            self.fecha_ocurrencia_origen == self.fecha_ocurrencia_destino):
+            raise ValueError("Los hechos deben ser diferentes o tener fechas de ocurrencia diferentes")
+        return self
+
+class ContradiccionDetectada(PipelineBaseModel):
+    """
+    Representa una contradicción detectada entre dos hechos (tabla contradicciones).
+    
+    Modelo Pydantic para validar contradicciones detectadas en Fase 7B.2.
+    Los campos coinciden exactamente con la tabla contradicciones en la BD.
+    
+    NOTA: El campo 'id' (bigint PRIMARY KEY) se genera automáticamente en la BD,
+    por lo que no se incluye en este modelo de procesamiento.
+    """
+    hecho_principal_id: int = Field(..., description="ID secuencial del hecho principal.")
+    fecha_ocurrencia_principal: str = Field(..., description="Rango temporal del hecho principal (tstzrange format).")
+    hecho_contradictorio_id: int = Field(..., description="ID secuencial del hecho que contradice.")
+    fecha_ocurrencia_contradictoria: str = Field(..., description="Rango temporal del hecho contradictorio (tstzrange format).")
+    tipo_contradiccion: constr(pattern=r"^(fecha|contenido|entidades|ubicacion|valor|completa)$") = Field(
+        ..., description="Tipo de contradicción detectada."
+    )
+    grado_contradiccion: int = Field(..., ge=1, le=5, description="Grado de la contradicción (1-5).")
+    descripcion: Optional[str] = Field(default=None, description="Descripción de la contradicción.")
+    estado_resolucion: Optional[constr(pattern=r"^(pendiente|analizada|resuelta|ignorada)$")] = Field(
+        default="pendiente", description="Estado de resolución de la contradicción."
+    )
+    fecha_deteccion: AwareDatetime = Field(default_factory=get_aware_now, description="Fecha y hora de detección de la contradicción.")
+    
+    @model_validator(mode='after')
+    def check_hechos_diferentes(self) -> Self:
+        """Valida que los hechos sean diferentes O tengan fechas diferentes."""
+        if (self.hecho_principal_id == self.hecho_contradictorio_id and 
+            self.fecha_ocurrencia_principal == self.fecha_ocurrencia_contradictoria):
+            raise ValueError("Los hechos contradictorios deben ser diferentes o tener fechas de ocurrencia diferentes")
+        return self

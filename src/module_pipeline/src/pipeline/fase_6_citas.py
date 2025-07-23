@@ -96,7 +96,7 @@ def _preparar_contexto_referencias(
     for hecho in hechos:
         hechos_json.append({
             "id": hecho.id_hecho,
-            "contenido": hecho.texto_original_del_hecho,
+            "contenido": hecho.contenido,
             "tipo": hecho.metadata_hecho.tipo_hecho
         })
     
@@ -105,8 +105,8 @@ def _preparar_contexto_referencias(
     for entidad in entidades:
         entidades_json.append({
             "id": entidad.id_entidad,
-            "nombre": entidad.texto_entidad,
-            "tipo": entidad.tipo_entidad
+            "nombre": entidad.nombre,
+            "tipo": entidad.tipo
         })
     
     return json.dumps(hechos_json, ensure_ascii=False, indent=2), \
@@ -289,14 +289,8 @@ def _procesar_citas_extraidas(
     for cita in citas_raw:
         try:
             # Crear metadatos específicos
-            metadatos = MetadatosCita(
-                cita_textual=cita.get("cita", ""),
-                entidad_emisora_id=cita.get("entidad_id"),
-                hecho_relacionado_id=cita.get("hecho_id"),
-                fecha_cita=cita.get("fecha"),
-                contexto=cita.get("contexto"),
-                relevancia=cita.get("relevancia", 3)
-            )
+            # NOTA: No duplicar campos que ya están en CitaTextual
+            metadatos = MetadatosCita()
             
             # Determinar persona citada
             persona_citada = None
@@ -309,10 +303,13 @@ def _procesar_citas_extraidas(
             cita_procesada = CitaTextual(
                 id_cita=cita.get("id", 0),
                 id_fragmento_origen=id_fragmento,
-                texto_cita=cita.get("cita", ""),
+                cita=cita.get("cita", ""),
                 persona_citada=persona_citada,
-                id_entidad_citada=cita.get("entidad_id"),
-                contexto_cita=cita.get("contexto"),
+                entidad_emisora_id=cita.get("entidad_id"),
+                hecho_contexto_id=cita.get("hecho_id"),
+                fecha_cita=cita.get("fecha"),
+                contexto=cita.get("contexto"),
+                relevancia=cita.get("relevancia", 3),  # Default relevancia 3 si no viene
                 metadata_cita=metadatos
             )
             
@@ -491,9 +488,9 @@ def _vincular_nombres_entidades(
     
     # Actualizar nombres en citas
     for cita in citas:
-        if cita.id_entidad_citada and cita.id_entidad_citada in entidades_dict:
-            entidad = entidades_dict[cita.id_entidad_citada]
-            cita.persona_citada = entidad.texto_entidad
+        if cita.entidad_emisora_id and cita.entidad_emisora_id in entidades_dict:
+            entidad = entidades_dict[cita.entidad_emisora_id]
+            cita.persona_citada = entidad.nombre
 
 
 def _calcular_relevancia_promedio(citas: List[CitaTextual]) -> float:
@@ -509,7 +506,7 @@ def _calcular_relevancia_promedio(citas: List[CitaTextual]) -> float:
     if not citas:
         return 0.0
     
-    total_relevancia = sum(c.metadata_cita.relevancia for c in citas)
+    total_relevancia = sum(c.relevancia for c in citas)
     return total_relevancia / len(citas)
 
 
@@ -532,14 +529,14 @@ async def _procesar_chunk_citas_async(
         # Preparar contexto para chunk
         hechos_json = json.dumps([{
             "id": hecho.id_hecho,
-            "contenido": hecho.texto_hecho,
+            "contenido": hecho.contenido,
             "tipo": hecho.metadata_hecho.tipo_hecho if hasattr(hecho, 'metadata_hecho') and hecho.metadata_hecho else "DESCONOCIDO"
         } for hecho in hechos_chunk], ensure_ascii=False, indent=2)
         
         entidades_json = json.dumps([{
             "id": entidad.id_entidad,
-            "nombre": entidad.texto_entidad,
-            "tipo": entidad.tipo_entidad
+            "nombre": entidad.nombre,
+            "tipo": entidad.tipo
         } for entidad in entidades_chunk], ensure_ascii=False, indent=2)
         
         # Preparar prompt para chunk
