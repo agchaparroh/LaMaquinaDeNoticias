@@ -1,0 +1,58 @@
+Chicharito Hernández Chicharito Hernández, en el centro de la polémica por sus mensajes machistas: “Mujeres, están fracasando” La carrera futbolística del máximo goleador de la selección mexicana ha pasado a segundo plano por los videos que ha compartido en redes recientemente
+window. videoList = window. videoList || [];
+window. videoList. push({"dev": false,"container":"video_2025072114643118","id_media":"2025072114643118","id_cuenta":"elpais","id_player":"141","isPremiumArticle": false,"media_type":"video","disableRelatedVideosYoutube": false,"playlist_yt":"","ads":{"enabled": true,"ad_tags":"mexico_a, america_a, latinoamerica_a, violencia_machista_a, machismo_a, javier_hernandez_balcazar_a, influenciadores_digitales_a, futbol_a, mexico, mexico_actualidad"},"player_image":{"image":" _df ph-v_b","HTMLelement":"div","value":"<svg class=\"_db ph-v_p\" viewBox=\"0 0 99 99\"><g stroke=\"none\" strokeWidth=\"1\" fill=\"none\" fillRule=\"evenodd\"><g fillRule=\"nonzero\"><path fill=\"#ffffff\" d=\"M48.5,0 C75.288975,0 97,21.711025 97,48.5 C97,75.288975 75.288975,97 48.5,97 C21.711025,97 0,75.288975 0,48.5 C0,21.711025 21.711025,0 48.5,0 Z M48.5,3.4954955 C23.6549046,3.4954955 3.4954955,23.6549046 3.4954955,48.5 C3.4954955,73.3450954 23.6549046,93.5045045 48.5,93.5045045 C73.3450954,93.5045045 93.5045045,73.3450954 93.5045045,48.5 C93.5045045,23.6549046 73.3450954,3.4954955 48.5,3.4954955 Z\"></path></g><path d=\"M5.24324324,48.5 C5.24324324,24.6197626 24.6197626,5.24324324 48.5,5.24324324 C72.3802374,5.24324324 91.7567568,24.6197626 91.7567568,48.5 C91.7567568,72.3802374 72.3802374,91.7567568 48.5,91.7567568 C24.6197626,91.7567568 5.24324324,72.3802374 5.24324324,48.5 Z\" fill=\"rgba(0,0,0,0.08)\"></path><g fillRule=\"nonzero\"><path fill=\"#ffffff\" d=\"M35.0265172,71.8661372 L72.4183211,50.4951448 C73.2814102,50.0018529 73.5811902,48.9022888 73.0878983,48.0391997 C72.9284137,47.760157 72.6971234,47.5289063 72.4180534,47.3694695 L35.0262496,26.0069719 C34.1630759,25.5138278 33.0635632,25.8137961 32.5704192,26.6769697 C32.4150536,26.9489135 32.3333333,27.2566898 32.3333333,27.569886 L32.3333333,70.3033761 C32.3333333,71.2974886 33.1392208,72.1033761 34.1333333,72.1033761 C34.4466341,72.1033761 34.7545093,72.0216012 35.0265172,71.8661372 Z\"></path></g></g></svg>\n <div class=\"_df ph-v_c\">\n <div class=\"ph-v_d _dib\">01:09</div><div class=\"ph-v_t\">\"Chicharito\" Hernández desata polémica por mensajes machistas</div>\n </div>"}},"video_agency": false,"alt_image":"\"Chicharito\" Hernández desata polémica por mensajes machistas"},"url":" Hernández desata polémica por mensajes machistas","ogWidth":16,"ogHeight":9});
+01:09 "Chicharito" Hernández desata polémica por mensajes machistas Javier "Chicharito" Hernández en un video difundido en sus redes sociales.
+
+Vídeo: RRSS Sara González México - 22 jul 2025 - 01:23 CEST Copiar enlace Ir a los comentarios Javier Chicharito Hernández, una de las grandes figuras del fútbol mexicano, está siendo criticado en las redes sociales por reproducir mensajes de gran calado machista en una serie de videos motivacionales.
+
+Desde hace semanas, el delantero de las Chivas de Guadalajara ha utilizado sus cuentas para compartir contenido más afín al perfil de un coach de vida que al de un deportista profesional, pero su más reciente video ha resultado especialmente problemático porque afirma que las mujeres “están fracasando” y que “tienen que aprender a recibir y a honrar la masculinidad”.
+
+En su discurso, Chicharito sostiene que la masculinidad está siendo erradicada porque las mujeres están “haciendo a la sociedad hipersensible”.
+
+Aunque su tono intenta ser inspiracional, el trasfondo del mensaje ha encendido alertas por su cercanía con ideologías conservadoras que han cobrado fuerza en los últimos años como el movimiento redpill o píldora roja, que plantea que las mujeres tienen una ventaja injusta en las relaciones y solo se vinculan con hombres por su estatus o apariencia, y el de las tradwives, que promueve el regreso de la mujer al rol tradicional de esposa sumisa y ama de casa. “No le tengan miedo a ser mujeres, a permitirse ser lideradas por un hombre que lo único que quiere es verlas felices.
+
+Responsabilizarlas de su energía también es amarlas”, dice en el clip.
+
+Más información Las jugadoras de Chivas femenil se unen a las críticas en contra de los mensajes machistas de Chicharito Hernández Además, hace un llamado a que las mujeres “encarnen su energía femenina cuidando, nutriendo, recibiendo, multiplicando, limpiando, sosteniendo el hogar que es el lugar más preciado para los hombres”.
+
+El futbolista ya había provocado reacciones negativas en días anteriores por otro video en el que también fomenta los roles de género. “Entonces quieres a un hombre proveedor, pero para ti limpiar es opresión patriarcal… interesante”, comentó con ironía.
+
+Más allá de su desempeño futbolístico, la carrera de Chicharito se ha visto empañada recientemente por sus polémicas fuera de la cancha.
+
+Algunos seguidores adjudican esta mala racha mediática a su cercanía con Diego Dreyfus, un ingeniero con formación actoral, convertido en gurú de autoayuda, que ofrece conferencias, cursos y “sesiones terapéuticas”.
+
+Hace algunos años, ambos compartían un canal de YouTube en el que documentaban momentos de su día a día, pero este fue eliminado tras la separación del futbolista y Sarah Kohan, quien también formó parte del proyecto.
+
+En tanto, Chicharito defiende la cercanía que tiene con su mentor y lo describe como “alguien que ha podido ayudarme a que no hubiera echado a perder completamente mi carrera”.
+
+Influencers como Dreyfus y el Temach se han posicionado en México como referentes de discursos de autoayuda dirigidos principalmente a hombres, aunque muchas veces lo que promueven bajo el pretexto de empoderarlos reproduce ideas misóginas.
+
+Un reporte de la Universidad Iberoamericana advierte que los jóvenes radicalizados por este tipo de contenido han encontrado espacios en foros, grupos de Facebook y plataformas como Reddit o Telegram, donde se replican discursos de odio.
+
+En casos extremos, estas ideologías representan una amenaza creciente, al alimentar la violencia de género e incluso fomentar fantasías de venganza contra las mujeres.
+
+Tu suscripción se está usando en otro dispositivo ¿Quieres añadir otro usuario a tu suscripción? Añadir usuario Continuar leyendo aquí Si continúas leyendo en este dispositivo, no se podrá leer en el otro. ¿Por qué estás viendo esto? Flecha Tu suscripción se está usando en otro dispositivo y solo puedes acceder a EL PAÍS desde un dispositivo a la vez.
+
+Si quieres compartir tu cuenta, cambia tu suscripción a la modalidad Premium, así podrás añadir otro usuario.
+
+Cada uno accederá con su propia cuenta de email, lo que os permitirá personalizar vuestra experiencia en EL PAÍS. ¿Tienes una suscripción de empresa? Accede aquí para contratar más cuentas.
+
+En el caso de no saber quién está usando tu cuenta, te recomendamos cambiar tu contraseña aquí.
+
+Si decides continuar compartiendo tu cuenta, este mensaje se mostrará en tu dispositivo y en el de la otra persona que está usando tu cuenta de forma indefinida, afectando a tu experiencia de lectura.
+
+Puedes consultar aquí los términos y condiciones de la suscripción digital.
+
+Sobre la firma Sara González Es editora SEO y periodista de EL PAÍS América.
+
+Antes trabajó en Grupo Reforma y Televisa.
+
+Es originaria de Monterrey, Nuevo León, y vive en Ciudad de México desde 2019.
+
+Recibe el boletín de México en tu bandeja de entrada Mexico El País en Facebook Mexico El País en Instagram Mexico El País en Twitter Mexico El País en Whatsapp Comentarios Ir a los comentarios Normas › Mis comentarios Normas Rellena tu nombre y apellido para comentar completar datos Suscríbete en El País para participar Ya tengo una suscripción var disqus_config = function () {
+this. page. url = '
+this. page. identifier = 'HWZQEX5O2ZFXLDAUX2FPIATE5Y';
+}; Please enable JavaScript to view the <a href=" rel="nofollow"> comments powered by Disqus.</a> Más información Chicharito regresa a Chivas en el ocaso de su carrera Diego Mancera | México El secreto del optimismo de Chicharito Hernández Diego Mancera | México Archivado En México América Latinoamérica Violencia machista Machismo Chicharito Influencers Fútbol Se adhiere a los criterios de Más información Si está interesado en licenciar este contenido, pinche aquí
+
+
+_ 09:26 Un helicóptero de rescate localiza el fuselaje en llamas de un avión con más de 40 pasajeros desaparecido en Rusia 09:26 En dos minutos: así fue la emoción del gol de Aitana Bonmatí y el pase de España a la final de la Eurocopa 09:25 Una incidencia ya reparada provoca retrasos en los trenes AVE con origen en la estación de Santa Justa 09:11 Así celebraron las jugadoras de España el pase a la final de la Eurocopa Lo más visto La pesadilla de los hermanos mexicanos González, detenidos en Alligator Alcatraz por una multa de tránsito: “Están violando sus derechos” Harfuch confirma que el exjefe de policía de Adán Augusto López en Tabasco es investigado desde 2024 La caída de los Guzmán en Badiraguato Chicharito Hernández, en el centro de la polémica por sus mensajes machistas: “Mujeres, están fracasando” ¿Cómo se vuelven ricos los mexicanos?

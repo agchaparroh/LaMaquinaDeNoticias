@@ -1,0 +1,70 @@
+CHILE Pedro Sánchez llama en Chile a la ofensiva contra la “internacional del odio” y apunta al PP: “La derecha ha sucumbido a la ultraderecha” El presidente apoya una alianza internacional progresista para luchar contra la desinformación y defender la democracia
+window. videoList = window. videoList || [];
+window. videoList. push({"dev": false,"container":"video_20250721202317754","id_media":"20250721202317754","id_cuenta":"elpais","id_player":"141","isPremiumArticle": false,"media_type":"video","disableRelatedVideosYoutube": false,"playlist_yt":"","ads":{"enabled": true,"ad_tags":"espana_a, chile_a, pedro_sanchez_perez_castejon_a, cumbres_internacionales_a, sudamerica_a, latinoamerica_a, gabriel_boric_font_a, espana"},"player_image":{"image":" _df ph-v_b","HTMLelement":"div","value":"<svg class=\"_db ph-v_p\" viewBox=\"0 0 99 99\"><g stroke=\"none\" strokeWidth=\"1\" fill=\"none\" fillRule=\"evenodd\"><g fillRule=\"nonzero\"><path fill=\"#ffffff\" d=\"M48.5,0 C75.288975,0 97,21.711025 97,48.5 C97,75.288975 75.288975,97 48.5,97 C21.711025,97 0,75.288975 0,48.5 C0,21.711025 21.711025,0 48.5,0 Z M48.5,3.4954955 C23.6549046,3.4954955 3.4954955,23.6549046 3.4954955,48.5 C3.4954955,73.3450954 23.6549046,93.5045045 48.5,93.5045045 C73.3450954,93.5045045 93.5045045,73.3450954 93.5045045,48.5 C93.5045045,23.6549046 73.3450954,3.4954955 48.5,3.4954955 Z\"></path></g><path d=\"M5.24324324,48.5 C5.24324324,24.6197626 24.6197626,5.24324324 48.5,5.24324324 C72.3802374,5.24324324 91.7567568,24.6197626 91.7567568,48.5 C91.7567568,72.3802374 72.3802374,91.7567568 48.5,91.7567568 C24.6197626,91.7567568 5.24324324,72.3802374 5.24324324,48.5 Z\" fill=\"rgba(0,0,0,0.08)\"></path><g fillRule=\"nonzero\"><path fill=\"#ffffff\" d=\"M35.0265172,71.8661372 L72.4183211,50.4951448 C73.2814102,50.0018529 73.5811902,48.9022888 73.0878983,48.0391997 C72.9284137,47.760157 72.6971234,47.5289063 72.4180534,47.3694695 L35.0262496,26.0069719 C34.1630759,25.5138278 33.0635632,25.8137961 32.5704192,26.6769697 C32.4150536,26.9489135 32.3333333,27.2566898 32.3333333,27.569886 L32.3333333,70.3033761 C32.3333333,71.2974886 33.1392208,72.1033761 34.1333333,72.1033761 C34.4466341,72.1033761 34.7545093,72.0216012 35.0265172,71.8661372 Z\"></path></g></g></svg>\n <div class=\"_df ph-v_c\">\n <div class=\"ph-v_d _dib\">01:25</div><div class=\"ph-v_t\">Sánchez: “Es hora de dar un paso al frente para defender la democracia\"</div>\n </div>"}},"video_agency": false,"alt_image":"Sánchez: “Es hora de dar un paso al frente para defender la democracia\""},"url":" “Es hora de dar un paso al frente para defender la democracia\"","ogWidth":16,"ogHeight":9});
+01:25 Sánchez: “Es hora de dar un paso al frente para defender la democracia" Los presidentes de Uruguay, Yamandú Orsi; Brasil, Luís Inacio Lula da Silva; Chile, Gabriel Boric; el presidente del Gobierno, Pedro Sánchez; y el presidente de Colombia, Gustavo Petro, en la cumbre "Democracia siempre" en Santiago de Chile, este lunes.
+
+Foto: Pablo Sanhueza (REUTERS) | Vídeo: EPV Carlos E.
+
+Cué Antonia Laborde Santiago de Chile - 21 jul 2025 - 19:58 CEST Copiar enlace Ir a los comentarios Todo está cargado de símbolos en esta reunión inédita de líderes progresistas iberoamericano s —los de Brasil, España, Colombia, Chile y Uruguay— a los que pronto se sumarán otros como los de México, Canadá, Australia, el Reino Unido y Sudáfrica.
+
+Para empezar, el lugar: el Palacio de La Moneda, sede la presidencia de la república chilena, y como recordaron este lunes el español Pedro Sánchez y el brasileño Luiz Inácio Lula da Silva, el símbolo de la lucha por la democracia en América Latina, que fue bombardeado el 11 de septiembre de 1973 para derrocar a Salvador Allende, que murió ese día en este espacio, con un golpe de Estado liderado por el general Augusto Pinochet.
+
+Sánchez, que se ha cruzado el océano para llegar a esta cita, ha lanzado un mensaje claro pero no solo internacional, sino también local, porque cree que el PP, como otras muchas derechas tradicionales en el mundo, está entregado a la ultraderecha de Vox.
+
+Más información Fotogalería | Líderes se reunen en Chile para la cumbre internacional ‘Democracia Siempre’, en imágenes “Es hora de dar un paso al frente para defender la democracia.
+
+De pasar a la ofensiva”, ha dicho Sánchez. “Nuestras sociedades se enfrentan a una amenaza real, liderada por una coalición de intereses entre oligarcas y la ultraderecha.
+
+Una internacional del odio y la mentira que avanza peligrosamente, por desgracia, en ambos continentes.
+
+Poniendo en riesgo los derechos y libertades por los que las generaciones que nos precedieron lucharon tanto, a veces sacrificando la propia vida”, ha insistido precisamente en un patio de La Moneda que vio ese histórico bombardeo golpista de la ultraderecha en 1973, y que hoy tiene a un presidente de izquierda como Boric que reivindica a Allende. “Preservar la democracia no es solo una cuestión institucional o jurídica.
+
+Es una obligación moral.
+
+Es una responsabilidad que le debemos a las generaciones pasadas, pero también a las futuras”, ha insistido Sánchez, para cargar ahí contra la derecha tradicional, esto es, en España contra el PP. “Cada vez es más evidente que la derecha tradicional, con la que compartíamos consensos básicos, ha sucumbido al discurso de la ultraderecha”, ha rematado.
+
+Sánchez defiende que de la misma manera que “la internacional reaccionaria” está coordinando sus esfuerzos en todo el mundo para destruir la democracia, los progresistas deben hacerlo en sentido contrario. “Esta internacional ha entendido que no hay fronteras, nosotros debemos hacerlo también.
+
+Por eso, hoy hemos acordado tres áreas de actuación clave: primero, fortalecer las instituciones y el multilateralismo, porque aquí se juega buena parte de la partida”.
+
+Por eso anunció que España acogerá la próxima cumbre de este estilo en 2026, se espera que para entonces con más países participantes.
+
+Segundo, combatir la desinformación. “Necesitamos una gobernanza digital democrática, colaborar para que los algoritmos no manipulen nuestras opiniones y nuestra convivencia”.
+
+Y por último, la igualdad. “La injusticia social y económica quiebra la confianza, es en la desigualdad donde la ultraderecha encuentra el caldo de cultivo para crecer, y en una nostalgia de un pasado que nunca existió”, ha rematado.
+
+Sánchez ha viajado así hasta Chile para reforzar su papel como referente progresista europeo e internacional, como uno de los pocos líderes de esta corriente que quedan en un continente dominado por la derecha y la ultraderecha.
+
+Después irá a Uruguay y Paraguay, en un viaje ya de más claro contenido económico acompañado de empresarios, incluido el líder de la patronal, Antonio Garamendi.
+
+El plato fuerte político era este encuentro, que no solo es con líderes progresistas sino también con intelectuales y referentes de movimientos sociales, porque todos los dirigentes han insistido en que esta batalla no la pueden dar los gobiernos solos.
+
+Sánchez está buscando en todo momento volver al marco de 2023, con el que logró una movilización extraordinaria de la izquierda para evitar que Vox llegara al Gobierno.
+
+Desde entonces, insisten en el entorno del presidente, la situación ha empeorado mucho y el regreso de Trump a la Casa Blanca ha mostrado las consecuencias de la llegada de la ultraderecha al poder.
+
+Por eso Sánchez piensa insistir en esta línea, y además cree que el endurecimiento del discurso del PP en temas muy sensibles como la inmigración, en los que compite con Vox, le ayuda para intentar convencer a a millones de personas de que la amenaza de una involución es real.
+
+Tu suscripción se está usando en otro dispositivo ¿Quieres añadir otro usuario a tu suscripción? Añadir usuario Continuar leyendo aquí Si continúas leyendo en este dispositivo, no se podrá leer en el otro. ¿Por qué estás viendo esto? Flecha Tu suscripción se está usando en otro dispositivo y solo puedes acceder a EL PAÍS desde un dispositivo a la vez.
+
+Si quieres compartir tu cuenta, cambia tu suscripción a la modalidad Premium, así podrás añadir otro usuario.
+
+Cada uno accederá con su propia cuenta de email, lo que os permitirá personalizar vuestra experiencia en EL PAÍS. ¿Tienes una suscripción de empresa? Accede aquí para contratar más cuentas.
+
+En el caso de no saber quién está usando tu cuenta, te recomendamos cambiar tu contraseña aquí.
+
+Si decides continuar compartiendo tu cuenta, este mensaje se mostrará en tu dispositivo y en el de la otra persona que está usando tu cuenta de forma indefinida, afectando a tu experiencia de lectura.
+
+Puedes consultar aquí los términos y condiciones de la suscripción digital.
+
+El mejor análisis de la actualidad con Milagros Pérez Oliva, en EL PAÍS de la mañana.
+
+Espana El País en Facebook Espana El País en Instagram Espana El País en Twitter Comentarios Ir a los comentarios Normas › Mis comentarios Normas Rellena tu nombre y apellido para comentar completar datos Suscríbete en El País para participar Ya tengo una suscripción var disqus_config = function () {
+this. page. url = '
+this. page. identifier = 'YQWLDGTCKJFJ5OGNYXK6URN5PU';
+}; Please enable JavaScript to view the <a href=" rel="nofollow"> comments powered by Disqus.</a> Más información ERC aboga por una comisión de investigación en el Congreso sobre el ‘caso Montoro’ Camilo S.
+
+Baquero | Barcelona El Constitucional avoca a pleno el recurso en el que Puigdemont pide la amnistía José María Brunet | Madrid Archivado En España Chile Pedro Sánchez Cumbres internacionales Sudamérica Latinoamérica Gabriel Boric Se adhiere a los criterios de Más información Si está interesado en licenciar este contenido, pinche aquí
+
+
+_ 09:26 Un helicóptero de rescate localiza el fuselaje en llamas de un avión con más de 40 pasajeros desaparecido en Rusia 09:26 En dos minutos: así fue la emoción del gol de Aitana Bonmatí y el pase de España a la final de la Eurocopa 09:25 Una incidencia ya reparada provoca retrasos en los trenes AVE con origen en la estación de Santa Justa 09:11 Así celebraron las jugadoras de España el pase a la final de la Eurocopa {"brandedId":""} Lo más visto La diputada Noelia Núñez (PP) admite ahora que no tiene títulos universitarios: “Una equivocación” La diputada del PP Noelia Núñez dimite de todos sus cargos tras falsear su currículum Pedro Sánchez defiende el acuerdo de Mercosur y avisa a Trump: “Queremos negociar pero, si no, responderemos con firmeza” Aitor Esteban alerta de que “empieza a conformarse una mayoría negativa” en el Congreso El extraño caso del currículum fluctuante de Noelia Núñez, diputada del PP y alto cargo de Feijóo

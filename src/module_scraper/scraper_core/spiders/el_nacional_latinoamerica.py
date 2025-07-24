@@ -79,14 +79,14 @@ class ElNacionalLatinoamericaSpider(scrapy.Spider):
         # Schedule: Every 60 minutes
         # Project: lamaquina
         # Spider: el_nacional_latinoamerica
-        # Arguments: -a max_items=100
+        # Arguments: -a max_items=20
     }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rss_url = "https://www.elnacional.com/mundo/latinoamerica/feed/"
         self.articles_scraped = 0
-        self.max_articles = int(kwargs.get('max_items', 100))
+        self.max_articles = int(kwargs.get('max_items', 20))
         
         # Información del medio
         self.medio_info = {

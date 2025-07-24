@@ -48,14 +48,14 @@ class Centroamérica360PoliticaSpider(scrapy.Spider):
         # Schedule: Every 30 minutes
         # Project: lamaquina
         # Spider: centroamérica360_politica
-        # Arguments: -a max_items=1
+        # Arguments: -a max_items=20
     }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rss_url = "https://www.centroamerica360.com/category/politica/feed/"
         self.articles_scraped = 0
-        self.max_articles = int(kwargs.get("max_items", 1))
+        self.max_articles = int(kwargs.get("max_items", 20))
 
         # Información del medio
         self.medio_info = {

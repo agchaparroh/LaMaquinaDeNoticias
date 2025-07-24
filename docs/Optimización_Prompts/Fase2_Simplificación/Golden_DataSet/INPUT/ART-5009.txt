@@ -1,0 +1,64 @@
+'Fito' El capo narco ecuatoriano ‘Fito’ se declara no culpable ante la justicia de Estados Unidos Su extradición refuerza al Gobierno de Daniel Noboa, pero también muestra la falta de confianza en las instituciones locales
+window. videoList = window. videoList || [];
+window. videoList. push({"dev": false,"container":"video_20250721125916276","id_media":"20250721125916276","id_cuenta":"elpais","id_player":"141","isPremiumArticle": false,"media_type":"video","disableRelatedVideosYoutube": false,"playlist_yt":"","ads":{"enabled": true,"ad_tags":"ecuador_a, america_a, sudamerica_a, narcotrafico_a, narcotraficantes_a, extradiciones_a, estados_unidos_a, trafico_armas_a, justicia_a, internacional"},"player_image":{"image":" _df ph-v_b","HTMLelement":"div","value":"<svg class=\"_db ph-v_p\" viewBox=\"0 0 99 99\"><g stroke=\"none\" strokeWidth=\"1\" fill=\"none\" fillRule=\"evenodd\"><g fillRule=\"nonzero\"><path fill=\"#ffffff\" d=\"M48.5,0 C75.288975,0 97,21.711025 97,48.5 C97,75.288975 75.288975,97 48.5,97 C21.711025,97 0,75.288975 0,48.5 C0,21.711025 21.711025,0 48.5,0 Z M48.5,3.4954955 C23.6549046,3.4954955 3.4954955,23.6549046 3.4954955,48.5 C3.4954955,73.3450954 23.6549046,93.5045045 48.5,93.5045045 C73.3450954,93.5045045 93.5045045,73.3450954 93.5045045,48.5 C93.5045045,23.6549046 73.3450954,3.4954955 48.5,3.4954955 Z\"></path></g><path d=\"M5.24324324,48.5 C5.24324324,24.6197626 24.6197626,5.24324324 48.5,5.24324324 C72.3802374,5.24324324 91.7567568,24.6197626 91.7567568,48.5 C91.7567568,72.3802374 72.3802374,91.7567568 48.5,91.7567568 C24.6197626,91.7567568 5.24324324,72.3802374 5.24324324,48.5 Z\" fill=\"rgba(0,0,0,0.08)\"></path><g fillRule=\"nonzero\"><path fill=\"#ffffff\" d=\"M35.0265172,71.8661372 L72.4183211,50.4951448 C73.2814102,50.0018529 73.5811902,48.9022888 73.0878983,48.0391997 C72.9284137,47.760157 72.6971234,47.5289063 72.4180534,47.3694695 L35.0262496,26.0069719 C34.1630759,25.5138278 33.0635632,25.8137961 32.5704192,26.6769697 C32.4150536,26.9489135 32.3333333,27.2566898 32.3333333,27.569886 L32.3333333,70.3033761 C32.3333333,71.2974886 33.1392208,72.1033761 34.1333333,72.1033761 C34.4466341,72.1033761 34.7545093,72.0216012 35.0265172,71.8661372 Z\"></path></g></g></svg>\n <div class=\"_df ph-v_c\">\n <div class=\"ph-v_d _dib\">01:12</div><div class=\"ph-v_t\">José Adolfo Macías 'Fito' se declara \"no culpable\" tras ser extraditado a Estados Unidos</div>\n </div>"}},"video_agency": false,"alt_image":"José Adolfo Macías 'Fito' se declara \"no culpable\" tras ser extraditado a Estados Unidos"},"url":" Adolfo Macías 'Fito' se declara \"no culpable\" tras ser extraditado a Estados Unidos","ogWidth":16,"ogHeight":9});
+01:12 José Adolfo Macías 'Fito' se declara "no culpable" tras ser extraditado a Estados Unidos El narcotraficante José Adolfo 'Fito' Macías, es trasladado desde la cárcel la Roca hasta la Base Aérea Simón Boíivar en Guayaquil, el 21 de julio.
+
+Foto: Mauricio Torres / EFE | Vídeo: REUTERS Carolina Mella Guayaquil - 22 jul 2025 - 01:28 CEST Copiar enlace Ir a los comentarios José Adolfo Macías, alias Fito, el temido líder de Los Choneros, compareció este lunes 21 de julio ante la Corte del Distrito Este de Nueva York.
+
+Se declaró “no culpable” de los siete cargos que le imputa la justicia estadounidense, todos relacionados con el tráfico internacional de drogas y armas.
+
+La jueza Vera M.
+
+Scanlon ordenó su reclusión sin derecho a fianza en el Centro de Detención Municipal de Brooklyn, acatando la petición de la Fiscalía, que lo considera una figura de alto riesgo con antecedentes de fuga. “El acusado y sus cómplices inundaron Estados Unidos y otros países con drogas y emplearon medidas extremas de violencia en su búsqueda de poder y control”, afirmó en un comunicado Joseph Nocella, fiscal federal del caso.
+
+Las autoridades lo acusan de haber dirigido una red que no solo enviaba cocaína a través del Pacífico desde Ecuador, sino que también adquiría armamento estadounidense para abastecer a sicarios y facciones armadas en su país.
+
+Fito enfrenta una posible condena de entre diez y cincuenta años de prisión, tras la garantía diplomática ofrecida por Washington a Quito de que no se le aplicará ni cadena perpetua ni la pena de muerte, condiciones exigidas por Ecuador para permitir su extradición. “José ‘Fito’ Macías creyó que podía traficar veneno a nuestro país, contrabandear armas estadounidenses a sus asesinos y promover su actividad criminal mediante el caos y el derramamiento de sangre.
+
+Se equivocó”, sentenció Robert Murphy, administrador interino de la DEA.
+
+Horas después de que el avión del Departamento de Justicia estadounidense despegara con José Adolfo Macías a bordo, el presidente ecuatoriano Daniel Noboa reaccionó en la red social X: “Hasta nunca, Fito”, escribió con tono de victoria política. “Fito ya está en EE UU.
+
+Esto es gracias a ustedes, ecuatorianos, que dijeron sí a la consulta popular”, en referencia al referéndum que promovió en abril y que abrió el camino legal para extraditar a nacionales requeridos por otros países.
+
+La entrega del líder de Los Choneros representa, para el Gobierno de Noboa, una victoria política en su ofensiva contra el crimen organizado.
+
+Pero no todos los capos pueden ser extraditados. “Uno de los errores previo a la consulta popular fue que la gente creía que cualquier delincuente peligroso podríamos mandarlo a Estados Unidos para que la justicia de ese país se haga cargo, y no funciona así”, explica la abogada Dolores Miño.
+
+Para que se conceda una extradición, deben coincidir varios elementos, entre ellos que los delitos imputados hayan sido cometidos en territorio del país solicitante.
+
+Justicia tercerizada El caso de Fito se usa como un mensaje de fuerza del Gobierno, como si se pudiera “tercerizar la justicia” para los criminales más peligrosos.
+
+Pero Miño advierte que esa narrativa encubre un problema más profundo: “Cuando consideras que otro sistema de justicia está en mejor capacidad de detener, procesar y condenar a tus propios delincuentes, evidentemente es una falta de confianza terrible al sistema judicial”.
+
+La mayoría de las organizaciones criminales que han sembrado el terror en Ecuador no han operado directamente en Estados Unidos, por lo que su persecución sigue siendo responsabilidad del Estado ecuatoriano.
+
+El problema es que las instituciones encargadas de hacerlo están profundamente deterioradas.
+
+Casi a diario, la Fiscalía abre una investigación contra funcionarios judiciales por vínculos con las mafias.
+
+Desde julio de 2024, al menos 45 jueces, 11 fiscales y 33 funcionarios de la función judicial han sido destituidos por corrupción o colusión con el crimen organizado.
+
+Fito es, hasta ahora, la pieza más grande que ha caído.
+
+Pero el tablero sigue lleno.
+
+Tu suscripción se está usando en otro dispositivo ¿Quieres añadir otro usuario a tu suscripción? Añadir usuario Continuar leyendo aquí Si continúas leyendo en este dispositivo, no se podrá leer en el otro. ¿Por qué estás viendo esto? Flecha Tu suscripción se está usando en otro dispositivo y solo puedes acceder a EL PAÍS desde un dispositivo a la vez.
+
+Si quieres compartir tu cuenta, cambia tu suscripción a la modalidad Premium, así podrás añadir otro usuario.
+
+Cada uno accederá con su propia cuenta de email, lo que os permitirá personalizar vuestra experiencia en EL PAÍS. ¿Tienes una suscripción de empresa? Accede aquí para contratar más cuentas.
+
+En el caso de no saber quién está usando tu cuenta, te recomendamos cambiar tu contraseña aquí.
+
+Si decides continuar compartiendo tu cuenta, este mensaje se mostrará en tu dispositivo y en el de la otra persona que está usando tu cuenta de forma indefinida, afectando a tu experiencia de lectura.
+
+Puedes consultar aquí los términos y condiciones de la suscripción digital.
+
+Recibe el boletín de Internacional Internacional El País en Facebook Internacional El País en Instagram Internacional El País en Twitter Comentarios Ir a los comentarios Normas › Mis comentarios Normas Rellena tu nombre y apellido para comentar completar datos Suscríbete en El País para participar Ya tengo una suscripción var disqus_config = function () {
+this. page. url = '
+this. page. identifier = 'JXEOUTKFSJAALLBI7QC24BAMRM';
+}; Please enable JavaScript to view the <a href=" rel="nofollow"> comments powered by Disqus.</a> Más información Ecuador extradita a Estados Unidos al capo narco ‘Fito’ Carolina Mella | Guayaquil El narco ecuatoriano alias ‘Fito’ acepta su extradición a Estados Unidos Carolina Mella | Guayaquil Archivado En Ecuador América Sudamérica Narcotráfico Narcotraficantes Extradiciones Estados Unidos Tráfico armas Justicia Se adhiere a los criterios de Más información Si está interesado en licenciar este contenido, pinche aquí
+
+
+_ 09:26 Un helicóptero de rescate localiza el fuselaje en llamas de un avión con más de 40 pasajeros desaparecido en Rusia 09:26 En dos minutos: así fue la emoción del gol de Aitana Bonmatí y el pase de España a la final de la Eurocopa 09:25 Una incidencia ya reparada provoca retrasos en los trenes AVE con origen en la estación de Santa Justa 09:11 Así celebraron las jugadoras de España el pase a la final de la Eurocopa {"brandedId":""} Lo más visto La diputada Noelia Núñez (PP) admite ahora que no tiene títulos universitarios: “Una equivocación” La diputada del PP Noelia Núñez dimite de todos sus cargos tras falsear su currículum Pedro Sánchez defiende el acuerdo de Mercosur y avisa a Trump: “Queremos negociar pero, si no, responderemos con firmeza” Aitor Esteban alerta de que “empieza a conformarse una mayoría negativa” en el Congreso El extraño caso del currículum fluctuante de Noelia Núñez, diputada del PP y alto cargo de Feijóo

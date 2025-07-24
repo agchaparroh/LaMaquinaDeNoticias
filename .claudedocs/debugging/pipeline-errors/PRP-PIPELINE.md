@@ -191,15 +191,17 @@ Ningún error activo detectado.
   → Detalles completos: [./pipeline-errors/ERROR-YYYYMMDD-HHMM.md]
 ```
 
-### ❌ ÚLTIMA VERIFICACIÓN DE CRITERIOS GLOBALES [2025-07-23 12:15]
+### ✅ ÚLTIMA VERIFICACIÓN DE CRITERIOS GLOBALES [2025-07-23 23:58]
 - [x] Pipeline activo y respondiendo al health check
-- [❌] ¿Procesa artículos medianos con éxito? - NO - El error de tipo persiste en Fase 7
-  - Procesamiento exitoso hasta Fase 6: ✅ Triaje, ✅ Simplificación, ✅ Entidades (17), ✅ Hechos (8)
-  - Falla en Fase 7A: Error validación Pydantic - id_entidad_normalizada espera string, recibe int (IDs: 41, 42, 43, etc.)
-  - Fase 7B completa exitosamente: 33 relaciones detectadas
-- [❌] ¿Persiste correctamente en Supabase? - NO - El error en normalización impide la persistencia completa
-- [❓] ¿Maneja múltiples artículos en cola? - No verificado debido al error
-- [⚠️] ¿Los errores se manejan gracefully? - Sí - El servicio continúa operativo pero no completa la persistencia
+- [✅] ¿Procesa artículos medianos con éxito? - SÍ - Procesamiento completo exitoso
+  - Procesamiento exitoso de todas las fases: ✅ Triaje, ✅ Simplificación, ✅ Entidades (15), ✅ Hechos (9)
+  - Fase 7A completada: 0 normalizadas, 15 no encontradas (comportamiento normal para entidades nuevas)
+  - Fase 7B completada: 30 relaciones detectadas (18 hecho-entidad, 7 entidad-entidad, 4 hecho-hecho, 1 contradicción)
+- [✅] ¿Persiste correctamente en Supabase? - SÍ - RPC actualizar_articulo_procesado exitoso
+  - Artículo ID: 1 actualizado exitosamente
+  - Hechos: 9, Entidades: 15, Citas: 0 persistidos correctamente
+- [❓] ¿Maneja múltiples artículos en cola? - No verificado en esta prueba
+- [✅] ¿Los errores se manejan gracefully? - Sí - Validación post-7B descartó 3 relaciones inválidas sin interrumpir el flujo
 
 ---
 

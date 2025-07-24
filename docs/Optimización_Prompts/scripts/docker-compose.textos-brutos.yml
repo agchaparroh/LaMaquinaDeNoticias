@@ -1,0 +1,77 @@
+version: '3.8'
+
+networks:
+  textos_brutos_network:
+    driver: bridge
+
+services:
+  # Scrapyd dedicado para extraer textos brutos
+  scrapyd_textos_brutos:
+    build:
+      context: ../../../src/module_scraper
+      dockerfile: Dockerfile
+    container_name: scrapyd_textos_brutos
+    volumes:
+      # Código fuente de los spiders
+      - ../../../src/module_scraper:/app
+      # Pipeline personalizado para textos brutos
+      - ./json_writer_texto_bruto.py:/app/scraper_core/pipelines/json_writer_texto_bruto.py:ro
+      # Directorio de salida mapeado a TEXTOS BRUTOS
+      - "../TEXTOS BRUTOS:/output"
+      # Logs y datos temporales
+      - scrapyd_textos_logs:/var/lib/scrapyd/logs
+      - scrapyd_textos_eggs:/var/lib/scrapyd/eggs
+    command: ["scrapyd", "--pidfile="]
+    ports:
+      - "6801:6800"  # Puerto diferente para no conflictuar
+    environment:
+      # Directorio de salida
+      - OUTPUT_DIR=/output
+      - SCRAPY_OUTPUT_DIR=/output
+      # Forzar uso del pipeline personalizado
+      - ITEM_PIPELINES='{"scraper_core.pipelines.json_writer_texto_bruto.JsonWriterTextoBrutoPipeline": 900}'
+    networks:
+      - textos_brutos_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6800/daemonstatus.json"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ScrapydWeb para gestionar el scrapyd de textos brutos
+  scrapydweb_textos_brutos:
+    build:
+      context: ../../../src/module_scraper/scrapydweb
+      dockerfile: Dockerfile
+    container_name: scrapydweb_textos_brutos
+    volumes:
+      # Datos persistentes
+      - scrapydweb_textos_data:/var/lib/scrapydweb
+      # Proyectos Scrapy
+      - ../../../src/module_scraper:/app/projects:ro
+      # Logs compartidos
+      - scrapyd_textos_logs:/var/lib/scrapydweb/scrapyd_logs
+    ports:
+      - "5001:5000"  # Puerto diferente
+    environment:
+      - SCRAPYDWEB_USERNAME=admin
+      - SCRAPYDWEB_PASSWORD=textos_brutos
+      - SCRAPYDWEB_DATA_PATH=/var/lib/scrapydweb
+      - SCRAPYDWEB_LOGS_DIR=/var/lib/scrapydweb/logs
+      - SCRAPYDWEB_DATABASE_URL=sqlite:////var/lib/scrapydweb/database/scrapydweb_textos.db
+      - SCRAPYDWEB_LOCAL_SCRAPYD_LOGS_DIR=/var/lib/scrapydweb/scrapyd_logs
+    networks:
+      - textos_brutos_network
+    depends_on:
+      - scrapyd_textos_brutos
+    restart: unless-stopped
+
+volumes:
+  scrapyd_textos_eggs:
+    driver: local
+  scrapyd_textos_logs:
+    driver: local
+  scrapydweb_textos_data:
+    driver: local

@@ -1,0 +1,26 @@
+window. videoList = window. videoList || [];
+window. videoList. push({"dev": false,"container":"video_2025072111327955","id_media":"2025072111327955","id_cuenta":"elpais","id_player":"141","isPremiumArticle": false,"media_type":"video","disableRelatedVideosYoutube": false,"playlist_yt":"","ads":{"enabled": true,"ad_tags":"ciencia_a, astronomia_a, cometas_a, sistema_solar_a, espacio_exterior_a, asteroides_a, telescopios_a, ciencia, videos"},"player_image":{"image":" / Materia"}},"playList":{},"plugins":[],"managerOpt":{"url_image":" _df ph-v_b","HTMLelement":"div","value":"<svg class=\"_db ph-v_p\" viewBox=\"0 0 99 99\"><g stroke=\"none\" strokeWidth=\"1\" fill=\"none\" fillRule=\"evenodd\"><g fillRule=\"nonzero\"><path fill=\"#ffffff\" d=\"M48.5,0 C75.288975,0 97,21.711025 97,48.5 C97,75.288975 75.288975,97 48.5,97 C21.711025,97 0,75.288975 0,48.5 C0,21.711025 21.711025,0 48.5,0 Z M48.5,3.4954955 C23.6549046,3.4954955 3.4954955,23.6549046 3.4954955,48.5 C3.4954955,73.3450954 23.6549046,93.5045045 48.5,93.5045045 C73.3450954,93.5045045 93.5045045,73.3450954 93.5045045,48.5 C93.5045045,23.6549046 73.3450954,3.4954955 48.5,3.4954955 Z\"></path></g><path d=\"M5.24324324,48.5 C5.24324324,24.6197626 24.6197626,5.24324324 48.5,5.24324324 C72.3802374,5.24324324 91.7567568,24.6197626 91.7567568,48.5 C91.7567568,72.3802374 72.3802374,91.7567568 48.5,91.7567568 C24.6197626,91.7567568 5.24324324,72.3802374 5.24324324,48.5 Z\" fill=\"rgba(0,0,0,0.08)\"></path><g fillRule=\"nonzero\"><path fill=\"#ffffff\" d=\"M35.0265172,71.8661372 L72.4183211,50.4951448 C73.2814102,50.0018529 73.5811902,48.9022888 73.0878983,48.0391997 C72.9284137,47.760157 72.6971234,47.5289063 72.4180534,47.3694695 L35.0262496,26.0069719 C34.1630759,25.5138278 33.0635632,25.8137961 32.5704192,26.6769697 C32.4150536,26.9489135 32.3333333,27.2566898 32.3333333,27.569886 L32.3333333,70.3033761 C32.3333333,71.2974886 33.1392208,72.1033761 34.1333333,72.1033761 C34.4466341,72.1033761 34.7545093,72.0216012 35.0265172,71.8661372 Z\"></path></g></g></svg>\n <div class=\"_df ph-v_c\">\n <div class=\"ph-v_d _dib\">01:51</div><div class=\"ph-v_t\">Esto va (D)espacio: Un visitante de otro sistema solar</div>\n </div>"}},"video_agency": false,"alt_image":"Esto va (D)espacio: Un visitante de otro sistema solar"},"url":" va (D)espacio: Un visitante de otro sistema solar","ogWidth":16,"ogHeight":9});
+01:51 Esto va (D)espacio: Un visitante de otro sistema solar Astronomía Vídeo | Un visitante de otro sistema solar El tercer objeto interestelar jamás observado trae información sobre mundos lejanos Daniel Mediavilla 22 jul 2025 - 05:15 CEST Copiar enlace Ir a los comentarios El 1 de julio, el telescopio ATLAS en Chile detectó un cometa con trayectoria inusual: el 3I/ATLAS, el tercer objeto interestelar jamás observado.
+
+No representa peligro para la Tierra, pero su tamaño —más de 20 km de ancho— y origen lo hacen excepcional.
+
+A diferencia de ‘Oumuamua, el primer visitante interestelar descubierto en 2017, que medía menos de 200 metros, este será mucho más fácil de estudiar.
+
+Estos cometas son reliquias de otros sistemas planetarios y aportan pistas sobre mundos lejanos.
+
+Con la inauguración del observatorio Vera Rubin en Chile, se espera encontrar muchos más.
+
+La ESA incluso planea enviar una misión para interceptar uno, lo que marcaría un hito histórico en la exploración del cosmos.
+
+Sobre la firma Daniel Mediavilla Daniel Mediavilla es cofundador de Materia, la sección de Ciencia de EL PAÍS.
+
+Antes trabajó en ABC y en Público.
+
+Para descansar del periodismo, ha escrito discursos.
+
+Le interesa el poder de la ciencia y, cada vez más, sus límites.
+
+Comentarios Ir a los comentarios Normas › Mis comentarios Normas Rellena tu nombre y apellido para comentar completar datos Suscríbete en El País para participar Ya tengo una suscripción var disqus_config = function () {
+this. page. url = '
+this. page. identifier = 'FTPVN2X3VBAU5CORZA42H72KPM';
+}; Please enable JavaScript to view the <a href=" rel="nofollow"> comments powered by Disqus.</a> Más información Vídeo | Salvar la Estación Espacial Internacional Daniel Mediavilla Vídeo | ¿Qué hora es en la Luna? Miguel Cáceres Arias | Madrid Archivado En Ciencia Astronomía Cometas Sistema solar Espacio exterior Asteroides Telescopios Se adhiere a los criterios de Más información Si está interesado en licenciar este contenido, pinche aquí

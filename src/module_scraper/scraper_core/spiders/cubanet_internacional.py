@@ -48,14 +48,14 @@ class CubanetInternacionalSpider(scrapy.Spider):
         # Schedule: Every 60 minutes
         # Project: lamaquina
         # Spider: cubanet_internacional
-        # Arguments: -a max_items=100
+        # Arguments: -a max_items=20
     }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rss_url = "https://www.cubanet.org/feed/"
         self.articles_scraped = 0
-        self.max_articles = int(kwargs.get("max_items", 100))
+        self.max_articles = int(kwargs.get("max_items", 20))
 
         # Información del medio
         self.medio_info = {

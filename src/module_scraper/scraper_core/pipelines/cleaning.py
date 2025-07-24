@@ -14,6 +14,7 @@ from itemadapter import ItemAdapter
 from scrapy import Spider
 from bs4 import BeautifulSoup
 import unicodedata
+import trafilatura
 
 from scraper_core.items import ArticuloInItem
 from .exceptions import CleaningError
@@ -150,6 +151,13 @@ class DataCleaningPipeline:
                 continue
             
             try:
+                # Solo para contenido_texto: usar Trafilatura
+                if field == 'contenido_texto':
+                    extracted = trafilatura.extract(value)
+                    if extracted:
+                        adapter[field] = extracted
+                        continue
+                
                 # Use BeautifulSoup to properly parse and extract text
                 soup = BeautifulSoup(value, 'html.parser')
                 
