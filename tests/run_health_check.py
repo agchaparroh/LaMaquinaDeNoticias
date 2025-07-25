@@ -1,8 +1,14 @@
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.test_all_services_health import check_service_health, check_container_running, SERVICES, WORKER_SERVICES
+from tests.test_all_services_health import (
+    SERVICES,
+    WORKER_SERVICES,
+    check_container_running,
+    check_service_health,
+)
 
 print("🔍 Ejecutando verificación manual de servicios...\n")
 

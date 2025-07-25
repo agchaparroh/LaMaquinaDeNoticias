@@ -1,7 +1,8 @@
 """
 Verificación manual de la configuración de tests
 """
-import os
+
+import os  # noqa: F401
 import sys
 from pathlib import Path
 
@@ -14,11 +15,11 @@ print(f"Directorio del módulo: {module_dir}")
 
 # Verificar archivos clave
 files_to_check = [
-    '.env.test',
-    'scraper_core/utils/supabase_client.py',
-    'scraper_core/utils/compression.py',
-    'scraper_core/pipelines/supabase_pipeline.py',
-    'tests/test_supabase_integration.py'
+    ".env.test",
+    "scraper_core/utils/supabase_client.py",
+    "scraper_core/utils/compression.py",
+    "scraper_core/pipelines/supabase_pipeline.py",
+    "tests/test_supabase_integration.py",
 ]
 
 all_exist = True
@@ -33,7 +34,9 @@ for file in files_to_check:
 if all_exist:
     print("\n✓ Todos los archivos necesarios están presentes")
     print("\nPara ejecutar los tests:")
-    print("1. Navega al directorio: cd 'C:\\Users\\DELL\\Desktop\\Prueba con Windsurf AI\\La Máquina de Noticias\\src\\module_scraper'")
+    print(
+        "1. Navega al directorio: cd 'C:\\Users\\DELL\\Desktop\\Prueba con Windsurf AI\\La Máquina de Noticias\\src\\module_scraper'"
+    )
     print("2. Ejecuta: python tests/diagnostico.py")
     print("3. Si todo está bien, ejecuta: python tests/run_unittest.py")
 else:

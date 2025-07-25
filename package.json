@@ -1,0 +1,28 @@
+{
+  "name": "lamaquinadenoticias",
+  "version": "1.0.0",
+  "description": "**Sistema modular para recopilación, procesamiento y análisis automatizado de noticias.** Herramienta diseñada para periodistas que permite extracción de conocimiento estructurado desde grandes volúmenes de texto utilizando inteligencia artificial.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agchaparroh/LaMaquinaDeNoticias.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/agchaparroh/LaMaquinaDeNoticias/issues"
+  },
+  "homepage": "https://github.com/agchaparroh/LaMaquinaDeNoticias#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "eslint": "^9.31.0"
+  }
+}

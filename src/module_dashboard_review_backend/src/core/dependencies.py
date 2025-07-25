@@ -3,14 +3,15 @@ FastAPI Dependency Injection Configuration
 Provides service dependencies for routers
 """
 
-from typing import Generator, Optional
-from loguru import logger
+from typing import Generator, Optional  # noqa: F401
+
+from loguru import logger  # noqa: F401
+
+from ..services.feedback_service import FeedbackService
+from ..services.hechos_service import HechosService
 
 # Import real implementations
 from ..services.supabase_client import SupabaseClient
-from ..services.hechos_service import HechosService
-from ..services.feedback_service import FeedbackService
-
 
 # Singleton instances (will be replaced with proper initialization in future tasks)
 _supabase_client: Optional[SupabaseClient] = None
@@ -22,7 +23,7 @@ _feedback_service: Optional[FeedbackService] = None
 def get_supabase_client() -> SupabaseClient:
     """
     Provides Supabase client instance for dependency injection
-    
+
     Returns:
         SupabaseClient instance
     """
@@ -33,7 +34,7 @@ def get_supabase_client() -> SupabaseClient:
 def get_hechos_service() -> HechosService:
     """
     Provides HechosService instance for dependency injection
-    
+
     Returns:
         HechosService instance
     """
@@ -47,7 +48,7 @@ def get_hechos_service() -> HechosService:
 def get_feedback_service() -> FeedbackService:
     """
     Provides FeedbackService instance for dependency injection
-    
+
     Returns:
         FeedbackService instance
     """
@@ -62,14 +63,14 @@ def get_feedback_service() -> FeedbackService:
 def get_request_id(request) -> str:
     """
     Extract request ID from request state
-    
+
     Args:
         request: FastAPI Request object
-        
+
     Returns:
         Request ID string
     """
-    return getattr(request.state, 'request_id', 'unknown')
+    return getattr(request.state, "request_id", "unknown")
 
 
 # Future dependencies placeholders (for extensibility)

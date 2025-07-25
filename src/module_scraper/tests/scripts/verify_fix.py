@@ -2,8 +2,9 @@
 """
 Test rápido para verificar que el esquema está corregido usando MCP Supabase
 """
+
+import os  # noqa: F401
 import sys
-import os
 from pathlib import Path
 
 # Añadir path del módulo
@@ -23,16 +24,17 @@ print("✓ Tipo: TEXT, Nullable: YES")
 # 2. Verificar que el mapeo en ArticuloInItem es correcto
 print("\n2. Verificando mapeo en ArticuloInItem...")
 try:
-    from scraper_core.items import ArticuloInItem
     from datetime import datetime
-    
+
+    from scraper_core.items import ArticuloInItem
+
     item = ArticuloInItem()
-    item['contenido_texto'] = 'Test content'
-    item['fecha_recopilacion'] = datetime.now()
-    
+    item["contenido_texto"] = "Test content"
+    item["fecha_recopilacion"] = datetime.now()
+
     print("✓ ArticuloInItem acepta campo contenido_texto")
     print("✓ ArticuloInItem usa fecha_recopilacion (correcto mapeo con DB)")
-    
+
 except Exception as e:
     print(f"✗ Error en mapeo de ArticuloInItem: {e}")
     sys.exit(1)
@@ -41,22 +43,22 @@ except Exception as e:
 print("\n3. Verificando ArticuloAdapter...")
 try:
     from scraper_core.items import ArticuloAdapter
-    
+
     test_item = ArticuloInItem()
-    test_item['url'] = 'http://test.com'
-    test_item['titular'] = 'Test'
-    test_item['contenido_texto'] = 'Content test'
-    test_item['medio'] = 'Test'
-    test_item['fecha_recopilacion'] = datetime.now()
-    
+    test_item["url"] = "http://test.com"
+    test_item["titular"] = "Test"
+    test_item["contenido_texto"] = "Content test"
+    test_item["medio"] = "Test"
+    test_item["fecha_recopilacion"] = datetime.now()
+
     adapter = ArticuloAdapter(test_item)
-    
-    assert 'contenido_texto' in adapter
-    assert 'fecha_recopilacion' in adapter
-    
+
+    assert "contenido_texto" in adapter
+    assert "fecha_recopilacion" in adapter
+
     print("✓ ArticuloAdapter procesa contenido_texto correctamente")
     print("✓ ArticuloAdapter procesa fecha_recopilacion correctamente")
-    
+
 except Exception as e:
     print(f"✗ Error en ArticuloAdapter: {e}")
     sys.exit(1)

@@ -10,25 +10,20 @@ Tests incluidos:
 """
 
 # Hacer disponibles las clases principales para importación fácil
-from .test_universal_spider import (
-    TestUniversalSpider,
-    SpiderTestCase,
-    validate_spider
-)
-
 from .test_generator_compliance import (
     TestGeneratorCompliance,
     TestSpiderIntegration,
     generate_compliance_report,
-    print_compliance_report
+    print_compliance_report,
 )
+from .test_universal_spider import SpiderTestCase, TestUniversalSpider, validate_spider
 
 __all__ = [
-    'TestUniversalSpider',
-    'SpiderTestCase',
-    'validate_spider',
-    'TestGeneratorCompliance', 
-    'TestSpiderIntegration',
-    'generate_compliance_report',
-    'print_compliance_report'
+    "TestUniversalSpider",
+    "SpiderTestCase",
+    "validate_spider",
+    "TestGeneratorCompliance",
+    "TestSpiderIntegration",
+    "generate_compliance_report",
+    "print_compliance_report",
 ]

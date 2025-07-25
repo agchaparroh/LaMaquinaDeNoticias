@@ -1,4 +1,5 @@
 import nest_asyncio
+
 nest_asyncio.apply()
 
 # Scrapy settings for scraper_core project
@@ -10,11 +11,13 @@ nest_asyncio.apply()
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-import os
-from pathlib import Path
-from dotenv import load_dotenv
-from config.rate_limits.domain_config import DOMAIN_RATE_LIMITS
-from scraper_core.logging_config import LoggingConfig
+import os  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+from dotenv import load_dotenv  # noqa: E402
+
+from config.rate_limits.domain_config import DOMAIN_RATE_LIMITS  # noqa: E402
+from scraper_core.logging_config import LoggingConfig  # noqa: E402
 
 # Load environment variables - check multiple locations in order of preference
 # 1. Environment variables (highest priority)
@@ -23,9 +26,9 @@ from scraper_core.logging_config import LoggingConfig
 # 4. .env (legacy location)
 project_root = Path(__file__).resolve().parent.parent
 env_paths = [
-    project_root / 'config' / '.env.test',
-    project_root / 'config' / '.env',
-    project_root / '.env',  # Legacy location
+    project_root / "config" / ".env.test",
+    project_root / "config" / ".env",
+    project_root / ".env",  # Legacy location
 ]
 
 # Load the first .env file that exists
@@ -55,13 +58,13 @@ CONCURRENT_REQUESTS = 8
 DOWNLOAD_DELAY = 2
 # The download delay setting will honor only one of:
 CONCURRENT_REQUESTS_PER_DOMAIN = 2
-#CONCURRENT_REQUESTS_PER_IP = 16
+# CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
-#COOKIES_ENABLED = False
+# COOKIES_ENABLED = False
 
 # Disable Telnet Console (enabled by default)
-#TELNETCONSOLE_ENABLED = False
+# TELNETCONSOLE_ENABLED = False
 
 # Override the default request headers:
 DEFAULT_REQUEST_HEADERS = {
@@ -73,7 +76,7 @@ DEFAULT_REQUEST_HEADERS = {
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 SPIDER_MIDDLEWARES = {
     # Enable scrapy-crawl-once for duplicate prevention
-    'scrapy_crawl_once.CrawlOnceMiddleware': 100,
+    "scrapy_crawl_once.CrawlOnceMiddleware": 100,
     # Custom spider middlewares can be added here
     # "scraper_core.middlewares.ScraperCoreSpiderMiddleware": 543,
 }
@@ -82,17 +85,15 @@ SPIDER_MIDDLEWARES = {
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     # Enable scrapy-crawl-once for duplicate prevention
-    'scrapy_crawl_once.CrawlOnceMiddleware': 50,
+    "scrapy_crawl_once.CrawlOnceMiddleware": 50,
     # Disable default user agent middleware
-    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+    "scrapy.downloadermiddlewares.useragent.UserAgentMiddleware": None,
     # Enable random user agent middleware
-    'scrapy_user_agents.middlewares.RandomUserAgentMiddleware': 400,
-    
+    "scrapy_user_agents.middlewares.RandomUserAgentMiddleware": 400,
     # NUEVO: Middleware personalizado para Playwright para manejar respuestas vacías
-    'scraper_core.middlewares.playwright_custom_middleware.PlaywrightCustomDownloaderMiddleware': 550,
-    
+    "scraper_core.middlewares.playwright_custom_middleware.PlaywrightCustomDownloaderMiddleware": 550,
     # Rate limit monitoring middleware (optional, enable for debugging)
-    # 'scraper_core.middlewares.rate_limit_monitor.RateLimitMonitorMiddleware': 543, 
+    # 'scraper_core.middlewares.rate_limit_monitor.RateLimitMonitorMiddleware': 543,
     # Custom middlewares can be added here
     # "scraper_core.middlewares.ScraperCoreDownloaderMiddleware": 543,
 }
@@ -120,19 +121,15 @@ LOG_ROTATION_PER_SPIDER = False  # Create separate rotating logs per spider
 # Lower numbers mean higher priority.
 ITEM_PIPELINES = {
     # 1. Conversión de tipos (DEBE ser primero)
-    'scraper_core.pipelines.converter.ItemConverterPipeline': 100,
-
+    "scraper_core.pipelines.converter.ItemConverterPipeline": 100,
     # 2. Limpieza de Datos
-    'scraper_core.pipelines.cleaning.DataCleaningPipeline': 200,
-
+    "scraper_core.pipelines.cleaning.DataCleaningPipeline": 200,
     # 3. Validación de Datos Post-Limpieza
-    'scraper_core.pipelines.validation.DataValidationPipeline': 300,
-
+    "scraper_core.pipelines.validation.DataValidationPipeline": 300,
     # 4. Almacenamiento en Supabase
-    'scraper_core.pipelines.SupabaseStoragePipeline': 400,
-
+    "scraper_core.pipelines.SupabaseStoragePipeline": 400,
     # 5. Exportación a JSON para el connector
-    'scraper_core.pipelines.json_writer.JsonWriterPipeline': 900,
+    "scraper_core.pipelines.json_writer.JsonWriterPipeline": 900,
 }
 
 print("✅ Pipelines configurados:")
@@ -164,19 +161,23 @@ PLAYWRIGHT_LAUNCH_OPTIONS = {
 # =============================================================================
 
 # Maximum number of retries for Playwright-specific errors
-PLAYWRIGHT_MAX_RETRIES = int(os.getenv('PLAYWRIGHT_MAX_RETRIES', 2))
+PLAYWRIGHT_MAX_RETRIES = int(os.getenv("PLAYWRIGHT_MAX_RETRIES", 2))
 
 # Timeout for Playwright operations (milliseconds)
-PLAYWRIGHT_TIMEOUT = int(os.getenv('PLAYWRIGHT_TIMEOUT', 30000))  # 30 seconds
+PLAYWRIGHT_TIMEOUT = int(os.getenv("PLAYWRIGHT_TIMEOUT", 30000))  # 30 seconds
 
 # Enable fallback to non-Playwright requests when Playwright fails
-PLAYWRIGHT_ENABLE_FALLBACK = os.getenv('PLAYWRIGHT_ENABLE_FALLBACK', 'True').lower() == 'true'
+PLAYWRIGHT_ENABLE_FALLBACK = (
+    os.getenv("PLAYWRIGHT_ENABLE_FALLBACK", "True").lower() == "true"
+)
 
 # Maximum number of retries for empty content detection
-PLAYWRIGHT_MAX_EMPTY_RETRIES = int(os.getenv('PLAYWRIGHT_MAX_EMPTY_RETRIES', 1))
+PLAYWRIGHT_MAX_EMPTY_RETRIES = int(os.getenv("PLAYWRIGHT_MAX_EMPTY_RETRIES", 1))
 
 # Enable Playwright for empty content detection (BaseArticleSpider compatibility)
-USE_PLAYWRIGHT_FOR_EMPTY_CONTENT = os.getenv('USE_PLAYWRIGHT_FOR_EMPTY_CONTENT', 'True').lower() == 'true'
+USE_PLAYWRIGHT_FOR_EMPTY_CONTENT = (
+    os.getenv("USE_PLAYWRIGHT_FOR_EMPTY_CONTENT", "True").lower() == "true"
+)
 
 # =============================================================================
 # HTTP CACHE CONFIGURATION
@@ -186,9 +187,9 @@ USE_PLAYWRIGHT_FOR_EMPTY_CONTENT = os.getenv('USE_PLAYWRIGHT_FOR_EMPTY_CONTENT',
 HTTPCACHE_ENABLED = True
 HTTPCACHE_EXPIRATION_SECS = 0  # Cache forever (useful for development)
 HTTPCACHE_DIR = "httpcache"
-HTTPCACHE_IGNORE_HTTP_CODES = [] # Cache all responses
+HTTPCACHE_IGNORE_HTTP_CODES = []  # Cache all responses
 HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
-#HTTPCACHE_POLICY = 'scrapy.extensions.httpcache.RFC2616Policy' # Default policy
+# HTTPCACHE_POLICY = 'scrapy.extensions.httpcache.RFC2616Policy' # Default policy
 
 # =============================================================================
 # AUTO THROTTLE CONFIGURATION
@@ -231,52 +232,58 @@ RANDOMIZE_DOWNLOAD_DELAY = True
 # SUPABASE CONFIGURATION
 # =============================================================================
 # Supabase connection details (loaded from .env)
-SUPABASE_URL = os.getenv('SUPABASE_URL')
-SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY') # For admin operations
-SUPABASE_KEY = os.getenv('SUPABASE_KEY') # Public anon key if needed for RLS
-SUPABASE_HTML_BUCKET = os.getenv('SUPABASE_HTML_BUCKET', 'html_content')
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv(
+    "SUPABASE_SERVICE_ROLE_KEY"
+)  # For admin operations
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")  # Public anon key if needed for RLS
+SUPABASE_HTML_BUCKET = os.getenv("SUPABASE_HTML_BUCKET", "html_content")
 
 # =============================================================================
 # TENACITY RETRY CONFIGURATION FOR PIPELINES (Ej. Supabase)
 # =============================================================================
-TENACITY_STOP_AFTER_ATTEMPT = int(os.getenv('TENACITY_STOP_AFTER_ATTEMPT', 3))
-TENACITY_WAIT_MULTIPLIER = float(os.getenv('TENACITY_WAIT_MULTIPLIER', 1)) # seconds
-TENACITY_WAIT_MIN = float(os.getenv('TENACITY_WAIT_MIN', 2)) # seconds
-TENACITY_WAIT_MAX = float(os.getenv('TENACITY_WAIT_MAX', 10)) # seconds
+TENACITY_STOP_AFTER_ATTEMPT = int(os.getenv("TENACITY_STOP_AFTER_ATTEMPT", 3))
+TENACITY_WAIT_MULTIPLIER = float(os.getenv("TENACITY_WAIT_MULTIPLIER", 1))  # seconds
+TENACITY_WAIT_MIN = float(os.getenv("TENACITY_WAIT_MIN", 2))  # seconds
+TENACITY_WAIT_MAX = float(os.getenv("TENACITY_WAIT_MAX", 10))  # seconds
 
 # =============================================================================
 # JSON EXPORT CONFIGURATION
 # =============================================================================
 # Directory where JSON files are exported for the connector
-SCRAPY_OUTPUT_DIR = os.getenv('SCRAPY_OUTPUT_DIR', '/data/scrapy_output/pending')
+SCRAPY_OUTPUT_DIR = os.getenv("SCRAPY_OUTPUT_DIR", "/data/scrapy_output/pending")
 
 # =============================================================================
 # VALIDATION PIPELINE CONFIGURATION
 # =============================================================================
 # Fields required for an item to be considered valid
-VALIDATION_REQUIRED_FIELDS = ['url', 'titular', 'medio', 'fecha_recopilacion']
+VALIDATION_REQUIRED_FIELDS = ["url", "titular", "medio", "fecha_recopilacion"]
 
 # Fields that must not be empty if present
-VALIDATION_NON_EMPTY_FIELDS = ['url', 'titular', 'medio']
+VALIDATION_NON_EMPTY_FIELDS = ["url", "titular", "medio"]
 
 # Max length for certain text fields (0 means no limit)
 VALIDATION_MAX_LENGTHS = {
-    'url': 2048,
-    'titular': 512,
-    'subtitulo': 1024,
-    'autor': 256,
-    'medio': 256,
-    'categoria': 128,
+    "url": 2048,
+    "titular": 512,
+    "subtitulo": 1024,
+    "autor": 256,
+    "medio": 256,
+    "categoria": 128,
 }
 
 # Allowed date formats for validation (ISO 8601 is preferred)
-VALIDATION_DATE_FORMATS = ["%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S"]
+VALIDATION_DATE_FORMATS = [
+    "%Y-%m-%dT%H:%M:%S.%fZ",
+    "%Y-%m-%dT%H:%M:%SZ",
+    "%Y-%m-%d %H:%M:%S",
+]
 
 # Fields to check for valid URL format
-VALIDATION_URL_FIELDS = ['url', 'url_original', 'medio_url_base']
+VALIDATION_URL_FIELDS = ["url", "url_original", "medio_url_base"]
 
 # Fields that should be lists/arrays
-VALIDATION_LIST_FIELDS = ['etiquetas']
+VALIDATION_LIST_FIELDS = ["etiquetas"]
 
 # Fields that should be dictionaries/objects
 # VALIDATION_DICT_FIELDS = ['metadata_extra']
@@ -286,18 +293,18 @@ VALIDATION_LIST_FIELDS = ['etiquetas']
 VALIDATION_DROP_INVALID_ITEMS = False
 
 # Fields to include in the validation summary (for logging or item field)
-VALIDATION_SUMMARY_FIELDS = ['url', 'titular', 'medio', 'contenido_texto']
+VALIDATION_SUMMARY_FIELDS = ["url", "titular", "medio", "contenido_texto"]
 
 # =============================================================================
 # CLEANING PIPELINE CONFIGURATION
 # =============================================================================
 
 # Cleaning options
-CLEANING_STRIP_HTML = True           # Strip HTML tags from text fields
-CLEANING_NORMALIZE_WHITESPACE = True # Normalize whitespace in text
-CLEANING_REMOVE_EMPTY_LINES = True   # Remove empty lines from content
-CLEANING_STANDARDIZE_QUOTES = True   # Standardize quote characters
-CLEANING_PRESERVE_HTML_CONTENT = True # Clean but preserve HTML structure
+CLEANING_STRIP_HTML = True  # Strip HTML tags from text fields
+CLEANING_NORMALIZE_WHITESPACE = True  # Normalize whitespace in text
+CLEANING_REMOVE_EMPTY_LINES = True  # Remove empty lines from content
+CLEANING_STANDARDIZE_QUOTES = True  # Standardize quote characters
+CLEANING_PRESERVE_HTML_CONTENT = True  # Clean but preserve HTML structure
 
 # =============================================================================
 # LOGGING CONFIGURATION
@@ -307,19 +314,19 @@ CLEANING_PRESERVE_HTML_CONTENT = True # Clean but preserve HTML structure
 logging_settings = LoggingConfig.get_scrapy_settings()
 
 # Apply logging settings
-LOG_LEVEL = logging_settings['LOG_LEVEL']
-LOG_FORMAT = logging_settings['LOG_FORMAT']
-LOG_DATEFORMAT = logging_settings['LOG_DATEFORMAT']
-LOG_STDOUT = logging_settings.get('LOG_STDOUT', False)
-LOG_SHORT_NAMES = logging_settings.get('LOG_SHORT_NAMES', False)
+LOG_LEVEL = logging_settings["LOG_LEVEL"]
+LOG_FORMAT = logging_settings["LOG_FORMAT"]
+LOG_DATEFORMAT = logging_settings["LOG_DATEFORMAT"]
+LOG_STDOUT = logging_settings.get("LOG_STDOUT", False)
+LOG_SHORT_NAMES = logging_settings.get("LOG_SHORT_NAMES", False)
 
 # File logging (if enabled)
-if 'LOG_FILE' in logging_settings:
-    LOG_FILE = logging_settings['LOG_FILE']
-    LOG_FILE_ENCODING = logging_settings.get('LOG_FILE_ENCODING', 'utf-8')
+if "LOG_FILE" in logging_settings:
+    LOG_FILE = logging_settings["LOG_FILE"]
+    LOG_FILE_ENCODING = logging_settings.get("LOG_FILE_ENCODING", "utf-8")
 
 # Component-specific log levels
-LOGGERS = logging_settings['LOGGERS']
+LOGGERS = logging_settings["LOGGERS"]
 
 # =============================================================================
 # ERROR HANDLING CONFIGURATION
@@ -354,7 +361,7 @@ CRAWL_ONCE_ENABLED = True
 
 # Path to store crawled requests database
 # By default uses .scrapy/crawl_once/ directory
-CRAWL_ONCE_PATH = project_root / '.scrapy' / 'crawl_once'
+CRAWL_ONCE_PATH = project_root / ".scrapy" / "crawl_once"
 
 # Default value for crawl_once meta key (False by default)
 # When True, all requests are handled by this middleware unless disabled explicitly
@@ -366,12 +373,12 @@ CRAWL_ONCE_DEFAULT = False
 # =============================================================================
 
 # These can be overridden by environment variables or spider settings
-if os.getenv('ENVIRONMENT') == 'production':
+if os.getenv("ENVIRONMENT") == "production":
     CONCURRENT_REQUESTS = 16
     CONCURRENT_REQUESTS_PER_DOMAIN = 4
     DOWNLOAD_DELAY = 1
     AUTOTHROTTLE_TARGET_CONCURRENCY = 4.0
-    LOG_LEVEL = 'WARNING'
+    LOG_LEVEL = "WARNING"
 
 # =============================================================================
 # SECTION-SPECIFIC RSS ARTIFICIAL SPIDER CONFIGURATION
@@ -382,15 +389,19 @@ if os.getenv('ENVIRONMENT') == 'production':
 
 # Section-specific crawl-once configuration
 CRAWL_ONCE_SECTION_PREFIX = "section"  # Prefix for section-specific duplicate tracking
-CRAWL_ONCE_SECTION_TTL = int(os.getenv('CRAWL_ONCE_SECTION_TTL', 86400))  # 24 hours default
+CRAWL_ONCE_SECTION_TTL = int(
+    os.getenv("CRAWL_ONCE_SECTION_TTL", 86400)
+)  # 24 hours default
 
 # RSS detection timeouts for section analysis
-RSS_DETECTION_TIMEOUT = int(os.getenv('RSS_DETECTION_TIMEOUT', 15))  # 15 seconds
-RSS_VALIDATION_TIMEOUT = int(os.getenv('RSS_VALIDATION_TIMEOUT', 10))  # 10 seconds
+RSS_DETECTION_TIMEOUT = int(os.getenv("RSS_DETECTION_TIMEOUT", 15))  # 15 seconds
+RSS_VALIDATION_TIMEOUT = int(os.getenv("RSS_VALIDATION_TIMEOUT", 10))  # 10 seconds
 
 # Section analysis configuration
-SECTION_ANALYSIS_MAX_SAMPLES = int(os.getenv('SECTION_ANALYSIS_MAX_SAMPLES', 5))  # Max article samples per section
-SECTION_ANALYSIS_TIMEOUT = int(os.getenv('SECTION_ANALYSIS_TIMEOUT', 30))  # 30 seconds
+SECTION_ANALYSIS_MAX_SAMPLES = int(
+    os.getenv("SECTION_ANALYSIS_MAX_SAMPLES", 5)
+)  # Max article samples per section
+SECTION_ANALYSIS_TIMEOUT = int(os.getenv("SECTION_ANALYSIS_TIMEOUT", 30))  # 30 seconds
 
 # Spider Factory section-specific settings
 SPIDER_FACTORY_SECTION_MODE = True  # Enable section-specific spider generation
@@ -399,20 +410,42 @@ SPIDER_FACTORY_RSS_PRIORITY = True  # Prioritize RSS detection over scraping
 
 # Section URL pattern detection
 SECTION_URL_PATTERNS = {
-    'common_sections': [
-        'nacional', 'internacional', 'politica', 'economia', 'deportes',
-        'tecnologia', 'cultura', 'sociedad', 'mundo', 'local', 'opinion',
-        'entretenimiento', 'salud', 'educacion', 'medio-ambiente'
+    "common_sections": [
+        "nacional",
+        "internacional",
+        "politica",
+        "economia",
+        "deportes",
+        "tecnologia",
+        "cultura",
+        "sociedad",
+        "mundo",
+        "local",
+        "opinion",
+        "entretenimiento",
+        "salud",
+        "educacion",
+        "medio-ambiente",
     ],
-    'section_indicators': [
-        '/seccion/', '/categoria/', '/section/', '/category/', '/tema/',
-        '/tag/', '/area/', '/departamento/'
-    ]
+    "section_indicators": [
+        "/seccion/",
+        "/categoria/",
+        "/section/",
+        "/category/",
+        "/tema/",
+        "/tag/",
+        "/area/",
+        "/departamento/",
+    ],
 }
 
 # RSS artificial spider execution settings
-RSS_ARTIFICIAL_DEFAULT_DELAY = float(os.getenv('RSS_ARTIFICIAL_DEFAULT_DELAY', 3.0))  # Conservative delay
-RSS_ARTIFICIAL_CONCURRENT_REQUESTS = int(os.getenv('RSS_ARTIFICIAL_CONCURRENT_REQUESTS', 1))  # Very conservative
+RSS_ARTIFICIAL_DEFAULT_DELAY = float(
+    os.getenv("RSS_ARTIFICIAL_DEFAULT_DELAY", 3.0)
+)  # Conservative delay
+RSS_ARTIFICIAL_CONCURRENT_REQUESTS = int(
+    os.getenv("RSS_ARTIFICIAL_CONCURRENT_REQUESTS", 1)
+)  # Very conservative
 RSS_ARTIFICIAL_RESPECT_ROBOTS = True  # Always respect robots.txt for RSS artificial
 
 # =============================================================================
@@ -423,13 +456,15 @@ RSS_ARTIFICIAL_RESPECT_ROBOTS = True  # Always respect robots.txt for RSS artifi
 SPIDERMON_ENABLED = True
 
 # Add Spidermon extension
-EXTENSIONS.update({
-    'spidermon.contrib.scrapy.extensions.Spidermon': 600,
-})
+EXTENSIONS.update(
+    {
+        "spidermon.contrib.scrapy.extensions.Spidermon": 600,
+    }
+)
 
 # Spider close monitors
 SPIDERMON_SPIDER_CLOSE_MONITORS = [
-    'scraper_core.monitors.spider_monitors.SpiderCloseMonitorSuite',
+    "scraper_core.monitors.spider_monitors.SpiderCloseMonitorSuite",
 ]
 
 # Item validation pipeline (already in ITEM_PIPELINES above)
@@ -440,32 +475,32 @@ SPIDERMON_SPIDER_CLOSE_MONITORS = [
 
 # Validation settings
 SPIDERMON_VALIDATION_ADD_ERRORS_TO_ITEMS = True
-SPIDERMON_VALIDATION_ERRORS_FIELD = '_validation'
+SPIDERMON_VALIDATION_ERRORS_FIELD = "_validation"
 SPIDERMON_VALIDATION_DROP_ITEMS_WITH_ERRORS = False
 
 # JSON Schema for validation
 SPIDERMON_VALIDATION_SCHEMAS = {
-    'ArticuloInItem': os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        'schemas',
-        'articulo_schema.json'
+    "ArticuloInItem": os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "schemas", "articulo_schema.json"
     )
 }
 
 # Monitor thresholds
-SPIDERMON_MIN_ITEMS_SCRAPED = int(os.getenv('SPIDERMON_MIN_ITEMS_SCRAPED', 1))
-SPIDERMON_MAX_CRITICAL_ERRORS = int(os.getenv('SPIDERMON_MAX_CRITICAL_ERRORS', 0))
-SPIDERMON_MAX_ERROR_MESSAGES = int(os.getenv('SPIDERMON_MAX_ERROR_MESSAGES', 5))
-SPIDERMON_MAX_RESPONSE_TIME = float(os.getenv('SPIDERMON_MAX_RESPONSE_TIME', 5000))  # milliseconds
+SPIDERMON_MIN_ITEMS_SCRAPED = int(os.getenv("SPIDERMON_MIN_ITEMS_SCRAPED", 1))
+SPIDERMON_MAX_CRITICAL_ERRORS = int(os.getenv("SPIDERMON_MAX_CRITICAL_ERRORS", 0))
+SPIDERMON_MAX_ERROR_MESSAGES = int(os.getenv("SPIDERMON_MAX_ERROR_MESSAGES", 5))
+SPIDERMON_MAX_RESPONSE_TIME = float(
+    os.getenv("SPIDERMON_MAX_RESPONSE_TIME", 5000)
+)  # milliseconds
 
 # Field coverage monitoring
 SPIDERMON_ADD_FIELD_COVERAGE = True
 SPIDERMON_FIELD_COVERAGE_RULES = {
-    'url': 1.0,  # 100% coverage required
-    'titular': 0.95,  # 95% coverage required
-    'contenido_texto': 0.95,
-    'medio': 1.0,
-    'fecha_publicacion': 0.8,  # 80% coverage acceptable
+    "url": 1.0,  # 100% coverage required
+    "titular": 0.95,  # 95% coverage required
+    "contenido_texto": 0.95,
+    "medio": 1.0,
+    "fecha_publicacion": 0.8,  # 80% coverage acceptable
 }
 
 # Periodic monitors (optional, for running monitors during spider execution)

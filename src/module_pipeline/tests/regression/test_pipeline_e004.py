@@ -2,8 +2,9 @@
 """
 Test script para validar corrección de E004
 """
-import sys
+
 import os
+import sys
 import uuid
 from datetime import datetime
 
@@ -14,14 +15,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ...src.controller import PipelineController
 from ...src.models.entrada import FragmentoProcesableItem
 
+
 def main():
     print("=== TEST PIPELINE E004 ===")
     print(f"Timestamp: {datetime.now()}")
-    
+
     # Crear controller
     controller = PipelineController()
     print("✓ Controller creado")
-    
+
     # Crear fragmento de prueba
     fragmento_data = {
         "id_fragmento": str(uuid.uuid4()),
@@ -33,12 +35,12 @@ def main():
         La inflación alcanzó el 5.5% en el último trimestre.
         """,
         "id_articulo_fuente": "test_article_e004",
-        "orden_en_articulo": 1
+        "orden_en_articulo": 1,
     }
-    
+
     fragmento = FragmentoProcesableItem(**fragmento_data)
     print(f"✓ Fragmento creado: {fragmento.id_fragmento}")
-    
+
     # Ejecutar pipeline
     try:
         resultado = controller.pipeline_coordinator.ejecutar_pipeline_completo(
@@ -49,31 +51,33 @@ def main():
             contexto_articulo={
                 "titulo": "Test Article E004",
                 "fecha_publicacion": datetime.now().isoformat(),
-                "fuente": "test"
-            }
+                "fuente": "test",
+            },
         )
-        
-        print(f"\n✓ Pipeline ejecutado")
+
+        print(f"\n✓ Pipeline ejecutado")  # noqa: F541
         print(f"  - Éxito: {resultado['exito']}")
         print(f"  - Fase completada: {resultado['fase_completada']}")
         print(f"  - Errores: {resultado['errores']}")
-        
-        if resultado['exito']:
+
+        if resultado["exito"]:
             print("\n✅ E004 CORREGIDO - Pipeline completado exitosamente")
-            if 'metadatos' in resultado and 'processor_stats' in resultado['metadatos']:
-                stats = resultado['metadatos']['processor_stats']
-                print(f"\nEstadísticas:")
+            if "metadatos" in resultado and "processor_stats" in resultado["metadatos"]:
+                stats = resultado["metadatos"]["processor_stats"]
+                print(f"\nEstadísticas:")  # noqa: F541
                 print(f"  - Hechos: {stats.get('total_hechos', 0)}")
                 print(f"  - Entidades: {stats.get('total_entidades', 0)}")
                 print(f"  - Citas: {stats.get('total_citas', 0)}")
                 print(f"  - Datos: {stats.get('total_datos', 0)}")
         else:
             print(f"\n❌ Pipeline falló: {resultado['errores']}")
-            
+
     except Exception as e:
         print(f"\n❌ Error: {type(e).__name__}: {str(e)}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

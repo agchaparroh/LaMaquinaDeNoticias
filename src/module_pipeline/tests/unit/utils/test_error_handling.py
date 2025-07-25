@@ -1,18 +1,22 @@
-import pytest
+import logging  # For checking log levels
 import uuid
-import logging # For checking log levels
-from loguru import logger # For accessing loguru specific record attributes
+
+import pytest
+from loguru import (
+    logger,  # For accessing loguru specific record attributes  # noqa: F401
+)
 
 from ....src.module_pipeline.src.utils.error_handling import (
-    handle_spacy_load_error_fase1, # Corrected casing
+    ErrorPhase,
+    ErrorType,  # Import for checking error_type in logs
+    PipelineException,  # For generic error test  # noqa: F401
+    ProcessingError,  # For generic error test  # noqa: F401
+    handle_generic_phase_error,
     handle_groq_relevance_error_fase1,
     handle_groq_translation_fallback_fase1,
-    handle_generic_phase_error,
-    ErrorPhase,
-    ErrorType, # Import for checking error_type in logs
-    PipelineException, # For generic error test
-    ProcessingError # For generic error test
+    handle_spacy_load_error_fase1,  # Corrected casing
 )
+
 
 # Fixture to capture log messages
 @pytest.fixture
@@ -20,8 +24,9 @@ def caplog_fixture(caplog):
     # Configure Loguru to propagate to standard logging (which caplog captures)
     # This might be needed if Loguru by default doesn't send to caplog
     # logger.add(logging.StreamHandler(), format="{level} {message}") # Example, might need adjustment
-    caplog.set_level(logging.DEBUG) # Capture from DEBUG level up for standard logging
+    caplog.set_level(logging.DEBUG)  # Capture from DEBUG level up for standard logging
     return caplog
+
 
 def test_handle_spacy_load_error_fase1(caplog_fixture):
     article_id = str(uuid.uuid4())
@@ -31,19 +36,28 @@ def test_handle_spacy_load_error_fase1(caplog_fixture):
     result = handle_spacy_load_error_fase1(article_id, model_name, original_exception)
 
     assert result["id_fragmento"] == article_id
-    assert result["es_relevante"] is True # Updated logic
-    assert result["decision_triaje"] == "FALLBACK_ACEPTADO_ERROR_PREPROCESO" # Updated logic
+    assert result["es_relevante"] is True  # Updated logic
+    assert (
+        result["decision_triaje"] == "FALLBACK_ACEPTADO_ERROR_PREPROCESO"
+    )  # Updated logic
     expected_justification = f"Fallo al cargar modelo spaCy '{model_name}': {str(original_exception)}. Preprocesamiento degradado, artículo aceptado automáticamente."
     assert result["justificacion_triaje"] == expected_justification
     assert result["categoria_principal"] == "INDETERMINADO"
     assert result["palabras_clave_triaje"] == []
     assert result["puntuacion_triaje"] == 0.0
     assert result["confianza_triaje"] == 0.0
-    assert result["texto_para_siguiente_fase"] == "[PREPROCESAMIENTO_FALLIDO]" # Updated
-    assert result["metadatos_specificos_triaje"]["error_type"] == "SPACY_MODEL_LOAD_FAILURE"
+    assert (
+        result["texto_para_siguiente_fase"] == "[PREPROCESAMIENTO_FALLIDO]"
+    )  # Updated
+    assert (
+        result["metadatos_specificos_triaje"]["error_type"]
+        == "SPACY_MODEL_LOAD_FAILURE"
+    )
     assert result["metadatos_specificos_triaje"]["model_name"] == model_name
     assert str(original_exception) in result["metadatos_specificos_triaje"]["details"]
-    assert "SpaCy model loading failed" in result["metadatos_specificos_triaje"]["message"]
+    assert (
+        "SpaCy model loading failed" in result["metadatos_specificos_triaje"]["message"]
+    )
 
     # Check structured logs
     assert len(caplog_fixture.records) == 1
@@ -64,9 +78,15 @@ def test_handle_spacy_load_error_fase1(caplog_fixture):
     # For simplicity, we'll check the message and level, and trust `format_error_for_logging` works.
     # To check structured parts, we'd ideally use a custom Loguru sink in tests.
     # For now, rely on the message content and that the correct exception was formatted.
-    assert f"'fase': '{ErrorPhase.FASE_1_TRIAJE.value}'" in str(log_record.loguru_record.extra) # Example check
-    assert f"'error_type': '{ErrorType.PROCESSING_ERROR.value}'" in str(log_record.loguru_record.extra)
-    assert f"'original_error': '{str(original_exception)}'" in str(log_record.loguru_record.extra['details'])
+    assert f"'fase': '{ErrorPhase.FASE_1_TRIAJE.value}'" in str(
+        log_record.loguru_record.extra
+    )  # Example check
+    assert f"'error_type': '{ErrorType.PROCESSING_ERROR.value}'" in str(
+        log_record.loguru_record.extra
+    )
+    assert f"'original_error': '{str(original_exception)}'" in str(
+        log_record.loguru_record.extra["details"]
+    )
 
 
 def test_handle_groq_relevance_error_fase1(caplog_fixture):
@@ -74,17 +94,25 @@ def test_handle_groq_relevance_error_fase1(caplog_fixture):
     text_cleaned = "Este es un texto limpio de prueba."
     original_exception = RuntimeError("Test Groq API error")
 
-    result = handle_groq_relevance_error_fase1(article_id, text_cleaned, original_exception)
+    result = handle_groq_relevance_error_fase1(
+        article_id, text_cleaned, original_exception
+    )
 
     assert result["id_fragmento"] == article_id
-    assert result["es_relevante"] is True # Updated logic
-    assert result["decision_triaje"] == "FALLBACK_ACEPTADO_ERROR_LLM" # Updated logic
+    assert result["es_relevante"] is True  # Updated logic
+    assert result["decision_triaje"] == "FALLBACK_ACEPTADO_ERROR_LLM"  # Updated logic
     expected_justification = f"Fallo en API Groq para evaluación de relevancia: {str(original_exception)}. Artículo aceptado automáticamente por política de fallback."
     assert result["justificacion_triaje"] == expected_justification
     assert result["texto_para_siguiente_fase"] == text_cleaned
-    assert result["metadatos_specificos_triaje"]["error_type"] == "GROQ_RELEVANCE_API_FAILURE"
+    assert (
+        result["metadatos_specificos_triaje"]["error_type"]
+        == "GROQ_RELEVANCE_API_FAILURE"
+    )
     assert str(original_exception) in result["metadatos_specificos_triaje"]["details"]
-    assert "Groq API failed during relevance evaluation" in result["metadatos_specificos_triaje"]["message"]
+    assert (
+        "Groq API failed during relevance evaluation"
+        in result["metadatos_specificos_triaje"]["message"]
+    )
 
     # Check structured logs
     assert len(caplog_fixture.records) == 1
@@ -92,10 +120,18 @@ def test_handle_groq_relevance_error_fase1(caplog_fixture):
     assert log_record.levelname == "ERROR"
     expected_log_message = f"Fallback: Groq API relevance evaluation failed for article {article_id}. Accepting article by policy."
     assert log_record.message == expected_log_message
-    assert f"'fase': '{ErrorPhase.FASE_1_TRIAJE.value}'" in str(log_record.loguru_record.extra)
-    assert f"'error_type': '{ErrorType.GROQ_API_ERROR.value}'" in str(log_record.loguru_record.extra)
-    assert f"'original_error': '{str(original_exception)}'" in str(log_record.loguru_record.extra['details'])
-    assert f"'text_cleaned_excerpt': '{text_cleaned[:100]}'" in str(log_record.loguru_record.extra['details'])
+    assert f"'fase': '{ErrorPhase.FASE_1_TRIAJE.value}'" in str(
+        log_record.loguru_record.extra
+    )
+    assert f"'error_type': '{ErrorType.GROQ_API_ERROR.value}'" in str(
+        log_record.loguru_record.extra
+    )
+    assert f"'original_error': '{str(original_exception)}'" in str(
+        log_record.loguru_record.extra["details"]
+    )
+    assert f"'text_cleaned_excerpt': '{text_cleaned[:100]}'" in str(
+        log_record.loguru_record.extra["details"]
+    )
 
 
 def test_handle_groq_translation_fallback_fase1_with_exception(caplog_fixture):
@@ -104,10 +140,15 @@ def test_handle_groq_translation_fallback_fase1_with_exception(caplog_fixture):
     original_language = "en"
     original_exception = ConnectionError("Test translation API error")
 
-    result = handle_groq_translation_fallback_fase1(article_id, text_cleaned, original_language, original_exception)
+    result = handle_groq_translation_fallback_fase1(
+        article_id, text_cleaned, original_language, original_exception
+    )
 
     assert result["status"] == "TRANSLATION_FALLBACK_APPLIED"
-    assert f"Traducción de '{original_language}' falló. Se usará texto original." == result["message"]
+    assert (
+        f"Traducción de '{original_language}' falló. Se usará texto original."
+        == result["message"]
+    )
     assert result["original_text_used"] is True
     assert result["texto_para_siguiente_fase"] == text_cleaned
     assert str(original_exception) in result["error_details"]
@@ -119,10 +160,18 @@ def test_handle_groq_translation_fallback_fase1_with_exception(caplog_fixture):
     assert log_record.levelname == "WARNING"
     expected_log_message = f"Fallback: Groq translation from '{original_language}' failed for article {article_id}. Using original text."
     assert log_record.message == expected_log_message
-    assert f"'fase': '{ErrorPhase.FASE_1_TRIAJE.value}'" in str(log_record.loguru_record.extra)
-    assert f"'error_type': '{ErrorType.PROCESSING_ERROR.value}'" in str(log_record.loguru_record.extra)
-    assert f"'original_error': '{str(original_exception)}'" in str(log_record.loguru_record.extra['details'])
-    assert f"'original_language': '{original_language}'" in str(log_record.loguru_record.extra['details'])
+    assert f"'fase': '{ErrorPhase.FASE_1_TRIAJE.value}'" in str(
+        log_record.loguru_record.extra
+    )
+    assert f"'error_type': '{ErrorType.PROCESSING_ERROR.value}'" in str(
+        log_record.loguru_record.extra
+    )
+    assert f"'original_error': '{str(original_exception)}'" in str(
+        log_record.loguru_record.extra["details"]
+    )
+    assert f"'original_language': '{original_language}'" in str(
+        log_record.loguru_record.extra["details"]
+    )
 
 
 def test_handle_groq_translation_fallback_fase1_no_exception(caplog_fixture):
@@ -130,10 +179,15 @@ def test_handle_groq_translation_fallback_fase1_no_exception(caplog_fixture):
     text_cleaned = "Ceci est le texte original."
     original_language = "fr"
 
-    result = handle_groq_translation_fallback_fase1(article_id, text_cleaned, original_language, None)
+    result = handle_groq_translation_fallback_fase1(
+        article_id, text_cleaned, original_language, None
+    )
 
     assert result["status"] == "TRANSLATION_FALLBACK_APPLIED"
-    assert f"Traducción de '{original_language}' falló. Se usará texto original." == result["message"]
+    assert (
+        f"Traducción de '{original_language}' falló. Se usará texto original."
+        == result["message"]
+    )
     assert result["texto_para_siguiente_fase"] == text_cleaned
     assert result["error_details"] is None
 
@@ -143,7 +197,7 @@ def test_handle_groq_translation_fallback_fase1_no_exception(caplog_fixture):
     assert log_record.levelname == "WARNING"
     expected_log_message = f"Fallback: Groq translation from '{original_language}' failed for article {article_id}. Using original text."
     assert log_record.message == expected_log_message
-    assert f"'original_error': 'N/A'" in str(log_record.loguru_record.extra['details'])
+    assert f"'original_error': 'N/A'" in str(log_record.loguru_record.extra["details"])  # noqa: F541
 
 
 def test_handle_generic_phase_error_with_generic_exception(caplog_fixture):
@@ -157,19 +211,35 @@ def test_handle_generic_phase_error_with_generic_exception(caplog_fixture):
     assert result["id_fragmento"] == article_id
     assert result["status"] == "ERROR"
     assert result["phase_name"] == phase.value
-    assert result["error_type"] == "PROCESSING_ERROR" # Default from the function
-    assert f"Fallo en {phase.value} durante {step_failed}: {str(exception)}" == result["message"]
+    assert result["error_type"] == "PROCESSING_ERROR"  # Default from the function
+    assert (
+        f"Fallo en {phase.value} durante {step_failed}: {str(exception)}"
+        == result["message"]
+    )
     assert result["step_failed"] == step_failed
     assert result["exception_type"] == type(exception).__name__
     assert str(exception) in result["details"]
     assert result["data"] == {}
 
     # Check logs
-    assert any(f"Error en {phase.value} durante el paso '{step_failed}' para artículo {article_id}" in record.message and record.levelname == "ERROR" for record in caplog_fixture.records)
-    assert any(f"Usando fallback para {phase.value} (Artículo: {article_id})" in record.message and record.levelname == "INFO" for record in caplog_fixture.records)
+    assert any(
+        f"Error en {phase.value} durante el paso '{step_failed}' para artículo {article_id}"
+        in record.message
+        and record.levelname == "ERROR"
+        for record in caplog_fixture.records
+    )
+    assert any(
+        f"Usando fallback para {phase.value} (Artículo: {article_id})" in record.message
+        and record.levelname == "INFO"
+        for record in caplog_fixture.records
+    )
+
 
 def test_handle_generic_phase_error_with_pipeline_exception(caplog_fixture):
-    from ....src.module_pipeline.src.utils.error_handling import GroqAPIError # Specific PipelineException
+    from ....src.module_pipeline.src.utils.error_handling import (
+        GroqAPIError,  # Specific PipelineException
+    )
+
     article_id = str(uuid.uuid4())
     phase = ErrorPhase.FASE_3_CITAS_DATOS
     step_failed = "quote_extraction"
@@ -177,13 +247,26 @@ def test_handle_generic_phase_error_with_pipeline_exception(caplog_fixture):
 
     result = handle_generic_phase_error(article_id, phase, step_failed, exception)
 
-    assert result["error_type"] == "groq_api_error" # Derived from exception type
+    assert result["error_type"] == "groq_api_error"  # Derived from exception type
     assert result["phase_name"] == phase.value
-    assert f"Fallo en {phase.value} durante {step_failed}: {str(exception)}" == result["message"]
+    assert (
+        f"Fallo en {phase.value} durante {step_failed}: {str(exception)}"
+        == result["message"]
+    )
 
     # Check logs
-    assert any(f"Error en {phase.value} durante el paso '{step_failed}' para artículo {article_id}" in record.message and record.levelname == "ERROR" for record in caplog_fixture.records)
-    assert any(f"Usando fallback para {phase.value} (Artículo: {article_id})" in record.message and record.levelname == "INFO" for record in caplog_fixture.records)
+    assert any(
+        f"Error en {phase.value} durante el paso '{step_failed}' para artículo {article_id}"
+        in record.message
+        and record.levelname == "ERROR"
+        for record in caplog_fixture.records
+    )
+    assert any(
+        f"Usando fallback para {phase.value} (Artículo: {article_id})" in record.message
+        and record.levelname == "INFO"
+        for record in caplog_fixture.records
+    )
+
 
 # Test with a different ErrorPhase
 def test_handle_generic_phase_error_fase_4(caplog_fixture):
@@ -197,14 +280,29 @@ def test_handle_generic_phase_error_fase_4(caplog_fixture):
     assert result["id_fragmento"] == article_id
     assert result["status"] == "ERROR"
     assert result["phase_name"] == phase.value
-    assert result["error_type"] == "PROCESSING_ERROR" # Default as ValueError is not a PipelineException subclass defined in the handler
-    assert f"Fallo en {phase.value} durante {step_failed}: {str(exception)}" == result["message"]
+    assert (
+        result["error_type"] == "PROCESSING_ERROR"
+    )  # Default as ValueError is not a PipelineException subclass defined in the handler
+    assert (
+        f"Fallo en {phase.value} durante {step_failed}: {str(exception)}"
+        == result["message"]
+    )
     assert result["step_failed"] == step_failed
     assert result["exception_type"] == type(exception).__name__
 
     # Check logs
-    assert any(f"Error en {phase.value} durante el paso '{step_failed}' para artículo {article_id}" in record.message and record.levelname == "ERROR" for record in caplog_fixture.records)
-    assert any(f"Usando fallback para {phase.value} (Artículo: {article_id})" in record.message and record.levelname == "INFO" for record in caplog_fixture.records)
+    assert any(
+        f"Error en {phase.value} durante el paso '{step_failed}' para artículo {article_id}"
+        in record.message
+        and record.levelname == "ERROR"
+        for record in caplog_fixture.records
+    )
+    assert any(
+        f"Usando fallback para {phase.value} (Artículo: {article_id})" in record.message
+        and record.levelname == "INFO"
+        for record in caplog_fixture.records
+    )
+
 
 # Ensure the directory exists
 # Note: This is a placeholder, actual directory creation should be handled by the environment/setup

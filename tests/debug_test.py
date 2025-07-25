@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Script de debug para verificar estado del código"""
 
-import sys
 import os
-sys.path.insert(0, '/home/ec2-user/projects/LaMaquinaDeNoticias/src/module_pipeline')
-os.chdir('/home/ec2-user/projects/LaMaquinaDeNoticias/src/module_pipeline')
+import sys
 
-from src.pipeline.pipeline_coordinator import PipelineCoordinator
-from src.models.entrada import ArticuloProcesableItem, ArticuloInItem
-from datetime import datetime, timezone
+sys.path.insert(0, "/home/ec2-user/projects/LaMaquinaDeNoticias/src/module_pipeline")
+os.chdir("/home/ec2-user/projects/LaMaquinaDeNoticias/src/module_pipeline")
+
+from datetime import datetime, timezone  # noqa: E402
+
+from src.models.entrada import ArticuloInItem, ArticuloProcesableItem  # noqa: E402
+from src.pipeline.pipeline_coordinator import PipelineCoordinator  # noqa: E402
 
 # Crear artículo de prueba
 articulo_in = ArticuloInItem(
@@ -20,7 +22,7 @@ articulo_in = ArticuloInItem(
     fecha_publicacion=datetime.now(timezone.utc),
     contenido_texto="Test contenido para debug",
     idioma="es",
-    autor="Test Autor"
+    autor="Test Autor",
 )
 
 # Convertir a ArticuloProcesableItem
@@ -34,7 +36,8 @@ print(f"Tipo: {type(articulo).__name__}")
 coordinator = PipelineCoordinator()
 
 # Verificar si el método tiene el código actualizado
-import inspect
+import inspect  # noqa: E402
+
 source = inspect.getsource(coordinator.ejecutar_pipeline_completo)
 if "Detección de tipo de contenido" in source:
     print("✅ Código actualizado encontrado en ejecutar_pipeline_completo")
@@ -42,7 +45,7 @@ else:
     print("❌ Código NO actualizado en ejecutar_pipeline_completo")
 
 # Verificar _generar_payload_articulo_completo
-if hasattr(coordinator, '_generar_payload_articulo_completo'):
+if hasattr(coordinator, "_generar_payload_articulo_completo"):
     print("✅ Método _generar_payload_articulo_completo existe")
 else:
     print("❌ Método _generar_payload_articulo_completo NO existe")
@@ -52,12 +55,14 @@ print("\n=== SIMULACIÓN DE METADATOS ===")
 metadatos = {
     "tipo_contenido_original": type(articulo).__name__,
     "es_articulo_completo": isinstance(articulo, ArticuloProcesableItem),
-    "articulo_original": articulo
+    "articulo_original": articulo,
 }
 
 print(f"es_articulo_completo: {metadatos['es_articulo_completo']}")
 print(f"articulo_original presente: {metadatos.get('articulo_original') is not None}")
-print(f"Tipo articulo_original: {type(metadatos.get('articulo_original')).__name__ if metadatos.get('articulo_original') else 'None'}")
+print(
+    f"Tipo articulo_original: {type(metadatos.get('articulo_original')).__name__ if metadatos.get('articulo_original') else 'None'}"
+)
 
 # Test de condición
 articulo_original_preserved = metadatos.get("articulo_original")
@@ -67,5 +72,7 @@ if articulo_original_preserved is not None and es_articulo_completo:
     print("\n✅ CONDICIÓN PARA ARTÍCULO SE CUMPLE")
 else:
     print("\n❌ CONDICIÓN PARA ARTÍCULO NO SE CUMPLE")
-    print(f"   articulo_original_preserved is not None: {articulo_original_preserved is not None}")
+    print(
+        f"   articulo_original_preserved is not None: {articulo_original_preserved is not None}"
+    )
     print(f"   es_articulo_completo: {es_articulo_completo}")

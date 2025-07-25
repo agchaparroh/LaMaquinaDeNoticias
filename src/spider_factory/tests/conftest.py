@@ -1,22 +1,24 @@
 """
 Configuración y fixtures compartidas para tests
 """
-import pytest
+
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from pathlib import Path
-import tempfile
 import sys
+import tempfile
+from pathlib import Path
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # Agregar src al path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.config import settings
-from src.analyzer import SmartAnalyzer, AnalysisStrategy, AnalysisResult, SiteSelectors
+from src.analyzer import AnalysisResult, AnalysisStrategy, SiteSelectors, SmartAnalyzer
+from src.config import settings  # noqa: F401
 from src.generator import SpiderGenerator
-from src.patterns import PatternStorage, Pattern
 from src.metrics import Metrics
-from src.redis_pool import RedisConnectionPool
+from src.patterns import Pattern, PatternStorage  # noqa: F401
+from src.redis_pool import RedisConnectionPool  # noqa: F401
 
 
 @pytest.fixture(scope="session")
@@ -31,7 +33,7 @@ def event_loop():
 async def mock_redis_client():
     """Mock de cliente Redis para tests"""
     client = AsyncMock()
-    
+
     # Configurar comportamientos por defecto
     client.get = AsyncMock(return_value=None)
     client.set = AsyncMock(return_value=True)
@@ -43,7 +45,7 @@ async def mock_redis_client():
     client.lrange = AsyncMock(return_value=[])
     client.expire = AsyncMock(return_value=True)
     client.ping = AsyncMock(return_value=True)
-    
+
     return client
 
 
@@ -51,18 +53,17 @@ async def mock_redis_client():
 def mock_firecrawl_client():
     """Mock de cliente Firecrawl para tests"""
     client = AsyncMock()
-    
+
     # Respuesta por defecto de Firecrawl
-    client.scrape = AsyncMock(return_value={
-        'markdown': '# Test Article\n\nTest content',
-        'html': '<html><body><h1>Test Article</h1><p>Test content</p></body></html>',
-        'screenshot': 'base64_screenshot_data',
-        'metadata': {
-            'title': 'Test Article',
-            'description': 'Test description'
+    client.scrape = AsyncMock(
+        return_value={
+            "markdown": "# Test Article\n\nTest content",
+            "html": "<html><body><h1>Test Article</h1><p>Test content</p></body></html>",
+            "screenshot": "base64_screenshot_data",
+            "metadata": {"title": "Test Article", "description": "Test description"},
         }
-    })
-    
+    )
+
     return client
 
 
@@ -79,7 +80,7 @@ def sample_analysis_result():
             title="h1.article-title",
             content="div.article-content",
             date="time.published",
-            author="span.author"
+            author="span.author",
         ),
         needs_javascript=False,
         url_patterns=["https://example.com/news/*"],
@@ -87,7 +88,7 @@ def sample_analysis_result():
             {
                 "url": "https://example.com/news/article1",
                 "title": "Test Article 1",
-                "content": "Test content 1"
+                "content": "Test content 1",
             }
         ],
         from_cache=False,
@@ -95,15 +96,15 @@ def sample_analysis_result():
         seccion="Internacional",
         area_geografica="GLOBAL",
         tipo_medio="diario",
-        frecuencia_minutos=60
+        frecuencia_minutos=60,
     )
 
 
 @pytest.fixture
 def mock_analyzer(mock_redis_client, mock_firecrawl_client):
     """Analyzer mockeado para tests"""
-    with patch('src.analyzer.get_redis_client', return_value=mock_redis_client):
-        with patch('src.analyzer.Firecrawl', return_value=mock_firecrawl_client):
+    with patch("src.analyzer.get_redis_client", return_value=mock_redis_client):
+        with patch("src.analyzer.Firecrawl", return_value=mock_firecrawl_client):
             analyzer = SmartAnalyzer()
             return analyzer
 
@@ -114,7 +115,7 @@ def temp_templates_dir():
     with tempfile.TemporaryDirectory() as tmpdir:
         templates_path = Path(tmpdir) / "templates" / "spiders"
         templates_path.mkdir(parents=True)
-        
+
         # Crear templates básicos
         base_template = '''# -*- coding: utf-8 -*-
 """
@@ -126,19 +127,28 @@ class {{ spider_name }}Spider:
     medio = "{{ medio }}"
     seccion = "{{ seccion }}"
 '''
-        
+
         (templates_path / "base_spider.j2").write_text(base_template)
-        (templates_path / "rss_spider.j2").write_text(base_template + "\n    # RSS Spider")
-        (templates_path / "scraping_spider.j2").write_text(base_template + "\n    # Scraping Spider")
-        (templates_path / "playwright_spider.j2").write_text(base_template + "\n    # Playwright Spider")
-        
+        (templates_path / "rss_spider.j2").write_text(
+            base_template + "\n    # RSS Spider"
+        )
+        (templates_path / "scraping_spider.j2").write_text(
+            base_template + "\n    # Scraping Spider"
+        )
+        (templates_path / "playwright_spider.j2").write_text(
+            base_template + "\n    # Playwright Spider"
+        )
+
         yield tmpdir
 
 
 @pytest.fixture
 def mock_generator(temp_templates_dir):
     """Generator mockeado para tests"""
-    with patch('src.generator.SpiderGenerator.templates_dir', Path(temp_templates_dir) / "templates" / "spiders"):
+    with patch(
+        "src.generator.SpiderGenerator.templates_dir",
+        Path(temp_templates_dir) / "templates" / "spiders",
+    ):
         generator = SpiderGenerator()
         generator.output_dir = Path(temp_templates_dir) / "output"
         generator.output_dir.mkdir(exist_ok=True)
@@ -148,7 +158,7 @@ def mock_generator(temp_templates_dir):
 @pytest.fixture
 async def mock_pattern_storage(mock_redis_client):
     """PatternStorage mockeado para tests"""
-    with patch('src.patterns.get_redis_client', return_value=mock_redis_client):
+    with patch("src.patterns.get_redis_client", return_value=mock_redis_client):
         storage = PatternStorage()
         return storage
 
@@ -190,7 +200,7 @@ def mock_batch_sites():
             "url": "https://elpais.com/internacional",
             "area_geografica": "ESPAÑA",
             "tipo_medio": "diario",
-            "frecuencia_minutos": 60
+            "frecuencia_minutos": 60,
         },
         {
             "medio": "La Nación",
@@ -198,15 +208,15 @@ def mock_batch_sites():
             "url": "https://lanacion.com.ar/economia",
             "area_geografica": "ARGENTINA",
             "tipo_medio": "diario",
-            "frecuencia_minutos": 120
-        }
+            "frecuencia_minutos": 120,
+        },
     ]
 
 
 @pytest.fixture
 async def mock_metrics(mock_redis_client):
     """Sistema de métricas mockeado"""
-    with patch('src.metrics.Metrics.redis', mock_redis_client):
+    with patch("src.metrics.Metrics.redis", mock_redis_client):
         metrics = Metrics(mock_redis_client)
         return metrics
 
@@ -215,8 +225,9 @@ async def mock_metrics(mock_redis_client):
 def api_client():
     """Cliente de test para la API FastAPI"""
     from fastapi.testclient import TestClient
+
     from src.api import app
-    
+
     return TestClient(app)
 
 
@@ -225,14 +236,15 @@ def api_client():
 def no_real_connections(monkeypatch):
     """Previene conexiones reales a servicios externos"""
     # Mock Redis
-    monkeypatch.setattr('redis.Redis', Mock)
-    monkeypatch.setattr('redis.asyncio.Redis', AsyncMock)
-    
+    monkeypatch.setattr("redis.Redis", Mock)
+    monkeypatch.setattr("redis.asyncio.Redis", AsyncMock)
+
     # Mock HTTP clients
-    monkeypatch.setattr('httpx.AsyncClient', AsyncMock)
-    monkeypatch.setattr('httpx.Client', Mock)
-    
+    monkeypatch.setattr("httpx.AsyncClient", AsyncMock)
+    monkeypatch.setattr("httpx.Client", Mock)
+
     # Mock Firecrawl
     def mock_firecrawl(*args, **kwargs):
         return Mock()
-    monkeypatch.setattr('firecrawl.FirecrawlApp', mock_firecrawl)
+
+    monkeypatch.setattr("firecrawl.FirecrawlApp", mock_firecrawl)

@@ -6,18 +6,19 @@ Test de debug para E012 - Captura el error completo
 import asyncio
 import sys
 import traceback
-from datetime import datetime
+from datetime import datetime  # noqa: F401
 
 # Añadir el directorio src al path
-sys.path.insert(0, '/app/src')
+sys.path.insert(0, "/app/src")
 
 from ...src.controller import PipelineController
 from ...src.utils.config import GROQ_API_KEY
 
+
 async def test_debug_e012():
     """Test con captura completa de errores."""
     print("\n=== TEST DEBUG E012 ===\n")
-    
+
     # Artículo mínimo
     articulo_test = {
         "id": 9999,
@@ -33,51 +34,52 @@ async def test_debug_e012():
         "Estas medidas son necesarias para impulsar el crecimiento", declaró el ministro.""",
         "idioma": "es",
         "seccion": "politica",
-        "area_geografica": "AMERICA"
+        "area_geografica": "AMERICA",
     }
-    
+
     controller = PipelineController()
-    
+
     try:
         print(f"Procesando artículo ID: {articulo_test['id']}")
         print(f"Tamaño: {len(articulo_test['contenido_texto'])} caracteres")
-        
+
         resultado = await controller.process_article(articulo_test)
-        
-        print(f"\n✅ Procesamiento completado:")
+
+        print(f"\n✅ Procesamiento completado:")  # noqa: F541
         print(f"   Éxito: {resultado.get('exito', False)}")
         print(f"   Fase: {resultado.get('fase_completada', 0)}/7")
-        
-        if resultado.get('persistencia'):
-            print(f"\n📊 Persistencia:")
-            persist = resultado['persistencia']
+
+        if resultado.get("persistencia"):
+            print(f"\n📊 Persistencia:")  # noqa: F541
+            persist = resultado["persistencia"]
             print(f"   Hechos: {persist.get('hechos_insertados', 0)}")
             print(f"   Entidades: {persist.get('entidades_insertadas', 0)}")
             print(f"   Citas: {persist.get('citas_insertadas', 0)}")
         else:
-            print(f"\n❌ Sin persistencia")
-            
-        if resultado.get('errores'):
-            print(f"\n⚠️ Errores detectados:")
-            for error in resultado.get('errores', []):
+            print(f"\n❌ Sin persistencia")  # noqa: F541
+
+        if resultado.get("errores"):
+            print(f"\n⚠️ Errores detectados:")  # noqa: F541
+            for error in resultado.get("errores", []):
                 print(f"   - {error}")
-                
+
     except Exception as e:
-        print(f"\n❌ ERROR CAPTURADO:")
+        print(f"\n❌ ERROR CAPTURADO:")  # noqa: F541
         print(f"Tipo: {type(e).__name__}")
         print(f"Mensaje: {str(e)}")
-        print(f"\n📍 TRACEBACK COMPLETO:")
+        print(f"\n📍 TRACEBACK COMPLETO:")  # noqa: F541
         traceback.print_exc()
-        
+
         # Intentar obtener más información del error
-        if hasattr(e, '__dict__'):
-            print(f"\n📋 Atributos del error:")
+        if hasattr(e, "__dict__"):
+            print(f"\n📋 Atributos del error:")  # noqa: F541
             for key, value in e.__dict__.items():
                 print(f"   {key}: {value}")
+
 
 if __name__ == "__main__":
     if not GROQ_API_KEY:
         print("ERROR: No se encontró GROQ_API_KEY")
         sys.exit(1)
-    
+
     asyncio.run(test_debug_e012())

@@ -9,42 +9,37 @@ __version__ = "2.0.0"
 __author__ = "La Máquina de Noticias Team"
 
 # Importaciones del módulo de configuración
-from .config import (
-    RedisConfig,
-    SpiderFactoryConfig,
-    RedisManager,
-    RedisKeys,
-    config,
-    redis_manager,
-    get_redis_client,
-    check_system_health
-)
-
 # Importaciones del analyzer
 from .analyzer import (
-    SmartAnalyzer,
-    AnalysisStrategy,
     AnalysisConfidence,
-    SiteSelectors,
     AnalysisResult,
-    SiteAnalysisRequest
+    AnalysisStrategy,
+    SiteAnalysisRequest,
+    SiteSelectors,
+    SmartAnalyzer,
 )
-
-# Importaciones de patterns
-from .patterns import (
-    PatternStorage,
-    Pattern,
-    PatternStatus,
-    PatternMetadata
+from .config import (
+    RedisConfig,
+    RedisKeys,
+    RedisManager,
+    SpiderFactoryConfig,
+    check_system_health,
+    config,
+    get_redis_client,
+    redis_manager,
 )
 
 # Importaciones del generator
 from .generator import SpiderGenerator
 
+# Importaciones de patterns
+from .patterns import Pattern, PatternMetadata, PatternStatus, PatternStorage
+
 # Importaciones de la API (solo si se necesitan)
 try:
-    from .api import app
-    from .models import *
+    from .api import app  # noqa: F401
+    from .models import *  # noqa: F403
+
     _api_available = True
 except ImportError:
     _api_available = False
@@ -75,7 +70,7 @@ __all__ = [
     "PatternStatus",
     "PatternMetadata",
     # Generator
-    "SpiderGenerator"
+    "SpiderGenerator",
 ]
 
 # Agregar API si está disponible

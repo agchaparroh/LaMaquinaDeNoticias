@@ -4,24 +4,27 @@ Provides structured logging for the Dashboard Review Backend
 """
 
 import sys
+from typing import Any, Dict
+
 from loguru import logger
-from typing import Dict, Any
 
 
-def setup_logging(log_level: str = "INFO", environment: str = "development") -> Dict[str, Any]:
+def setup_logging(
+    log_level: str = "INFO", environment: str = "development"
+) -> Dict[str, Any]:
     """
     Configure loguru for structured logging following module_pipeline pattern
-    
+
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         environment: Environment (development, production)
-    
+
     Returns:
         Dictionary with logging configuration for settings
     """
     # Remove default handler
     logger.remove()
-    
+
     # Format for console output - structured for module_pipeline compatibility
     if environment == "development":
         # Human-readable format for development
@@ -41,7 +44,7 @@ def setup_logging(log_level: str = "INFO", environment: str = "development") -> 
             '"line": "{line}", '
             '"message": "{message}"}'
         )
-    
+
     # Add console handler
     logger.add(
         sys.stdout,
@@ -51,9 +54,9 @@ def setup_logging(log_level: str = "INFO", environment: str = "development") -> 
         serialize=environment == "production",
         backtrace=True,
         diagnose=environment == "development",
-        enqueue=True  # Thread-safe logging
+        enqueue=True,  # Thread-safe logging
     )
-    
+
     # Return configuration dictionary for settings
     return {
         "handlers": [
@@ -65,16 +68,18 @@ def setup_logging(log_level: str = "INFO", environment: str = "development") -> 
                 "serialize": environment == "production",
                 "backtrace": True,
                 "diagnose": environment == "development",
-                "enqueue": True
+                "enqueue": True,
             }
         ]
     }
 
 
-def log_request(request_id: str, method: str, path: str, status_code: int, duration_ms: float):
+def log_request(
+    request_id: str, method: str, path: str, status_code: int, duration_ms: float
+):
     """
     Log HTTP request details in structured format
-    
+
     Args:
         request_id: Unique request identifier
         method: HTTP method
@@ -89,6 +94,6 @@ def log_request(request_id: str, method: str, path: str, status_code: int, durat
             "method": method,
             "path": path,
             "status_code": status_code,
-            "duration_ms": duration_ms
-        }
+            "duration_ms": duration_ms,
+        },
     )

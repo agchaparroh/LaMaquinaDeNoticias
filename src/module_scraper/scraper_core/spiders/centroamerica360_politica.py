@@ -9,14 +9,15 @@ GENERADO AUTOMÁTICAMENTE - NO EDITAR MANUALMENTE
 Los cambios manuales se perderán en la próxima generación
 """
 
+import logging  # noqa: F401
 import re
+from datetime import datetime
+from typing import Any, Dict, Iterator, Optional  # noqa: F401
+
+import feedparser
 import scrapy
 from scrapy import signals
-from scrapy.exceptions import CloseSpider
-import feedparser
-from datetime import datetime
-import logging
-from typing import Dict, Any, Optional, Iterator
+from scrapy.exceptions import CloseSpider  # noqa: F401
 
 
 class Centroamérica360PoliticaSpider(scrapy.Spider):
@@ -40,7 +41,7 @@ class Centroamérica360PoliticaSpider(scrapy.Spider):
         "COOKIES_ENABLED": True,
         # Scrapy-crawl-once configuration
         "CRAWL_ONCE_ENABLED": True,
-        "CRAWL_ONCE_PATH": f".scrapy/crawl_once/centroamérica360_politica",
+        "CRAWL_ONCE_PATH": f".scrapy/crawl_once/centroamérica360_politica",  # noqa: F541
         "CRAWL_ONCE_DEFAULT": False,
         # Configuración de encoding
         "FEED_EXPORT_ENCODING": "utf-8",
@@ -94,26 +95,28 @@ class Centroamérica360PoliticaSpider(scrapy.Spider):
         try:
             # Solución alternativa: usar requests directamente para evitar problemas de Scrapy
             import requests
-            
+
             self.logger.info("Usando requests para descargar RSS directamente...")
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Accept': 'application/rss+xml, application/xml, text/xml'
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Accept": "application/rss+xml, application/xml, text/xml",
             }
-            
+
             resp = requests.get(self.rss_url, headers=headers, timeout=30)
             resp.raise_for_status()
-            
+
             self.logger.info(f"Requests response: {resp.status_code}")
             self.logger.info(f"Content-Type: {resp.headers.get('Content-Type')}")
-            self.logger.info(f"Content-Encoding: {resp.headers.get('Content-Encoding')}")
+            self.logger.info(
+                f"Content-Encoding: {resp.headers.get('Content-Encoding')}"
+            )
             self.logger.info(f"Content length: {len(resp.content)} bytes")
-            
+
             # resp.text maneja automáticamente la decodificación
             content_str = resp.text
             self.logger.info(f"Text length: {len(content_str)} chars")
             self.logger.info(f"Primeros 200 chars: {content_str[:200]}")
-            
+
             # Parsear RSS con feedparser
             feed = feedparser.parse(content_str)
 
@@ -251,7 +254,7 @@ class Centroamérica360PoliticaSpider(scrapy.Spider):
 
         # Criterio 3: Por defecto incluir si no podemos determinar sección
         # Esto evita perder contenido válido de feeds mal configurados
-        self.logger.debug(f"Artículo incluido por defecto (sin información de sección)")
+        self.logger.debug(f"Artículo incluido por defecto (sin información de sección)")  # noqa: F541
         return True
 
     def _is_section_article(self, url: str) -> bool:
@@ -470,11 +473,11 @@ class Centroamérica360PoliticaSpider(scrapy.Spider):
                 try:
                     # Intentar parsear ISO format
                     return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-                except:
+                except:  # noqa: E722
                     try:
                         # Intentar otros formatos comunes
                         return datetime.strptime(date_str[:19], "%Y-%m-%dT%H:%M:%S")
-                    except:
+                    except:  # noqa: E722
                         pass
 
         return None
@@ -530,15 +533,15 @@ class Centroamérica360PoliticaSpider(scrapy.Spider):
             f"""
         ========== RESUMEN DE SCRAPING RSS ==========
         Spider: {spider.name}
-        Medio: {self.medio_info['medio']}
-        Sección: {self.medio_info['seccion']}
+        Medio: {self.medio_info["medio"]}
+        Sección: {self.medio_info["seccion"]}
         RSS URL: {self.rss_url}
         Artículos extraídos: {self.articles_scraped}
-        Duración: {stats.get('elapsed_time_seconds', 0):.2f} segundos
-        Requests exitosos: {stats.get('downloader/response_status_count/200', 0)}
-        Requests fallidos: {stats.get('downloader/response_status_count/404', 0) + stats.get('downloader/response_status_count/500', 0)}
-        Errores de red: {stats.get('downloader/exception_count', 0)}
-        Items generados: {stats.get('item_scraped_count', 0)}
+        Duración: {stats.get("elapsed_time_seconds", 0):.2f} segundos
+        Requests exitosos: {stats.get("downloader/response_status_count/200", 0)}
+        Requests fallidos: {stats.get("downloader/response_status_count/404", 0) + stats.get("downloader/response_status_count/500", 0)}
+        Errores de red: {stats.get("downloader/exception_count", 0)}
+        Items generados: {stats.get("item_scraped_count", 0)}
         ============================================
         """
         )

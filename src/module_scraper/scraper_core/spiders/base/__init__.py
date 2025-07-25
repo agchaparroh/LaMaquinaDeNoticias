@@ -6,7 +6,7 @@ for all article scraping spiders in the project.
 """
 
 from .base_article import BaseArticleSpider
-from .base_sitemap import BaseSitemapSpider
 from .base_crawl import BaseCrawlSpider
+from .base_sitemap import BaseSitemapSpider
 
-__all__ = ['BaseArticleSpider', 'BaseSitemapSpider', 'BaseCrawlSpider']
+__all__ = ["BaseArticleSpider", "BaseSitemapSpider", "BaseCrawlSpider"]

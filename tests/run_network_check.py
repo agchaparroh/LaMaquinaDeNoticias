@@ -1,12 +1,13 @@
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from tests.test_docker_network_connectivity import (
-    check_container_in_network, 
+    ALL_CONTAINERS,
+    check_container_in_network,
     test_dns_resolution,
     test_port_connectivity,
-    ALL_CONTAINERS
 )
 
 print("🔍 Ejecutando verificación manual de conectividad Docker...\n")
@@ -30,7 +31,9 @@ print(message)
 print("\n" + "=" * 60)
 print("CONECTIVIDAD DE PUERTO:")
 print("=" * 60)
-can_connect, message = test_port_connectivity("lamacquina_connector", "module_pipeline:8003")
+can_connect, message = test_port_connectivity(
+    "lamacquina_connector", "module_pipeline:8003"
+)
 print(message)
 
 print("\n✅ Verificación de ejemplo completa")

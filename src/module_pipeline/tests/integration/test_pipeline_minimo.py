@@ -7,22 +7,23 @@ y persistirlo exitosamente en Supabase.
 """
 
 import asyncio
-import os
+import json  # noqa: F401
+import os  # noqa: F401
 import sys
-import json
-from datetime import datetime
-from uuid import uuid4
+from datetime import datetime  # noqa: F401
+from uuid import uuid4  # noqa: F401
 
 # Añadir el directorio src al path
-sys.path.insert(0, '/app/src')
+sys.path.insert(0, "/app/src")
 
 from ...src.controller import PipelineController
 from ...src.utils.config import GROQ_API_KEY
 
+
 async def test_criterio_1():
     """Test del Criterio 1: Procesamiento de artículo medio con persistencia."""
     print("\n=== TEST CRITERIO 1: Artículo tamaño medio + persistencia ===\n")
-    
+
     # Artículo de prueba (tamaño medio ~2000 caracteres) - Cumple criterios de relevancia
     articulo_test = {
         "id": 1100,
@@ -63,71 +64,79 @@ async def test_criterio_1():
         en estados como Coahuila y Nuevo León, donde gobierna en coalición.""",
         "idioma": "es",
         "seccion": "politica",
-        "area_geografica": "MEXICO"
+        "area_geografica": "MEXICO",
     }
-    
+
     controller = PipelineController()
-    
+
     try:
         print(f"1. Procesando artículo ID: {articulo_test['id']}")
         print(f"   Titular: {articulo_test['titular'][:80]}...")
         print(f"   Tamaño: {len(articulo_test['contenido_texto'])} caracteres")
-        
+
         resultado = await controller.process_article(articulo_test)
-        
+
         print("\n2. Resultado del procesamiento:")
         print(f"   - Éxito: {resultado.get('exito', False)}")
         print(f"   - Fase completada: {resultado.get('fase_completada', 0)}/7")
         print(f"   - Request ID: {resultado.get('request_id', 'N/A')}")
-        
-        if resultado.get('payload'):
+
+        if resultado.get("payload"):
             print("\n3. Payload generado exitosamente")
-            payload = resultado['payload']
-            if hasattr(payload, 'resumen_generado_fragmento'):
+            payload = resultado["payload"]
+            if hasattr(payload, "resumen_generado_fragmento"):
                 print(f"   - Resumen: {payload.resumen_generado_fragmento[:100]}...")
-            print(f"   - Estado: {getattr(payload, 'estado_procesamiento_final_fragmento', 'N/A')}")
-        
-        if resultado.get('persistencia'):
+            print(
+                f"   - Estado: {getattr(payload, 'estado_procesamiento_final_fragmento', 'N/A')}"
+            )
+
+        if resultado.get("persistencia"):
             print("\n4. PERSISTENCIA EXITOSA EN SUPABASE:")
-            persist_data = resultado['persistencia']
+            persist_data = resultado["persistencia"]
             print(f"   - Fragmento ID: {persist_data.get('fragmento_id', 'N/A')}")
             print(f"   - Hechos insertados: {persist_data.get('hechos_insertados', 0)}")
-            print(f"   - Entidades insertadas: {persist_data.get('entidades_insertadas', 0)}")
+            print(
+                f"   - Entidades insertadas: {persist_data.get('entidades_insertadas', 0)}"
+            )
             print(f"   - Citas insertadas: {persist_data.get('citas_insertadas', 0)}")
             print(f"   - Datos insertados: {persist_data.get('datos_insertados', 0)}")
             print("\n✅ CRITERIO 1 COMPLETADO: Procesamiento y persistencia exitosos")
         else:
             print("\n❌ CRITERIO 1 FALLIDO: No se completó la persistencia en Supabase")
-            if resultado.get('errores'):
+            if resultado.get("errores"):
                 print(f"   Errores: {resultado['errores']}")
-        
+
         # Mostrar estadísticas del procesamiento
-        if resultado.get('metadatos', {}).get('processor_stats'):
-            stats = resultado['metadatos']['processor_stats']
+        if resultado.get("metadatos", {}).get("processor_stats"):
+            stats = resultado["metadatos"]["processor_stats"]
             print("\n5. Estadísticas del procesamiento:")
             print(f"   - Total hechos: {stats.get('total_hechos', 0)}")
             print(f"   - Total entidades: {stats.get('total_entidades', 0)}")
             print(f"   - Total citas: {stats.get('total_citas', 0)}")
             print(f"   - Total datos: {stats.get('total_datos', 0)}")
-            
-        return resultado.get('exito', False) and resultado.get('persistencia') is not None
-        
+
+        return (
+            resultado.get("exito", False) and resultado.get("persistencia") is not None
+        )
+
     except Exception as e:
         print(f"\n❌ ERROR en test: {str(e)}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     # Verificar que tenemos API key de Groq
     if not GROQ_API_KEY:
         print("ERROR: No se encontró GROQ_API_KEY en las variables de entorno")
         sys.exit(1)
-    
+
     # Ejecutar test
     success = asyncio.run(test_criterio_1())
-    
-    print("\n" + "="*60)
+
+    print("\n" + "=" * 60)
     if success:
         print("✅ TEST CRITERIO 1 PASADO")
         sys.exit(0)

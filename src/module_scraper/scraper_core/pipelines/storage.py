@@ -5,21 +5,30 @@
 
 
 # useful for handling different item types with a single interface
-from itemadapter import ItemAdapter
-
 import logging
 import uuid
 from datetime import datetime
 
-# Importaciones para Tenacity
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, before_sleep_log, RetryError
+import httpx  # supabase-py usa httpx, por lo que sus excepciones de red serían relevantes
+from itemadapter import ItemAdapter
+
 # Asumimos que supabase-py podría lanzar excepciones de red a través de 'requests' o similares.
 # Si supabase-py tiene sus propias excepciones específicas para errores de API/red, impórtalas.
 # Por ahora, usaremos una genérica y una personalizada.
-from requests.exceptions import RequestException # Ejemplo, si aplica
-import httpx # supabase-py usa httpx, por lo que sus excepciones de red serían relevantes
+from requests.exceptions import RequestException  # Ejemplo, si aplica
+
+# Importaciones para Tenacity
+from tenacity import (
+    RetryError,
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from scraper_core.items import ArticuloInItem
+
 from ..utils.compression import compress_html
 from ..utils.supabase_client import SupabaseClient
 
@@ -29,26 +38,32 @@ logger = logging.getLogger(__name__)
 DEFAULT_STOP_AFTER_ATTEMPT = 3
 DEFAULT_WAIT_MULTIPLIER = 1
 DEFAULT_WAIT_MIN = 2  # Segundos
-DEFAULT_WAIT_MAX = 10 # Segundos
+DEFAULT_WAIT_MAX = 10  # Segundos
+
 
 # --- Excepciones personalizadas para reintentos ---
 class SupabaseNetworkError(Exception):
     """Para errores de red/conexión con Supabase que son reintentables."""
+
     pass
+
 
 class SupabaseAPIError(Exception):
     """Para errores de la API de Supabase que podrían ser reintentables (ej. rate limits)."""
+
     pass
+
 
 # Crear una tupla de excepciones reintentables
 RETRYABLE_EXCEPTIONS = (
     SupabaseNetworkError,
     SupabaseAPIError,
-    RequestException, # Si requests es usado indirectamente y relevante
-    httpx.RequestError, # Errores de red de httpx
-    httpx.TimeoutException # Timeouts de httpx
+    RequestException,  # Si requests es usado indirectamente y relevante
+    httpx.RequestError,  # Errores de red de httpx
+    httpx.TimeoutException,  # Timeouts de httpx
 )
 # --- Fin Configuración de Tenacity ---
+
 
 class SupabaseStoragePipeline:
     def __init__(self, supabase_client: SupabaseClient, html_bucket_name: str):
@@ -64,25 +79,28 @@ class SupabaseStoragePipeline:
     def from_crawler(cls, crawler):
         supabase_client = SupabaseClient()
         html_bucket_name = crawler.settings.get(
-            'SUPABASE_STORAGE_BUCKET',
-            'articulos-html-beta'
+            "SUPABASE_STORAGE_BUCKET", "articulos-html-beta"
         )
-        
+
         # Leer configuración de Tenacity desde settings.py si se desea, o usar defaults
         # Estos atributos se asignarán a la instancia en __init__ si se pasan aquí
         # o se pueden usar directamente desde cls si los decoradores se ajustan.
         # Por simplicidad, los atributos de instancia se usarán en los decoradores.
-        stop_after_attempt_cfg = crawler.settings.getint('TENACITY_STOP_AFTER_ATTEMPT', DEFAULT_STOP_AFTER_ATTEMPT)
-        wait_multiplier_cfg = crawler.settings.getint('TENACITY_WAIT_MULTIPLIER', DEFAULT_WAIT_MULTIPLIER)
-        wait_min_cfg = crawler.settings.getint('TENACITY_WAIT_MIN', DEFAULT_WAIT_MIN)
-        wait_max_cfg = crawler.settings.getint('TENACITY_WAIT_MAX', DEFAULT_WAIT_MAX)
+        stop_after_attempt_cfg = crawler.settings.getint(
+            "TENACITY_STOP_AFTER_ATTEMPT", DEFAULT_STOP_AFTER_ATTEMPT
+        )
+        wait_multiplier_cfg = crawler.settings.getint(
+            "TENACITY_WAIT_MULTIPLIER", DEFAULT_WAIT_MULTIPLIER
+        )
+        wait_min_cfg = crawler.settings.getint("TENACITY_WAIT_MIN", DEFAULT_WAIT_MIN)
+        wait_max_cfg = crawler.settings.getint("TENACITY_WAIT_MAX", DEFAULT_WAIT_MAX)
 
         instance = cls(supabase_client, html_bucket_name)
         instance.stop_after_attempt = stop_after_attempt_cfg
         instance.wait_multiplier = wait_multiplier_cfg
         instance.wait_min = wait_min_cfg
         instance.wait_max = wait_max_cfg
-        
+
         logger.info(
             f"SupabaseStoragePipeline initialized. HTML Bucket: {html_bucket_name}. "
             f"Tenacity: stop={instance.stop_after_attempt}, wait_min={instance.wait_min}, wait_max={instance.wait_max}"
@@ -94,9 +112,11 @@ class SupabaseStoragePipeline:
     def _get_retry_decorator(self):
         return retry(
             stop=stop_after_attempt(self.stop_after_attempt),
-            wait=wait_exponential(multiplier=self.wait_multiplier, min=self.wait_min, max=self.wait_max),
+            wait=wait_exponential(
+                multiplier=self.wait_multiplier, min=self.wait_min, max=self.wait_max
+            ),
             retry=retry_if_exception_type(RETRYABLE_EXCEPTIONS),
-            before_sleep=before_sleep_log(logger, logging.WARNING)
+            before_sleep=before_sleep_log(logger, logging.WARNING),
         )
 
     def _ensure_bucket_exists_with_retry(self, bucket_name: str):
@@ -109,39 +129,53 @@ class SupabaseStoragePipeline:
             self.supabase_client.create_bucket_if_not_exists(bucket_name)
             logger.info(f"Supabase bucket '{bucket_name}' is ready.")
         except httpx.RequestError as e:
-            logger.warning(f"Network error during bucket creation/verification for '{bucket_name}': {e}")
-            raise SupabaseNetworkError(f"Network error for bucket '{bucket_name}': {e}") from e
+            logger.warning(
+                f"Network error during bucket creation/verification for '{bucket_name}': {e}"
+            )
+            raise SupabaseNetworkError(
+                f"Network error for bucket '{bucket_name}': {e}"
+            ) from e
         except Exception as e:
-            logger.error(f"Unexpected error during bucket creation/verification for '{bucket_name}': {e}", exc_info=True)
+            logger.error(
+                f"Unexpected error during bucket creation/verification for '{bucket_name}': {e}",
+                exc_info=True,
+            )
             raise
 
     def open_spider(self, spider):
-        logger.info(f"Opening spider {spider.name}. Ensuring Supabase bucket '{self.html_bucket_name}' exists.")
+        logger.info(
+            f"Opening spider {spider.name}. Ensuring Supabase bucket '{self.html_bucket_name}' exists."
+        )
         try:
             self._ensure_bucket_exists_with_retry(self.html_bucket_name)
         except RetryError as e:
             logger.error(
                 f"All attempts failed to create/verify Supabase bucket '{self.html_bucket_name}' "
-                f"after {self.stop_after_attempt} attempts: {e}", exc_info=True
+                f"after {self.stop_after_attempt} attempts: {e}",
+                exc_info=True,
             )
             # from scrapy.exceptions import CloseSpider
             # raise CloseSpider(f"Failed to initialize Supabase bucket after retries: {self.html_bucket_name}")
         except Exception as e:
-             logger.error(
+            logger.error(
                 f"An unexpected, non-retryable error occurred in open_spider for bucket '{self.html_bucket_name}': {e}",
-                exc_info=True
+                exc_info=True,
             )
 
     def close_spider(self, spider):
         logger.info(f"Closing spider {spider.name}. Closing Supabase client.")
-        if hasattr(self.supabase_client, 'close') and callable(self.supabase_client.close):
+        if hasattr(self.supabase_client, "close") and callable(
+            self.supabase_client.close
+        ):
             try:
                 self.supabase_client.close()
             except Exception as e:
                 logger.error(f"Error closing Supabase client: {e}", exc_info=True)
 
     # Métodos auxiliares para upload y upsert
-    def _upload_to_storage_with_retry(self, bucket_name: str, file_path: str, file_content):
+    def _upload_to_storage_with_retry(
+        self, bucket_name: str, file_path: str, file_content
+    ):
         decorated_func = self._get_retry_decorator()(self.__upload_to_storage_logic)
         return decorated_func(bucket_name, file_path, file_content)
 
@@ -149,15 +183,20 @@ class SupabaseStoragePipeline:
         logger.debug(f"Attempting to upload to storage: {bucket_name}/{file_path}")
         try:
             self.supabase_client.upload_to_storage(
-                bucket_name=bucket_name,
-                file_path=file_path,
-                file_content=file_content
+                bucket_name=bucket_name, file_path=file_path, file_content=file_content
             )
         except httpx.RequestError as e:
-            logger.warning(f"Network error during storage upload to '{bucket_name}/{file_path}': {e}")
-            raise SupabaseNetworkError(f"Network error uploading to '{bucket_name}/{file_path}': {e}") from e
+            logger.warning(
+                f"Network error during storage upload to '{bucket_name}/{file_path}': {e}"
+            )
+            raise SupabaseNetworkError(
+                f"Network error uploading to '{bucket_name}/{file_path}': {e}"
+            ) from e
         except Exception as e:
-            logger.error(f"Unexpected error during storage upload to '{bucket_name}/{file_path}': {e}", exc_info=True)
+            logger.error(
+                f"Unexpected error during storage upload to '{bucket_name}/{file_path}': {e}",
+                exc_info=True,
+            )
             raise
 
     def _upsert_articulo_with_retry(self, data):
@@ -165,53 +204,72 @@ class SupabaseStoragePipeline:
         return decorated_func(data)
 
     def __upsert_articulo_logic(self, data):
-        item_url = data.get('url', 'URL desconocida')
-        logger.debug(f"Attempting to upsert article data for {item_url} via SupabaseClient")
+        item_url = data.get("url", "URL desconocida")
+        logger.debug(
+            f"Attempting to upsert article data for {item_url} via SupabaseClient"
+        )
         try:
             # Capture the response from the client's upsert_articulo method
             response_data = self.supabase_client.upsert_articulo(data)
             # SupabaseClient.upsert_articulo is expected to return data on success or None/raise on error
             if response_data:
                 logger.info(f"SupabaseClient.upsert_articulo successful for {item_url}")
-                return response_data # Return the actual data from Supabase
+                return response_data  # Return the actual data from Supabase
             else:
                 # This case implies supabase_client.upsert_articulo returned None/empty without an exception,
                 # which might indicate a logical failure or no actual upsert occurred.
-                logger.warning(f"SupabaseClient.upsert_articulo for {item_url} returned no data or failed logically.")
-                raise SupabaseAPIError(f"Upsert for article {item_url} returned no data.")
+                logger.warning(
+                    f"SupabaseClient.upsert_articulo for {item_url} returned no data or failed logically."
+                )
+                raise SupabaseAPIError(
+                    f"Upsert for article {item_url} returned no data."
+                )
         except httpx.RequestError as e:
-            logger.warning(f"Network error during DB upsert for article {item_url}: {e}")
-            raise SupabaseNetworkError(f"Network error upserting article {item_url}: {e}") from e
-        except SupabaseAPIError as e: 
-            logger.warning(f"Supabase API error during DB upsert for article {item_url}: {e}")
+            logger.warning(
+                f"Network error during DB upsert for article {item_url}: {e}"
+            )
+            raise SupabaseNetworkError(
+                f"Network error upserting article {item_url}: {e}"
+            ) from e
+        except SupabaseAPIError as e:
+            logger.warning(
+                f"Supabase API error during DB upsert for article {item_url}: {e}"
+            )
             raise
         except Exception as e:
-            logger.error(f"Unexpected error during DB upsert for article {item_url}: {e}", exc_info=True)
+            logger.error(
+                f"Unexpected error during DB upsert for article {item_url}: {e}",
+                exc_info=True,
+            )
             raise
 
     def process_item(self, item, spider):
         if not isinstance(item, ArticuloInItem):
-            logger.debug(f"Item no es una instancia de ArticuloInItem, omitiendo: {type(item)}")
+            logger.debug(
+                f"Item no es una instancia de ArticuloInItem, omitiendo: {type(item)}"
+            )
             return item
 
         adapter = ItemAdapter(item)
-        item_url_for_log = adapter.get('url', 'URL desconocida')
+        item_url_for_log = adapter.get("url", "URL desconocida")
         logger.info(f"Processing item: {item_url_for_log}")
 
-        if not adapter.get('fecha_recopilacion'):
-            adapter['fecha_recopilacion'] = datetime.utcnow().isoformat()
+        if not adapter.get("fecha_recopilacion"):
+            adapter["fecha_recopilacion"] = datetime.utcnow().isoformat()
 
         # 1. Handle HTML content storage
-        html_content = adapter.get('contenido_html')
+        html_content = adapter.get("contenido_html")
         if html_content:
             try:
                 compressed_html = compress_html(html_content)
-                medio_slug = adapter.get('medio', 'unknown_medio').lower().replace(' ', '_')
-                fecha_pub_str = str(adapter.get('fecha_publicacion', 'unknown_date'))
-                fecha_pub_path_part = fecha_pub_str.split('T')[0]
+                medio_slug = (
+                    adapter.get("medio", "unknown_medio").lower().replace(" ", "_")
+                )
+                fecha_pub_str = str(adapter.get("fecha_publicacion", "unknown_date"))
+                fecha_pub_path_part = fecha_pub_str.split("T")[0]
                 # Convertir formato de fecha de YYYY-MM-DD a YYYY/MM/DD para cumplir con el constraint
-                if '-' in fecha_pub_path_part:
-                    year, month, day = fecha_pub_path_part.split('-')
+                if "-" in fecha_pub_path_part:
+                    year, month, day = fecha_pub_path_part.split("-")
                     fecha_pub_path_part = f"{year}/{month}/{day}"
                 file_name = f"{uuid.uuid4()}.html.gz"
                 storage_file_path = f"{medio_slug}/{fecha_pub_path_part}/{file_name}"
@@ -219,31 +277,39 @@ class SupabaseStoragePipeline:
                 self._upload_to_storage_with_retry(
                     bucket_name=self.html_bucket_name,
                     file_path=storage_file_path,
-                    file_content=compressed_html
+                    file_content=compressed_html,
                 )
-                adapter['storage_path'] = storage_file_path
-                logger.info(f"Successfully stored HTML for {item_url_for_log} at {storage_file_path}")
+                adapter["storage_path"] = storage_file_path
+                logger.info(
+                    f"Successfully stored HTML for {item_url_for_log} at {storage_file_path}"
+                )
 
             except RetryError as e:
                 logger.error(
                     f"Failed to store HTML for {item_url_for_log} after {self.stop_after_attempt} attempts: {e}",
-                    exc_info=True
+                    exc_info=True,
                 )
-                adapter['error_detalle'] = (
+                adapter["error_detalle"] = (
                     f"HTML storage failed after retries: {e}; {adapter.get('error_detalle', '')}"
                 )
             except Exception as e:
-                logger.error(f"Failed to store HTML for {item_url_for_log}: {e}", exc_info=True)
-                adapter['error_detalle'] = f"HTML storage failed: {e}; {adapter.get('error_detalle', '')}"
+                logger.error(
+                    f"Failed to store HTML for {item_url_for_log}: {e}", exc_info=True
+                )
+                adapter["error_detalle"] = (
+                    f"HTML storage failed: {e}; {adapter.get('error_detalle', '')}"
+                )
         else:
-            logger.warning(f"No HTML content found for item {item_url_for_log}. Skipping HTML storage.")
+            logger.warning(
+                f"No HTML content found for item {item_url_for_log}. Skipping HTML storage."
+            )
 
         # 2. Prepare and upsert article metadata
         try:
             article_data_for_db = adapter.asdict()
-            if 'contenido_html' in article_data_for_db:
-                del article_data_for_db['contenido_html']
-            
+            if "contenido_html" in article_data_for_db:
+                del article_data_for_db["contenido_html"]
+
             for field_name, field_value in article_data_for_db.items():
                 if isinstance(field_value, datetime):
                     article_data_for_db[field_name] = field_value.isoformat()
@@ -251,48 +317,82 @@ class SupabaseStoragePipeline:
             upserted_data = self._upsert_articulo_with_retry(article_data_for_db)
 
             if upserted_data:
-                logger.info(f"Successfully upserted article data for {item_url_for_log}. DB Response: {upserted_data}")
-                
+                logger.info(
+                    f"Successfully upserted article data for {item_url_for_log}. DB Response: {upserted_data}"
+                )
+
                 # Extract and propagate the article ID from the database response
                 # This ID will be included in the JSON export for the connector/pipeline
                 if isinstance(upserted_data, list) and len(upserted_data) > 0:
-                    articulo_id = upserted_data[0].get('id') if isinstance(upserted_data[0], dict) else None
+                    articulo_id = (
+                        upserted_data[0].get("id")
+                        if isinstance(upserted_data[0], dict)
+                        else None
+                    )
                 elif isinstance(upserted_data, dict):
-                    articulo_id = upserted_data.get('id')
+                    articulo_id = upserted_data.get("id")
                 else:
                     articulo_id = None
-                
+
                 if articulo_id:
-                    adapter['articulo_id'] = articulo_id
-                    logger.info(f"Article ID {articulo_id} added to item for propagation through the pipeline")
+                    adapter["articulo_id"] = articulo_id
+                    logger.info(
+                        f"Article ID {articulo_id} added to item for propagation through the pipeline"
+                    )
                 else:
-                    logger.warning(f"Could not extract article ID from upsert response for {item_url_for_log}")
+                    logger.warning(
+                        f"Could not extract article ID from upsert response for {item_url_for_log}"
+                    )
             else:
-                logger.warning(f"Upsert article data for {item_url_for_log} did not return data, indicating a potential issue.")
-                adapter['error_detalle'] = f"DB upsert for {item_url_for_log} returned no data; {adapter.get('error_detalle', '')}"
+                logger.warning(
+                    f"Upsert article data for {item_url_for_log} did not return data, indicating a potential issue."
+                )
+                adapter["error_detalle"] = (
+                    f"DB upsert for {item_url_for_log} returned no data; {adapter.get('error_detalle', '')}"
+                )
 
         except RetryError as e:
             logger.error(
                 f"Failed to upsert article data for {item_url_for_log} after {self.stop_after_attempt} attempts: {e}",
-                exc_info=True
+                exc_info=True,
             )
-            adapter['error_detalle'] = f"DB upsert failed after retries: {e}; {adapter.get('error_detalle', '')}"
+            adapter["error_detalle"] = (
+                f"DB upsert failed after retries: {e}; {adapter.get('error_detalle', '')}"
+            )
         except SupabaseNetworkError as e:
-            logger.error(f"Supabase network error during article upsert for {item_url_for_log}: {e}", exc_info=True)
-            adapter['error_detalle'] = f"DB upsert network error: {e}; {adapter.get('error_detalle', '')}"
+            logger.error(
+                f"Supabase network error during article upsert for {item_url_for_log}: {e}",
+                exc_info=True,
+            )
+            adapter["error_detalle"] = (
+                f"DB upsert network error: {e}; {adapter.get('error_detalle', '')}"
+            )
         except SupabaseAPIError as e:
-            logger.error(f"Supabase API error during article upsert for {item_url_for_log}: {e}", exc_info=True)
-            adapter['error_detalle'] = f"DB upsert API error: {e}; {adapter.get('error_detalle', '')}"
+            logger.error(
+                f"Supabase API error during article upsert for {item_url_for_log}: {e}",
+                exc_info=True,
+            )
+            adapter["error_detalle"] = (
+                f"DB upsert API error: {e}; {adapter.get('error_detalle', '')}"
+            )
         except Exception as e:
-            logger.error(f"Unexpected error during article data upsert for {item_url_for_log}: {e}", exc_info=True)
-            adapter['error_detalle'] = f"DB upsert failed unexpectedly: {e}; {adapter.get('error_detalle', '')}"
-            
-        if adapter.get('error_detalle'):
-            logger.warning(f"Item {item_url_for_log} processed with errors: {adapter.get('error_detalle')}")
+            logger.error(
+                f"Unexpected error during article data upsert for {item_url_for_log}: {e}",
+                exc_info=True,
+            )
+            adapter["error_detalle"] = (
+                f"DB upsert failed unexpectedly: {e}; {adapter.get('error_detalle', '')}"
+            )
+
+        if adapter.get("error_detalle"):
+            logger.warning(
+                f"Item {item_url_for_log} processed with errors: {adapter.get('error_detalle')}"
+            )
         else:
             logger.info(f"Item {item_url_for_log} processed successfully.")
-            
+
         return item
+
 
 # --- Note ---
 # The actual implementations of data processing pipelines are now located

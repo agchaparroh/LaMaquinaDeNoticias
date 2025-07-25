@@ -2,12 +2,14 @@
 """
 Script para verificar los criterios globales del PRP
 """
+
+import json  # noqa: F401
 import os
 import sys
-import requests
-import json
 import time
 from datetime import datetime
+
+import requests
 from supabase import create_client
 
 # Configuración
@@ -59,20 +61,20 @@ article_data = {
     Por su parte, el ministro de Economía, Carlos Cuerpo, señaló que estas
     medidas se suman a las ya implementadas en el último trimestre. Se espera
     que beneficien a más de 3 millones de hogares y 500.000 empresas.
-    """
+    """,
 }
 
 try:
     response = requests.post(PIPELINE_URL, json=article_data, timeout=30)
     if response.status_code == 200:
         result = response.json()
-        request_id = result.get('request_id')
+        request_id = result.get("request_id")
         print(f"   ✅ Artículo enviado correctamente (Request ID: {request_id})")
-        
+
         # Esperar procesamiento
         print("   ⏳ Esperando procesamiento (30 segundos)...")
         time.sleep(30)
-        
+
     else:
         print(f"   ❌ Error al procesar: {response.status_code}")
         print(f"   Response: {response.text}")
@@ -83,38 +85,48 @@ except Exception as e:
 print("\n3. Verificando persistencia en Supabase...")
 try:
     # Buscar artículos procesados recientemente
-    ultimos = client.table("articulos").select("id, titular, estado_procesamiento, fecha_procesamiento") \
-        .eq("estado_procesamiento", "completado") \
-        .like("titular", "%PRP%") \
-        .order("fecha_procesamiento", desc=True) \
-        .limit(5) \
+    ultimos = (
+        client.table("articulos")
+        .select("id, titular, estado_procesamiento, fecha_procesamiento")
+        .eq("estado_procesamiento", "completado")
+        .like("titular", "%PRP%")
+        .order("fecha_procesamiento", desc=True)
+        .limit(5)
         .execute()
-    
+    )
+
     if ultimos.data:
-        print(f"   ✅ Se encontraron {len(ultimos.data)} artículos procesados con 'PRP' en el título")
+        print(
+            f"   ✅ Se encontraron {len(ultimos.data)} artículos procesados con 'PRP' en el título"
+        )
         for art in ultimos.data:
             print(f"      - ID {art['id']}: {art['titular'][:50]}...")
     else:
         print("   ⚠️ No se encontraron artículos con 'PRP' procesados exitosamente")
-        
+
     # Verificar cualquier artículo procesado en los últimos 5 minutos
     print("\n   Buscando artículos procesados en los últimos 5 minutos...")
     cinco_min_atras = datetime.now().isoformat()
-    recientes = client.table("articulos").select("id, titular, estado_procesamiento") \
-        .gte("fecha_procesamiento", cinco_min_atras) \
+    recientes = (
+        client.table("articulos")
+        .select("id, titular, estado_procesamiento")
+        .gte("fecha_procesamiento", cinco_min_atras)
         .execute()
-    
+    )
+
     if recientes.data:
         print(f"   ✅ {len(recientes.data)} artículos procesados recientemente")
     else:
         print("   ⚠️ No hay artículos procesados en los últimos 5 minutos")
-        
+
 except Exception as e:
     print(f"   ❌ Error al verificar Supabase: {e}")
 
 # 4. Verificar manejo de múltiples artículos
 print("\n4. Verificando manejo de múltiples artículos...")
-print("   [NOTA: Esta verificación requiere pruebas con spider que procese múltiples URLs]")
+print(
+    "   [NOTA: Esta verificación requiere pruebas con spider que procese múltiples URLs]"
+)
 
 # 5. Verificar manejo de errores
 print("\n5. Verificando manejo graceful de errores...")

@@ -7,15 +7,16 @@ import asyncio
 import sys
 import traceback
 
-sys.path.insert(0, '/app/src')
+sys.path.insert(0, "/app/src")
 
 from ...src.controller import PipelineController
 from ...src.utils.config import GROQ_API_KEY
 
+
 async def test_e012_political():
     """Test con artículo que debe pasar Fase 1."""
     print("\n=== TEST E012 - ARTÍCULO POLÍTICO ===\n")
-    
+
     # Artículo claramente político que debe pasar Fase 1
     articulo_test = {
         "id": 8888,
@@ -45,56 +46,64 @@ async def test_e012_political():
         semana, con la meta de someter la propuesta a votación popular antes de fin de año.""",
         "idioma": "es",
         "seccion": "politica",
-        "area_geografica": "AMERICA"
+        "area_geografica": "AMERICA",
     }
-    
+
     controller = PipelineController()
-    
+
     try:
         print(f"Procesando artículo ID: {articulo_test['id']}")
         print(f"Título: {articulo_test['titular']}")
         print(f"Tamaño: {len(articulo_test['contenido_texto'])} caracteres")
-        
+
         resultado = await controller.process_article(articulo_test)
-        
-        print(f"\n📊 RESULTADO:")
+
+        print(f"\n📊 RESULTADO:")  # noqa: F541
         print(f"   Éxito: {resultado.get('exito', False)}")
         print(f"   Fase completada: {resultado.get('fase_completada', 0)}/7")
         print(f"   Request ID: {resultado.get('request_id', 'N/A')}")
-        
+
         # Verificar fases completadas
-        if resultado.get('fase_completada', 0) < 7:
-            print(f"\n⚠️ Pipeline terminó prematuramente en fase {resultado.get('fase_completada')}")
-            if resultado.get('resultado_triaje'):
-                print(f"   Triaje: relevante={resultado['resultado_triaje'].get('es_relevante')}")
-        
+        if resultado.get("fase_completada", 0) < 7:
+            print(
+                f"\n⚠️ Pipeline terminó prematuramente en fase {resultado.get('fase_completada')}"
+            )
+            if resultado.get("resultado_triaje"):
+                print(
+                    f"   Triaje: relevante={resultado['resultado_triaje'].get('es_relevante')}"
+                )
+
         # Verificar persistencia
-        if resultado.get('persistencia'):
-            persist = resultado['persistencia']
-            print(f"\n✅ PERSISTENCIA:")
+        if resultado.get("persistencia"):
+            persist = resultado["persistencia"]
+            print(f"\n✅ PERSISTENCIA:")  # noqa: F541
             print(f"   Hechos insertados: {persist.get('hechos_insertados', 0)}")
             print(f"   Entidades insertadas: {persist.get('entidades_insertadas', 0)}")
             print(f"   Citas insertadas: {persist.get('citas_insertadas', 0)}")
             print(f"   Datos insertados: {persist.get('datos_insertados', 0)}")
-            
-            if persist.get('hechos_insertados', 0) > 0 or persist.get('entidades_insertadas', 0) > 0:
+
+            if (
+                persist.get("hechos_insertados", 0) > 0
+                or persist.get("entidades_insertadas", 0) > 0
+            ):
                 print("\n🎉 E012 RESUELTO - Datos persistidos exitosamente!")
             else:
                 print("\n❌ E012 PERSISTE - 0 datos persistidos")
         else:
-            print(f"\n❌ Sin persistencia")
-            if resultado.get('errores'):
+            print(f"\n❌ Sin persistencia")  # noqa: F541
+            if resultado.get("errores"):
                 print(f"   Errores: {resultado['errores']}")
-                
+
     except Exception as e:
-        print(f"\n💥 EXCEPCIÓN CAPTURADA:")
+        print(f"\n💥 EXCEPCIÓN CAPTURADA:")  # noqa: F541
         print(f"Tipo: {type(e).__name__}")
         print(f"Mensaje: {str(e)}")
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     if not GROQ_API_KEY:
         print("ERROR: No se encontró GROQ_API_KEY")
         sys.exit(1)
-    
+
     asyncio.run(test_e012_political())

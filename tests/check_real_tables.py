@@ -1,17 +1,26 @@
 #!/usr/bin/env python3
 import os
+
 from dotenv import load_dotenv
 from supabase import create_client
 
 load_dotenv()
 
 # Conectar a Supabase
-url = os.getenv('SUPABASE_URL')
-key = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
+url = os.getenv("SUPABASE_URL")
+key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 supabase = create_client(url, key)
 
 # Consultar estructura real de las tablas
-tables = ['articulos', 'entidades', 'hechos', 'citas_textuales', 'datos_cuantitativos', 'hecho_entidad', 'hecho_articulo']
+tables = [
+    "articulos",
+    "entidades",
+    "hechos",
+    "citas_textuales",
+    "datos_cuantitativos",
+    "hecho_entidad",
+    "hecho_articulo",
+]
 
 for table in tables:
     print(f"\n=== TABLA: {table} ===")
@@ -23,23 +32,23 @@ for table in tables:
         WHERE table_schema = 'public' AND table_name = '{table}'
         ORDER BY ordinal_position
         """
-        
+
         # Intentar ejecutar query directa
-        result = supabase.rpc('get_table_schema', {'table_name': table}).execute()
+        result = supabase.rpc("get_table_schema", {"table_name": table}).execute()
         print(f"Columnas desde RPC: {result.data}")
-    except:
+    except:  # noqa: E722
         # Si no hay RPC, intentar con select limit 0
         try:
             result = supabase.table(table).select("*").limit(0).execute()
             # Esto debería devolver estructura sin datos
-            print(f"Estructura obtenida con limit 0")
-        except:
+            print(f"Estructura obtenida con limit 0")  # noqa: F541
+        except:  # noqa: E722
             # Último intento: hacer query que no devuelva filas
             try:
-                result = supabase.table(table).select("*").eq('id', -999999).execute()
+                result = supabase.table(table).select("*").eq("id", -999999).execute()
                 # La respuesta debería incluir la estructura aunque no haya datos
-                if hasattr(result, 'data'):
-                    print(f"Query ejecutada, verificando estructura...")
+                if hasattr(result, "data"):
+                    print(f"Query ejecutada, verificando estructura...")  # noqa: F541
                     # Para Postgrest, los campos vienen en la respuesta aunque esté vacía
             except Exception as e:
                 print(f"Error: {e}")

@@ -1,0 +1,33 @@
+# Configuración de Ruff siguiendo el formato oficial
+
+# Mismo formato que Black
+line-length = 88
+indent-width = 4
+
+# Python 3.8+
+target-version = "py38"
+
+[lint]
+# Habilitar reglas por defecto más algunas adicionales
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings  
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+]
+
+# Permitir autofix para todas las reglas habilitadas
+fixable = ["ALL"]
+
+# Variables no usadas con prefijo _ están permitidas
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[format]
+# Como Black
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

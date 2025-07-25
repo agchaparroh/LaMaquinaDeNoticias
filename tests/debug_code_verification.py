@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Script simple para verificar cambios en el código usando Docker"""
 
+import json  # noqa: F401
 import subprocess
-import json
+
 
 def run_docker_command(cmd):
     """Ejecutar comando en el contenedor Docker"""
@@ -13,10 +14,11 @@ def run_docker_command(cmd):
     except Exception as e:
         return "", str(e)
 
+
 def check_code_changes():
     """Verificar si los cambios están en el código"""
     print("=== VERIFICACIÓN DE CAMBIOS EN CÓDIGO ===\n")
-    
+
     # 1. Verificar si existe el método _generar_payload_articulo_completo
     stdout, stderr = run_docker_command(
         "sh -c \"cd /app && python3 -c \\\"import sys; sys.path.insert(0, '/app'); "
@@ -28,7 +30,7 @@ def check_code_changes():
     print(f"   Resultado: {stdout.strip()}")
     if stderr:
         print(f"   Error: {stderr}")
-    
+
     # 2. Verificar si el código tiene el comentario de detección
     stdout, stderr = run_docker_command(
         "grep -n 'Detección de tipo de contenido' /app/src/pipeline/pipeline_coordinator.py"
@@ -37,8 +39,8 @@ def check_code_changes():
     if stdout:
         print(f"   ✅ Encontrado: {stdout.strip()}")
     else:
-        print(f"   ❌ NO encontrado")
-    
+        print(f"   ❌ NO encontrado")  # noqa: F541
+
     # 3. Verificar log específico en el método
     stdout, stderr = run_docker_command(
         "grep -n 'Generando payload para artículo completo' /app/src/pipeline/pipeline_coordinator.py"
@@ -47,20 +49,21 @@ def check_code_changes():
     if stdout:
         print(f"   ✅ Encontrado: {stdout.strip()}")
     else:
-        print(f"   ❌ NO encontrado")
-    
+        print(f"   ❌ NO encontrado")  # noqa: F541
+
     # 4. Verificar la condición específica
     stdout, stderr = run_docker_command(
         "grep -A2 -B2 'articulo_original_preserved is not None and es_articulo_completo' /app/src/pipeline/pipeline_coordinator.py"
     )
     print("\n4. Condición de detección de artículo:")
     if stdout:
-        print(f"   ✅ Encontrado:")
-        for line in stdout.split('\n'):
+        print(f"   ✅ Encontrado:")  # noqa: F541
+        for line in stdout.split("\n"):
             if line.strip():
                 print(f"       {line}")
     else:
-        print(f"   ❌ NO encontrado")
+        print(f"   ❌ NO encontrado")  # noqa: F541
+
 
 if __name__ == "__main__":
     check_code_changes()

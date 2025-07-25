@@ -6,18 +6,20 @@ Tests para verificar que el método construir_payload_articulo_from_model
 funciona correctamente con ArticuloProcesableItem.
 """
 
-import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import sys
 
-from datetime import datetime, timezone
-from uuid import uuid4
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+from datetime import datetime, timezone  # noqa: F401
+from uuid import uuid4  # noqa: F401
+
 
 def test_payload_builder_integration():
     """Test de integración completa del PayloadBuilder con ArticuloProcesableItem."""
-    
+
     print("=== Test Integración PayloadBuilder con ArticuloProcesableItem ===")
-    
+
     # Simular estructura de ArticuloProcesableItem
     articulo_mock = {
         "id_articulo": "ART-001",
@@ -37,9 +39,9 @@ def test_payload_builder_integration():
         "es_oficial": False,
         "contenido_html": "<p>Este es el contenido del artículo de prueba</p>",
         "etiquetas_fuente": ["política", "test"],
-        "metadata_adicional": {"source": "test"}
+        "metadata_adicional": {"source": "test"},
     }
-    
+
     # Simular resultado del procesamiento
     resultado_procesamiento = {
         "resumen_generado_pipeline": "Resumen del artículo generado por el pipeline",
@@ -50,9 +52,9 @@ def test_payload_builder_integration():
         "fecha_ingesta_sistema": "2025-07-18T10:00:00Z",
         "fecha_procesamiento_pipeline": "2025-07-18T10:15:00Z",
         "error_detalle_pipeline": None,
-        "embedding_articulo_vector": None
+        "embedding_articulo_vector": None,
     }
-    
+
     # Test 1: Verificar mapeo de campos
     expected_mapping = {
         "id_articulo": "Se usa como identificador",
@@ -66,16 +68,16 @@ def test_payload_builder_integration():
         "pais": "area_geografica",
         "tipo_medio": "tipo_medio",
         "idioma": "idioma_original",
-        "url": "url"
+        "url": "url",
     }
-    
+
     for articulo_field, payload_field in expected_mapping.items():
         if articulo_field in articulo_mock:
             if payload_field.startswith("Se usa"):
                 print(f"✓ Campo {articulo_field}: {payload_field}")
             else:
                 print(f"✓ Campo {articulo_field} -> {payload_field}")
-    
+
     # Test 2: Verificar estructura del payload esperado
     metadatos_esperados = {
         "url": articulo_mock["url"],
@@ -95,43 +97,52 @@ def test_payload_builder_integration():
         "es_oficial": articulo_mock["es_oficial"],
         "contenido_texto_original": articulo_mock["contenido_texto"],
         "contenido_html_original": articulo_mock["contenido_html"],
-        "metadata_original": articulo_mock["metadata_adicional"]
+        "metadata_original": articulo_mock["metadata_adicional"],
     }
-    
+
     print(f"✓ Estructura de metadatos: {len(metadatos_esperados)} campos")
-    
+
     # Test 3: Verificar que no hay campos faltantes
     required_fields = [
-        "medio", "titular", "fecha_publicacion", "contenido_texto_original",
-        "estado_procesamiento_final_pipeline", "fecha_procesamiento_pipeline"
+        "medio",
+        "titular",
+        "fecha_publicacion",
+        "contenido_texto_original",
+        "estado_procesamiento_final_pipeline",
+        "fecha_procesamiento_pipeline",
     ]
-    
+
     combined_data = {**metadatos_esperados, **resultado_procesamiento}
-    
+
     for field in required_fields:
         assert field in combined_data, f"Campo requerido {field} no encontrado"
         print(f"✓ Campo requerido presente: {field}")
-    
+
     # Test 4: Verificar elementos opcionales
     elementos_opcionales = [
-        "hechos_extraidos", "entidades_autonomas", "citas_textuales_extraidas",
-        "datos_cuantitativos_extraidos", "relaciones_hechos", 
-        "relaciones_entidades", "contradicciones_detectadas"
+        "hechos_extraidos",
+        "entidades_autonomas",
+        "citas_textuales_extraidas",
+        "datos_cuantitativos_extraidos",
+        "relaciones_hechos",
+        "relaciones_entidades",
+        "contradicciones_detectadas",
     ]
-    
+
     for elemento in elementos_opcionales:
         print(f"✓ Elemento opcional soportado: {elemento}")
-    
+
     # Test 5: Verificar que el método puede ser llamado
     print("✓ Método construir_payload_articulo_from_model listo para uso")
-    
+
     print("\n✅ Integración PayloadBuilder con ArticuloProcesableItem verificada")
+
 
 def test_payload_builder_method_signature():
     """Test de la signatura del método construir_payload_articulo_from_model."""
-    
+
     print("\n=== Test Signatura del Método ===")
-    
+
     # Parámetros esperados
     parametros_esperados = [
         "articulo_model: ArticuloProcesableItem",
@@ -142,22 +153,23 @@ def test_payload_builder_method_signature():
         "datos_extraidos: Optional[List[Dict[str, Any]]] = None",
         "relaciones_hechos: Optional[List[Dict[str, Any]]] = None",
         "relaciones_entidades: Optional[List[Dict[str, Any]]] = None",
-        "contradicciones_detectadas: Optional[List[Dict[str, Any]]] = None"
+        "contradicciones_detectadas: Optional[List[Dict[str, Any]]] = None",
     ]
-    
+
     for param in parametros_esperados:
         print(f"✓ Parámetro: {param}")
-    
+
     # Retorno esperado
-    print(f"✓ Retorno: PayloadCompletoArticulo")
-    
+    print(f"✓ Retorno: PayloadCompletoArticulo")  # noqa: F541
+
     print("\n✅ Signatura del método verificada")
+
 
 def test_payload_builder_workflow():
     """Test del flujo completo de trabajo con PayloadBuilder."""
-    
+
     print("\n=== Test Flujo Completo PayloadBuilder ===")
-    
+
     workflow_steps = [
         "1. Recibir ArticuloProcesableItem del Pipeline Coordinator",
         "2. Recibir resultado_procesamiento con metadatos del pipeline",
@@ -165,28 +177,31 @@ def test_payload_builder_workflow():
         "4. Extraer metadatos del ArticuloProcesableItem",
         "5. Llamar construir_payload_articulo existente con datos mapeados",
         "6. Validar payload con Pydantic",
-        "7. Retornar PayloadCompletoArticulo listo para RPC"
+        "7. Retornar PayloadCompletoArticulo listo para RPC",
     ]
-    
+
     for step in workflow_steps:
         print(f"✓ {step}")
-    
+
     # Verificar que el flujo mantiene compatibilidad
     compatibility_points = [
         "Reutiliza método construir_payload_articulo existente",
         "Mapea campos ArticuloProcesableItem -> payload fields",
         "Mantiene validación Pydantic existente",
         "Soporta todos los elementos extraídos opcionales",
-        "Preserva estructura de RPC insertar_articulo_completo"
+        "Preserva estructura de RPC insertar_articulo_completo",
     ]
-    
+
     for point in compatibility_points:
         print(f"✓ Compatibilidad: {point}")
-    
+
     print("\n✅ Flujo completo de trabajo verificado")
 
+
 if __name__ == "__main__":
-    print("Ejecutando tests de integración PayloadBuilder con ArticuloProcesableItem...")
+    print(
+        "Ejecutando tests de integración PayloadBuilder con ArticuloProcesableItem..."
+    )
     test_payload_builder_integration()
     test_payload_builder_method_signature()
     test_payload_builder_workflow()

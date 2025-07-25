@@ -2,8 +2,10 @@
 """
 Verificar artículos en Supabase
 """
+
+import json  # noqa: F401
+
 import requests
-import json
 
 # URL y key de Supabase
 SUPABASE_URL = "https://xmymdivqydldspqmzowr.supabase.co"
@@ -13,7 +15,7 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 headers = {
     "apikey": SUPABASE_KEY,
     "Authorization": f"Bearer {SUPABASE_KEY}",
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
 }
 
 # Consultar artículos
@@ -24,7 +26,9 @@ if response.status_code == 200:
     articles = response.json()
     print(f"Artículos en la base de datos: {len(articles)}")
     for art in articles:
-        print(f"  - ID: {art['articulo_id']}, URL: {art['url'][:50] if art['url'] else 'None'}..., Titular: {art['titular'][:50] if art['titular'] else 'None'}...")
+        print(
+            f"  - ID: {art['articulo_id']}, URL: {art['url'][:50] if art['url'] else 'None'}..., Titular: {art['titular'][:50] if art['titular'] else 'None'}..."
+        )
 else:
     print(f"Error al consultar: {response.status_code}")
     print(response.text)

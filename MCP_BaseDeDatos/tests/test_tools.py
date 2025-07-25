@@ -1137,7 +1137,7 @@ class TestLogsAndAnalyticsTools:
             search_found = False
             for log in result["result"]:
                 if "connection" in log["event_message"].lower():
-                    search_found = True
+                    search_found = True  # noqa: F841
                     break
 
             # We don't assert this because the search is done at the SQL level

@@ -3,10 +3,11 @@ Pytest fixtures for Dashboard Review Backend tests
 Provides mock Supabase client and test configurations
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from httpx import AsyncClient
+
+import pytest
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
 from src.main import app
 
@@ -28,11 +29,11 @@ async def async_test_client():
 def mock_supabase():
     """Mock Supabase client for testing."""
     mock_client = MagicMock()
-    
+
     # Mock table operations
     mock_table = MagicMock()
     mock_client.table.return_value = mock_table
-    
+
     # Mock query chain
     mock_table.select.return_value = mock_table
     mock_table.insert.return_value = mock_table
@@ -54,20 +55,20 @@ def mock_supabase():
     mock_table.limit.return_value = mock_table
     mock_table.range.return_value = mock_table
     mock_table.single.return_value = mock_table
-    
+
     # Default execute response
     mock_response = MagicMock()
     mock_response.data = []
     mock_response.count = 0
     mock_table.execute.return_value = mock_response
-    
+
     return mock_client
 
 
 @pytest.fixture
 def mock_supabase_dependency(mock_supabase):
     """Override the Supabase client dependency for testing."""
-    with patch('core.dependencies.get_supabase_client', return_value=mock_supabase):
+    with patch("core.dependencies.get_supabase_client", return_value=mock_supabase):
         yield mock_supabase
 
 
@@ -85,7 +86,7 @@ def sample_hecho():
         "importancia": 8,
         "evaluacion_editorial": None,
         "fecha_feedback_importancia": None,
-        "fecha_evaluacion_editorial": None
+        "fecha_evaluacion_editorial": None,
     }
 
 
@@ -112,7 +113,7 @@ def mock_environment():
         "API_PORT": "8004",
         "CORS_ORIGINS": "http://localhost:3001",
         "LOG_LEVEL": "INFO",
-        "ENVIRONMENT": "testing"
+        "ENVIRONMENT": "testing",
     }
     with patch.dict("os.environ", env_vars):
         yield env_vars
@@ -128,7 +129,7 @@ def auto_mock_environment():
         "API_PORT": "8004",
         "CORS_ORIGINS": "http://localhost:3001",
         "LOG_LEVEL": "INFO",
-        "ENVIRONMENT": "testing"
+        "ENVIRONMENT": "testing",
     }
     with patch.dict("os.environ", env_vars, clear=False):
         yield env_vars
@@ -139,11 +140,11 @@ def auto_mock_environment():
 async def async_mock_supabase():
     """Async mock Supabase client for async testing."""
     mock_client = AsyncMock()
-    
+
     # Mock async table operations
     mock_table = AsyncMock()
     mock_client.table.return_value = mock_table
-    
+
     # Mock async query chain
     mock_table.select.return_value = mock_table
     mock_table.insert.return_value = mock_table
@@ -154,13 +155,13 @@ async def async_mock_supabase():
     mock_table.limit.return_value = mock_table
     mock_table.range.return_value = mock_table
     mock_table.execute = AsyncMock()
-    
+
     # Default async execute response
     mock_response = MagicMock()
     mock_response.data = []
     mock_response.count = 0
     mock_table.execute.return_value = mock_response
-    
+
     return mock_client
 
 
@@ -168,11 +169,11 @@ async def async_mock_supabase():
 def mock_supabase_with_errors():
     """Mock Supabase client that simulates various error conditions."""
     mock_client = MagicMock()
-    
+
     # Mock table operations
     mock_table = MagicMock()
     mock_client.table.return_value = mock_table
-    
+
     # Setup query chain that will raise errors
     mock_table.select.return_value = mock_table
     mock_table.insert.return_value = mock_table
@@ -183,7 +184,7 @@ def mock_supabase_with_errors():
     mock_table.limit.return_value = mock_table
     mock_table.range.return_value = mock_table
     mock_table.filter.return_value = mock_table
-    
+
     # Configure to raise different types of errors
     def configure_error(error_type="connection", message="Test error"):
         if error_type == "connection":
@@ -192,7 +193,10 @@ def mock_supabase_with_errors():
             mock_table.execute.side_effect = TimeoutError(message)
         elif error_type == "api":
             from supabase import APIError
-            mock_table.execute.side_effect = APIError({"message": message, "code": "TEST_ERROR"})
+
+            mock_table.execute.side_effect = APIError(
+                {"message": message, "code": "TEST_ERROR"}
+            )
         elif error_type == "generic":
             mock_table.execute.side_effect = Exception(message)
         else:
@@ -202,7 +206,7 @@ def mock_supabase_with_errors():
             mock_response.data = []
             mock_response.count = 0
             mock_table.execute.return_value = mock_response
-    
+
     mock_client.configure_error = configure_error
     return mock_client
 
@@ -225,11 +229,11 @@ def complete_hecho_data():
             "medio": "La Nación",
             "titular": "Presidente anuncia paquete de medidas antiinflacionarias",
             "fecha_publicacion": "2024-01-15T11:00:00",
-            "url": "https://www.lanacion.com.ar/economia/medidas-antiinflacion"
+            "url": "https://www.lanacion.com.ar/economia/medidas-antiinflacion",
         },
         # Computed fields
         "fecha_feedback_importancia": None,
-        "fecha_evaluacion_editorial": None
+        "fecha_evaluacion_editorial": None,
     }
 
 
@@ -251,10 +255,10 @@ def complete_hechos_list():
                 "medio": "La Nación",
                 "titular": "Presidente anuncia medidas económicas",
                 "fecha_publicacion": "2024-01-15T11:00:00",
-                "url": "https://www.lanacion.com.ar/economia/medidas"
+                "url": "https://www.lanacion.com.ar/economia/medidas",
             },
             "fecha_feedback_importancia": "2024-01-15T15:00:00",
-            "fecha_evaluacion_editorial": "2024-01-15T16:00:00"
+            "fecha_evaluacion_editorial": "2024-01-15T16:00:00",
         },
         {
             "id": 2,
@@ -270,10 +274,10 @@ def complete_hechos_list():
                 "medio": "El Mercurio",
                 "titular": "Fuerte terremoto sacude el norte del país",
                 "fecha_publicacion": "2024-01-15T00:30:00",
-                "url": "https://www.elmercurio.com/nacional/terremoto-norte"
+                "url": "https://www.elmercurio.com/nacional/terremoto-norte",
             },
             "fecha_feedback_importancia": None,
-            "fecha_evaluacion_editorial": None
+            "fecha_evaluacion_editorial": None,
         },
         {
             "id": 3,
@@ -289,10 +293,10 @@ def complete_hechos_list():
                 "medio": "Folha de S.Paulo",
                 "titular": "Banco Central ajusta taxa de juros",
                 "fecha_publicacion": "2024-01-13T15:30:00",
-                "url": "https://www.folha.com.br/economia/banco-central-juros"
+                "url": "https://www.folha.com.br/economia/banco-central-juros",
             },
             "fecha_feedback_importancia": "2024-01-14T09:00:00",
-            "fecha_evaluacion_editorial": None
+            "fecha_evaluacion_editorial": None,
         },
         {
             "id": 4,
@@ -308,10 +312,10 @@ def complete_hechos_list():
                 "medio": "El Comercio",
                 "titular": "Destapan red de corrupción en empresa del Estado",
                 "fecha_publicacion": "2024-01-12T10:00:00",
-                "url": "https://www.elcomercio.pe/politica/corrupcion-empresa-estatal"
+                "url": "https://www.elcomercio.pe/politica/corrupcion-empresa-estatal",
             },
             "fecha_feedback_importancia": "2024-01-12T18:00:00",
-            "fecha_evaluacion_editorial": "2024-01-13T10:00:00"
+            "fecha_evaluacion_editorial": "2024-01-13T10:00:00",
         },
         {
             "id": 5,
@@ -327,37 +331,37 @@ def complete_hechos_list():
                 "medio": "El Tiempo",
                 "titular": "Alarmante estudio sobre impacto del cambio climático",
                 "fecha_publicacion": "2024-01-11T14:00:00",
-                "url": "https://www.eltiempo.com/vida/medio-ambiente/cambio-climatico-estudio"
+                "url": "https://www.eltiempo.com/vida/medio-ambiente/cambio-climatico-estudio",
             },
             "fecha_feedback_importancia": None,
-            "fecha_evaluacion_editorial": None
-        }
+            "fecha_evaluacion_editorial": None,
+        },
     ]
 
 
 @pytest.fixture
 def feedback_importancia_data():
     """Sample feedback importancia data for testing."""
-    return {
-        "hecho_id": 1,
-        "importancia_editor_final": 9
-    }
+    return {"hecho_id": 1, "importancia_editor_final": 9}
 
 
 @pytest.fixture
 def evaluacion_editorial_data():
     """Sample evaluacion editorial data for testing."""
-    return {
-        "hecho_id": 2,
-        "evaluacion": "relevante"
-    }
+    return {"hecho_id": 2, "evaluacion": "relevante"}
 
 
 @pytest.fixture
 def filter_options_data():
     """Sample filter options data for testing."""
     return {
-        "medios": ["La Nación", "El Mercurio", "Folha de S.Paulo", "El Comercio", "El Tiempo"],
+        "medios": [
+            "La Nación",
+            "El Mercurio",
+            "Folha de S.Paulo",
+            "El Comercio",
+            "El Tiempo",
+        ],
         "paises": ["Argentina", "Brasil", "Chile", "Colombia", "Perú"],
-        "tipos_evaluacion": ["relevante", "contextual", "irrelevante"]
+        "tipos_evaluacion": ["relevante", "contextual", "irrelevante"],
     }

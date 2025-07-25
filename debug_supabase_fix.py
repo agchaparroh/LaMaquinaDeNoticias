@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Parche temporal para debug del error de Supabase"""
 
-import json
+import json  # noqa: F401
 
 # Función para agregar al archivo supabase_service.py
 debug_code = '''

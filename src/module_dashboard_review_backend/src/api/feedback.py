@@ -5,16 +5,17 @@ Provides endpoints for submitting feedback on facts (hechos) including
 importance adjustments and editorial evaluations.
 """
 
-from fastapi import APIRouter, Depends, Path, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from loguru import logger
 
+from ..core.dependencies import get_feedback_service
+
 # Import models
-from ..models.requests import ImportanciaFeedbackRequest, EvaluacionEditorialRequest
+from ..models.requests import EvaluacionEditorialRequest, ImportanciaFeedbackRequest
 from ..models.responses import FeedbackResponse
 
 # Import services and dependencies
 from ..services.feedback_service import FeedbackService
-from ..core.dependencies import get_feedback_service
 
 # Import custom exceptions
 from ..utils.exceptions import ResourceNotFoundError
@@ -48,35 +49,31 @@ router = APIRouter()
     responses={
         200: {
             "description": "Feedback successfully submitted",
-            "model": FeedbackResponse
+            "model": FeedbackResponse,
         },
-        400: {
-            "description": "Bad request or database error"
-        },
-        404: {
-            "description": "Fact (hecho) not found"
-        },
-        422: {
-            "description": "Validation error"
-        }
-    }
+        400: {"description": "Bad request or database error"},
+        404: {"description": "Fact (hecho) not found"},
+        422: {"description": "Validation error"},
+    },
 )
 async def submit_importancia_feedback(
-    hecho_id: int = Path(..., gt=0, description="ID of the fact to provide feedback for"),
+    hecho_id: int = Path(
+        ..., gt=0, description="ID of the fact to provide feedback for"
+    ),
     feedback: ImportanciaFeedbackRequest = None,
-    feedback_service: FeedbackService = Depends(get_feedback_service)
+    feedback_service: FeedbackService = Depends(get_feedback_service),
 ) -> FeedbackResponse:
     """
     Submit importance feedback for a specific fact.
-    
+
     Args:
         hecho_id: ID of the fact (must be greater than 0)
         feedback: Feedback data containing new importance level and editor ID
         feedback_service: Injected service for handling feedback operations
-        
+
     Returns:
         FeedbackResponse with success status and confirmation message
-        
+
     Raises:
         HTTPException 404: If the fact with given ID doesn't exist
         HTTPException 400: If any other error occurs during processing
@@ -87,31 +84,25 @@ async def submit_importancia_feedback(
             extra={
                 "hecho_id": hecho_id,
                 "editor": feedback.usuario_id_editor,
-                "new_importance": feedback.importancia_editor_final
-            }
+                "new_importance": feedback.importancia_editor_final,
+            },
         )
-        
+
         # Call service to submit feedback
         await feedback_service.submit_importancia_feedback(hecho_id, feedback)
-        
+
         # Return success response
         return FeedbackResponse(
             success=True,
-            message=f"Feedback de importancia actualizado para hecho {hecho_id}"
+            message=f"Feedback de importancia actualizado para hecho {hecho_id}",
         )
-        
+
     except ResourceNotFoundError as e:
         # Re-raise custom exceptions as HTTPException for API response
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        logger.error(
-            f"Error processing importance feedback: {str(e)}",
-            exc_info=True
-        )
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
+        logger.error(f"Error processing importance feedback: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post(
@@ -139,35 +130,29 @@ async def submit_importancia_feedback(
     responses={
         200: {
             "description": "Evaluation successfully submitted",
-            "model": FeedbackResponse
+            "model": FeedbackResponse,
         },
-        400: {
-            "description": "Bad request or database error"
-        },
-        404: {
-            "description": "Fact (hecho) not found"
-        },
-        422: {
-            "description": "Validation error - invalid evaluation value"
-        }
-    }
+        400: {"description": "Bad request or database error"},
+        404: {"description": "Fact (hecho) not found"},
+        422: {"description": "Validation error - invalid evaluation value"},
+    },
 )
 async def submit_evaluacion_editorial(
     hecho_id: int = Path(..., gt=0, description="ID of the fact to evaluate"),
     evaluacion: EvaluacionEditorialRequest = None,
-    feedback_service: FeedbackService = Depends(get_feedback_service)
+    feedback_service: FeedbackService = Depends(get_feedback_service),
 ) -> FeedbackResponse:
     """
     Submit editorial evaluation for a specific fact.
-    
+
     Args:
         hecho_id: ID of the fact (must be greater than 0)
         evaluacion: Evaluation data containing verdict and justification
         feedback_service: Injected service for handling feedback operations
-        
+
     Returns:
         FeedbackResponse with success status and confirmation message
-        
+
     Raises:
         HTTPException 404: If the fact with given ID doesn't exist
         HTTPException 400: If any other error occurs during processing
@@ -178,28 +163,24 @@ async def submit_evaluacion_editorial(
             extra={
                 "hecho_id": hecho_id,
                 "verdict": evaluacion.evaluacion_editorial,
-                "has_justification": bool(evaluacion.justificacion_evaluacion_editorial)
-            }
+                "has_justification": bool(
+                    evaluacion.justificacion_evaluacion_editorial
+                ),
+            },
         )
-        
+
         # Call service to submit evaluation
         await feedback_service.submit_evaluacion_editorial(hecho_id, evaluacion)
-        
+
         # Return success response
         return FeedbackResponse(
             success=True,
-            message=f"Evaluación editorial actualizada para hecho {hecho_id}"
+            message=f"Evaluación editorial actualizada para hecho {hecho_id}",
         )
-        
+
     except ResourceNotFoundError as e:
         # Re-raise custom exceptions as HTTPException for API response
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        logger.error(
-            f"Error processing editorial evaluation: {str(e)}",
-            exc_info=True
-        )
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
+        logger.error(f"Error processing editorial evaluation: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=400, detail=str(e))

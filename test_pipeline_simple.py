@@ -2,9 +2,11 @@
 """
 Test simple del pipeline con un artículo mínimo
 """
-import requests
-import json
+
+import json  # noqa: F401
 from datetime import datetime
+
+import requests
 
 # URL del pipeline
 PIPELINE_URL = "http://localhost:8003/procesar_articulo"
@@ -37,7 +39,7 @@ article_data = {
     María Jesús Montero, quien explicó los detalles técnicos del plan.
     Se espera que las medidas beneficien a más de 50.000 empresas en
     todo el territorio nacional.
-    """
+    """,
 }
 
 print("=== Enviando artículo de prueba al pipeline ===")
@@ -45,27 +47,31 @@ print(f"Titular: {article_data['titular']}")
 
 try:
     response = requests.post(PIPELINE_URL, json=article_data)
-    
+
     if response.status_code == 200:
         result = response.json()
         print("\n✅ Procesamiento completado!")
         print(f"Request ID: {result.get('request_id')}")
         print(f"Procesamiento exitoso: {result.get('procesamiento_exitoso')}")
-        
-        if result.get('persistencia'):
-            pers = result['persistencia']
+
+        if result.get("persistencia"):
+            pers = result["persistencia"]
             print(f"\nPersistencia: {pers.get('exitosa')}")
-            if pers.get('exitosa'):
+            if pers.get("exitosa"):
                 print(f"  - Artículo ID: {pers.get('articulo_id')}")
-                print(f"  - Hechos: {pers.get('elementos_insertados', {}).get('hechos', 0)}")
-                print(f"  - Entidades: {pers.get('elementos_insertados', {}).get('entidades', 0)}")
-        
-        if result.get('advertencias'):
+                print(
+                    f"  - Hechos: {pers.get('elementos_insertados', {}).get('hechos', 0)}"
+                )
+                print(
+                    f"  - Entidades: {pers.get('elementos_insertados', {}).get('entidades', 0)}"
+                )
+
+        if result.get("advertencias"):
             print(f"\n⚠️ Advertencias: {result['advertencias']}")
-            
+
     else:
         print(f"\n❌ Error: {response.status_code}")
         print(f"Response: {response.text}")
-        
+
 except Exception as e:
     print(f"\n❌ Error al conectar con el pipeline: {e}")

@@ -2,8 +2,10 @@
 """
 Script para probar el RPC actualizar_articulo_procesado directamente
 """
-import os
-from supabase import create_client, Client
+
+import os  # noqa: F401
+
+from supabase import Client, create_client
 
 # Credenciales
 url = "https://aukbzqbcvbsnjdhflyvr.supabase.co"
@@ -15,7 +17,7 @@ supabase: Client = create_client(url, key)
 # Payload mínimo para probar
 test_payload = {
     "articulo_id": 1100,
-    "resumen_generado_pipeline": "Test de actualización"
+    "resumen_generado_pipeline": "Test de actualización",
 }
 
 print("=== TEST RPC DIRECTO ===")
@@ -23,10 +25,12 @@ print(f"Probando actualizar_articulo_procesado con ID: {test_payload['articulo_i
 
 try:
     # Llamar al RPC
-    response = supabase.rpc("actualizar_articulo_procesado", {"datos_json": test_payload}).execute()
-    
+    response = supabase.rpc(
+        "actualizar_articulo_procesado", {"datos_json": test_payload}
+    ).execute()
+
     print("\nRespuesta del RPC:")
     print(response.data)
-    
+
 except Exception as e:
     print(f"\nError: {e}")

@@ -6,14 +6,14 @@ Prueba varios artículos a la vez para diagnosticar el pipeline.
 """
 
 import asyncio
+import json  # noqa: F401
 import sys
-import json
 import time
-from datetime import datetime
-from uuid import uuid4
+from datetime import datetime  # noqa: F401
+from uuid import uuid4  # noqa: F401
 
 # Añadir el directorio src al path
-sys.path.insert(0, '/app/src')
+sys.path.insert(0, "/app/src")
 
 from ...src.controller import PipelineController
 from ...src.utils.config import GROQ_API_KEY
@@ -37,13 +37,13 @@ La oposición política había exigido la renuncia del gobierno desde hace seman
 La crisis se agravó la semana pasada cuando el Parlamento haitiano rechazó el presupuesto nacional propuesto por el gobierno, dejando al país sin recursos para funcionar adecuadamente. Esta situación provocó huelgas en el sector público y paralizó servicios esenciales como salud y educación.""",
         "idioma": "es",
         "seccion": "politica",
-        "area_geografica": "AMERICA"
+        "area_geografica": "AMERICA",
     },
     {
         "id": 2002,
         "url": "https://www.infobae.com/test/2025/07/17/congreso-espana-reforma",
         "medio": "Infobae",
-        "tipo_medio": "otro", 
+        "tipo_medio": "otro",
         "titular": "El Congreso español aprueba la polémica reforma del sistema judicial",
         "fecha_publicacion": "2025-07-17T09:30:00Z",
         "autor": "Madrid Corresponsal",
@@ -56,7 +56,7 @@ El ministro de Justicia, Félix Bolaños, defendió la reforma argumentando que 
 La reforma también establece nuevos mecanismos de control y evaluación para los magistrados, así como cambios en el régimen disciplinario. Los críticos argumentan que estos cambios podrían politizar la justicia, mientras que el gobierno sostiene que aumentarán la rendición de cuentas.""",
         "idioma": "es",
         "seccion": "politica",
-        "area_geografica": "EUROPA"
+        "area_geografica": "EUROPA",
     },
     {
         "id": 2003,
@@ -75,9 +75,10 @@ El ministro de Hacienda, Ricardo Bonilla, explicó que la reforma está diseñad
 Sin embargo, los sectores empresariales han expresado preocupación por el impacto de las nuevas medidas en la competitividad del país. La Asociación Nacional de Empresarios de Colombia (ANDI) advirtió que algunos impuestos podrían desincentivar la inversión extranjera y afectar el crecimiento económico.""",
         "idioma": "es",
         "seccion": "politica",
-        "area_geografica": "AMERICA"
-    }
+        "area_geografica": "AMERICA",
+    },
 ]
+
 
 async def procesar_articulo_individual(controller, articulo, indice):
     """Procesa un artículo individual y retorna el resultado."""
@@ -85,87 +86,85 @@ async def procesar_articulo_individual(controller, articulo, indice):
     print(f"  ID: {articulo['id']}")
     print(f"  Título: {articulo['titular'][:60]}...")
     print(f"  Tamaño: {len(articulo['contenido_texto'])} caracteres")
-    
+
     inicio = time.time()
-    
+
     try:
         resultado = await controller.process_article(articulo)
         duracion = time.time() - inicio
-        
+
         print(f"[ARTÍCULO {indice}] Completado en {duracion:.2f}s")
         print(f"  Éxito: {resultado.get('exito', False)}")
         print(f"  Fase: {resultado.get('fase_completada', 0)}/7")
-        
-        if resultado.get('persistencia'):
-            persist = resultado['persistencia']
-            print(f"  Persistido: {persist.get('hechos_insertados', 0)} hechos, {persist.get('entidades_insertadas', 0)} entidades")
+
+        if resultado.get("persistencia"):
+            persist = resultado["persistencia"]
+            print(
+                f"  Persistido: {persist.get('hechos_insertados', 0)} hechos, {persist.get('entidades_insertadas', 0)} entidades"
+            )
         else:
             print(f"  Error persistencia: {resultado.get('errores', 'Desconocido')}")
-            
+
         return {
             "indice": indice,
-            "exito": resultado.get('exito', False),
+            "exito": resultado.get("exito", False),
             "duracion": duracion,
-            "resultado": resultado
+            "resultado": resultado,
         }
-        
+
     except Exception as e:
         duracion = time.time() - inicio
         print(f"[ARTÍCULO {indice}] ERROR en {duracion:.2f}s: {str(e)}")
-        return {
-            "indice": indice,
-            "exito": False,
-            "duracion": duracion,
-            "error": str(e)
-        }
+        return {"indice": indice, "exito": False, "duracion": duracion, "error": str(e)}
+
 
 async def test_procesamiento_multiple():
     """Test de procesamiento múltiple simultáneo."""
     print("=== TEST DE PROCESAMIENTO MÚLTIPLE DE ARTÍCULOS POLÍTICOS ===")
     print(f"Artículos a procesar: {len(ARTICULOS_POLITICOS)}")
-    
+
     controller = PipelineController()
-    
+
     # Procesar todos los artículos EN PARALELO
     print("\n🚀 INICIANDO PROCESAMIENTO EN PARALELO...")
     inicio_total = time.time()
-    
+
     # Crear tareas para todos los artículos
     tareas = []
     for i, articulo in enumerate(ARTICULOS_POLITICOS, 1):
         tarea = procesar_articulo_individual(controller, articulo, i)
         tareas.append(tarea)
-    
+
     # Ejecutar todas las tareas en paralelo
     resultados = await asyncio.gather(*tareas, return_exceptions=True)
-    
+
     duracion_total = time.time() - inicio_total
-    
+
     # Analizar resultados
     print(f"\n📊 ANÁLISIS DE RESULTADOS (Tiempo total: {duracion_total:.2f}s)")
     print("=" * 60)
-    
+
     exitosos = 0
     fallidos = 0
     total_hechos = 0
     total_entidades = 0
-    
+
     for resultado in resultados:
         if isinstance(resultado, Exception):
             print(f"❌ Excepción: {resultado}")
             fallidos += 1
             continue
-            
+
         indice = resultado["indice"]
         if resultado["exito"]:
             exitosos += 1
             print(f"✅ Artículo {indice}: ÉXITO ({resultado['duracion']:.2f}s)")
-            
+
             # Extraer datos de persistencia
             if resultado["resultado"].get("persistencia"):
                 persist = resultado["resultado"]["persistencia"]
-                hechos = persist.get('hechos_insertados', 0)
-                entidades = persist.get('entidades_insertadas', 0)
+                hechos = persist.get("hechos_insertados", 0)
+                entidades = persist.get("entidades_insertadas", 0)
                 total_hechos += hechos
                 total_entidades += entidades
                 print(f"   └─ Persistido: {hechos} hechos, {entidades} entidades")
@@ -174,30 +173,39 @@ async def test_procesamiento_multiple():
             print(f"❌ Artículo {indice}: FALLO ({resultado['duracion']:.2f}s)")
             if "error" in resultado:
                 print(f"   └─ Error: {resultado['error']}")
-    
-    print(f"\n📈 RESUMEN FINAL:")
+
+    print(f"\n📈 RESUMEN FINAL:")  # noqa: F541
     print(f"   ✅ Exitosos: {exitosos}/{len(ARTICULOS_POLITICOS)}")
     print(f"   ❌ Fallidos: {fallidos}/{len(ARTICULOS_POLITICOS)}")
-    print(f"   📊 Total datos persistidos: {total_hechos} hechos, {total_entidades} entidades")
-    print(f"   ⏱️  Tiempo promedio por artículo: {duracion_total/len(ARTICULOS_POLITICOS):.2f}s")
-    
+    print(
+        f"   📊 Total datos persistidos: {total_hechos} hechos, {total_entidades} entidades"
+    )
+    print(
+        f"   ⏱️  Tiempo promedio por artículo: {duracion_total / len(ARTICULOS_POLITICOS):.2f}s"
+    )
+
     if exitosos > 0:
-        print(f"\n🎯 EFICIENCIA DEL PARALELISMO:")
-        tiempo_secuencial_estimado = sum(r.get('duracion', 0) for r in resultados if not isinstance(r, Exception))
+        print(f"\n🎯 EFICIENCIA DEL PARALELISMO:")  # noqa: F541
+        tiempo_secuencial_estimado = sum(
+            r.get("duracion", 0) for r in resultados if not isinstance(r, Exception)
+        )
         print(f"   Tiempo secuencial estimado: {tiempo_secuencial_estimado:.2f}s")
         print(f"   Tiempo paralelo real: {duracion_total:.2f}s")
-        print(f"   Mejora de rendimiento: {tiempo_secuencial_estimado/duracion_total:.1f}x")
-    
+        print(
+            f"   Mejora de rendimiento: {tiempo_secuencial_estimado / duracion_total:.1f}x"
+        )
+
     return exitosos == len(ARTICULOS_POLITICOS)
+
 
 if __name__ == "__main__":
     if not GROQ_API_KEY:
         print("ERROR: No se encontró GROQ_API_KEY")
         sys.exit(1)
-    
+
     success = asyncio.run(test_procesamiento_multiple())
-    
-    print("\n" + "="*60)
+
+    print("\n" + "=" * 60)
     if success:
         print("🎉 TODOS LOS ARTÍCULOS PROCESADOS EXITOSAMENTE")
         sys.exit(0)
