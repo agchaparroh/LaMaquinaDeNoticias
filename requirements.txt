@@ -31,7 +31,7 @@ supafunc==0.4.7                     # Functions Supabase
 # VALIDACIÓN Y CONFIGURACIÓN
 # =============================================================================
 pydantic==2.11.5                    # Validación de datos (todos los módulos)
-pydantic-settings==2.3.0            # Configuración con Pydantic V2
+pydantic-settings==2.10.1            # Configuración con Pydantic V2
 python-dotenv==1.1.0                # Variables de entorno (todos los módulos)
 
 # =============================================================================
