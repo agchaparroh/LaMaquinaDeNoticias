@@ -41,7 +41,7 @@ scrapy==2.11.0                      # Framework de scraping
 scrapy-playwright==0.0.33           # JavaScript rendering para Scrapy
 scrapy-user-agents==0.1.1           # Rotación de user agents
 scrapy-crawl-once>=0.1.1           # Detección de duplicados
-spidermon==1.20.0                   # Monitoreo de spiders
+spidermon==1.24.0                   # Monitoreo de spiders
 beautifulsoup4==4.12.3              # Parser HTML
 lxml==5.1.0                         # Parser XML/HTML rápido
 pillow==10.2.0                      # Procesamiento de imágenes
