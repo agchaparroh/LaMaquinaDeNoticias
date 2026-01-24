@@ -108,7 +108,7 @@ hpack==4.1.0                        # Compresión de headers HTTP/2
 hyperframe==6.1.0                   # Framing HTTP/2
 hyperlink==21.0.0                   # Utilidades de URLs
 httpcore==1.0.9                     # Core HTTP
-websockets==12.0                    # WebSockets
+websockets==15.0.1                    # WebSockets
 pyee==13.0.0                        # Event Emitter
 
 # =============================================================================
